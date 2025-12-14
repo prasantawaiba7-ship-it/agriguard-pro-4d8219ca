@@ -1,12 +1,15 @@
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Leaf, Menu, X } from "lucide-react";
+import { Leaf, Menu, X, LogIn, User } from "lucide-react";
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { useAuth } from "@/hooks/useAuth";
 
 const Header = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const location = useLocation();
+  const navigate = useNavigate();
+  const { user, profile } = useAuth();
 
   const navLinks = [
     { href: "/", label: "Home" },
@@ -45,10 +48,25 @@ const Header = () => {
           </nav>
 
           <div className="hidden md:flex items-center gap-3">
-            <Button variant="outline" size="sm">
-              Login
-            </Button>
-            <Button size="sm">Get Started</Button>
+            {user ? (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => navigate('/farmer')}
+                className="gap-2"
+              >
+                <User className="w-4 h-4" />
+                {profile?.full_name || 'Dashboard'}
+              </Button>
+            ) : (
+              <>
+                <Button variant="outline" size="sm" onClick={() => navigate('/auth')}>
+                  <LogIn className="w-4 h-4 mr-2" />
+                  Login
+                </Button>
+                <Button size="sm" onClick={() => navigate('/auth')}>Get Started</Button>
+              </>
+            )}
           </div>
 
           {/* Mobile Menu Button */}
@@ -86,12 +104,44 @@ const Header = () => {
                 </Link>
               ))}
               <div className="flex gap-3 mt-4 pt-4 border-t border-border">
-                <Button variant="outline" size="sm" className="flex-1">
-                  Login
-                </Button>
-                <Button size="sm" className="flex-1">
-                  Get Started
-                </Button>
+                {user ? (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="flex-1"
+                    onClick={() => {
+                      navigate('/farmer');
+                      setIsMenuOpen(false);
+                    }}
+                  >
+                    <User className="w-4 h-4 mr-2" />
+                    {profile?.full_name || 'Dashboard'}
+                  </Button>
+                ) : (
+                  <>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="flex-1"
+                      onClick={() => {
+                        navigate('/auth');
+                        setIsMenuOpen(false);
+                      }}
+                    >
+                      Login
+                    </Button>
+                    <Button
+                      size="sm"
+                      className="flex-1"
+                      onClick={() => {
+                        navigate('/auth');
+                        setIsMenuOpen(false);
+                      }}
+                    >
+                      Get Started
+                    </Button>
+                  </>
+                )}
               </div>
             </nav>
           </motion.div>
