@@ -10,6 +10,7 @@ import Index from "./pages/Index";
 import Auth from "./pages/Auth";
 import FarmerDashboard from "./pages/FarmerDashboard";
 import AuthorityDashboard from "./pages/AuthorityDashboard";
+import ProfileSettings from "./pages/ProfileSettings";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -27,6 +28,7 @@ const App = () => (
                 <Route path="/" element={<Index />} />
                 <Route path="/auth" element={<Auth />} />
                 <Route path="/farmer" element={<FarmerDashboard />} />
+                <Route path="/farmer/profile" element={<ProfileSettings />} />
                 <Route path="/authority" element={<AuthorityDashboard />} />
                 {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
                 <Route path="*" element={<NotFound />} />

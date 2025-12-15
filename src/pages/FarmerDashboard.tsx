@@ -180,8 +180,11 @@ const FarmerDashboard = () => {
               className="mb-6 sm:mb-8"
             >
               <div className="flex flex-col gap-4">
-                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 sm:gap-4">
-                  <div className="flex items-center gap-3">
+              <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 sm:gap-4">
+                  <div 
+                    className="flex items-center gap-3 cursor-pointer hover:opacity-80 transition-opacity"
+                    onClick={() => navigate('/farmer/profile')}
+                  >
                     <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-primary flex items-center justify-center flex-shrink-0">
                       <User className="w-5 h-5 sm:w-6 sm:h-6 text-primary-foreground" />
                     </div>
@@ -196,6 +199,10 @@ const FarmerDashboard = () => {
                   </div>
                   <div className="flex items-center gap-2 w-full sm:w-auto">
                     <LanguageSelector />
+                    <Button variant="outline" size="sm" onClick={() => navigate('/farmer/profile')} className="flex-1 sm:flex-initial">
+                      <User className="w-4 h-4" />
+                      <span className="ml-2 hidden md:inline">Profile</span>
+                    </Button>
                     <Button variant="outline" size="sm" onClick={signOut} className="flex-1 sm:flex-initial">
                       <LogOut className="w-4 h-4" />
                       <span className="ml-2 sm:hidden md:inline">Sign Out</span>
