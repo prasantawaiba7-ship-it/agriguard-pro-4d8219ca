@@ -1,12 +1,14 @@
 import { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Send, Mic, MicOff, Image, X, Loader2, Bot, User, Sparkles, Leaf, Bug, CloudSun } from 'lucide-react';
+import { Send, Mic, MicOff, Image, X, Loader2, Bot, User, Sparkles, Leaf, Bug, WifiOff, Wifi, CloudOff, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Card } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
 import { useLanguage } from '@/hooks/useLanguage';
 import { usePlots } from '@/hooks/useFarmerData';
+import { useNetworkStatus } from '@/hooks/useNetworkStatus';
+import { offlineStorage } from '@/lib/offlineStorage';
 
 interface Message {
   id: string;
@@ -14,6 +16,8 @@ interface Message {
   content: string;
   imageUrl?: string;
   timestamp: Date;
+  pending?: boolean;
+  isOfflineResponse?: boolean;
 }
 
 interface AIAssistantProps {
@@ -28,12 +32,14 @@ export function AIAssistant({ initialAction = null }: AIAssistantProps) {
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const [isAnalyzingDisease, setIsAnalyzingDisease] = useState(false);
   const [isGettingRecommendations, setIsGettingRecommendations] = useState(false);
+  const [pendingCount, setPendingCount] = useState(0);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const diseaseInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
   const { t, language } = useLanguage();
   const { data: plots } = usePlots();
+  const { isOnline, wasOffline } = useNetworkStatus();
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -42,6 +48,119 @@ export function AIAssistant({ initialAction = null }: AIAssistantProps) {
   useEffect(() => {
     scrollToBottom();
   }, [messages]);
+
+  // Load saved conversations on mount
+  useEffect(() => {
+    const savedMessages = offlineStorage.loadConversations();
+    if (savedMessages.length > 0) {
+      setMessages(savedMessages);
+    }
+    const pending = offlineStorage.getPendingMessages();
+    setPendingCount(pending.length);
+  }, []);
+
+  // Save conversations when messages change
+  useEffect(() => {
+    if (messages.length > 0) {
+      offlineStorage.saveConversations(messages);
+    }
+  }, [messages]);
+
+  // Process pending messages when back online
+  useEffect(() => {
+    if (isOnline && wasOffline) {
+      const pending = offlineStorage.getPendingMessages();
+      if (pending.length > 0) {
+        toast({
+          title: "Back online!",
+          description: `Sending ${pending.length} queued message(s)...`,
+        });
+        processPendingMessages();
+      }
+    }
+  }, [isOnline, wasOffline]);
+
+  const processPendingMessages = async () => {
+    const pending = offlineStorage.getPendingMessages();
+    
+    for (const pendingMsg of pending) {
+      try {
+        const response = await fetch(
+          `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/ai-farm-assistant`,
+          {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+            },
+            body: JSON.stringify({
+              messages: pendingMsg.messages,
+              language
+            }),
+          }
+        );
+
+        if (response.ok) {
+          // Process streaming response
+          const reader = response.body?.getReader();
+          const decoder = new TextDecoder();
+          let assistantContent = '';
+          const assistantMessageId = crypto.randomUUID();
+
+          setMessages(prev => [...prev, {
+            id: assistantMessageId,
+            role: 'assistant',
+            content: '',
+            timestamp: new Date()
+          }]);
+
+          if (reader) {
+            let textBuffer = '';
+            
+            while (true) {
+              const { done, value } = await reader.read();
+              if (done) break;
+
+              textBuffer += decoder.decode(value, { stream: true });
+              
+              let newlineIndex: number;
+              while ((newlineIndex = textBuffer.indexOf('\n')) !== -1) {
+                let line = textBuffer.slice(0, newlineIndex);
+                textBuffer = textBuffer.slice(newlineIndex + 1);
+                
+                if (line.endsWith('\r')) line = line.slice(0, -1);
+                if (line.startsWith(':') || line.trim() === '') continue;
+                if (!line.startsWith('data: ')) continue;
+                
+                const jsonStr = line.slice(6).trim();
+                if (jsonStr === '[DONE]') break;
+                
+                try {
+                  const parsed = JSON.parse(jsonStr);
+                  const content = parsed.choices?.[0]?.delta?.content;
+                  if (content) {
+                    assistantContent += content;
+                    setMessages(prev => prev.map(m => 
+                      m.id === assistantMessageId 
+                        ? { ...m, content: assistantContent }
+                        : m
+                    ));
+                  }
+                } catch {
+                  // Incomplete JSON, continue
+                }
+              }
+            }
+          }
+
+          offlineStorage.removePendingMessage(pendingMsg.id);
+          setPendingCount(prev => prev - 1);
+        }
+      } catch (error) {
+        console.error('Failed to process pending message:', error);
+      }
+    }
+  };
 
   // Handle initial action
   useEffect(() => {
@@ -98,6 +217,48 @@ export function AIAssistant({ initialAction = null }: AIAssistantProps) {
         timestamp: new Date()
       };
       setMessages(prev => [...prev, userMessage]);
+
+      if (!isOnline) {
+        // Offline response for disease detection
+        const offlineMessage: Message = {
+          id: crypto.randomUUID(),
+          role: 'assistant',
+          content: `📴 **Offline Mode - Image Saved**
+
+I've saved your crop image. I'll analyze it when you're back online.
+
+**While waiting, check for these common signs:**
+
+🍂 **Yellow/Brown Spots** → Possible fungal infection
+🐛 **Holes in Leaves** → Pest damage
+🥀 **Wilting** → Root issues or water stress
+⚪ **White Powder** → Powdery mildew
+
+💡 *The image will be analyzed automatically when connectivity is restored.*`,
+          timestamp: new Date(),
+          isOfflineResponse: true
+        };
+        setMessages(prev => [...prev, offlineMessage]);
+        
+        // Queue for later processing
+        offlineStorage.queuePendingMessage({
+          id: crypto.randomUUID(),
+          messages: [{
+            role: 'user',
+            content: 'Please analyze this crop image for diseases or pests.',
+            imageUrl
+          }],
+          timestamp: new Date()
+        });
+        setPendingCount(prev => prev + 1);
+        
+        toast({
+          title: "Image saved offline",
+          description: "Will analyze when you're back online",
+        });
+        return;
+      }
+
       setIsAnalyzingDisease(true);
 
       try {
@@ -200,7 +361,7 @@ export function AIAssistant({ initialAction = null }: AIAssistantProps) {
       return;
     }
 
-    const plot = plots[0]; // Use first plot
+    const plot = plots[0];
     
     const userMessage: Message = {
       id: crypto.randomUUID(),
@@ -209,6 +370,21 @@ export function AIAssistant({ initialAction = null }: AIAssistantProps) {
       timestamp: new Date()
     };
     setMessages(prev => [...prev, userMessage]);
+
+    if (!isOnline) {
+      // Provide offline crop recommendations
+      const offlineResponse = offlineStorage.getOfflineResponse('crop');
+      const offlineMessage: Message = {
+        id: crypto.randomUUID(),
+        role: 'assistant',
+        content: offlineResponse,
+        timestamp: new Date(),
+        isOfflineResponse: true
+      };
+      setMessages(prev => [...prev, offlineMessage]);
+      return;
+    }
+
     setIsGettingRecommendations(true);
 
     try {
@@ -344,8 +520,38 @@ export function AIAssistant({ initialAction = null }: AIAssistantProps) {
     };
 
     setMessages(prev => [...prev, userMessage]);
+    const currentInput = input;
     setInput('');
     setSelectedImage(null);
+
+    // Handle offline mode
+    if (!isOnline) {
+      const offlineResponse = offlineStorage.getOfflineResponse(currentInput);
+      const offlineMessage: Message = {
+        id: crypto.randomUUID(),
+        role: 'assistant',
+        content: offlineResponse,
+        timestamp: new Date(),
+        isOfflineResponse: true
+      };
+      setMessages(prev => [...prev, offlineMessage]);
+      
+      // Queue the message for when we're back online (only if it needs AI processing)
+      if (selectedImage || !offlineResponse.includes('Offline Mode')) {
+        offlineStorage.queuePendingMessage({
+          id: crypto.randomUUID(),
+          messages: [{
+            role: 'user',
+            content: currentInput,
+            imageUrl: selectedImage || undefined
+          }],
+          timestamp: new Date()
+        });
+        setPendingCount(prev => prev + 1);
+      }
+      return;
+    }
+
     setIsLoading(true);
 
     try {
@@ -459,10 +665,48 @@ export function AIAssistant({ initialAction = null }: AIAssistantProps) {
     });
   };
 
+  const clearChat = () => {
+    setMessages([]);
+    offlineStorage.clearConversations();
+    toast({
+      title: "Chat cleared",
+      description: "All messages have been deleted",
+    });
+  };
+
   const isProcessing = isLoading || isAnalyzingDisease || isGettingRecommendations;
 
   return (
     <div className="flex flex-col h-full bg-background">
+      {/* Offline Status Banner */}
+      {!isOnline && (
+        <motion.div
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="bg-warning/20 border-b border-warning/30 px-4 py-2 flex items-center gap-2"
+        >
+          <WifiOff className="w-4 h-4 text-warning" />
+          <span className="text-sm text-warning font-medium">Offline Mode</span>
+          {pendingCount > 0 && (
+            <span className="text-xs bg-warning/30 px-2 py-0.5 rounded-full">
+              {pendingCount} pending
+            </span>
+          )}
+        </motion.div>
+      )}
+
+      {/* Back Online Banner */}
+      {isOnline && wasOffline && pendingCount > 0 && (
+        <motion.div
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="bg-success/20 border-b border-success/30 px-4 py-2 flex items-center gap-2"
+        >
+          <Wifi className="w-4 h-4 text-success" />
+          <span className="text-sm text-success font-medium">Back online! Syncing...</span>
+        </motion.div>
+      )}
+
       {/* Messages */}
       <div className="flex-1 overflow-y-auto p-4 space-y-4">
         {messages.length === 0 && (
@@ -472,7 +716,9 @@ export function AIAssistant({ initialAction = null }: AIAssistantProps) {
             </div>
             <h4 className="font-semibold text-lg mb-2">{t('askAnything')}</h4>
             <p className="text-sm text-muted-foreground max-w-xs mb-6">
-              Upload crop photos for disease detection, get crop recommendations, or ask farming questions.
+              {isOnline 
+                ? 'Upload crop photos for disease detection, get crop recommendations, or ask farming questions.'
+                : 'You\'re offline. Basic tips are available. Full features will work when connected.'}
             </p>
             
             {/* Quick Action Buttons */}
@@ -488,7 +734,9 @@ export function AIAssistant({ initialAction = null }: AIAssistantProps) {
                 </div>
                 <div className="text-left">
                   <div className="font-medium text-sm">Crop Recommendations</div>
-                  <div className="text-xs text-muted-foreground">Based on your field</div>
+                  <div className="text-xs text-muted-foreground">
+                    {isOnline ? 'Based on your field' : 'General tips'}
+                  </div>
                 </div>
               </Button>
               <Button
@@ -502,7 +750,9 @@ export function AIAssistant({ initialAction = null }: AIAssistantProps) {
                 </div>
                 <div className="text-left">
                   <div className="font-medium text-sm">Scan for Disease</div>
-                  <div className="text-xs text-muted-foreground">Upload crop photo</div>
+                  <div className="text-xs text-muted-foreground">
+                    {isOnline ? 'Upload crop photo' : 'Save for later'}
+                  </div>
                 </div>
               </Button>
             </div>
@@ -534,13 +784,23 @@ export function AIAssistant({ initialAction = null }: AIAssistantProps) {
               <div className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 ${
                 message.role === 'user' 
                   ? 'bg-primary text-primary-foreground' 
+                  : message.isOfflineResponse
+                  ? 'bg-warning/20 text-warning'
                   : 'bg-accent/20 text-accent'
               }`}>
-                {message.role === 'user' ? <User className="w-4 h-4" /> : <Bot className="w-4 h-4" />}
+                {message.role === 'user' ? (
+                  <User className="w-4 h-4" />
+                ) : message.isOfflineResponse ? (
+                  <CloudOff className="w-4 h-4" />
+                ) : (
+                  <Bot className="w-4 h-4" />
+                )}
               </div>
               <Card className={`p-3 max-w-[80%] ${
                 message.role === 'user' 
                   ? 'bg-primary text-primary-foreground' 
+                  : message.isOfflineResponse
+                  ? 'bg-warning/10 border-warning/20'
                   : 'bg-muted'
               }`}>
                 {message.imageUrl && (
@@ -630,6 +890,15 @@ export function AIAssistant({ initialAction = null }: AIAssistantProps) {
               <Bug className="w-3.5 h-3.5" />
               Scan Disease
             </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              className="flex-shrink-0 gap-1.5 ml-auto text-muted-foreground"
+              onClick={clearChat}
+            >
+              <Trash2 className="w-3.5 h-3.5" />
+              Clear
+            </Button>
           </div>
         )}
         
@@ -663,7 +932,7 @@ export function AIAssistant({ initialAction = null }: AIAssistantProps) {
             value={input}
             onChange={(e) => setInput(e.target.value)}
             onKeyPress={handleKeyPress}
-            placeholder={t('typeMessage')}
+            placeholder={isOnline ? t('typeMessage') : 'Type for offline tips...'}
             className="min-h-[44px] max-h-32 resize-none"
             rows={1}
             disabled={isProcessing}
