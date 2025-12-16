@@ -1,12 +1,12 @@
 import { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Send, Mic, MicOff, Image, X, Loader2, Bot, User, Sparkles } from 'lucide-react';
+import { Send, Mic, MicOff, Image, X, Loader2, Bot, User, Sparkles, Leaf, Bug, CloudSun } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Card } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
 import { useLanguage } from '@/hooks/useLanguage';
-import { supabase } from '@/integrations/supabase/client';
+import { usePlots } from '@/hooks/useFarmerData';
 
 interface Message {
   id: string;
@@ -16,16 +16,24 @@ interface Message {
   timestamp: Date;
 }
 
-export function AIAssistant() {
+interface AIAssistantProps {
+  initialAction?: 'chat' | 'recommend' | 'disease' | null;
+}
+
+export function AIAssistant({ initialAction = null }: AIAssistantProps) {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [isRecording, setIsRecording] = useState(false);
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
+  const [isAnalyzingDisease, setIsAnalyzingDisease] = useState(false);
+  const [isGettingRecommendations, setIsGettingRecommendations] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const diseaseInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
   const { t, language } = useLanguage();
+  const { data: plots } = usePlots();
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -34,6 +42,15 @@ export function AIAssistant() {
   useEffect(() => {
     scrollToBottom();
   }, [messages]);
+
+  // Handle initial action
+  useEffect(() => {
+    if (initialAction === 'recommend' && messages.length === 0) {
+      handleGetCropRecommendations();
+    } else if (initialAction === 'disease' && messages.length === 0) {
+      diseaseInputRef.current?.click();
+    }
+  }, [initialAction]);
 
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -52,6 +69,266 @@ export function AIAssistant() {
         setSelectedImage(reader.result as string);
       };
       reader.readAsDataURL(file);
+    }
+  };
+
+  const handleDiseaseImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (file.size > 5 * 1024 * 1024) {
+      toast({
+        title: "File too large",
+        description: "Please select an image smaller than 5MB",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = async () => {
+      const imageUrl = reader.result as string;
+      
+      // Add user message with image
+      const userMessage: Message = {
+        id: crypto.randomUUID(),
+        role: 'user',
+        content: 'Please analyze this crop image for diseases or pests.',
+        imageUrl,
+        timestamp: new Date()
+      };
+      setMessages(prev => [...prev, userMessage]);
+      setIsAnalyzingDisease(true);
+
+      try {
+        const response = await fetch(
+          `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/analyze-crop-disease`,
+          {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+            },
+            body: JSON.stringify({
+              imageUrl,
+              language,
+              cropType: plots?.[0]?.crop_type || undefined
+            }),
+          }
+        );
+
+        if (!response.ok) {
+          throw new Error('Failed to analyze image');
+        }
+
+        const analysis = await response.json();
+        
+        // Format the response
+        let responseContent = '';
+        if (analysis.isHealthy) {
+          responseContent = `✅ **Good news! Your crop looks healthy.**\n\nConfidence: ${Math.round((analysis.confidence || 0.8) * 100)}%\n\nKeep up the good farming practices!`;
+        } else {
+          responseContent = `🔍 **Disease Detection Result**\n\n`;
+          responseContent += `**Detected Issue:** ${analysis.detectedIssue || 'Unknown'}\n`;
+          responseContent += `**Confidence:** ${Math.round((analysis.confidence || 0.7) * 100)}%\n`;
+          responseContent += `**Severity:** ${analysis.severity || 'Unknown'}\n\n`;
+          
+          if (analysis.symptoms?.length > 0) {
+            responseContent += `**Symptoms:**\n${analysis.symptoms.map((s: string) => `• ${s}`).join('\n')}\n\n`;
+          }
+          
+          if (analysis.immediateActions?.length > 0) {
+            responseContent += `**Immediate Actions:**\n`;
+            analysis.immediateActions.forEach((action: any) => {
+              responseContent += `• ${action.action}\n`;
+            });
+            responseContent += '\n';
+          }
+          
+          if (analysis.organicTreatment) {
+            responseContent += `**🌿 Organic Treatment:**\n`;
+            responseContent += `${analysis.organicTreatment.name}\n`;
+            responseContent += `Preparation: ${analysis.organicTreatment.preparation}\n`;
+            responseContent += `Application: ${analysis.organicTreatment.application}\n\n`;
+          }
+          
+          if (analysis.chemicalTreatment) {
+            responseContent += `**💊 Chemical Treatment:**\n`;
+            responseContent += `${analysis.chemicalTreatment.name}\n`;
+            responseContent += `Dosage: ${analysis.chemicalTreatment.dosage}\n\n`;
+          }
+          
+          if (analysis.preventiveMeasures?.length > 0) {
+            responseContent += `**Prevention Tips:**\n${analysis.preventiveMeasures.map((p: string) => `• ${p}`).join('\n')}\n\n`;
+          }
+          
+          if (analysis.whenToSeekHelp) {
+            responseContent += `⚠️ **When to consult expert:** ${analysis.whenToSeekHelp}`;
+          }
+        }
+
+        const assistantMessage: Message = {
+          id: crypto.randomUUID(),
+          role: 'assistant',
+          content: responseContent,
+          timestamp: new Date()
+        };
+        setMessages(prev => [...prev, assistantMessage]);
+      } catch (error) {
+        toast({
+          title: 'Analysis Failed',
+          description: error instanceof Error ? error.message : 'Could not analyze image',
+          variant: 'destructive'
+        });
+      } finally {
+        setIsAnalyzingDisease(false);
+        if (diseaseInputRef.current) {
+          diseaseInputRef.current.value = '';
+        }
+      }
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const handleGetCropRecommendations = async () => {
+    if (!plots || plots.length === 0) {
+      toast({
+        title: "No plots found",
+        description: "Please add a plot first to get personalized recommendations",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    const plot = plots[0]; // Use first plot
+    
+    const userMessage: Message = {
+      id: crypto.randomUUID(),
+      role: 'user',
+      content: `Get crop recommendations for my ${plot.crop_type} field (${plot.area_hectares || 'unknown'} hectares) in ${plot.village || plot.district || plot.state || 'my area'}.`,
+      timestamp: new Date()
+    };
+    setMessages(prev => [...prev, userMessage]);
+    setIsGettingRecommendations(true);
+
+    try {
+      // Fetch weather data if plot has coordinates
+      let weatherData = {
+        temperature: 28,
+        humidity: 65,
+        rainfall: 100
+      };
+
+      if (plot.latitude && plot.longitude) {
+        try {
+          const weatherResponse = await fetch(
+            `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/fetch-weather`,
+            {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+              },
+              body: JSON.stringify({
+                latitude: plot.latitude,
+                longitude: plot.longitude
+              }),
+            }
+          );
+          if (weatherResponse.ok) {
+            const weather = await weatherResponse.json();
+            weatherData = {
+              temperature: weather.temperature || 28,
+              humidity: weather.humidity || 65,
+              rainfall: weather.rainfall || 100
+            };
+          }
+        } catch (e) {
+          console.log('Could not fetch weather, using defaults');
+        }
+      }
+
+      const response = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/crop-recommendation`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+          },
+          body: JSON.stringify({
+            soilData: {
+              ph: 6.5,
+              moisture: 45,
+              nitrogen: 280,
+              phosphorus: 45,
+              potassium: 200,
+              soilType: 'Loamy'
+            },
+            weatherData,
+            plotInfo: {
+              latitude: plot.latitude || 20.5937,
+              longitude: plot.longitude || 78.9629,
+              areaHectares: plot.area_hectares || 2,
+              state: plot.state || 'India',
+              district: plot.district || '',
+              season: plot.season || 'Kharif',
+              previousCrop: plot.crop_type
+            },
+            language
+          }),
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error('Failed to get recommendations');
+      }
+
+      const data = await response.json();
+      
+      let responseContent = `🌾 **Crop Recommendations for Your Field**\n\n`;
+      responseContent += `**Soil Health Score:** ${Math.round((data.soilHealthScore || 0.7) * 100)}%\n`;
+      responseContent += `**Sustainability Score:** ${Math.round((data.sustainabilityScore || 0.7) * 100)}%\n\n`;
+      
+      if (data.recommendations && data.recommendations.length > 0) {
+        responseContent += `**Top Recommended Crops:**\n\n`;
+        data.recommendations.slice(0, 3).forEach((rec: any, index: number) => {
+          const medal = index === 0 ? '🥇' : index === 1 ? '🥈' : '🥉';
+          responseContent += `${medal} **${rec.crop}**\n`;
+          responseContent += `   Suitability: ${Math.round((rec.suitabilityScore || 0.8) * 100)}%\n`;
+          responseContent += `   Expected Yield: ${rec.expectedYieldPerHectare || 'N/A'}\n`;
+          responseContent += `   Profit Estimate: ${rec.estimatedProfitPerHectare || 'N/A'}\n`;
+          responseContent += `   Water Needs: ${rec.waterRequirement || 'Medium'}\n\n`;
+        });
+      }
+
+      if (data.soilImprovementTips && data.soilImprovementTips.length > 0) {
+        responseContent += `**💡 Soil Improvement Tips:**\n`;
+        data.soilImprovementTips.forEach((tip: string) => {
+          responseContent += `• ${tip}\n`;
+        });
+        responseContent += '\n';
+      }
+
+      if (data.reasoning) {
+        responseContent += `**Analysis:** ${data.reasoning}`;
+      }
+
+      const assistantMessage: Message = {
+        id: crypto.randomUUID(),
+        role: 'assistant',
+        content: responseContent,
+        timestamp: new Date()
+      };
+      setMessages(prev => [...prev, assistantMessage]);
+    } catch (error) {
+      toast({
+        title: 'Recommendation Failed',
+        description: error instanceof Error ? error.message : 'Could not get recommendations',
+        variant: 'destructive'
+      });
+    } finally {
+      setIsGettingRecommendations(false);
     }
   };
 
@@ -176,38 +453,61 @@ export function AIAssistant() {
 
   const toggleRecording = () => {
     setIsRecording(!isRecording);
-    // Voice recording would be implemented with Web Speech API
     toast({
       title: isRecording ? "Recording stopped" : "Recording started",
       description: isRecording ? "Processing your voice..." : "Speak now..."
     });
   };
 
-  return (
-    <div className="flex flex-col h-[calc(100vh-200px)] max-h-[700px] bg-background rounded-2xl border border-border overflow-hidden">
-      {/* Header */}
-      <div className="flex items-center gap-3 p-4 border-b border-border bg-gradient-to-r from-primary/10 to-accent/10">
-        <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center">
-          <Sparkles className="w-5 h-5 text-primary" />
-        </div>
-        <div>
-          <h3 className="font-semibold text-foreground">Krishi Mitra</h3>
-          <p className="text-xs text-muted-foreground">{t('aiAssistant')}</p>
-        </div>
-      </div>
+  const isProcessing = isLoading || isAnalyzingDisease || isGettingRecommendations;
 
+  return (
+    <div className="flex flex-col h-full bg-background">
       {/* Messages */}
       <div className="flex-1 overflow-y-auto p-4 space-y-4">
         {messages.length === 0 && (
           <div className="flex flex-col items-center justify-center h-full text-center p-6">
-            <div className="w-20 h-20 rounded-full bg-gradient-to-br from-primary/20 to-accent/20 flex items-center justify-center mb-4">
-              <Bot className="w-10 h-10 text-primary" />
+            <div className="w-16 h-16 rounded-full bg-gradient-to-br from-primary/20 to-accent/20 flex items-center justify-center mb-4">
+              <Bot className="w-8 h-8 text-primary" />
             </div>
             <h4 className="font-semibold text-lg mb-2">{t('askAnything')}</h4>
-            <p className="text-sm text-muted-foreground max-w-xs">
-              Upload crop photos for disease detection, ask about farming tips, or get personalized recommendations.
+            <p className="text-sm text-muted-foreground max-w-xs mb-6">
+              Upload crop photos for disease detection, get crop recommendations, or ask farming questions.
             </p>
-            <div className="flex flex-wrap gap-2 mt-4 justify-center">
+            
+            {/* Quick Action Buttons */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 w-full max-w-sm mb-4">
+              <Button
+                variant="outline"
+                className="flex items-center gap-2 h-auto py-3 justify-start"
+                onClick={handleGetCropRecommendations}
+                disabled={isProcessing}
+              >
+                <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
+                  <Leaf className="w-4 h-4 text-primary" />
+                </div>
+                <div className="text-left">
+                  <div className="font-medium text-sm">Crop Recommendations</div>
+                  <div className="text-xs text-muted-foreground">Based on your field</div>
+                </div>
+              </Button>
+              <Button
+                variant="outline"
+                className="flex items-center gap-2 h-auto py-3 justify-start"
+                onClick={() => diseaseInputRef.current?.click()}
+                disabled={isProcessing}
+              >
+                <div className="w-8 h-8 rounded-full bg-destructive/10 flex items-center justify-center">
+                  <Bug className="w-4 h-4 text-destructive" />
+                </div>
+                <div className="text-left">
+                  <div className="font-medium text-sm">Scan for Disease</div>
+                  <div className="text-xs text-muted-foreground">Upload crop photo</div>
+                </div>
+              </Button>
+            </div>
+
+            <div className="flex flex-wrap gap-2 justify-center">
               {['मेरी फसल में पीलापन है', 'Best crops for clay soil?', 'आज मौसम कैसा है?'].map((suggestion, i) => (
                 <Button
                   key={i}
@@ -251,7 +551,7 @@ export function AIAssistant() {
                   />
                 )}
                 <p className="text-sm whitespace-pre-wrap">{message.content}</p>
-                {message.role === 'assistant' && isLoading && message.id === messages[messages.length - 1]?.id && !message.content && (
+                {message.role === 'assistant' && isProcessing && message.id === messages[messages.length - 1]?.id && !message.content && (
                   <div className="flex gap-1 py-2">
                     <span className="w-2 h-2 bg-current rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
                     <span className="w-2 h-2 bg-current rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
@@ -262,8 +562,27 @@ export function AIAssistant() {
             </motion.div>
           ))}
         </AnimatePresence>
+        
+        {/* Processing indicator */}
+        {(isAnalyzingDisease || isGettingRecommendations) && (
+          <div className="flex items-center gap-2 text-sm text-muted-foreground justify-center py-4">
+            <Loader2 className="w-4 h-4 animate-spin" />
+            {isAnalyzingDisease ? 'Analyzing crop image...' : 'Getting recommendations...'}
+          </div>
+        )}
+        
         <div ref={messagesEndRef} />
       </div>
+
+      {/* Hidden disease image input */}
+      <input
+        type="file"
+        ref={diseaseInputRef}
+        onChange={handleDiseaseImageUpload}
+        accept="image/*"
+        capture="environment"
+        className="hidden"
+      />
 
       {/* Selected Image Preview */}
       {selectedImage && (
@@ -288,6 +607,32 @@ export function AIAssistant() {
 
       {/* Input */}
       <div className="p-4 border-t border-border bg-muted/30">
+        {/* Quick action buttons when in chat */}
+        {messages.length > 0 && (
+          <div className="flex gap-2 mb-3 overflow-x-auto pb-2">
+            <Button
+              variant="outline"
+              size="sm"
+              className="flex-shrink-0 gap-1.5"
+              onClick={handleGetCropRecommendations}
+              disabled={isProcessing}
+            >
+              <Leaf className="w-3.5 h-3.5" />
+              Crop Tips
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              className="flex-shrink-0 gap-1.5"
+              onClick={() => diseaseInputRef.current?.click()}
+              disabled={isProcessing}
+            >
+              <Bug className="w-3.5 h-3.5" />
+              Scan Disease
+            </Button>
+          </div>
+        )}
+        
         <div className="flex gap-2 items-end">
           <input
             type="file"
@@ -301,6 +646,7 @@ export function AIAssistant() {
             size="icon"
             onClick={() => fileInputRef.current?.click()}
             className="flex-shrink-0"
+            disabled={isProcessing}
           >
             <Image className="w-4 h-4" />
           </Button>
@@ -309,6 +655,7 @@ export function AIAssistant() {
             size="icon"
             onClick={toggleRecording}
             className="flex-shrink-0"
+            disabled={isProcessing}
           >
             {isRecording ? <MicOff className="w-4 h-4" /> : <Mic className="w-4 h-4" />}
           </Button>
@@ -319,13 +666,14 @@ export function AIAssistant() {
             placeholder={t('typeMessage')}
             className="min-h-[44px] max-h-32 resize-none"
             rows={1}
+            disabled={isProcessing}
           />
           <Button
             onClick={sendMessage}
-            disabled={isLoading || (!input.trim() && !selectedImage)}
+            disabled={isProcessing || (!input.trim() && !selectedImage)}
             className="flex-shrink-0"
           >
-            {isLoading ? (
+            {isProcessing ? (
               <Loader2 className="w-4 h-4 animate-spin" />
             ) : (
               <Send className="w-4 h-4" />

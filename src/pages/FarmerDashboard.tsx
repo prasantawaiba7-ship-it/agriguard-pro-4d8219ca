@@ -9,6 +9,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
 import { AIAssistant } from "@/components/ai/AIAssistant";
+import { KrishiMitraBar } from "@/components/ai/KrishiMitraBar";
 import { LanguageSelector } from "@/components/farmer/LanguageSelector";
 import { useAuth } from "@/hooks/useAuth";
 import { useLanguage } from "@/hooks/useLanguage";
@@ -25,7 +26,6 @@ import {
   AlertTriangle,
   Plus,
   Loader2,
-  Bot,
   Cloud,
   Thermometer,
   Droplets,
@@ -61,7 +61,7 @@ const cropStages: { value: CropStage; label: string }[] = [
 ];
 
 const FarmerDashboard = () => {
-  const [activeTab, setActiveTab] = useState<"plots" | "capture" | "history" | "assistant">("plots");
+  const [activeTab, setActiveTab] = useState<"plots" | "capture" | "history">("plots");
   const [isAddPlotOpen, setIsAddPlotOpen] = useState(false);
   const [selectedPlot, setSelectedPlot] = useState<string>("");
   const [selectedStage, setSelectedStage] = useState<CropStage>("vegetative");
@@ -252,7 +252,6 @@ const FarmerDashboard = () => {
                 { id: "plots", label: t('myPlots'), icon: MapPin },
                 { id: "capture", label: "Capture", icon: Camera },
                 { id: "history", label: t('history'), icon: History },
-                { id: "assistant", label: t('aiAssistant'), icon: Bot },
               ].map((tab) => (
                 <Button
                   key={tab.id}
@@ -599,17 +598,15 @@ const FarmerDashboard = () => {
                   </div>
                 )}
 
-                {activeTab === "assistant" && (
-                  <div className="max-w-3xl mx-auto">
-                    <AIAssistant />
-                  </div>
-                )}
               </motion.div>
             </AnimatePresence>
           </div>
         </main>
 
         <Footer />
+        
+        {/* Floating Krishi Mitra Bar */}
+        <KrishiMitraBar />
       </div>
     </>
   );
