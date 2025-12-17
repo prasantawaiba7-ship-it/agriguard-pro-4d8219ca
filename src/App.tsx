@@ -11,6 +11,7 @@ import Auth from "./pages/Auth";
 import FarmerDashboard from "./pages/FarmerDashboard";
 import AuthorityDashboard from "./pages/AuthorityDashboard";
 import ProfileSettings from "./pages/ProfileSettings";
+import KrishiMitra from "./pages/KrishiMitra";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -29,6 +30,7 @@ const App = () => (
                 <Route path="/auth" element={<Auth />} />
                 <Route path="/farmer" element={<FarmerDashboard />} />
                 <Route path="/farmer/profile" element={<ProfileSettings />} />
+                <Route path="/krishi-mitra" element={<KrishiMitra />} />
                 <Route path="/authority" element={<AuthorityDashboard />} />
                 {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
                 <Route path="*" element={<NotFound />} />
