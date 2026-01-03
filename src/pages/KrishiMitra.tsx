@@ -1,6 +1,6 @@
 import { Helmet } from "react-helmet-async";
 import { motion } from "framer-motion";
-import { Bot, Mic, Volume2, Leaf, CloudSun, Bug, Sprout, MessageCircle } from "lucide-react";
+import { Bot, Mic, Volume2, Leaf, CloudSun, Bug, Sprout, MessageCircle, Quote, Star } from "lucide-react";
 import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
 import { AIAssistant } from "@/components/ai/AIAssistant";
@@ -30,6 +30,41 @@ const features = [
     title: "Crop Recommendations",
     description: "Get AI-powered suggestions for crops based on your soil and climate",
     color: "text-emerald-500",
+  },
+];
+
+const testimonials = [
+  {
+    name: "Ramesh Patel",
+    location: "Gujarat",
+    crop: "Cotton Farmer",
+    image: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&h=100&fit=crop&crop=face",
+    quote: "Krishi Mitra identified a fungal infection in my cotton crop within seconds. The treatment suggestions saved my entire harvest worth ₹2 lakhs.",
+    rating: 5,
+  },
+  {
+    name: "Lakshmi Devi",
+    location: "Andhra Pradesh",
+    crop: "Rice Farmer",
+    image: "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=100&h=100&fit=crop&crop=face",
+    quote: "Being able to ask questions in Telugu makes it so easy. The weather alerts helped me plan my irrigation perfectly this season.",
+    rating: 5,
+  },
+  {
+    name: "Suresh Kumar",
+    location: "Maharashtra",
+    crop: "Soybean Farmer",
+    image: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=100&h=100&fit=crop&crop=face",
+    quote: "The pest management advice was spot-on! I reduced my pesticide costs by 40% while getting better results. Truly a game changer.",
+    rating: 5,
+  },
+  {
+    name: "Manjunath Gowda",
+    location: "Karnataka",
+    crop: "Sugarcane Farmer",
+    image: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=100&h=100&fit=crop&crop=face",
+    quote: "Voice input in Kannada is amazing! I just speak my problems and get solutions instantly. Even my father uses it now.",
+    rating: 5,
   },
 ];
 
@@ -185,6 +220,63 @@ const KrishiMitra = () => {
                     </div>
                     <h3 className="font-semibold text-foreground mb-2">{item.title}</h3>
                     <p className="text-sm text-muted-foreground">{item.description}</p>
+                  </motion.div>
+                ))}
+              </div>
+            </div>
+          </section>
+
+          {/* Testimonials Section */}
+          <section className="py-16 bg-background">
+            <div className="container mx-auto px-4">
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                className="text-center mb-12"
+              >
+                <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 text-primary mb-4">
+                  <Quote className="h-4 w-4" />
+                  <span className="text-sm font-medium">Farmer Success Stories</span>
+                </div>
+                <h2 className="text-3xl font-bold text-foreground mb-4">
+                  Trusted by Farmers Across India
+                </h2>
+                <p className="text-muted-foreground max-w-2xl mx-auto">
+                  See how Krishi Mitra is helping farmers solve real problems and improve their yields.
+                </p>
+              </motion.div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-5xl mx-auto">
+                {testimonials.map((testimonial, index) => (
+                  <motion.div
+                    key={index}
+                    initial={{ opacity: 0, y: 20 }}
+                    whileInView={{ opacity: 1, y: 0 }}
+                    viewport={{ once: true }}
+                    transition={{ delay: index * 0.1 }}
+                    className="bg-card border border-border rounded-xl p-6 hover:shadow-lg transition-shadow"
+                  >
+                    <div className="flex items-start gap-4 mb-4">
+                      <img
+                        src={testimonial.image}
+                        alt={testimonial.name}
+                        className="w-14 h-14 rounded-full object-cover border-2 border-primary/20"
+                      />
+                      <div className="flex-1">
+                        <h4 className="font-semibold text-foreground">{testimonial.name}</h4>
+                        <p className="text-sm text-muted-foreground">{testimonial.crop}</p>
+                        <p className="text-xs text-muted-foreground">{testimonial.location}</p>
+                      </div>
+                      <div className="flex gap-0.5">
+                        {[...Array(testimonial.rating)].map((_, i) => (
+                          <Star key={i} className="h-4 w-4 fill-yellow-400 text-yellow-400" />
+                        ))}
+                      </div>
+                    </div>
+                    <blockquote className="text-muted-foreground italic">
+                      "{testimonial.quote}"
+                    </blockquote>
                   </motion.div>
                 ))}
               </div>
