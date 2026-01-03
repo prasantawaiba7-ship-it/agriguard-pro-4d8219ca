@@ -10,6 +10,7 @@ import Index from "./pages/Index";
 import Auth from "./pages/Auth";
 import FarmerDashboard from "./pages/FarmerDashboard";
 import AuthorityDashboard from "./pages/AuthorityDashboard";
+import AdminDashboard from "./pages/AdminDashboard";
 import ProfileSettings from "./pages/ProfileSettings";
 import KrishiMitra from "./pages/KrishiMitra";
 import NotFound from "./pages/NotFound";
@@ -32,6 +33,7 @@ const App = () => (
                 <Route path="/farmer/profile" element={<ProfileSettings />} />
                 <Route path="/krishi-mitra" element={<KrishiMitra />} />
                 <Route path="/authority" element={<AuthorityDashboard />} />
+                <Route path="/admin" element={<AdminDashboard />} />
                 {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
                 <Route path="*" element={<NotFound />} />
               </Routes>

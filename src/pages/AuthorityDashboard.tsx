@@ -19,80 +19,88 @@ import {
   Leaf,
 } from "lucide-react";
 
-// Mock data
+// Nepal-focused mock data
 const mockSubmissions = [
   {
     id: "SUB-2024-001",
-    farmer: "Raju Kumar",
+    farmer: "Ram Bahadur Tamang",
     farmerId: "FRM-78542",
-    village: "Khirki",
-    district: "Ghaziabad",
+    village: "Chautara",
+    district: "Sindhupalchok",
+    province: "Bagmati Province",
     crop: "Rice",
     date: "2024-01-10",
     status: "damage_detected",
     damageType: "Waterlogging",
     severity: "High",
-    coordinates: { lat: 28.6692, lng: 77.4538 },
+    coordinates: { lat: 27.7857, lng: 85.7136 },
   },
   {
     id: "SUB-2024-002",
-    farmer: "Sunita Devi",
+    farmer: "Sita Devi Gurung",
     farmerId: "FRM-45231",
-    village: "Dadri",
-    district: "Gautam Buddha Nagar",
-    crop: "Wheat",
+    village: "Pokhara-17",
+    district: "Kaski",
+    province: "Gandaki Province",
+    crop: "Vegetables",
     date: "2024-01-10",
     status: "healthy",
     damageType: null,
     severity: null,
-    coordinates: { lat: 28.5512, lng: 77.5541 },
+    coordinates: { lat: 28.2096, lng: 83.9856 },
   },
   {
     id: "SUB-2024-003",
-    farmer: "Mahesh Singh",
+    farmer: "Hari Prasad Yadav",
     farmerId: "FRM-91837",
-    village: "Bisrakh",
-    district: "Gautam Buddha Nagar",
-    crop: "Cotton",
+    village: "Janakpur-5",
+    district: "Dhanusha",
+    province: "Madhesh Province",
+    crop: "Wheat",
     date: "2024-01-09",
     status: "pending",
     damageType: null,
     severity: null,
-    coordinates: { lat: 28.5021, lng: 77.4129 },
+    coordinates: { lat: 26.7288, lng: 85.9220 },
   },
   {
     id: "SUB-2024-004",
-    farmer: "Priya Sharma",
+    farmer: "Dawa Sherpa",
     farmerId: "FRM-34821",
-    village: "Sikandrabad",
-    district: "Bulandshahr",
-    crop: "Sugarcane",
+    village: "Namche",
+    district: "Solukhumbu",
+    province: "Koshi Province",
+    crop: "Potato",
     date: "2024-01-09",
     status: "damage_detected",
-    damageType: "Pest Infestation",
+    damageType: "Frost Damage",
     severity: "Medium",
-    coordinates: { lat: 28.4521, lng: 77.7012 },
+    coordinates: { lat: 27.8069, lng: 86.7140 },
   },
   {
     id: "SUB-2024-005",
-    farmer: "Ramesh Yadav",
+    farmer: "Kamala Tharu",
     farmerId: "FRM-56234",
-    village: "Hapur",
-    district: "Hapur",
-    crop: "Rice",
+    village: "Gulariya",
+    district: "Bardiya",
+    province: "Lumbini Province",
+    crop: "Sugarcane",
     date: "2024-01-08",
     status: "healthy",
     damageType: null,
     severity: null,
-    coordinates: { lat: 28.7295, lng: 77.7758 },
+    coordinates: { lat: 28.2144, lng: 81.3467 },
   },
 ];
 
-const districtStats = [
-  { name: "Ghaziabad", plots: 1245, alerts: 23, healthy: 89 },
-  { name: "Gautam Buddha Nagar", plots: 892, alerts: 15, healthy: 92 },
-  { name: "Bulandshahr", plots: 1567, alerts: 45, healthy: 78 },
-  { name: "Hapur", plots: 734, alerts: 8, healthy: 95 },
+const provinceStats = [
+  { name: "Koshi Province", nepaliName: "कोशी प्रदेश", plots: 1245, alerts: 23, healthy: 89 },
+  { name: "Madhesh Province", nepaliName: "मधेश प्रदेश", plots: 1892, alerts: 35, healthy: 82 },
+  { name: "Bagmati Province", nepaliName: "बागमती प्रदेश", plots: 1567, alerts: 45, healthy: 78 },
+  { name: "Gandaki Province", nepaliName: "गण्डकी प्रदेश", plots: 892, alerts: 15, healthy: 92 },
+  { name: "Lumbini Province", nepaliName: "लुम्बिनी प्रदेश", plots: 1734, alerts: 28, healthy: 85 },
+  { name: "Karnali Province", nepaliName: "कर्णाली प्रदेश", plots: 534, alerts: 8, healthy: 95 },
+  { name: "Sudurpashchim Province", nepaliName: "सुदूरपश्चिम प्रदेश", plots: 678, alerts: 12, healthy: 91 },
 ];
 
 const AuthorityDashboard = () => {
@@ -106,11 +114,14 @@ const AuthorityDashboard = () => {
     return true;
   });
 
+  const totalPlots = provinceStats.reduce((acc, p) => acc + p.plots, 0);
+  const totalAlerts = provinceStats.reduce((acc, p) => acc + p.alerts, 0);
+
   return (
     <>
       <Helmet>
-        <title>Authority Dashboard - CROPIC</title>
-        <meta name="description" content="Monitor crop health submissions, view alerts, and manage insurance claims across districts with CROPIC's authority dashboard." />
+        <title>Authority Dashboard - CROPIC Nepal</title>
+        <meta name="description" content="Monitor crop health submissions, view alerts, and manage insurance claims across Nepal's 7 provinces with CROPIC's authority dashboard." />
       </Helmet>
 
       <div className="min-h-screen bg-background">
@@ -130,7 +141,7 @@ const AuthorityDashboard = () => {
                     Authority Dashboard
                   </h1>
                   <p className="text-muted-foreground">
-                    District Agricultural Office | Western UP Region
+                    कृषि विभाग | नेपाल सरकार
                   </p>
                 </div>
                 <div className="flex gap-3">
@@ -149,10 +160,10 @@ const AuthorityDashboard = () => {
             {/* Overview Stats */}
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
               {[
-                { icon: Users, label: "Total Farmers", value: "4,438", trend: "+12%", color: "bg-primary" },
-                { icon: Leaf, label: "Active Plots", value: "5,892", trend: "+8%", color: "bg-success" },
-                { icon: AlertTriangle, label: "Damage Alerts", value: "91", trend: "-5%", trendDown: true, color: "bg-warning" },
-                { icon: CheckCircle2, label: "Claims Processed", value: "234", trend: "+23%", color: "bg-secondary" },
+                { icon: Users, label: "Total Farmers", value: "12,438", trend: "+12%", color: "bg-primary" },
+                { icon: Leaf, label: "Active Plots", value: totalPlots.toLocaleString(), trend: "+8%", color: "bg-success" },
+                { icon: AlertTriangle, label: "Damage Alerts", value: totalAlerts.toString(), trend: "-5%", trendDown: true, color: "bg-warning" },
+                { icon: CheckCircle2, label: "Claims Processed", value: "534", trend: "+23%", color: "bg-secondary" },
               ].map((stat, i) => (
                 <motion.div
                   key={stat.label}
@@ -187,7 +198,7 @@ const AuthorityDashboard = () => {
                     <div className="flex items-center justify-between">
                       <CardTitle className="flex items-center gap-2">
                         <MapPin className="w-5 h-5 text-primary" />
-                        Regional Map View
+                        Nepal Map View
                       </CardTitle>
                       <Button variant="outline" size="sm">
                         <Filter className="w-4 h-4" />
@@ -205,7 +216,7 @@ const AuthorityDashboard = () => {
                             Interactive map will load here
                           </p>
                           <p className="text-xs text-muted-foreground mt-1">
-                            Showing plots from Western UP Region
+                            Showing plots from all 7 provinces of Nepal
                           </p>
                         </div>
                       </div>
@@ -247,30 +258,33 @@ const AuthorityDashboard = () => {
                 </Card>
               </div>
 
-              {/* District Stats */}
+              {/* Province Stats */}
               <div>
                 <Card className="border-border/50">
                   <CardHeader className="pb-3">
-                    <CardTitle className="text-lg">District Overview</CardTitle>
+                    <CardTitle className="text-lg">Province Overview (प्रदेश)</CardTitle>
                   </CardHeader>
-                  <CardContent className="space-y-3">
-                    {districtStats.map((district) => (
+                  <CardContent className="space-y-3 max-h-[400px] overflow-y-auto">
+                    {provinceStats.map((province) => (
                       <div
-                        key={district.name}
+                        key={province.name}
                         className="p-3 rounded-xl bg-muted/50 hover:bg-muted transition-colors cursor-pointer"
                       >
                         <div className="flex items-center justify-between mb-2">
-                          <span className="font-medium text-foreground">{district.name}</span>
-                          <span className="text-xs text-muted-foreground">{district.plots} plots</span>
+                          <div>
+                            <span className="font-medium text-foreground text-sm">{province.name}</span>
+                            <p className="text-xs text-muted-foreground">{province.nepaliName}</p>
+                          </div>
+                          <span className="text-xs text-muted-foreground">{province.plots} plots</span>
                         </div>
                         <div className="flex items-center gap-4">
                           <div className="flex items-center gap-1 text-sm">
                             <CheckCircle2 className="w-3 h-3 text-success" />
-                            <span className="text-muted-foreground">{district.healthy}%</span>
+                            <span className="text-muted-foreground">{province.healthy}%</span>
                           </div>
                           <div className="flex items-center gap-1 text-sm">
                             <AlertTriangle className="w-3 h-3 text-warning" />
-                            <span className="text-muted-foreground">{district.alerts}</span>
+                            <span className="text-muted-foreground">{province.alerts}</span>
                           </div>
                         </div>
                       </div>
@@ -320,6 +334,7 @@ const AuthorityDashboard = () => {
                         <th className="text-left py-3 px-4 text-sm font-medium text-muted-foreground">ID</th>
                         <th className="text-left py-3 px-4 text-sm font-medium text-muted-foreground">Farmer</th>
                         <th className="text-left py-3 px-4 text-sm font-medium text-muted-foreground">Location</th>
+                        <th className="text-left py-3 px-4 text-sm font-medium text-muted-foreground">Province</th>
                         <th className="text-left py-3 px-4 text-sm font-medium text-muted-foreground">Crop</th>
                         <th className="text-left py-3 px-4 text-sm font-medium text-muted-foreground">Date</th>
                         <th className="text-left py-3 px-4 text-sm font-medium text-muted-foreground">Status</th>
@@ -338,6 +353,7 @@ const AuthorityDashboard = () => {
                             <div className="text-sm text-foreground">{sub.village}</div>
                             <div className="text-xs text-muted-foreground">{sub.district}</div>
                           </td>
+                          <td className="py-3 px-4 text-sm text-muted-foreground">{sub.province}</td>
                           <td className="py-3 px-4 text-sm text-foreground">{sub.crop}</td>
                           <td className="py-3 px-4 text-sm text-muted-foreground">{sub.date}</td>
                           <td className="py-3 px-4">

@@ -9,19 +9,15 @@ interface UseTextToSpeechOptions {
   onError?: (error: string) => void;
 }
 
-// Map app language codes to speech synthesis language codes
+// Map app language codes to speech synthesis language codes for Nepal
 const languageMap: Record<string, string> = {
-  en: 'en-IN',
-  hi: 'hi-IN',
-  mr: 'mr-IN',
-  ta: 'ta-IN',
-  te: 'te-IN',
-  kn: 'kn-IN',
-  gu: 'gu-IN',
-  pa: 'pa-IN',
-  bn: 'bn-IN',
-  ml: 'ml-IN',
-  or: 'or-IN',
+  en: 'en-US',
+  ne: 'ne-NP',
+  tamang: 'ne-NP', // Fallback to Nepali
+  newar: 'ne-NP', // Fallback to Nepali
+  maithili: 'hi-IN', // Close to Maithili
+  magar: 'ne-NP', // Fallback to Nepali
+  rai: 'ne-NP', // Fallback to Nepali
 };
 
 export function useTextToSpeech(options: UseTextToSpeechOptions = {}) {
@@ -104,7 +100,7 @@ export function useTextToSpeech(options: UseTextToSpeechOptions = {}) {
     utteranceRef.current = utterance;
 
     // Set language
-    const speechLang = languageMap[language] || 'en-IN';
+    const speechLang = languageMap[language] || 'en-US';
     utterance.lang = speechLang;
     utterance.rate = rate;
     utterance.pitch = pitch;
@@ -112,7 +108,7 @@ export function useTextToSpeech(options: UseTextToSpeechOptions = {}) {
     // Try to find a voice for the language
     const voices = window.speechSynthesis.getVoices();
     const preferredVoice = voices.find(v => v.lang.startsWith(speechLang.split('-')[0])) ||
-                          voices.find(v => v.lang.includes('IN')) ||
+                          voices.find(v => v.lang.includes('NP')) ||
                           voices.find(v => v.default);
     
     if (preferredVoice) {

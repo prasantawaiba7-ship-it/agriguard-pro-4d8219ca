@@ -16,7 +16,7 @@ const features = [
   {
     icon: CloudSun,
     title: "Weather Advisories",
-    description: "Get localized weather forecasts and farming recommendations",
+    description: "Get localized weather forecasts and farming recommendations for Nepal",
     color: "text-blue-500",
   },
   {
@@ -35,35 +35,51 @@ const features = [
 
 const testimonials = [
   {
-    name: "Ramesh Patel",
-    location: "Gujarat",
-    crop: "Cotton Farmer",
-    image: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&h=100&fit=crop&crop=face",
-    quote: "Krishi Mitra identified a fungal infection in my cotton crop within seconds. The treatment suggestions saved my entire harvest worth ₹2 lakhs.",
-    rating: 5,
-  },
-  {
-    name: "Lakshmi Devi",
-    location: "Andhra Pradesh",
+    name: "Ram Bahadur Tamang",
+    location: "Sindhupalchok, Bagmati Province",
     crop: "Rice Farmer",
+    image: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&h=100&fit=crop&crop=face",
+    quote: "कृषि मित्रले मेरो धानमा लागेको झुलसा रोग तुरुन्तै पत्ता लगायो। उपचारको सुझावले मेरो सम्पूर्ण उत्पादन बचायो जसको मूल्य रु. २ लाख थियो।",
+    rating: 5,
+  },
+  {
+    name: "Sita Devi Gurung",
+    location: "Kaski, Gandaki Province",
+    crop: "Vegetable Farmer",
     image: "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=100&h=100&fit=crop&crop=face",
-    quote: "Being able to ask questions in Telugu makes it so easy. The weather alerts helped me plan my irrigation perfectly this season.",
+    quote: "नेपालीमा प्रश्न सोध्न सक्नु धेरै सजिलो छ। मौसम चेतावनीले मलाई यस सिजनमा सिंचाइ राम्रोसँग योजना बनाउन मद्दत गर्यो।",
     rating: 5,
   },
   {
-    name: "Suresh Kumar",
-    location: "Maharashtra",
-    crop: "Soybean Farmer",
+    name: "Hari Prasad Yadav",
+    location: "Dhanusha, Madhesh Province",
+    crop: "Wheat Farmer",
     image: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=100&h=100&fit=crop&crop=face",
-    quote: "The pest management advice was spot-on! I reduced my pesticide costs by 40% while getting better results. Truly a game changer.",
+    quote: "कीट व्यवस्थापन सल्लाह एकदमै सही थियो! मैले कीटनाशक खर्च ४०% घटाएँ र राम्रो नतिजा पाएँ। साँच्चै परिवर्तनकारी छ।",
     rating: 5,
   },
   {
-    name: "Manjunath Gowda",
-    location: "Karnataka",
-    crop: "Sugarcane Farmer",
+    name: "Dawa Sherpa",
+    location: "Solukhumbu, Koshi Province",
+    crop: "Potato Farmer",
     image: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=100&h=100&fit=crop&crop=face",
-    quote: "Voice input in Kannada is amazing! I just speak my problems and get solutions instantly. Even my father uses it now.",
+    quote: "आवाज इनपुट अद्भुत छ! म आफ्नो समस्या बोल्छु र तुरुन्तै समाधान पाउँछु। मेरा बुबाले पनि अहिले प्रयोग गर्नुहुन्छ।",
+    rating: 5,
+  },
+  {
+    name: "Kamala Tharu",
+    location: "Bardiya, Lumbini Province",
+    crop: "Sugarcane Farmer",
+    image: "https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=100&h=100&fit=crop&crop=face",
+    quote: "पहिले बाली रोगको बारेमा थाहा पाउन धेरै समय लाग्थ्यो। अहिले फोटो खिचेर पठाउँछु, तुरुन्तै जवाफ आउँछ।",
+    rating: 5,
+  },
+  {
+    name: "Bhim Bahadur Magar",
+    location: "Palpa, Lumbini Province",
+    crop: "Maize Farmer",
+    image: "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=100&h=100&fit=crop&crop=face",
+    quote: "मेरो गाउँमा इन्टरनेट कम्जोर छ तर अफलाइन मोडले पनि राम्रोसँग काम गर्छ। यो एप्लिकेसन नेपाली किसानको लागि वरदान हो।",
     rating: 5,
   },
 ];
@@ -74,10 +90,10 @@ const KrishiMitra = () => {
   return (
     <>
       <Helmet>
-        <title>Krishi Mitra - AI Farming Assistant | CROPIC</title>
+        <title>Krishi Mitra - AI Farming Assistant | CROPIC Nepal</title>
         <meta
           name="description"
-          content="Krishi Mitra is your AI-powered farming assistant. Get instant help with crop diseases, weather advisories, pest management, and personalized farming recommendations."
+          content="Krishi Mitra is your AI-powered farming assistant for Nepal. Get instant help with crop diseases, weather advisories, pest management, and personalized farming recommendations in Nepali and local languages."
         />
       </Helmet>
 
@@ -107,8 +123,8 @@ const KrishiMitra = () => {
                 </h1>
                 
                 <p className="text-lg md:text-xl text-muted-foreground mb-8">
-                  Your intelligent farming companion. Ask questions in your language, 
-                  upload crop photos, and get instant expert advice powered by AI.
+                  Your intelligent farming companion for Nepal. Ask questions in Nepali, Tamang, Newar, Maithili, and more.
+                  Upload crop photos and get instant expert advice powered by AI.
                 </p>
 
                 <div className="flex flex-wrap justify-center gap-4 text-sm text-muted-foreground">
@@ -122,7 +138,7 @@ const KrishiMitra = () => {
                   </div>
                   <div className="flex items-center gap-2">
                     <MessageCircle className="h-4 w-4 text-primary" />
-                    <span>11 Languages</span>
+                    <span>7 Languages</span>
                   </div>
                 </div>
               </motion.div>
@@ -194,7 +210,7 @@ const KrishiMitra = () => {
                   {
                     step: "1",
                     title: "Ask a Question",
-                    description: "Type your farming question or use voice input in your preferred language",
+                    description: "Type your farming question or use voice input in Nepali or your preferred language",
                   },
                   {
                     step: "2",
@@ -240,14 +256,14 @@ const KrishiMitra = () => {
                   <span className="text-sm font-medium">Farmer Success Stories</span>
                 </div>
                 <h2 className="text-3xl font-bold text-foreground mb-4">
-                  Trusted by Farmers Across India
+                  Trusted by Farmers Across Nepal
                 </h2>
                 <p className="text-muted-foreground max-w-2xl mx-auto">
-                  See how Krishi Mitra is helping farmers solve real problems and improve their yields.
+                  See how Krishi Mitra is helping farmers from all 7 provinces solve real problems and improve their yields.
                 </p>
               </motion.div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-5xl mx-auto">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-6xl mx-auto">
                 {testimonials.map((testimonial, index) => (
                   <motion.div
                     key={index}
@@ -268,13 +284,13 @@ const KrishiMitra = () => {
                         <p className="text-sm text-muted-foreground">{testimonial.crop}</p>
                         <p className="text-xs text-muted-foreground">{testimonial.location}</p>
                       </div>
-                      <div className="flex gap-0.5">
-                        {[...Array(testimonial.rating)].map((_, i) => (
-                          <Star key={i} className="h-4 w-4 fill-yellow-400 text-yellow-400" />
-                        ))}
-                      </div>
                     </div>
-                    <blockquote className="text-muted-foreground italic">
+                    <div className="flex gap-0.5 mb-3">
+                      {[...Array(testimonial.rating)].map((_, i) => (
+                        <Star key={i} className="h-4 w-4 fill-yellow-400 text-yellow-400" />
+                      ))}
+                    </div>
+                    <blockquote className="text-muted-foreground text-sm italic">
                       "{testimonial.quote}"
                     </blockquote>
                   </motion.div>

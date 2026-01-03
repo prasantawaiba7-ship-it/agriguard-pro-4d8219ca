@@ -16,19 +16,15 @@ interface UseVoiceInputReturn {
   resetTranscript: () => void;
 }
 
-// Map app languages to Web Speech API language codes
+// Map app languages to Web Speech API language codes for Nepal
 const languageMap: Record<string, string> = {
-  en: 'en-IN',
-  hi: 'hi-IN',
-  mr: 'mr-IN',
-  ta: 'ta-IN',
-  te: 'te-IN',
-  kn: 'kn-IN',
-  gu: 'gu-IN',
-  pa: 'pa-IN',
-  bn: 'bn-IN',
-  ml: 'ml-IN',
-  or: 'or-IN',
+  en: 'en-US',
+  ne: 'ne-NP',
+  tamang: 'ne-NP', // Fallback to Nepali
+  newar: 'ne-NP', // Fallback to Nepali
+  maithili: 'hi-IN', // Close to Maithili
+  magar: 'ne-NP', // Fallback to Nepali
+  rai: 'ne-NP', // Fallback to Nepali
 };
 
 export function useVoiceInput(options: UseVoiceInputOptions = {}): UseVoiceInputReturn {
@@ -49,7 +45,7 @@ export function useVoiceInput(options: UseVoiceInputOptions = {}): UseVoiceInput
       const recognition = new SpeechRecognitionAPI();
       recognition.continuous = continuous;
       recognition.interimResults = true;
-      recognition.lang = languageMap[language] || 'en-IN';
+      recognition.lang = languageMap[language] || 'en-US';
 
       recognition.onstart = () => {
         setIsListening(true);
@@ -122,7 +118,7 @@ export function useVoiceInput(options: UseVoiceInputOptions = {}): UseVoiceInput
   // Update language when it changes
   useEffect(() => {
     if (recognitionRef.current) {
-      recognitionRef.current.lang = languageMap[language] || 'en-IN';
+      recognitionRef.current.lang = languageMap[language] || 'en-US';
     }
   }, [language]);
 

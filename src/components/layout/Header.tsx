@@ -16,6 +16,7 @@ const Header = () => {
     { href: "/farmer", label: "Farmer Portal" },
     { href: "/krishi-mitra", label: "Krishi Mitra" },
     { href: "/authority", label: "Authority Dashboard" },
+    { href: "/admin", label: "Admin" },
   ];
 
   const isActive = (path: string) => location.pathname === path;
