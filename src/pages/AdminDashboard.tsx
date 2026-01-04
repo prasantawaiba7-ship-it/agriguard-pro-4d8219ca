@@ -11,7 +11,9 @@ import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
 import { Helmet } from "react-helmet-async";
 import { useAuth } from "@/hooks/useAuth";
+import { useUserRole } from "@/hooks/useUserRole";
 import { useNavigate } from "react-router-dom";
+import { useEffect } from "react";
 import {
   Settings,
   Users,
@@ -63,8 +65,18 @@ const languageOptions = [
 ];
 
 const AdminDashboard = () => {
-  const { user, isLoading } = useAuth();
+  const { user, isLoading: authLoading } = useAuth();
+  const { isAdmin, isLoading: roleLoading } = useUserRole();
   const navigate = useNavigate();
+  
+  const isLoading = authLoading || roleLoading;
+  
+  // Redirect non-admin users
+  useEffect(() => {
+    if (!isLoading && !isAdmin()) {
+      navigate('/dashboard', { replace: true });
+    }
+  }, [isLoading, isAdmin, navigate]);
   
   const [testimonials, setTestimonials] = useState(defaultTestimonials);
   const [languages, setLanguages] = useState(languageOptions);
@@ -145,6 +157,20 @@ const AdminDashboard = () => {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+      </div>
+    );
+  }
+
+  // Show access denied if not admin
+  if (!isAdmin()) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="text-center p-8">
+          <Shield className="h-16 w-16 text-destructive mx-auto mb-4" />
+          <h2 className="text-2xl font-bold text-foreground mb-2">Access Denied</h2>
+          <p className="text-muted-foreground mb-4">You don't have permission to access this page.</p>
+          <Button onClick={() => navigate('/dashboard')}>Go to Dashboard</Button>
+        </div>
       </div>
     );
   }
