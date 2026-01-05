@@ -32,8 +32,75 @@ export const nepalDistricts: Record<string, string[]> = {
   'Sudurpashchim Province': ['Kailali', 'Achham', 'Doti', 'Bajhang', 'Bajura', 'Kanchanpur', 'Dadeldhura', 'Baitadi', 'Darchula'],
 };
 
+// Ward numbers for different municipality types
+export const wardNumbersByType: Record<'metro' | 'sub-metro' | 'municipality' | 'rural', number[]> = {
+  'metro': Array.from({ length: 35 }, (_, i) => i + 1), // 1-35 wards for metropolitan cities
+  'sub-metro': Array.from({ length: 23 }, (_, i) => i + 1), // 1-23 wards for sub-metropolitan cities
+  'municipality': Array.from({ length: 15 }, (_, i) => i + 1), // 1-15 wards for municipalities
+  'rural': Array.from({ length: 9 }, (_, i) => i + 1), // 1-9 wards for rural municipalities
+};
+
+// Get wards for a specific municipality
+export const getWardsForMunicipality = (municipalityType: 'metro' | 'sub-metro' | 'municipality' | 'rural'): number[] => {
+  return wardNumbersByType[municipalityType];
+};
+
+// Municipality ward data with exact ward counts (key municipalities)
+export const municipalityWardCounts: Record<string, number> = {
+  // Metropolitan Cities
+  'Kathmandu Metropolitan City': 32,
+  'Lalitpur Metropolitan City': 29,
+  'Biratnagar Metropolitan City': 19,
+  'Pokhara Metropolitan City': 33,
+  'Bharatpur Metropolitan City': 29,
+  // Sub-Metropolitan Cities
+  'Itahari Sub-Metropolitan City': 20,
+  'Dharan Sub-Metropolitan City': 20,
+  'Janakpur Sub-Metropolitan City': 27,
+  'Butwal Sub-Metropolitan City': 19,
+  'Dhangadhi Sub-Metropolitan City': 19,
+  'Kalaiya Sub-Metropolitan City': 27,
+  'Jitpur Simara Sub-Metropolitan City': 23,
+  'Ghorahi Sub-Metropolitan City': 19,
+  'Tulsipur Sub-Metropolitan City': 19,
+  'Nepalgunj Sub-Metropolitan City': 23,
+  // Regular Municipalities (sample)
+  'Kirtipur Municipality': 10,
+  'Tokha Municipality': 11,
+  'Chandragiri Municipality': 15,
+  'Budhanilkantha Municipality': 13,
+  'Bhaktapur Municipality': 10,
+  'Damak Municipality': 11,
+  'Birtamod Municipality': 11,
+};
+
+// Helper function to get exact ward count for a municipality
+export const getWardCount = (municipalityName: string, municipalityType: 'metro' | 'sub-metro' | 'municipality' | 'rural'): number => {
+  if (municipalityWardCounts[municipalityName]) {
+    return municipalityWardCounts[municipalityName];
+  }
+  // Default ward counts by type
+  switch (municipalityType) {
+    case 'metro': return 32;
+    case 'sub-metro': return 20;
+    case 'municipality': return 12;
+    case 'rural': return 7;
+    default: return 9;
+  }
+};
+
+// Generate ward options for a municipality
+export const generateWardOptions = (municipalityName: string, municipalityType: 'metro' | 'sub-metro' | 'municipality' | 'rural'): { value: number; label: string; nepaliLabel: string }[] => {
+  const wardCount = getWardCount(municipalityName, municipalityType);
+  return Array.from({ length: wardCount }, (_, i) => ({
+    value: i + 1,
+    label: `Ward ${i + 1}`,
+    nepaliLabel: `वडा ${i + 1}`,
+  }));
+};
+
 // Nepal Municipalities (Palikas) by District - Sample key municipalities
-export const nepalMunicipalities: Record<string, { name: string; nepaliName: string; type: 'metro' | 'sub-metro' | 'municipality' | 'rural' }[]> = {
+export const nepalMunicipalities: Record<string, { name: string; nepaliName: string; type: 'metro' | 'sub-metro' | 'municipality' | 'rural'; wardCount?: number }[]> = {
   // Koshi Province
   'Jhapa': [
     { name: 'Bhadrapur Municipality', nepaliName: 'भद्रपुर नगरपालिका', type: 'municipality' },
