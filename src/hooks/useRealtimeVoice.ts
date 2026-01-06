@@ -6,14 +6,17 @@ interface UseRealtimeVoiceOptions {
   onMessage?: (message: { role: 'user' | 'assistant'; content: string }) => void;
   onError?: (error: string) => void;
   onStatusChange?: (status: 'disconnected' | 'connecting' | 'connected' | 'speaking') => void;
+  onUserTranscript?: (transcript: string, isFinal: boolean) => void;
+  onAiTranscript?: (transcript: string, isFinal: boolean) => void;
 }
 
 export function useRealtimeVoice(options: UseRealtimeVoiceOptions = {}) {
-  const { language = 'ne', onMessage, onError, onStatusChange } = options;
+  const { language = 'ne', onMessage, onError, onStatusChange, onUserTranscript, onAiTranscript } = options;
   
   const [status, setStatus] = useState<'disconnected' | 'connecting' | 'connected' | 'speaking'>('disconnected');
   const [isSpeaking, setIsSpeaking] = useState(false);
   const [transcript, setTranscript] = useState('');
+  const [aiResponseText, setAiResponseText] = useState('');
   
   const pcRef = useRef<RTCPeerConnection | null>(null);
   const dcRef = useRef<RTCDataChannel | null>(null);
@@ -95,18 +98,40 @@ export function useRealtimeVoice(options: UseRealtimeVoiceOptions = {}) {
               setIsSpeaking(false);
               updateStatus('connected');
               break;
+
+            // Real-time user speech transcription (interim)
+            case 'input_audio_buffer.speech_started':
+              console.log('User started speaking');
+              break;
+
+            case 'input_audio_buffer.speech_stopped':
+              console.log('User stopped speaking');
+              break;
               
+            // Completed user transcription
             case 'conversation.item.input_audio_transcription.completed':
               const userText = event.transcript;
               if (userText) {
                 setTranscript(userText);
+                onUserTranscript?.(userText, true);
                 onMessage?.({ role: 'user', content: userText });
+              }
+              break;
+
+            // Real-time AI response transcription (streaming)
+            case 'response.audio_transcript.delta':
+              const deltaText = event.delta;
+              if (deltaText) {
+                setAiResponseText(prev => prev + deltaText);
+                onAiTranscript?.(deltaText, false);
               }
               break;
               
             case 'response.audio_transcript.done':
               const assistantText = event.transcript;
               if (assistantText) {
+                setAiResponseText('');
+                onAiTranscript?.(assistantText, true);
                 onMessage?.({ role: 'assistant', content: assistantText });
               }
               break;
@@ -181,6 +206,7 @@ export function useRealtimeVoice(options: UseRealtimeVoiceOptions = {}) {
     
     setIsSpeaking(false);
     setTranscript('');
+    setAiResponseText('');
     updateStatus('disconnected');
   }, [updateStatus]);
 
@@ -212,6 +238,7 @@ export function useRealtimeVoice(options: UseRealtimeVoiceOptions = {}) {
     status,
     isSpeaking,
     transcript,
+    aiResponseText,
     connect,
     disconnect,
     sendTextMessage,

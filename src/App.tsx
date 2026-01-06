@@ -6,6 +6,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { HelmetProvider } from "react-helmet-async";
 import { AuthProvider } from "@/hooks/useAuth";
 import { LanguageProvider } from "@/hooks/useLanguage";
+import { FloatingVoiceButton } from "@/components/ai/FloatingVoiceButton";
 import Index from "./pages/Index";
 import Auth from "./pages/Auth";
 import FarmerDashboard from "./pages/FarmerDashboard";
@@ -37,6 +38,7 @@ const App = () => (
                 {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
                 <Route path="*" element={<NotFound />} />
               </Routes>
+              <FloatingVoiceButton />
             </BrowserRouter>
           </TooltipProvider>
         </LanguageProvider>
