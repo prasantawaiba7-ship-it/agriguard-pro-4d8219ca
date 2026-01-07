@@ -20,6 +20,40 @@ const languageMap: Record<string, string> = {
   rai: 'ne-NP', // Fallback to Nepali
 };
 
+// Helper to find the best voice for Nepali/South Asian languages
+const findBestVoice = (voices: SpeechSynthesisVoice[], targetLang: string): SpeechSynthesisVoice | null => {
+  const langCode = targetLang.split('-')[0];
+  
+  // Priority 1: Exact match for Nepali
+  const nepaliVoice = voices.find(v => 
+    v.lang.toLowerCase().includes('ne') || 
+    v.lang.toLowerCase().includes('nep') ||
+    v.name.toLowerCase().includes('nepali')
+  );
+  if (nepaliVoice) return nepaliVoice;
+  
+  // Priority 2: Hindi voice (very similar to Nepali)
+  const hindiVoice = voices.find(v => 
+    v.lang.startsWith('hi') || 
+    v.name.toLowerCase().includes('hindi')
+  );
+  if (hindiVoice && langCode !== 'en') return hindiVoice;
+  
+  // Priority 3: Any Indian language voice
+  const indianVoice = voices.find(v => 
+    v.lang.includes('IN') || 
+    v.name.toLowerCase().includes('india')
+  );
+  if (indianVoice && langCode !== 'en') return indianVoice;
+  
+  // Priority 4: Match the target language
+  const targetVoice = voices.find(v => v.lang.startsWith(langCode));
+  if (targetVoice) return targetVoice;
+  
+  // Priority 5: Default voice
+  return voices.find(v => v.default) || voices[0] || null;
+};
+
 export function useTextToSpeech(options: UseTextToSpeechOptions = {}) {
   const {
     language = 'en',
@@ -105,14 +139,17 @@ export function useTextToSpeech(options: UseTextToSpeechOptions = {}) {
     utterance.rate = rate;
     utterance.pitch = pitch;
 
-    // Try to find a voice for the language
+    // Try to find the best voice for Nepali/target language
     const voices = window.speechSynthesis.getVoices();
-    const preferredVoice = voices.find(v => v.lang.startsWith(speechLang.split('-')[0])) ||
-                          voices.find(v => v.lang.includes('NP')) ||
-                          voices.find(v => v.default);
+    const preferredVoice = findBestVoice(voices, speechLang);
     
     if (preferredVoice) {
       utterance.voice = preferredVoice;
+      // Update utterance language to match voice for better pronunciation
+      if (language !== 'en' && preferredVoice.lang.startsWith('hi')) {
+        // Hindi voice speaks Nepali well, keep Hindi lang for better pronunciation
+        utterance.lang = preferredVoice.lang;
+      }
     }
 
     utterance.onstart = () => {
