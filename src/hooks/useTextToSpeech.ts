@@ -4,7 +4,6 @@ interface UseTextToSpeechOptions {
   language?: string;
   rate?: number;
   pitch?: number;
-  useElevenLabs?: boolean;
   onStart?: () => void;
   onEnd?: () => void;
   onError?: (error: string) => void;
@@ -60,7 +59,6 @@ export function useTextToSpeech(options: UseTextToSpeechOptions = {}) {
     language = 'en',
     rate = 0.9,
     pitch = 1,
-    useElevenLabs = true, // Default to ElevenLabs for better quality
     onStart,
     onEnd,
     onError
@@ -69,10 +67,7 @@ export function useTextToSpeech(options: UseTextToSpeechOptions = {}) {
   const [isSpeaking, setIsSpeaking] = useState(false);
   const [isSupported, setIsSupported] = useState(false);
   const [currentMessageId, setCurrentMessageId] = useState<string | null>(null);
-  const [isLoading, setIsLoading] = useState(false);
   const utteranceRef = useRef<SpeechSynthesisUtterance | null>(null);
-  const audioRef = useRef<HTMLAudioElement | null>(null);
-  const abortControllerRef = useRef<AbortController | null>(null);
 
   useEffect(() => {
     setIsSupported('speechSynthesis' in window);
@@ -120,102 +115,7 @@ export function useTextToSpeech(options: UseTextToSpeechOptions = {}) {
       .trim();
   };
 
-  // ElevenLabs TTS for high-quality Nepali voice
-  const speakWithElevenLabs = useCallback(async (text: string, messageId?: string) => {
-    // Abort any pending request
-    if (abortControllerRef.current) {
-      abortControllerRef.current.abort();
-    }
-    
-    // Stop any current audio
-    if (audioRef.current) {
-      audioRef.current.pause();
-      audioRef.current = null;
-    }
-
-    const cleanedText = cleanTextForSpeech(text);
-    if (!cleanedText) {
-      onError?.('No text to speak');
-      return;
-    }
-
-    // Limit text length for API (ElevenLabs has a limit)
-    const truncatedText = cleanedText.slice(0, 5000);
-
-    setIsLoading(true);
-    setCurrentMessageId(messageId || null);
-    onStart?.();
-
-    try {
-      abortControllerRef.current = new AbortController();
-      
-      const response = await fetch(
-        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/elevenlabs-tts`,
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
-            Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
-          },
-          body: JSON.stringify({
-            text: truncatedText,
-            language,
-          }),
-          signal: abortControllerRef.current.signal,
-        }
-      );
-
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.error || `TTS request failed: ${response.status}`);
-      }
-
-      const audioBlob = await response.blob();
-      const audioUrl = URL.createObjectURL(audioBlob);
-      
-      const audio = new Audio(audioUrl);
-      audioRef.current = audio;
-
-      audio.onplay = () => {
-        setIsLoading(false);
-        setIsSpeaking(true);
-      };
-
-      audio.onended = () => {
-        setIsSpeaking(false);
-        setCurrentMessageId(null);
-        URL.revokeObjectURL(audioUrl);
-        audioRef.current = null;
-        onEnd?.();
-      };
-
-      audio.onerror = () => {
-        setIsSpeaking(false);
-        setIsLoading(false);
-        setCurrentMessageId(null);
-        URL.revokeObjectURL(audioUrl);
-        audioRef.current = null;
-        onError?.('Audio playback error');
-      };
-
-      await audio.play();
-    } catch (error) {
-      setIsLoading(false);
-      setIsSpeaking(false);
-      setCurrentMessageId(null);
-      
-      if (error instanceof Error && error.name === 'AbortError') {
-        return; // Ignore abort errors
-      }
-      
-      console.error('ElevenLabs TTS error:', error);
-      onError?.(error instanceof Error ? error.message : 'TTS error');
-    }
-  }, [language, onStart, onEnd, onError]);
-
-  // Browser-based TTS fallback
-  const speakWithBrowser = useCallback((text: string, messageId?: string) => {
+  const speak = useCallback((text: string, messageId?: string) => {
     if (!isSupported) {
       onError?.('Text-to-speech is not supported in this browser');
       return;
@@ -277,54 +177,24 @@ export function useTextToSpeech(options: UseTextToSpeechOptions = {}) {
     window.speechSynthesis.speak(utterance);
   }, [isSupported, language, rate, pitch, onStart, onEnd, onError]);
 
-  // Main speak function - chooses between ElevenLabs and browser TTS
-  const speak = useCallback((text: string, messageId?: string) => {
-    // Use ElevenLabs for non-English languages for better quality
-    const shouldUseElevenLabs = useElevenLabs && language !== 'en';
-    
-    if (shouldUseElevenLabs) {
-      speakWithElevenLabs(text, messageId);
-    } else {
-      speakWithBrowser(text, messageId);
-    }
-  }, [useElevenLabs, language, speakWithElevenLabs, speakWithBrowser]);
-
   const stop = useCallback(() => {
-    // Stop ElevenLabs audio
-    if (abortControllerRef.current) {
-      abortControllerRef.current.abort();
-    }
-    if (audioRef.current) {
-      audioRef.current.pause();
-      audioRef.current = null;
-    }
-    
-    // Stop browser TTS
     window.speechSynthesis.cancel();
-    
     setIsSpeaking(false);
-    setIsLoading(false);
     setCurrentMessageId(null);
     utteranceRef.current = null;
   }, []);
 
   const toggle = useCallback((text: string, messageId?: string) => {
-    if ((isSpeaking || isLoading) && currentMessageId === messageId) {
+    if (isSpeaking && currentMessageId === messageId) {
       stop();
     } else {
       speak(text, messageId);
     }
-  }, [isSpeaking, isLoading, currentMessageId, speak, stop]);
+  }, [isSpeaking, currentMessageId, speak, stop]);
 
   // Cleanup on unmount
   useEffect(() => {
     return () => {
-      if (abortControllerRef.current) {
-        abortControllerRef.current.abort();
-      }
-      if (audioRef.current) {
-        audioRef.current.pause();
-      }
       window.speechSynthesis.cancel();
     };
   }, []);
@@ -344,8 +214,8 @@ export function useTextToSpeech(options: UseTextToSpeechOptions = {}) {
     stop,
     toggle,
     isSpeaking,
-    isLoading,
-    isSupported: true, // ElevenLabs is always "supported"
+    isLoading: false,
+    isSupported,
     currentMessageId
   };
 }
