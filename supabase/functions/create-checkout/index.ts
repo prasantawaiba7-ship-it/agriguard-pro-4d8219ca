@@ -59,8 +59,8 @@ serve(async (req) => {
         },
       ],
       mode: "subscription",
-      success_url: `${origin}/krishi-mitra?payment=success`,
-      cancel_url: `${origin}/krishi-mitra?payment=cancelled`,
+      success_url: `${origin}/payment/success`,
+      cancel_url: `${origin}/payment/cancelled`,
       metadata: {
         user_id: user.id
       }

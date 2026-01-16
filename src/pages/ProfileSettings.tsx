@@ -15,6 +15,8 @@ import { useLanguage } from '@/hooks/useLanguage';
 import { LanguageSelector } from '@/components/farmer/LanguageSelector';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { SubscriptionCard } from '@/components/profile/SubscriptionCard';
+import { QueryHistoryCard } from '@/components/profile/QueryHistoryCard';
 
 const profileSchema = z.object({
   full_name: z.string().min(2, 'Name must be at least 2 characters').max(100),
@@ -26,12 +28,14 @@ const profileSchema = z.object({
 
 type ProfileFormData = z.infer<typeof profileSchema>;
 
-const indianStates = [
-  'Andhra Pradesh', 'Arunachal Pradesh', 'Assam', 'Bihar', 'Chhattisgarh',
-  'Goa', 'Gujarat', 'Haryana', 'Himachal Pradesh', 'Jharkhand', 'Karnataka',
-  'Kerala', 'Madhya Pradesh', 'Maharashtra', 'Manipur', 'Meghalaya', 'Mizoram',
-  'Nagaland', 'Odisha', 'Punjab', 'Rajasthan', 'Sikkim', 'Tamil Nadu',
-  'Telangana', 'Tripura', 'Uttar Pradesh', 'Uttarakhand', 'West Bengal',
+const nepalProvinces = [
+  'Province 1 (Koshi)',
+  'Province 2 (Madhesh)',
+  'Province 3 (Bagmati)',
+  'Province 4 (Gandaki)',
+  'Province 5 (Lumbini)',
+  'Province 6 (Karnali)',
+  'Province 7 (Sudurpashchim)',
 ];
 
 const ProfileSettings = () => {
@@ -173,7 +177,7 @@ const ProfileSettings = () => {
       </Helmet>
 
       <div className="min-h-screen bg-gradient-to-br from-primary/5 via-background to-accent/5 p-3 sm:p-4 md:p-6">
-        <div className="max-w-2xl mx-auto">
+        <div className="max-w-4xl mx-auto">
           {/* Header */}
           <motion.div
             initial={{ opacity: 0, y: -10 }}
@@ -193,204 +197,228 @@ const ProfileSettings = () => {
             <LanguageSelector />
           </motion.div>
 
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-          >
-            <Card className="border-border/50 shadow-xl">
-              <CardHeader className="text-center px-4 sm:px-6 py-4 sm:py-6">
-                {/* Avatar Upload */}
-                <div className="relative mx-auto mb-3 sm:mb-4">
-                  <div 
-                    className="w-20 h-20 sm:w-24 sm:h-24 rounded-full bg-primary/10 flex items-center justify-center overflow-hidden cursor-pointer group"
-                    onClick={() => fileInputRef.current?.click()}
-                  >
-                    {avatarUrl ? (
-                      <img 
-                        src={avatarUrl} 
-                        alt="Profile" 
-                        className="w-full h-full object-cover"
-                      />
-                    ) : (
-                      <User className="w-10 h-10 sm:w-12 sm:h-12 text-primary" />
-                    )}
-                    <div className="absolute inset-0 bg-black/50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity rounded-full">
-                      {isUploadingAvatar ? (
-                        <Loader2 className="w-6 h-6 text-white animate-spin" />
-                      ) : (
-                        <Camera className="w-6 h-6 text-white" />
-                      )}
-                    </div>
-                  </div>
-                  <input
-                    ref={fileInputRef}
-                    type="file"
-                    accept="image/*"
-                    onChange={handleAvatarUpload}
-                    className="hidden"
-                  />
-                  <p className="text-xs text-muted-foreground mt-2">
-                    Tap to change photo
-                  </p>
-                </div>
-
-                <CardTitle className="text-xl sm:text-2xl">Profile Settings</CardTitle>
-                <CardDescription className="text-sm">
-                  Update your personal information and farm location
-                </CardDescription>
-                {user?.email && (
-                  <p className="text-xs sm:text-sm text-muted-foreground mt-2">
-                    {user.email}
-                  </p>
-                )}
-              </CardHeader>
-
-              <CardContent className="px-4 sm:px-6 pb-6">
-                <Form {...form}>
-                  <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4 sm:space-y-5">
-                    <FormField
-                      control={form.control}
-                      name="full_name"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel className="text-sm font-medium">Full Name *</FormLabel>
-                          <FormControl>
-                            <div className="relative">
-                              <User className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                              <Input 
-                                placeholder="Enter your full name" 
-                                className="pl-10 h-11" 
-                                {...field} 
-                              />
-                            </div>
-                          </FormControl>
-                          <FormMessage className="text-xs" />
-                        </FormItem>
-                      )}
-                    />
-
-                    <FormField
-                      control={form.control}
-                      name="phone"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel className="text-sm font-medium">Phone Number</FormLabel>
-                          <FormControl>
-                            <div className="relative">
-                              <Phone className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                              <Input 
-                                type="tel"
-                                placeholder="Enter your phone number" 
-                                className="pl-10 h-11" 
-                                {...field} 
-                              />
-                            </div>
-                          </FormControl>
-                          <FormMessage className="text-xs" />
-                        </FormItem>
-                      )}
-                    />
-
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                      <FormField
-                        control={form.control}
-                        name="village"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel className="text-sm font-medium">Village</FormLabel>
-                            <FormControl>
-                              <div className="relative">
-                                <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                                <Input 
-                                  placeholder="Enter your village" 
-                                  className="pl-10 h-11" 
-                                  {...field} 
-                                />
-                              </div>
-                            </FormControl>
-                            <FormMessage className="text-xs" />
-                          </FormItem>
-                        )}
-                      />
-
-                      <FormField
-                        control={form.control}
-                        name="district"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel className="text-sm font-medium">District</FormLabel>
-                            <FormControl>
-                              <div className="relative">
-                                <Building className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                                <Input 
-                                  placeholder="Enter your district" 
-                                  className="pl-10 h-11" 
-                                  {...field} 
-                                />
-                              </div>
-                            </FormControl>
-                            <FormMessage className="text-xs" />
-                          </FormItem>
-                        )}
-                      />
-                    </div>
-
-                    <FormField
-                      control={form.control}
-                      name="state"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel className="text-sm font-medium">State</FormLabel>
-                          <FormControl>
-                            <div className="relative">
-                              <Flag className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none z-10" />
-                              <select
-                                className="w-full h-11 pl-10 pr-3 rounded-md border border-input bg-background text-sm focus:outline-none focus:ring-2 focus:ring-ring"
-                                value={field.value}
-                                onChange={field.onChange}
-                              >
-                                <option value="">Select your state</option>
-                                {indianStates.map((state) => (
-                                  <option key={state} value={state}>{state}</option>
-                                ))}
-                              </select>
-                            </div>
-                          </FormControl>
-                          <FormMessage className="text-xs" />
-                        </FormItem>
-                      )}
-                    />
-
-                    <div className="pt-4 space-y-3">
-                      <Button 
-                        type="submit" 
-                        className="w-full h-11 text-sm sm:text-base" 
-                        disabled={isLoading}
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            {/* Left Column - Profile Form */}
+            <div className="lg:col-span-2">
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+              >
+                <Card className="border-border/50 shadow-xl">
+                  <CardHeader className="text-center px-4 sm:px-6 py-4 sm:py-6">
+                    {/* Avatar Upload */}
+                    <div className="relative mx-auto mb-3 sm:mb-4">
+                      <div 
+                        className="w-20 h-20 sm:w-24 sm:h-24 rounded-full bg-primary/10 flex items-center justify-center overflow-hidden cursor-pointer group"
+                        onClick={() => fileInputRef.current?.click()}
                       >
-                        {isLoading ? (
-                          <Loader2 className="w-4 h-4 animate-spin" />
+                        {avatarUrl ? (
+                          <img 
+                            src={avatarUrl} 
+                            alt="Profile" 
+                            className="w-full h-full object-cover"
+                          />
                         ) : (
-                          <>
-                            <Save className="w-4 h-4 mr-2" />
-                            Save Changes
-                          </>
+                          <User className="w-10 h-10 sm:w-12 sm:h-12 text-primary" />
                         )}
-                      </Button>
-                      
-                      <Button 
-                        type="button"
-                        variant="outline" 
-                        className="w-full h-11 text-sm sm:text-base" 
-                        onClick={() => navigate('/farmer')}
-                      >
-                        Cancel
-                      </Button>
+                        <div className="absolute inset-0 bg-black/50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity rounded-full">
+                          {isUploadingAvatar ? (
+                            <Loader2 className="w-6 h-6 text-white animate-spin" />
+                          ) : (
+                            <Camera className="w-6 h-6 text-white" />
+                          )}
+                        </div>
+                      </div>
+                      <input
+                        ref={fileInputRef}
+                        type="file"
+                        accept="image/*"
+                        onChange={handleAvatarUpload}
+                        className="hidden"
+                      />
+                      <p className="text-xs text-muted-foreground mt-2">
+                        Tap to change photo
+                      </p>
                     </div>
-                  </form>
-                </Form>
-              </CardContent>
-            </Card>
-          </motion.div>
+
+                    <CardTitle className="text-xl sm:text-2xl">Profile Settings</CardTitle>
+                    <CardDescription className="text-sm">
+                      Update your personal information and farm location
+                    </CardDescription>
+                    {user?.email && (
+                      <p className="text-xs sm:text-sm text-muted-foreground mt-2">
+                        {user.email}
+                      </p>
+                    )}
+                  </CardHeader>
+
+                  <CardContent className="px-4 sm:px-6 pb-6">
+                    <Form {...form}>
+                      <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4 sm:space-y-5">
+                        <FormField
+                          control={form.control}
+                          name="full_name"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel className="text-sm font-medium">Full Name *</FormLabel>
+                              <FormControl>
+                                <div className="relative">
+                                  <User className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                                  <Input 
+                                    placeholder="Enter your full name" 
+                                    className="pl-10 h-11" 
+                                    {...field} 
+                                  />
+                                </div>
+                              </FormControl>
+                              <FormMessage className="text-xs" />
+                            </FormItem>
+                          )}
+                        />
+
+                        <FormField
+                          control={form.control}
+                          name="phone"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel className="text-sm font-medium">Phone Number</FormLabel>
+                              <FormControl>
+                                <div className="relative">
+                                  <Phone className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                                  <Input 
+                                    type="tel"
+                                    placeholder="Enter your phone number" 
+                                    className="pl-10 h-11" 
+                                    {...field} 
+                                  />
+                                </div>
+                              </FormControl>
+                              <FormMessage className="text-xs" />
+                            </FormItem>
+                          )}
+                        />
+
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                          <FormField
+                            control={form.control}
+                            name="village"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel className="text-sm font-medium">Village</FormLabel>
+                                <FormControl>
+                                  <div className="relative">
+                                    <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                                    <Input 
+                                      placeholder="Enter your village" 
+                                      className="pl-10 h-11" 
+                                      {...field} 
+                                    />
+                                  </div>
+                                </FormControl>
+                                <FormMessage className="text-xs" />
+                              </FormItem>
+                            )}
+                          />
+
+                          <FormField
+                            control={form.control}
+                            name="district"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel className="text-sm font-medium">District</FormLabel>
+                                <FormControl>
+                                  <div className="relative">
+                                    <Building className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                                    <Input 
+                                      placeholder="Enter your district" 
+                                      className="pl-10 h-11" 
+                                      {...field} 
+                                    />
+                                  </div>
+                                </FormControl>
+                                <FormMessage className="text-xs" />
+                              </FormItem>
+                            )}
+                          />
+                        </div>
+
+                        <FormField
+                          control={form.control}
+                          name="state"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel className="text-sm font-medium">Province</FormLabel>
+                              <FormControl>
+                                <div className="relative">
+                                  <Flag className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none z-10" />
+                                  <select
+                                    className="w-full h-11 pl-10 pr-3 rounded-md border border-input bg-background text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+                                    value={field.value}
+                                    onChange={field.onChange}
+                                  >
+                                    <option value="">Select your province</option>
+                                    {nepalProvinces.map((state) => (
+                                      <option key={state} value={state}>{state}</option>
+                                    ))}
+                                  </select>
+                                </div>
+                              </FormControl>
+                              <FormMessage className="text-xs" />
+                            </FormItem>
+                          )}
+                        />
+
+                        <div className="pt-4 space-y-3">
+                          <Button 
+                            type="submit" 
+                            className="w-full h-11 text-sm sm:text-base" 
+                            disabled={isLoading}
+                          >
+                            {isLoading ? (
+                              <Loader2 className="w-4 h-4 animate-spin" />
+                            ) : (
+                              <>
+                                <Save className="w-4 h-4 mr-2" />
+                                Save Changes
+                              </>
+                            )}
+                          </Button>
+                          
+                          <Button 
+                            type="button"
+                            variant="outline" 
+                            className="w-full h-11 text-sm sm:text-base" 
+                            onClick={() => navigate('/farmer')}
+                          >
+                            Cancel
+                          </Button>
+                        </div>
+                      </form>
+                    </Form>
+                  </CardContent>
+                </Card>
+              </motion.div>
+            </div>
+
+            {/* Right Column - Subscription & Query History */}
+            <div className="space-y-6">
+              <motion.div
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: 0.1 }}
+              >
+                <SubscriptionCard />
+              </motion.div>
+
+              <motion.div
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: 0.2 }}
+              >
+                <QueryHistoryCard />
+              </motion.div>
+            </div>
+          </div>
         </div>
       </div>
     </>
