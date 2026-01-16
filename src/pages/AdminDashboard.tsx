@@ -26,16 +26,11 @@ import {
   Shield,
   Database,
   Bell,
-  Trash2,
-  Plus,
-  MapPin,
   BarChart3,
   Phone,
   Mic,
   Volume2,
   RefreshCw,
-  Search,
-  UserPlus,
   AlertTriangle,
   Crown,
 } from "lucide-react";
@@ -47,6 +42,7 @@ import { ContentBlocksManager } from "@/components/admin/ContentBlocksManager";
 import { EmailSettingsManager } from "@/components/admin/EmailSettingsManager";
 import { PdfReportsManager } from "@/components/admin/PdfReportsManager";
 import { ActivityLogsViewer } from "@/components/admin/ActivityLogsViewer";
+import { UserManagement } from "@/components/admin/UserManagement";
 
 interface FarmerProfile {
   id: string;
@@ -499,111 +495,32 @@ const AdminDashboard = () => {
 
               {/* Users Tab */}
               <TabsContent value="users">
-                <Card>
-                  <CardHeader>
-                    <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                      <div>
-                        <CardTitle className="flex items-center gap-2">
-                          <Users className="h-5 w-5" />
-                          User Management
-                        </CardTitle>
-                        <CardDescription>Manage farmers and assign roles</CardDescription>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <div className="relative">
-                          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                          <Input
-                            placeholder="Search users..."
-                            value={searchQuery}
-                            onChange={(e) => setSearchQuery(e.target.value)}
-                            className="pl-10 w-64"
-                          />
-                        </div>
-                        <Button variant="outline" size="icon" onClick={fetchUsers}>
-                          <RefreshCw className={`h-4 w-4 ${usersLoading ? 'animate-spin' : ''}`} />
-                        </Button>
-                      </div>
-                    </div>
-                  </CardHeader>
-                  <CardContent>
-                    {usersLoading ? (
-                      <div className="flex justify-center py-12">
-                        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-                      </div>
-                    ) : filteredUsers.length === 0 ? (
-                      <div className="text-center py-12">
-                        <Users className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-                        <p className="text-muted-foreground">No users found</p>
-                      </div>
-                    ) : (
-                      <div className="overflow-x-auto">
-                        <Table>
-                          <TableHeader>
-                            <TableRow>
-                              <TableHead>Name</TableHead>
-                              <TableHead>Location</TableHead>
-                              <TableHead>Phone</TableHead>
-                              <TableHead>Role</TableHead>
-                              <TableHead>Joined</TableHead>
-                              <TableHead>Actions</TableHead>
-                            </TableRow>
-                          </TableHeader>
-                          <TableBody>
-                            {filteredUsers.map((user) => (
-                              <TableRow key={user.id}>
-                                <TableCell>
-                                  <div className="flex items-center gap-2">
-                                    <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center">
-                                      <span className="text-sm font-medium text-primary">
-                                        {user.full_name.charAt(0).toUpperCase()}
-                                      </span>
-                                    </div>
-                                    <span className="font-medium">{user.full_name}</span>
-                                  </div>
-                                </TableCell>
-                                <TableCell>
-                                  {user.district || user.state || user.village || (
-                                    <span className="text-muted-foreground">Not set</span>
-                                  )}
-                                </TableCell>
-                                <TableCell>{user.phone || <span className="text-muted-foreground">—</span>}</TableCell>
-                                <TableCell>
-                                  <Badge variant={user.role === 'admin' ? 'default' : 'secondary'}>
-                                    {user.role || 'farmer'}
-                                  </Badge>
-                                </TableCell>
-                                <TableCell>
-                                  {new Date(user.created_at).toLocaleDateString()}
-                                </TableCell>
-                                <TableCell>
-                                  <Select
-                                    defaultValue={user.role || 'farmer'}
-                                    onValueChange={(value) => handleAssignRole(user.user_id, value)}
-                                  >
-                                    <SelectTrigger className="w-32">
-                                      <SelectValue />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                      <SelectItem value="farmer">Farmer</SelectItem>
-                                      <SelectItem value="field_official">Field Official</SelectItem>
-                                      <SelectItem value="authority">Authority</SelectItem>
-                                      <SelectItem value="admin">Admin</SelectItem>
-                                    </SelectContent>
-                                  </Select>
-                                </TableCell>
-                              </TableRow>
-                            ))}
-                          </TableBody>
-                        </Table>
-                      </div>
-                    )}
-                  </CardContent>
-                </Card>
+                <UserManagement />
               </TabsContent>
 
               {/* Subscriptions Tab */}
               <TabsContent value="subscriptions">
                 <SubscriptionAnalytics />
+              </TabsContent>
+
+              {/* Plans Tab */}
+              <TabsContent value="plans">
+                <SubscriptionPlansManager />
+              </TabsContent>
+
+              {/* Reports Tab */}
+              <TabsContent value="reports">
+                <PdfReportsManager />
+              </TabsContent>
+
+              {/* Content Tab */}
+              <TabsContent value="content">
+                <ContentBlocksManager />
+              </TabsContent>
+
+              {/* Email Tab */}
+              <TabsContent value="email">
+                <EmailSettingsManager />
               </TabsContent>
 
               {/* Voice AI Tab */}
@@ -716,186 +633,14 @@ const AdminDashboard = () => {
                 </div>
               </TabsContent>
 
-              {/* Testimonials Tab */}
-              <TabsContent value="testimonials">
-                <div className="grid lg:grid-cols-2 gap-6">
-                  {/* Add New Testimonial */}
-                  <Card>
-                    <CardHeader>
-                      <CardTitle className="flex items-center gap-2">
-                        <Plus className="h-5 w-5" />
-                        Add New Testimonial
-                      </CardTitle>
-                      <CardDescription>Add a new farmer testimonial to display on the website</CardDescription>
-                    </CardHeader>
-                    <CardContent className="space-y-4">
-                      <div className="space-y-2">
-                        <Label htmlFor="name">Farmer Name</Label>
-                        <Input
-                          id="name"
-                          placeholder="e.g., Ram Bahadur Tamang"
-                          value={newTestimonial.name}
-                          onChange={(e) => setNewTestimonial(prev => ({ ...prev, name: e.target.value }))}
-                        />
-                      </div>
-                      <div className="space-y-2">
-                        <Label htmlFor="location">Location (District, Province)</Label>
-                        <Input
-                          id="location"
-                          placeholder="e.g., Sindhupalchok, Bagmati Province"
-                          value={newTestimonial.location}
-                          onChange={(e) => setNewTestimonial(prev => ({ ...prev, location: e.target.value }))}
-                        />
-                      </div>
-                      <div className="space-y-2">
-                        <Label htmlFor="crop">Farmer Type</Label>
-                        <Input
-                          id="crop"
-                          placeholder="e.g., Rice Farmer"
-                          value={newTestimonial.crop}
-                          onChange={(e) => setNewTestimonial(prev => ({ ...prev, crop: e.target.value }))}
-                        />
-                      </div>
-                      <div className="space-y-2">
-                        <Label htmlFor="quote">Testimonial Quote (Nepali or English)</Label>
-                        <Textarea
-                          id="quote"
-                          placeholder="Enter the farmer's testimonial..."
-                          value={newTestimonial.quote}
-                          onChange={(e) => setNewTestimonial(prev => ({ ...prev, quote: e.target.value }))}
-                          rows={4}
-                        />
-                      </div>
-                      <div className="space-y-2">
-                        <Label htmlFor="rating">Rating (1-5)</Label>
-                        <Input
-                          id="rating"
-                          type="number"
-                          min={1}
-                          max={5}
-                          value={newTestimonial.rating}
-                          onChange={(e) => setNewTestimonial(prev => ({ ...prev, rating: parseInt(e.target.value) || 5 }))}
-                        />
-                      </div>
-                      <Button onClick={handleAddTestimonial} className="w-full">
-                        <Plus className="h-4 w-4 mr-2" />
-                        Add Testimonial
-                      </Button>
-                    </CardContent>
-                  </Card>
-
-                  {/* Existing Testimonials */}
-                  <Card>
-                    <CardHeader>
-                      <CardTitle className="flex items-center gap-2">
-                        <Star className="h-5 w-5" />
-                        Manage Testimonials
-                      </CardTitle>
-                      <CardDescription>Toggle visibility or delete existing testimonials</CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="space-y-4 max-h-[500px] overflow-y-auto">
-                        {testimonials.map((testimonial) => (
-                          <div
-                            key={testimonial.id}
-                            className={`p-4 rounded-lg border ${testimonial.active ? 'bg-card' : 'bg-muted/50 opacity-60'}`}
-                          >
-                            <div className="flex items-start justify-between mb-2">
-                              <div>
-                                <h4 className="font-semibold text-foreground">{testimonial.name}</h4>
-                                <p className="text-xs text-muted-foreground">{testimonial.crop} • {testimonial.location}</p>
-                              </div>
-                              <div className="flex items-center gap-2">
-                                <Switch
-                                  checked={testimonial.active}
-                                  onCheckedChange={() => handleToggleTestimonial(testimonial.id)}
-                                />
-                                <Button
-                                  variant="ghost"
-                                  size="icon"
-                                  className="text-destructive hover:text-destructive"
-                                  onClick={() => handleDeleteTestimonial(testimonial.id)}
-                                >
-                                  <Trash2 className="h-4 w-4" />
-                                </Button>
-                              </div>
-                            </div>
-                            <p className="text-sm text-muted-foreground italic">"{testimonial.quote}"</p>
-                            <div className="flex gap-0.5 mt-2">
-                              {[...Array(testimonial.rating)].map((_, i) => (
-                                <Star key={i} className="h-3 w-3 fill-yellow-400 text-yellow-400" />
-                              ))}
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    </CardContent>
-                  </Card>
-                </div>
-              </TabsContent>
-
               {/* Settings Tab */}
               <TabsContent value="settings">
-                <div className="grid md:grid-cols-2 gap-6">
-                  <Card>
-                    <CardHeader>
-                      <CardTitle className="flex items-center gap-2">
-                        <Languages className="h-5 w-5" />
-                        Language Settings
-                      </CardTitle>
-                      <CardDescription>Enable or disable languages</CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="space-y-3">
-                        {languages.map((lang) => (
-                          <div
-                            key={lang.code}
-                            className={`flex items-center justify-between p-3 rounded-lg border ${lang.enabled ? 'bg-card border-primary/20' : 'bg-muted/50'}`}
-                          >
-                            <div>
-                              <span className="font-medium text-foreground">{lang.name}</span>
-                              <span className="text-muted-foreground ml-2">{lang.nativeName}</span>
-                            </div>
-                            <Switch
-                              checked={lang.enabled}
-                              onCheckedChange={() => handleToggleLanguage(lang.code)}
-                            />
-                          </div>
-                        ))}
-                      </div>
-                    </CardContent>
-                  </Card>
+                <AppSettingsManager />
+              </TabsContent>
 
-                  <Card>
-                    <CardHeader>
-                      <CardTitle className="flex items-center gap-2">
-                        <Settings className="h-5 w-5" />
-                        Feature Settings
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent className="space-y-4">
-                      {[
-                        { key: "aiEnabled", label: "AI Assistant", description: "Enable Krishi Mitra AI chatbot" },
-                        { key: "voiceInputEnabled", label: "Voice Input", description: "Allow voice commands" },
-                        { key: "textToSpeechEnabled", label: "Text to Speech", description: "Read responses aloud" },
-                        { key: "offlineModeEnabled", label: "Offline Mode", description: "Cache data for offline use" },
-                        { key: "autoTranslate", label: "Auto Translate", description: "Automatically translate AI responses" },
-                        { key: "notificationsEnabled", label: "Push Notifications", description: "Send notifications to farmers" },
-                      ].map((setting) => (
-                        <div key={setting.key} className="flex items-center justify-between p-3 rounded-lg bg-muted/50">
-                          <div>
-                            <p className="font-medium text-foreground">{setting.label}</p>
-                            <p className="text-sm text-muted-foreground">{setting.description}</p>
-                          </div>
-                          <Switch
-                            checked={settings[setting.key as keyof typeof settings]}
-                            onCheckedChange={(value) => handleSettingChange(setting.key, value)}
-                          />
-                        </div>
-                      ))}
-                    </CardContent>
-                  </Card>
-                </div>
+              {/* Activity Tab */}
+              <TabsContent value="activity">
+                <ActivityLogsViewer />
               </TabsContent>
             </Tabs>
           </div>
