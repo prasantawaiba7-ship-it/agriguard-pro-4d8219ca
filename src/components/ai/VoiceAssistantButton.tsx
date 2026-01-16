@@ -1,13 +1,16 @@
 import { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Mic, MicOff, Volume2, VolumeX, Loader2, X, MessageSquare, Send } from 'lucide-react';
+import { Mic, MicOff, Volume2, VolumeX, Loader2, X, MessageSquare, Send, Download, Crown, Camera } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
 import { useLanguage } from '@/hooks/useLanguage';
 import { useTextToSpeech } from '@/hooks/useTextToSpeech';
+import { useSubscription } from '@/hooks/useSubscription';
 import { supabase } from '@/integrations/supabase/client';
 import { cn } from '@/lib/utils';
+import { SubscriptionModal } from '@/components/subscription/SubscriptionModal';
+import { DiseaseImageUpload } from '@/components/ai/DiseaseImageUpload';
 
 interface Message {
   role: 'user' | 'assistant';
@@ -19,6 +22,8 @@ export function VoiceAssistantButton() {
   const { toast } = useToast();
   const { language } = useLanguage();
   const [showPanel, setShowPanel] = useState(false);
+  const [showSubscriptionModal, setShowSubscriptionModal] = useState(false);
+  const [showDiseaseUpload, setShowDiseaseUpload] = useState(false);
   const [messages, setMessages] = useState<Message[]>([]);
   const [inputText, setInputText] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -27,6 +32,8 @@ export function VoiceAssistantButton() {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const recognitionRef = useRef<any>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  
+  const { can_query, queries_used, queries_limit, subscribed, plan, incrementQueryCount, startCheckout, loading: subLoading } = useSubscription();
 
   const { speak, stop, isSpeaking, isSupported: ttsSupported } = useTextToSpeech({
     language,
@@ -118,6 +125,12 @@ export function VoiceAssistantButton() {
     const messageText = text || inputText.trim();
     if (!messageText || isLoading) return;
 
+    // Check subscription
+    if (!can_query && !subscribed) {
+      setShowSubscriptionModal(true);
+      return;
+    }
+
     // Add user message
     const userMessage: Message = {
       role: 'user',
@@ -127,6 +140,11 @@ export function VoiceAssistantButton() {
     setMessages(prev => [...prev, userMessage]);
     setInputText('');
     setIsLoading(true);
+
+    // Increment query count for free users
+    if (!subscribed) {
+      await incrementQueryCount();
+    }
 
     try {
       // Call AI assistant
@@ -207,6 +225,33 @@ export function VoiceAssistantButton() {
     stop();
   };
 
+  const downloadReport = async () => {
+    if (messages.length === 0) return;
+
+    try {
+      const { data, error } = await supabase.functions.invoke('generate-pdf-report', {
+        body: { 
+          conversation: messages.map(m => ({ role: m.role, content: m.content })), 
+          language 
+        }
+      });
+
+      if (error) throw error;
+
+      const blob = new Blob([data], { type: 'text/html' });
+      const url = URL.createObjectURL(blob);
+      const win = window.open(url, '_blank');
+      if (win) {
+        win.onload = () => win.print();
+      }
+    } catch (error) {
+      toast({
+        title: language === 'ne' ? 'रिपोर्ट त्रुटि' : 'Report error',
+        variant: 'destructive'
+      });
+    }
+  };
+
   return (
     <>
       {/* Floating Button */}
@@ -264,8 +309,19 @@ export function VoiceAssistantButton() {
                 <span className="font-semibold text-sm">
                   {language === 'ne' ? '🌾 किसान साथी' : '🌾 Kisan Saathi'}
                 </span>
+                {subscribed && (
+                  <span className="text-xs bg-accent text-accent-foreground px-1.5 py-0.5 rounded-full flex items-center gap-1">
+                    <Crown className="w-3 h-3" />
+                    {plan === 'monthly' ? (language === 'ne' ? 'मासिक' : 'Monthly') : (language === 'ne' ? 'वार्षिक' : 'Yearly')}
+                  </span>
+                )}
               </div>
               <div className="flex items-center gap-1">
+                {!subscribed && (
+                  <span className="text-xs text-muted-foreground mr-1">
+                    {queries_used}/{queries_limit}
+                  </span>
+                )}
                 <Button 
                   variant="ghost" 
                   size="icon" 
@@ -403,9 +459,46 @@ export function VoiceAssistantButton() {
               )}
             </div>
 
-            {/* Footer */}
-            {messages.length > 0 && (
-              <div className="px-4 pb-3">
+            {/* Footer Actions */}
+            <div className="px-4 pb-3 space-y-2">
+              {/* Quick Actions */}
+              <div className="flex gap-2">
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  onClick={() => setShowDiseaseUpload(true)}
+                  className="flex-1 text-xs"
+                >
+                  <Camera className="w-3 h-3 mr-1" />
+                  {language === 'ne' ? 'रोग पहिचान' : 'Disease Check'}
+                </Button>
+                {messages.length > 0 && (
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    onClick={downloadReport}
+                    className="flex-1 text-xs"
+                  >
+                    <Download className="w-3 h-3 mr-1" />
+                    {language === 'ne' ? 'रिपोर्ट' : 'Report'}
+                  </Button>
+                )}
+              </div>
+              
+              {/* Subscription CTA for free users */}
+              {!subscribed && !subLoading && (
+                <Button 
+                  variant="ghost" 
+                  size="sm" 
+                  onClick={() => setShowSubscriptionModal(true)}
+                  className="w-full text-xs bg-accent/10 hover:bg-accent/20 text-accent"
+                >
+                  <Crown className="w-3 h-3 mr-1" />
+                  {language === 'ne' ? 'असीमित सल्लाहका लागि सदस्यता लिनुहोस्' : 'Subscribe for unlimited advice'}
+                </Button>
+              )}
+              
+              {messages.length > 0 && (
                 <Button 
                   variant="ghost" 
                   size="sm" 
@@ -414,8 +507,40 @@ export function VoiceAssistantButton() {
                 >
                   {language === 'ne' ? 'च्याट मेटाउनुहोस्' : 'Clear chat'}
                 </Button>
-              </div>
-            )}
+              )}
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Subscription Modal */}
+      <SubscriptionModal
+        isOpen={showSubscriptionModal}
+        onClose={() => setShowSubscriptionModal(false)}
+        onSubscribe={startCheckout}
+        queriesUsed={queries_used}
+        queriesLimit={queries_limit}
+      />
+
+      {/* Disease Upload Modal */}
+      <AnimatePresence>
+        {showDiseaseUpload && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
+            onClick={() => setShowDiseaseUpload(false)}
+          >
+            <motion.div
+              initial={{ scale: 0.9 }}
+              animate={{ scale: 1 }}
+              exit={{ scale: 0.9 }}
+              onClick={(e) => e.stopPropagation()}
+              className="w-full max-w-md"
+            >
+              <DiseaseImageUpload onClose={() => setShowDiseaseUpload(false)} />
+            </motion.div>
           </motion.div>
         )}
       </AnimatePresence>
