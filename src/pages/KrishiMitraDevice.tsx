@@ -1,9 +1,11 @@
 import { useState, useCallback, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Mic, MicOff, Volume2, VolumeX, RefreshCw, Settings, Phone, PhoneOff } from 'lucide-react';
+import { Mic, Volume2, VolumeX, RefreshCw, Settings, Phone, PhoneOff, Repeat } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useRealtimeVoice } from '@/hooks/useRealtimeVoice';
+import { useTextToSpeech } from '@/hooks/useTextToSpeech';
 import { useLanguage } from '@/hooks/useLanguage';
+import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
 type VoiceState = 'idle' | 'listening' | 'thinking' | 'speaking';
@@ -13,6 +15,24 @@ interface Message {
   content: string;
   timestamp: Date;
 }
+
+interface DeviceConfig {
+  ttsVolume: number;
+  ttsRate: number;
+  defaultLanguage: string;
+  autoPlayResponse: boolean;
+  showTranscript: boolean;
+  kioskMode: boolean;
+}
+
+const defaultConfig: DeviceConfig = {
+  ttsVolume: 1,
+  ttsRate: 0.9,
+  defaultLanguage: 'ne',
+  autoPlayResponse: true,
+  showTranscript: true,
+  kioskMode: false,
+};
 
 const stateLabels = {
   idle: {
@@ -39,8 +59,37 @@ export default function KrishiMitraDevice() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [liveTranscript, setLiveTranscript] = useState('');
   const [isMuted, setIsMuted] = useState(false);
+  const [deviceConfig, setDeviceConfig] = useState<DeviceConfig>(defaultConfig);
   
   const currentLang = language === 'ne' ? 'ne' : 'en';
+
+  // TTS hook for replay functionality
+  const { speak, stop, isSpeaking: isTtsSpeaking } = useTextToSpeech({
+    language: currentLang,
+    rate: deviceConfig.ttsRate,
+    onError: (error) => {
+      toast.error(currentLang === 'ne' ? 'आवाज त्रुटि' : 'Voice error', { description: error });
+    }
+  });
+
+  // Load device config from database
+  useEffect(() => {
+    const loadConfig = async () => {
+      try {
+        const { data } = await supabase
+          .from('app_settings')
+          .select('value')
+          .eq('key', 'device_config')
+          .single();
+        if (data?.value) {
+          setDeviceConfig({ ...defaultConfig, ...(data.value as object) });
+        }
+      } catch (e) {
+        // Use defaults
+      }
+    };
+    loadConfig();
+  }, []);
 
   const {
     status,
@@ -109,6 +158,15 @@ export default function KrishiMitraDevice() {
     }
   };
 
+  // Replay last AI answer with TTS
+  const handleReplayAnswer = (text: string) => {
+    if (isTtsSpeaking) {
+      stop();
+    } else {
+      speak(text);
+    }
+  };
+
   const lastUserMessage = messages.filter(m => m.role === 'user').slice(-1)[0];
   const lastAiMessage = messages.filter(m => m.role === 'assistant').slice(-1)[0];
 
@@ -148,14 +206,16 @@ export default function KrishiMitraDevice() {
           >
             {isMuted ? <VolumeX className="h-5 w-5" /> : <Volume2 className="h-5 w-5" />}
           </Button>
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={() => window.location.href = '/admin'}
-            className="h-10 w-10"
-          >
-            <Settings className="h-5 w-5" />
-          </Button>
+          {!deviceConfig.kioskMode && (
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => window.location.href = '/device/settings'}
+              className="h-10 w-10"
+            >
+              <Settings className="h-5 w-5" />
+            </Button>
+          )}
         </div>
       </header>
 
@@ -285,14 +345,18 @@ export default function KrishiMitraDevice() {
                 <Button
                   variant="ghost"
                   size="sm"
-                  onClick={() => {
-                    // TODO: Implement TTS replay
-                    toast.info(currentLang === 'ne' ? 'जवाफ पुन: बजाउँदै...' : 'Replaying answer...');
-                  }}
+                  onClick={() => handleReplayAnswer(lastAiMessage.content)}
                   className="text-primary hover:text-primary/80"
                 >
-                  <RefreshCw className="h-4 w-4 mr-1" />
-                  {currentLang === 'ne' ? 'पुन: सुन्नुहोस्' : 'Replay'}
+                  {isTtsSpeaking ? (
+                    <VolumeX className="h-4 w-4 mr-1" />
+                  ) : (
+                    <Repeat className="h-4 w-4 mr-1" />
+                  )}
+                  {isTtsSpeaking 
+                    ? (currentLang === 'ne' ? 'रोक्नुहोस्' : 'Stop')
+                    : (currentLang === 'ne' ? 'पुन: सुन्नुहोस्' : 'Replay')
+                  }
                 </Button>
               </div>
               <p className="text-lg md:text-xl text-foreground leading-relaxed">

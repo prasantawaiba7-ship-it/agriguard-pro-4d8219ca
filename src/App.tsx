@@ -15,6 +15,7 @@ import AdminDashboard from "./pages/AdminDashboard";
 import ProfileSettings from "./pages/ProfileSettings";
 import KrishiMitra from "./pages/KrishiMitra";
 import KrishiMitraDevice from "./pages/KrishiMitraDevice";
+import DeviceSettings from "./pages/DeviceSettings";
 import PaymentSuccess from "./pages/PaymentSuccess";
 import PaymentCancelled from "./pages/PaymentCancelled";
 import NotFound from "./pages/NotFound";
@@ -37,6 +38,7 @@ const App = () => (
                 <Route path="/farmer/profile" element={<ProfileSettings />} />
                 <Route path="/krishi-mitra" element={<KrishiMitra />} />
                 <Route path="/device" element={<KrishiMitraDevice />} />
+                <Route path="/device/settings" element={<DeviceSettings />} />
                 <Route path="/payment/success" element={<PaymentSuccess />} />
                 <Route path="/payment/cancelled" element={<PaymentCancelled />} />
                 <Route path="/authority" element={<AuthorityDashboard />} />
