@@ -258,11 +258,11 @@ export function VoiceAssistantButton() {
             className="fixed bottom-24 right-6 z-50 bg-card border border-border rounded-2xl shadow-2xl w-80 sm:w-96 max-h-[70vh] flex flex-col overflow-hidden"
           >
             {/* Header */}
-            <div className="flex items-center justify-between p-4 border-b border-border bg-muted/50">
+            <div className="flex items-center justify-between p-4 border-b border-border bg-gradient-to-r from-primary/10 to-accent/10">
               <div className="flex items-center gap-2">
                 <div className="w-2 h-2 rounded-full bg-success animate-pulse" />
-                <span className="font-medium text-sm">
-                  {language === 'ne' ? 'कृषि मित्र' : 'Krishi Mitra'}
+                <span className="font-semibold text-sm">
+                  {language === 'ne' ? '🌾 किसान साथी' : '🌾 Kisan Saathi'}
                 </span>
               </div>
               <div className="flex items-center gap-1">
@@ -289,8 +289,19 @@ export function VoiceAssistantButton() {
             <div className="flex-1 overflow-y-auto p-4 space-y-3 min-h-[200px] max-h-[350px]">
               {messages.length === 0 ? (
                 <div className="text-center text-muted-foreground text-sm py-8">
-                  <Mic className="w-8 h-8 mx-auto mb-2 opacity-50" />
-                  <p>{language === 'ne' ? 'बोल्नुहोस् वा टाइप गर्नुहोस्' : 'Speak or type your question'}</p>
+                  <div className="text-3xl mb-2">🌾</div>
+                  <p className="font-medium text-foreground mb-1">
+                    {language === 'ne' ? 'नमस्ते दाइ/दिदी!' : 'Namaste!'}
+                  </p>
+                  <p className="text-xs">
+                    {language === 'ne' 
+                      ? 'म तपाईंको किसान साथी। कृषि सम्बन्धी कुनै पनि प्रश्न सोध्नुहोस्!' 
+                      : "I'm your Kisan Saathi. Ask any farming question!"}
+                  </p>
+                  <div className="flex items-center justify-center gap-2 mt-3 text-xs text-muted-foreground">
+                    <Mic className="w-4 h-4" />
+                    <span>{language === 'ne' ? 'बोल्नुहोस् वा टाइप गर्नुहोस्' : 'Speak or type'}</span>
+                  </div>
                 </div>
               ) : (
                 messages.map((msg, i) => (
