@@ -1,10 +1,11 @@
 import { useState, useCallback, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Mic, Volume2, VolumeX, RefreshCw, Settings, Phone, PhoneOff, Repeat } from 'lucide-react';
+import { Mic, Volume2, VolumeX, RefreshCw, Settings, Phone, PhoneOff, Repeat, WifiOff, Database } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useRealtimeVoice } from '@/hooks/useRealtimeVoice';
 import { useTextToSpeech } from '@/hooks/useTextToSpeech';
 import { useLanguage } from '@/hooks/useLanguage';
+import { useOfflineCache } from '@/hooks/useOfflineCache';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
@@ -60,8 +61,18 @@ export default function KrishiMitraDevice() {
   const [liveTranscript, setLiveTranscript] = useState('');
   const [isMuted, setIsMuted] = useState(false);
   const [deviceConfig, setDeviceConfig] = useState<DeviceConfig>(defaultConfig);
+  const [showOfflineData, setShowOfflineData] = useState(false);
   
   const currentLang = language === 'ne' ? 'ne' : 'en';
+
+  // Offline cache for crop recommendations and disease detections
+  const { 
+    cropRecommendations, 
+    diseaseDetections, 
+    isOnline, 
+    hasOfflineData,
+    refreshCache 
+  } = useOfflineCache();
 
   // TTS hook for replay functionality
   const { speak, stop, isSpeaking: isTtsSpeaking } = useTextToSpeech({
@@ -206,6 +217,16 @@ export default function KrishiMitraDevice() {
           >
             {isMuted ? <VolumeX className="h-5 w-5" /> : <Volume2 className="h-5 w-5" />}
           </Button>
+          {hasOfflineData && (
+            <Button
+              variant={showOfflineData ? "default" : "ghost"}
+              size="icon"
+              onClick={() => setShowOfflineData(!showOfflineData)}
+              className="h-10 w-10"
+            >
+              <Database className="h-5 w-5" />
+            </Button>
+          )}
           {!deviceConfig.kioskMode && (
             <Button
               variant="ghost"
@@ -218,6 +239,56 @@ export default function KrishiMitraDevice() {
           )}
         </div>
       </header>
+
+      {/* Offline Data Panel */}
+      <AnimatePresence>
+        {showOfflineData && (
+          <motion.div
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: 'auto' }}
+            exit={{ opacity: 0, height: 0 }}
+            className="border-b border-border/50 bg-card/50"
+          >
+            <div className="p-4 max-w-2xl mx-auto">
+              <div className="flex items-center justify-between mb-3">
+                <h3 className="font-semibold flex items-center gap-2">
+                  {!isOnline && <WifiOff className="h-4 w-4 text-destructive" />}
+                  {currentLang === 'ne' ? 'क्यास गरिएको डाटा' : 'Cached Data'}
+                </h3>
+                <Button variant="ghost" size="sm" onClick={() => setShowOfflineData(false)}>
+                  ✕
+                </Button>
+              </div>
+              
+              {/* Quick view of cached recommendations */}
+              <div className="space-y-2 max-h-60 overflow-y-auto">
+                {cropRecommendations.slice(0, 3).map((rec) => (
+                  <div key={rec.id} className="bg-muted/50 rounded-lg p-3 text-sm">
+                    <p className="font-medium">{rec.plot_name}</p>
+                    <p className="text-muted-foreground text-xs">
+                      {Array.isArray(rec.recommended_crops) 
+                        ? rec.recommended_crops.map((c: any) => typeof c === 'object' ? c.name : c).join(', ')
+                        : String(rec.recommended_crops)
+                      }
+                    </p>
+                  </div>
+                ))}
+                {diseaseDetections.slice(0, 2).map((det) => (
+                  <div key={det.id} className="bg-warning/10 rounded-lg p-3 text-sm">
+                    <p className="font-medium">{det.detected_disease || (currentLang === 'ne' ? 'स्वस्थ' : 'Healthy')}</p>
+                    <p className="text-muted-foreground text-xs">{det.severity || 'N/A'}</p>
+                  </div>
+                ))}
+                {cropRecommendations.length === 0 && diseaseDetections.length === 0 && (
+                  <p className="text-sm text-muted-foreground text-center py-4">
+                    {currentLang === 'ne' ? 'कुनै क्यास गरिएको डाटा छैन' : 'No cached data available'}
+                  </p>
+                )}
+              </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* Main Content */}
       <main className="flex-1 flex flex-col items-center justify-center p-4 md:p-8 gap-6">

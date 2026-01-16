@@ -10,6 +10,7 @@ import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
 import { AIAssistant } from "@/components/ai/AIAssistant";
 import { KrishiMitraBar } from "@/components/ai/KrishiMitraBar";
+import { OfflineDataViewer } from "@/components/farmer/OfflineDataViewer";
 import { LanguageSelector } from "@/components/farmer/LanguageSelector";
 import { useAuth } from "@/hooks/useAuth";
 import { useLanguage } from "@/hooks/useLanguage";
@@ -32,6 +33,7 @@ import {
   LogOut,
   User,
   Sparkles,
+  WifiOff,
 } from "lucide-react";
 import { Database } from "@/integrations/supabase/types";
 
@@ -61,7 +63,7 @@ const cropStages: { value: CropStage; label: string }[] = [
 ];
 
 const FarmerDashboard = () => {
-  const [activeTab, setActiveTab] = useState<"plots" | "capture" | "history">("plots");
+  const [activeTab, setActiveTab] = useState<"plots" | "capture" | "history" | "offline">("plots");
   const [isAddPlotOpen, setIsAddPlotOpen] = useState(false);
   const [selectedPlot, setSelectedPlot] = useState<string>("");
   const [selectedStage, setSelectedStage] = useState<CropStage>("vegetative");
@@ -252,6 +254,7 @@ const FarmerDashboard = () => {
                 { id: "plots", label: t('myPlots'), icon: MapPin },
                 { id: "capture", label: "Capture", icon: Camera },
                 { id: "history", label: t('history'), icon: History },
+                { id: "offline", label: "Offline", icon: WifiOff },
               ].map((tab) => (
                 <Button
                   key={tab.id}
@@ -595,6 +598,12 @@ const FarmerDashboard = () => {
                         </CardContent>
                       </Card>
                     )}
+                  </div>
+                )}
+
+                {activeTab === "offline" && (
+                  <div className="space-y-4">
+                    <OfflineDataViewer />
                   </div>
                 )}
 
