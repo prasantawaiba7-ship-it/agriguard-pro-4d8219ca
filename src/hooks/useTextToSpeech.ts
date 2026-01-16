@@ -20,37 +20,59 @@ const languageMap: Record<string, string> = {
   rai: 'ne-NP', // Fallback to Nepali
 };
 
-// Helper to find the best voice for Nepali/South Asian languages
+// Helper to check if a voice is likely female
+const isFemaleVoice = (voice: SpeechSynthesisVoice): boolean => {
+  const name = voice.name.toLowerCase();
+  const femaleIndicators = ['female', 'woman', 'girl', 'zira', 'samantha', 'victoria', 'karen', 'moira', 'tessa', 'veena', 'lekha', 'priya', 'aditi', 'raveena'];
+  const maleIndicators = ['male', 'man', 'boy', 'david', 'daniel', 'alex', 'fred', 'tom', 'rishi'];
+  
+  // Check for female indicators
+  if (femaleIndicators.some(ind => name.includes(ind))) return true;
+  // Exclude male indicators
+  if (maleIndicators.some(ind => name.includes(ind))) return false;
+  // Default to true for Google voices (usually female by default)
+  if (name.includes('google')) return true;
+  return false;
+};
+
+// Helper to find the best voice for Nepali/South Asian languages - prefer female voices
 const findBestVoice = (voices: SpeechSynthesisVoice[], targetLang: string): SpeechSynthesisVoice | null => {
   const langCode = targetLang.split('-')[0];
   
-  // Priority 1: Exact match for Nepali
-  const nepaliVoice = voices.find(v => 
+  // Filter to prefer female voices
+  const femaleVoices = voices.filter(isFemaleVoice);
+  const voicePool = femaleVoices.length > 0 ? femaleVoices : voices;
+  
+  // Priority 1: Female Nepali voice
+  const nepaliVoice = voicePool.find(v => 
     v.lang.toLowerCase().includes('ne') || 
     v.lang.toLowerCase().includes('nep') ||
     v.name.toLowerCase().includes('nepali')
   );
   if (nepaliVoice) return nepaliVoice;
   
-  // Priority 2: Hindi voice (very similar to Nepali)
-  const hindiVoice = voices.find(v => 
+  // Priority 2: Female Hindi voice (very similar to Nepali)
+  const hindiVoice = voicePool.find(v => 
     v.lang.startsWith('hi') || 
     v.name.toLowerCase().includes('hindi')
   );
   if (hindiVoice && langCode !== 'en') return hindiVoice;
   
-  // Priority 3: Any Indian language voice
-  const indianVoice = voices.find(v => 
+  // Priority 3: Any female Indian language voice
+  const indianVoice = voicePool.find(v => 
     v.lang.includes('IN') || 
     v.name.toLowerCase().includes('india')
   );
   if (indianVoice && langCode !== 'en') return indianVoice;
   
-  // Priority 4: Match the target language
-  const targetVoice = voices.find(v => v.lang.startsWith(langCode));
+  // Priority 4: Female voice matching the target language
+  const targetVoice = voicePool.find(v => v.lang.startsWith(langCode));
   if (targetVoice) return targetVoice;
   
-  // Priority 5: Default voice
+  // Priority 5: Any female voice
+  if (femaleVoices.length > 0) return femaleVoices[0];
+  
+  // Priority 6: Default voice
   return voices.find(v => v.default) || voices[0] || null;
 };
 
@@ -73,7 +95,7 @@ export function useTextToSpeech(options: UseTextToSpeechOptions = {}) {
     setIsSupported('speechSynthesis' in window);
   }, []);
 
-  // Clean text for speech (remove markdown, emojis that don't speak well)
+  // Clean text for speech (remove markdown, emojis, and problematic characters)
   const cleanTextForSpeech = (text: string): string => {
     return text
       // Remove markdown bold/italic
@@ -87,6 +109,13 @@ export function useTextToSpeech(options: UseTextToSpeechOptions = {}) {
       .replace(/^\s*[-•]\s*/gm, '')
       // Remove numbered lists prefix
       .replace(/^\d+\.\s/gm, '')
+      // Remove repeated question marks or other punctuation that sounds bad
+      .replace(/\?{2,}/g, '?')
+      .replace(/!{2,}/g, '!')
+      .replace(/\.{3,}/g, '.')
+      // Remove standalone question marks or symbols
+      .replace(/^\s*\?\s*$/gm, '')
+      .replace(/\s+\?\s+/g, ' ')
       // Remove emojis (keep some meaningful ones)
       .replace(/[🥇🥈🥉]/g, '')
       // Convert meaningful emojis to words
@@ -109,6 +138,11 @@ export function useTextToSpeech(options: UseTextToSpeechOptions = {}) {
       .replace(/[\u{1F1E0}-\u{1F1FF}]/gu, '')
       .replace(/[\u{2600}-\u{26FF}]/gu, '')
       .replace(/[\u{2700}-\u{27BF}]/gu, '')
+      // Remove other problematic Unicode characters
+      .replace(/[\u200B-\u200D\uFEFF]/g, '')
+      // Remove code blocks or technical artifacts
+      .replace(/```[\s\S]*?```/g, '')
+      .replace(/`[^`]+`/g, '')
       // Clean up extra whitespace
       .replace(/\n{3,}/g, '\n\n')
       .replace(/[ ]{2,}/g, ' ')
