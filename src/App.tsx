@@ -14,6 +14,8 @@ import AuthorityDashboard from "./pages/AuthorityDashboard";
 import AdminDashboard from "./pages/AdminDashboard";
 import ProfileSettings from "./pages/ProfileSettings";
 import KrishiMitra from "./pages/KrishiMitra";
+import PaymentSuccess from "./pages/PaymentSuccess";
+import PaymentCancelled from "./pages/PaymentCancelled";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -33,6 +35,8 @@ const App = () => (
                 <Route path="/farmer" element={<FarmerDashboard />} />
                 <Route path="/farmer/profile" element={<ProfileSettings />} />
                 <Route path="/krishi-mitra" element={<KrishiMitra />} />
+                <Route path="/payment/success" element={<PaymentSuccess />} />
+                <Route path="/payment/cancelled" element={<PaymentCancelled />} />
                 <Route path="/authority" element={<AuthorityDashboard />} />
                 <Route path="/admin" element={<AdminDashboard />} />
                 {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
