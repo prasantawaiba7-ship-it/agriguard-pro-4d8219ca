@@ -13,33 +13,37 @@ interface UseTextToSpeechOptions {
 const languageMap: Record<string, string> = {
   en: 'en-US',
   ne: 'ne-NP',
-  tamang: 'ne-NP', // Fallback to Nepali
-  newar: 'ne-NP', // Fallback to Nepali
-  maithili: 'hi-IN', // Close to Maithili
-  magar: 'ne-NP', // Fallback to Nepali
-  rai: 'ne-NP', // Fallback to Nepali
+  tamang: 'ne-NP',
+  newar: 'ne-NP',
+  maithili: 'hi-IN',
+  magar: 'ne-NP',
+  rai: 'ne-NP',
 };
 
 // Helper to check if a voice is likely female
 const isFemaleVoice = (voice: SpeechSynthesisVoice): boolean => {
   const name = voice.name.toLowerCase();
-  const femaleIndicators = ['female', 'woman', 'girl', 'zira', 'samantha', 'victoria', 'karen', 'moira', 'tessa', 'veena', 'lekha', 'priya', 'aditi', 'raveena'];
-  const maleIndicators = ['male', 'man', 'boy', 'david', 'daniel', 'alex', 'fred', 'tom', 'rishi'];
+  const femaleIndicators = [
+    'female', 'woman', 'girl', 
+    'zira', 'samantha', 'victoria', 'karen', 'moira', 'tessa', 
+    'veena', 'lekha', 'priya', 'aditi', 'raveena',
+    'microsoft zira', 'google us english female',
+    'heera', 'kalpana'
+  ];
+  const maleIndicators = ['male', 'man', 'boy', 'david', 'daniel', 'alex', 'fred', 'tom', 'rishi', 'microsoft david'];
   
-  // Check for female indicators
   if (femaleIndicators.some(ind => name.includes(ind))) return true;
-  // Exclude male indicators
   if (maleIndicators.some(ind => name.includes(ind))) return false;
-  // Default to true for Google voices (usually female by default)
   if (name.includes('google')) return true;
+  if (name.includes('microsoft') && !maleIndicators.some(ind => name.includes(ind))) return true;
   return false;
 };
 
-// Helper to find the best voice for Nepali/South Asian languages - prefer female voices
+// Helper to find the best voice - prefer female voices
 const findBestVoice = (voices: SpeechSynthesisVoice[], targetLang: string): SpeechSynthesisVoice | null => {
-  const langCode = targetLang.split('-')[0];
+  if (voices.length === 0) return null;
   
-  // Filter to prefer female voices
+  const langCode = targetLang.split('-')[0];
   const femaleVoices = voices.filter(isFemaleVoice);
   const voicePool = femaleVoices.length > 0 ? femaleVoices : voices;
   
@@ -69,10 +73,18 @@ const findBestVoice = (voices: SpeechSynthesisVoice[], targetLang: string): Spee
   const targetVoice = voicePool.find(v => v.lang.startsWith(langCode));
   if (targetVoice) return targetVoice;
   
-  // Priority 5: Any female voice
+  // Priority 5: Any female English voice as fallback
+  const englishFemale = femaleVoices.find(v => v.lang.startsWith('en'));
+  if (englishFemale) return englishFemale;
+  
+  // Priority 6: Google voice (usually good quality)
+  const googleVoice = voices.find(v => v.name.toLowerCase().includes('google'));
+  if (googleVoice) return googleVoice;
+  
+  // Priority 7: Any female voice
   if (femaleVoices.length > 0) return femaleVoices[0];
   
-  // Priority 6: Default voice
+  // Priority 8: Default voice
   return voices.find(v => v.default) || voices[0] || null;
 };
 
@@ -89,14 +101,41 @@ export function useTextToSpeech(options: UseTextToSpeechOptions = {}) {
   const [isSpeaking, setIsSpeaking] = useState(false);
   const [isSupported, setIsSupported] = useState(false);
   const [currentMessageId, setCurrentMessageId] = useState<string | null>(null);
+  const [voicesLoaded, setVoicesLoaded] = useState(false);
   const utteranceRef = useRef<SpeechSynthesisUtterance | null>(null);
+  const voicesRef = useRef<SpeechSynthesisVoice[]>([]);
 
+  // Initialize and load voices
   useEffect(() => {
-    setIsSupported('speechSynthesis' in window);
+    if (!('speechSynthesis' in window)) {
+      setIsSupported(false);
+      return;
+    }
+    
+    setIsSupported(true);
+    
+    const loadVoices = () => {
+      const voices = window.speechSynthesis.getVoices();
+      if (voices.length > 0) {
+        voicesRef.current = voices;
+        setVoicesLoaded(true);
+        console.log('TTS: Loaded', voices.length, 'voices');
+      }
+    };
+    
+    loadVoices();
+    window.speechSynthesis.onvoiceschanged = loadVoices;
+    
+    const timeout = setTimeout(loadVoices, 500);
+    
+    return () => {
+      clearTimeout(timeout);
+      window.speechSynthesis.onvoiceschanged = null;
+    };
   }, []);
 
-  // Clean text for speech (remove markdown, emojis, and problematic characters)
-  const cleanTextForSpeech = (text: string): string => {
+  // Clean text for speech - remove markdown, emojis, and problematic characters
+  const cleanTextForSpeech = useCallback((text: string): string => {
     return text
       // Remove markdown bold/italic
       .replace(/\*\*([^*]+)\*\*/g, '$1')
@@ -109,28 +148,20 @@ export function useTextToSpeech(options: UseTextToSpeechOptions = {}) {
       .replace(/^\s*[-•]\s*/gm, '')
       // Remove numbered lists prefix
       .replace(/^\d+\.\s/gm, '')
-      // Remove repeated question marks or other punctuation that sounds bad
+      // Remove repeated punctuation that sounds bad
       .replace(/\?{2,}/g, '?')
       .replace(/!{2,}/g, '!')
       .replace(/\.{3,}/g, '.')
       // Remove standalone question marks or symbols
-      .replace(/^\s*\?\s*$/gm, '')
-      .replace(/\s+\?\s+/g, ' ')
-      // Remove emojis (keep some meaningful ones)
-      .replace(/[🥇🥈🥉]/g, '')
+      .replace(/^\s*[\?\!\.]+\s*$/gm, '')
+      .replace(/\s+[\?\!]+\s+/g, ' ')
       // Convert meaningful emojis to words
       .replace(/✅/g, 'Good news: ')
       .replace(/⚠️/g, 'Warning: ')
       .replace(/💡/g, 'Tip: ')
-      .replace(/🌾/g, '')
-      .replace(/📴/g, 'Offline mode: ')
       .replace(/🔍/g, '')
-      .replace(/🍂/g, '')
-      .replace(/🐛/g, '')
-      .replace(/🥀/g, '')
-      .replace(/⚪/g, '')
-      .replace(/🌿/g, '')
-      .replace(/💊/g, '')
+      .replace(/📴/g, 'Offline mode: ')
+      .replace(/🌾|🍂|🐛|🥀|⚪|🌿|💊|🥇|🥈|🥉/g, '')
       // Remove other emojis
       .replace(/[\u{1F600}-\u{1F64F}]/gu, '')
       .replace(/[\u{1F300}-\u{1F5FF}]/gu, '')
@@ -138,16 +169,16 @@ export function useTextToSpeech(options: UseTextToSpeechOptions = {}) {
       .replace(/[\u{1F1E0}-\u{1F1FF}]/gu, '')
       .replace(/[\u{2600}-\u{26FF}]/gu, '')
       .replace(/[\u{2700}-\u{27BF}]/gu, '')
-      // Remove other problematic Unicode characters
+      // Remove zero-width characters
       .replace(/[\u200B-\u200D\uFEFF]/g, '')
-      // Remove code blocks or technical artifacts
+      // Remove code blocks
       .replace(/```[\s\S]*?```/g, '')
       .replace(/`[^`]+`/g, '')
       // Clean up extra whitespace
       .replace(/\n{3,}/g, '\n\n')
       .replace(/[ ]{2,}/g, ' ')
       .trim();
-  };
+  }, []);
 
   const speak = useCallback((text: string, messageId?: string) => {
     if (!isSupported) {
@@ -159,10 +190,12 @@ export function useTextToSpeech(options: UseTextToSpeechOptions = {}) {
     window.speechSynthesis.cancel();
 
     const cleanedText = cleanTextForSpeech(text);
-    if (!cleanedText) {
+    if (!cleanedText || cleanedText.length < 2) {
       onError?.('No text to speak');
       return;
     }
+
+    console.log('TTS: Speaking text:', cleanedText.substring(0, 100) + '...');
 
     const utterance = new SpeechSynthesisUtterance(cleanedText);
     utteranceRef.current = utterance;
@@ -173,26 +206,30 @@ export function useTextToSpeech(options: UseTextToSpeechOptions = {}) {
     utterance.rate = rate;
     utterance.pitch = pitch;
 
-    // Try to find the best voice for Nepali/target language
-    const voices = window.speechSynthesis.getVoices();
+    // Find the best female voice
+    const voices = voicesRef.current.length > 0 ? voicesRef.current : window.speechSynthesis.getVoices();
     const preferredVoice = findBestVoice(voices, speechLang);
     
     if (preferredVoice) {
+      console.log('TTS: Using voice:', preferredVoice.name, preferredVoice.lang);
       utterance.voice = preferredVoice;
-      // Update utterance language to match voice for better pronunciation
+      // Use voice's language for better pronunciation
       if (language !== 'en' && preferredVoice.lang.startsWith('hi')) {
-        // Hindi voice speaks Nepali well, keep Hindi lang for better pronunciation
         utterance.lang = preferredVoice.lang;
       }
+    } else {
+      console.log('TTS: No preferred voice found, using default');
     }
 
     utterance.onstart = () => {
+      console.log('TTS: Started speaking');
       setIsSpeaking(true);
       setCurrentMessageId(messageId || null);
       onStart?.();
     };
 
     utterance.onend = () => {
+      console.log('TTS: Finished speaking');
       setIsSpeaking(false);
       setCurrentMessageId(null);
       utteranceRef.current = null;
@@ -200,6 +237,7 @@ export function useTextToSpeech(options: UseTextToSpeechOptions = {}) {
     };
 
     utterance.onerror = (event) => {
+      console.error('TTS: Error', event.error);
       setIsSpeaking(false);
       setCurrentMessageId(null);
       utteranceRef.current = null;
@@ -209,7 +247,7 @@ export function useTextToSpeech(options: UseTextToSpeechOptions = {}) {
     };
 
     window.speechSynthesis.speak(utterance);
-  }, [isSupported, language, rate, pitch, onStart, onEnd, onError]);
+  }, [isSupported, language, rate, pitch, onStart, onEnd, onError, cleanTextForSpeech]);
 
   const stop = useCallback(() => {
     window.speechSynthesis.cancel();
@@ -233,16 +271,6 @@ export function useTextToSpeech(options: UseTextToSpeechOptions = {}) {
     };
   }, []);
 
-  // Load voices (they may load asynchronously)
-  useEffect(() => {
-    if (isSupported) {
-      window.speechSynthesis.getVoices();
-      window.speechSynthesis.onvoiceschanged = () => {
-        window.speechSynthesis.getVoices();
-      };
-    }
-  }, [isSupported]);
-
   return {
     speak,
     stop,
@@ -250,6 +278,7 @@ export function useTextToSpeech(options: UseTextToSpeechOptions = {}) {
     isSpeaking,
     isLoading: false,
     isSupported,
+    voicesLoaded,
     currentMessageId
   };
 }
