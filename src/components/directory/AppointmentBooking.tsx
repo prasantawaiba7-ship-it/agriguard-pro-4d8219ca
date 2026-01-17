@@ -88,7 +88,7 @@ export function AppointmentBooking({ officer, isOpen, onClose }: AppointmentBook
     mutationFn: async () => {
       if (!farmerProfile?.id) throw new Error('Farmer profile not found');
       
-      const { error } = await supabase
+      const { data, error } = await supabase
         .from('officer_appointments')
         .insert({
           farmer_id: farmerProfile.id,
@@ -99,13 +99,31 @@ export function AppointmentBooking({ officer, isOpen, onClose }: AppointmentBook
           notes: notes || null,
           farmer_phone: phone || farmerProfile.phone,
           status: 'pending'
-        });
+        })
+        .select('id')
+        .single();
       
       if (error) throw error;
+      
+      // Send notification email
+      try {
+        await supabase.functions.invoke('send-appointment-notification', {
+          body: {
+            appointment_id: data.id,
+            notification_type: 'confirmation'
+          }
+        });
+        console.log('Notification sent successfully');
+      } catch (notifError) {
+        console.error('Failed to send notification:', notifError);
+        // Don't fail the appointment creation if notification fails
+      }
+      
+      return data;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['farmer-appointments'] });
-      toast.success('भेटघाट अनुरोध पठाइयो!');
+      toast.success('भेटघाट अनुरोध पठाइयो! इमेल सूचना पठाइयो।');
       onClose();
       resetForm();
     },
@@ -309,10 +327,22 @@ export function FarmerAppointments() {
         .update({ status: 'cancelled' })
         .eq('id', id);
       if (error) throw error;
+      
+      // Send cancellation notification
+      try {
+        await supabase.functions.invoke('send-appointment-notification', {
+          body: {
+            appointment_id: id,
+            notification_type: 'cancellation'
+          }
+        });
+      } catch (notifError) {
+        console.error('Failed to send cancellation notification:', notifError);
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['farmer-appointments'] });
-      toast.success('भेटघाट रद्द गरियो');
+      toast.success('भेटघाट रद्द गरियो। सूचना पठाइयो।');
     }
   });
 
