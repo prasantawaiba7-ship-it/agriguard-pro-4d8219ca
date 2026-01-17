@@ -1239,14 +1239,74 @@ export function OnScreenAssistant({ isFullScreen: isEmbeddedFullScreen = false, 
                     ))}
                   </div>
                   
-                  <div className="flex items-center justify-center gap-2 text-xs text-muted-foreground">
-                    <Mic className="w-4 h-4" />
+                  {/* Large Speak Now Button for voice-first farmers */}
+                  <motion.button
+                    initial={{ opacity: 0, scale: 0.9 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    transition={{ delay: 0.4 }}
+                    onClick={toggleListening}
+                    disabled={isLoading}
+                    className={cn(
+                      "mx-auto flex flex-col items-center justify-center gap-2 p-6 sm:p-8 rounded-full",
+                      "min-w-[140px] min-h-[140px] sm:min-w-[160px] sm:min-h-[160px]",
+                      "touch-manipulation active:scale-95 transition-all duration-200",
+                      "shadow-lg hover:shadow-xl",
+                      isListening 
+                        ? "bg-destructive text-destructive-foreground animate-pulse" 
+                        : "bg-primary text-primary-foreground hover:bg-primary/90"
+                    )}
+                  >
+                    {isListening ? (
+                      <>
+                        <motion.div
+                          animate={{ scale: [1, 1.2, 1] }}
+                          transition={{ repeat: Infinity, duration: 0.6 }}
+                        >
+                          <MicOff className="w-10 h-10 sm:w-12 sm:h-12" />
+                        </motion.div>
+                        <span className="text-sm sm:text-base font-medium">
+                          {language === 'ne' ? 'सुन्दैछु...' : 
+                           language === 'hi' ? 'सुन रहा हूँ...' :
+                           'Listening...'}
+                        </span>
+                        <span className="text-xs opacity-80">
+                          {language === 'ne' ? 'बोलिसक्दा थिच्नुहोस्' : 
+                           language === 'hi' ? 'बोलने के बाद दबाएँ' :
+                           'Tap when done'}
+                        </span>
+                      </>
+                    ) : (
+                      <>
+                        <Mic className="w-10 h-10 sm:w-12 sm:h-12" />
+                        <span className="text-sm sm:text-base font-bold">
+                          {language === 'ne' ? '🎤 बोल्नुहोस्' : 
+                           language === 'hi' ? '🎤 बोलें' :
+                           '🎤 Speak Now'}
+                        </span>
+                        <span className="text-xs opacity-80">
+                          {language === 'ne' ? 'नेपालीमा प्रश्न सोध्नुहोस्' : 
+                           language === 'hi' ? 'हिंदी में पूछें' :
+                           'Ask in your language'}
+                        </span>
+                      </>
+                    )}
+                  </motion.button>
+                  
+                  {/* Language indicator */}
+                  <div className="flex items-center justify-center gap-2 text-xs text-muted-foreground mt-4">
+                    <Globe className="w-3.5 h-3.5" />
                     <span>
-                      {language === 'ne' ? 'बोल्नुहोस् वा टाइप गर्नुहोस्' : 
-                       language === 'hi' ? 'बोलें या टाइप करें' :
-                       'Speak or type'}
+                      {language === 'ne' ? 'नेपाली भाषा चयन गरिएको छ' : 
+                       language === 'hi' ? 'हिंदी भाषा चुनी गई है' :
+                       'English language selected'}
                     </span>
                   </div>
+                  
+                  <p className="text-xs text-muted-foreground mt-2">
+                    {language === 'ne' ? 'वा तल टाइप गर्नुहोस्' : 
+                     language === 'hi' ? 'या नीचे टाइप करें' :
+                     'Or type below'}
+                  </p>
                 </div>
               ) : (
                 messages.map((msg, i) => (
