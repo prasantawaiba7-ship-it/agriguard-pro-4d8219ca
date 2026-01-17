@@ -11,3 +11,9 @@ verify_jwt = false
 
 [functions.send-appointment-notification]
 verify_jwt = false
+
+[functions.analyze-crop-disease]
+verify_jwt = false
+
+[functions.generate-disease-pdf]
+verify_jwt = false

@@ -1,4 +1,5 @@
 import { useState, useRef, useCallback, useEffect } from 'react';
+import { supabase } from '@/integrations/supabase/client';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   Camera, Upload, X, Loader2, AlertTriangle, CheckCircle2, 
@@ -345,6 +346,19 @@ interface AnalysisResult {
     trapCrops?: string[];
     culturalPractices?: string[];
   };
+  // New fields from unified prompt
+  nepaliReport?: string;
+  recommended_chemicals?: Array<{
+    name: string;
+    dose: string;
+    usage_note?: string;
+  }>;
+  organic_treatment?: {
+    name: string;
+    preparation: string;
+    application: string;
+  };
+  possible_alternatives?: string[];
 }
 
 export function NepaliDiseaseDetector() {
@@ -561,141 +575,55 @@ export function NepaliDiseaseDetector() {
     }
   };
 
-  const downloadReport = () => {
+  const downloadReport = async () => {
     if (!result) return;
 
     const cropLabel = CROP_TYPES.find(c => c.value === selectedCrop)?.label || 'बाली';
-    const date = new Date().toLocaleDateString('ne-NP');
     
-    const htmlContent = `
-<!DOCTYPE html>
-<html lang="ne">
-<head>
-  <meta charset="UTF-8">
-  <title>बाली रोग विश्लेषण रिपोर्ट</title>
-  <style>
-    body { 
-      font-family: 'Noto Sans Devanagari', Arial, sans-serif; 
-      padding: 40px; 
-      max-width: 800px; 
-      margin: 0 auto;
-      color: #333;
-    }
-    .header { 
-      text-align: center; 
-      border-bottom: 3px solid #16a34a; 
-      padding-bottom: 20px; 
-      margin-bottom: 30px;
-    }
-    .header h1 { color: #16a34a; margin-bottom: 10px; }
-    .severity-badge {
-      display: inline-block;
-      padding: 5px 15px;
-      border-radius: 20px;
-      font-weight: bold;
-      margin: 10px 0;
-    }
-    .severity-low { background: #dcfce7; color: #166534; }
-    .severity-medium { background: #fef3c7; color: #92400e; }
-    .severity-high { background: #fee2e2; color: #991b1b; }
-    .section { 
-      margin: 25px 0; 
-      padding: 20px; 
-      background: #f9fafb; 
-      border-radius: 10px;
-      border-left: 4px solid #16a34a;
-    }
-    .section h3 { color: #16a34a; margin-bottom: 15px; }
-    .section ul { padding-left: 20px; }
-    .section li { margin: 8px 0; line-height: 1.6; }
-    .treatment-box {
-      background: #ecfdf5;
-      border: 1px solid #16a34a;
-      padding: 15px;
-      border-radius: 8px;
-      margin-top: 10px;
-    }
-    .footer { 
-      text-align: center; 
-      margin-top: 40px; 
-      padding-top: 20px; 
-      border-top: 1px solid #e5e7eb;
-      color: #6b7280;
-      font-size: 14px;
-    }
-    @media print {
-      body { padding: 20px; }
-      .section { break-inside: avoid; }
-    }
-  </style>
-</head>
-<body>
-  <div class="header">
-    <h1>🌿 बाली रोग विश्लेषण रिपोर्ट</h1>
-    <p>मिति: ${date}</p>
-    <p>बाली: ${cropLabel}</p>
-  </div>
-  
-  <div class="section">
-    <h3>📋 निदान</h3>
-    <p><strong>पहिचान:</strong> ${result.detectedIssue}</p>
-    <p><strong>विश्वासनियता:</strong> ${Math.round(result.confidence * 100)}%</p>
-    <span class="severity-badge severity-${result.severity}">
-      ${result.severity === 'low' ? 'सामान्य' : result.severity === 'medium' ? 'मध्यम' : 'गम्भीर'}
-    </span>
-    ${result.affectedPart ? `<p><strong>प्रभावित भाग:</strong> ${result.affectedPart}</p>` : ''}
-  </div>
-
-  ${result.symptoms.length > 0 ? `
-  <div class="section">
-    <h3>🔍 लक्षणहरू</h3>
-    <ul>
-      ${result.symptoms.map(s => `<li>${s}</li>`).join('')}
-    </ul>
-  </div>
-  ` : ''}
-
-  <div class="section">
-    <h3>💊 उपचार विधि</h3>
-    <div class="treatment-box">
-      <p>${result.treatment}</p>
-    </div>
-    ${result.organicTreatment ? `
-    <h4 style="margin-top: 15px;">🌿 जैविक उपचार:</h4>
-    <p>${result.organicTreatment}</p>
-    ` : ''}
-  </div>
-
-  ${result.prevention.length > 0 ? `
-  <div class="section">
-    <h3>🛡️ रोकथामका उपायहरू</h3>
-    <ul>
-      ${result.prevention.map(p => `<li>${p}</li>`).join('')}
-    </ul>
-  </div>
-  ` : ''}
-
-  ${result.whenToSeekHelp ? `
-  <div class="section" style="border-left-color: #f59e0b;">
-    <h3>⚠️ विशेषज्ञ सल्लाह</h3>
-    <p>${result.whenToSeekHelp}</p>
-  </div>
-  ` : ''}
-
-  <div class="footer">
-    <p>यो रिपोर्ट AI द्वारा उत्पन्न भएको हो। गम्भीर समस्याको लागि कृषि विशेषज्ञसँग सल्लाह लिनुहोस्।</p>
-    <p>© कृषि मित्र - नेपाल</p>
-  </div>
-</body>
-</html>`;
-
-    const blob = new Blob([htmlContent], { type: 'text/html' });
-    const url = URL.createObjectURL(blob);
-    const win = window.open(url, '_blank');
-    if (win) {
-      win.onload = () => {
-        setTimeout(() => win.print(), 500);
+    try {
+      // Prepare data for the new unified PDF endpoint
+      const reportData = {
+        crop_name: cropLabel,
+        disease_name: result.detectedIssue,
+        confidence: result.confidence,
+        severity: result.severity,
+        farmer_location: '', // Can be enhanced to get user location
+        symptoms_keypoints: result.symptoms || [],
+        recommended_chemicals: result.recommended_chemicals || [],
+        organic_treatment: result.organic_treatment || (result.organicTreatment ? {
+          name: 'जैविक उपचार',
+          preparation: '',
+          application: result.organicTreatment
+        } : null),
+        management_practices: result.prevention || [],
+        possible_alternatives: result.possible_alternatives || [],
+        when_to_seek_help: result.whenToSeekHelp || '',
+        nepaliReport: result.nepaliReport || '',
+        imageUrl: image || ''
       };
+
+      const { data, error } = await supabase.functions.invoke('generate-disease-pdf', {
+        body: reportData
+      });
+
+      if (error) throw error;
+
+      // Open HTML report in new window for printing
+      const blob = new Blob([data], { type: 'text/html' });
+      const url = URL.createObjectURL(blob);
+      const win = window.open(url, '_blank');
+      if (win) {
+        win.onload = () => {
+          setTimeout(() => win.print(), 500);
+        };
+      }
+    } catch (error) {
+      console.error('PDF generation error:', error);
+      toast({
+        title: 'रिपोर्ट बनाउन असफल',
+        description: 'कृपया पुनः प्रयास गर्नुहोस्',
+        variant: 'destructive'
+      });
     }
   };
 
