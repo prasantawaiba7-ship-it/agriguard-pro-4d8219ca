@@ -470,30 +470,62 @@ export function OnScreenAssistant({ isFullScreen: isEmbeddedFullScreen = false, 
 
       if (response.error) throw response.error;
 
-      // Handle streaming response
+      // Handle streaming response with real-time UI updates
       let fullResponse = '';
+      
+      // Add empty assistant message that we'll update as we stream
+      const streamingMsgId = Date.now();
+      setMessages(prev => [...prev, {
+        role: 'assistant',
+        content: '',
+        timestamp: new Date()
+      }]);
       
       if (response.data && typeof response.data.getReader === 'function') {
         const reader = response.data.getReader();
         const decoder = new TextDecoder();
+        let textBuffer = '';
 
         while (true) {
           const { done, value } = await reader.read();
           if (done) break;
 
-          const chunk = decoder.decode(value);
-          const lines = chunk.split('\n');
+          textBuffer += decoder.decode(value, { stream: true });
+          
+          // Process line-by-line as data arrives
+          let newlineIndex: number;
+          while ((newlineIndex = textBuffer.indexOf('\n')) !== -1) {
+            let line = textBuffer.slice(0, newlineIndex);
+            textBuffer = textBuffer.slice(newlineIndex + 1);
 
-          for (const line of lines) {
-            if (line.startsWith('data: ')) {
-              try {
-                const data = JSON.parse(line.slice(6));
-                if (data.choices?.[0]?.delta?.content) {
-                  fullResponse += data.choices[0].delta.content;
-                }
-              } catch {
-                // Skip invalid JSON
+            if (line.endsWith('\r')) line = line.slice(0, -1);
+            if (line.startsWith(':') || line.trim() === '') continue;
+            if (!line.startsWith('data: ')) continue;
+
+            const jsonStr = line.slice(6).trim();
+            if (jsonStr === '[DONE]') break;
+
+            try {
+              const parsed = JSON.parse(jsonStr);
+              const content = parsed.choices?.[0]?.delta?.content;
+              if (content) {
+                fullResponse += content;
+                // Update the last message in real-time
+                setMessages(prev => {
+                  const updated = [...prev];
+                  if (updated.length > 0) {
+                    updated[updated.length - 1] = {
+                      ...updated[updated.length - 1],
+                      content: fullResponse
+                    };
+                  }
+                  return updated;
+                });
               }
+            } catch {
+              // Incomplete JSON, put back and wait for more
+              textBuffer = line + '\n' + textBuffer;
+              break;
             }
           }
         }
@@ -502,15 +534,35 @@ export function OnScreenAssistant({ isFullScreen: isEmbeddedFullScreen = false, 
         fullResponse = typeof response.data === 'string' 
           ? response.data 
           : response.data.response || response.data.content || JSON.stringify(response.data);
+        
+        // Update the message with full response
+        setMessages(prev => {
+          const updated = [...prev];
+          if (updated.length > 0) {
+            updated[updated.length - 1] = {
+              ...updated[updated.length - 1],
+              content: fullResponse
+            };
+          }
+          return updated;
+        });
       }
 
-      // Add AI response
-      const aiMessage: Message = {
-        role: 'assistant',
-        content: fullResponse || (language === 'ne' ? 'माफ गर्नुहोस्, जवाफ प्राप्त भएन।' : language === 'hi' ? 'माफ़ कीजिए, जवाब नहीं मिला।' : 'Sorry, no response received.'),
-        timestamp: new Date()
-      };
-      setMessages(prev => [...prev, aiMessage]);
+      // If no response received, show error message
+      if (!fullResponse) {
+        setMessages(prev => {
+          const updated = [...prev];
+          if (updated.length > 0) {
+            updated[updated.length - 1] = {
+              ...updated[updated.length - 1],
+              content: language === 'ne' ? 'माफ गर्नुहोस्, जवाफ प्राप्त भएन। कृपया पुनः प्रयास गर्नुहोस्।' : 
+                       language === 'hi' ? 'माफ़ कीजिए, जवाब नहीं मिला। कृपया दोबारा प्रयास करें।' : 
+                       'Sorry, no response received. Please try again.'
+            };
+          }
+          return updated;
+        });
+      }
 
       // Auto-speak the response immediately for faster experience
       if (autoSpeak && ttsSupported && fullResponse) {
