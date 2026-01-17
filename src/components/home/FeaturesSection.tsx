@@ -2,77 +2,79 @@ import { motion } from "framer-motion";
 import {
   Camera,
   Cpu,
-  Map,
+  MapPin,
   Clock,
   Shield,
   Users,
   Smartphone,
-  Cloud,
+  FileText,
 } from "lucide-react";
 
 const features = [
   {
     icon: Camera,
-    title: "Guided Photo Capture",
-    description:
-      "Step-by-step instructions for capturing crop photos at the right angles with GPS verification.",
-    color: "bg-primary",
+    title: "फोटो अपलोड",
+    titleEn: "Photo Upload",
+    description: "बालीको प्रभावित भागको फोटो खिच्नुहोस् वा ग्यालरीबाट छान्नुहोस्।",
+    gradient: "from-primary to-secondary",
   },
   {
     icon: Cpu,
-    title: "AI-Powered Analysis",
-    description:
-      "Advanced machine learning models detect crop type, growth stage, and stress/damage conditions.",
-    color: "bg-secondary",
+    title: "AI विश्लेषण",
+    titleEn: "AI Analysis",
+    description: "उन्नत AI ले रोग, कीरा र पोषक तत्व कमी पहिचान गर्छ।",
+    gradient: "from-secondary to-primary",
   },
   {
-    icon: Map,
-    title: "Geo-Tagged Evidence",
-    description:
-      "Every photo is linked to plot coordinates and verified against PMFBY enrollment data.",
-    color: "bg-accent",
+    icon: FileText,
+    title: "नेपाली रिपोर्ट",
+    titleEn: "Nepali Report",
+    description: "विस्तृत नेपाली भाषामा रिपोर्ट र PDF डाउनलोड।",
+    gradient: "from-accent to-warning",
   },
   {
     icon: Clock,
-    title: "Real-Time Processing",
-    description:
-      "Get instant feedback on crop health status and damage assessment within seconds.",
-    color: "bg-success",
+    title: "तुरुन्त नतिजा",
+    titleEn: "Instant Results",
+    description: "केही सेकेन्डमा नतिजा प्राप्त गर्नुहोस्।",
+    gradient: "from-success to-primary",
+  },
+  {
+    icon: MapPin,
+    title: "स्थान आधारित",
+    titleEn: "Location Based",
+    description: "तपाईंको क्षेत्रको जलवायु अनुसार सुझाव।",
+    gradient: "from-primary to-accent",
   },
   {
     icon: Shield,
-    title: "Secure & Tamper-Proof",
-    description:
-      "Blockchain-ready timestamps and encrypted storage ensure data integrity for claims.",
-    color: "bg-primary",
-  },
-  {
-    icon: Users,
-    title: "Multi-Stakeholder Access",
-    description:
-      "Separate portals for farmers, field officials, insurers, and government authorities.",
-    color: "bg-secondary",
+    title: "विशेषज्ञ सुझाव",
+    titleEn: "Expert Advice",
+    description: "जैविक र रासायनिक दुवै उपचार विकल्प।",
+    gradient: "from-secondary to-success",
   },
   {
     icon: Smartphone,
-    title: "Offline-First Design",
-    description:
-      "Capture photos without internet; data syncs automatically when connected.",
-    color: "bg-accent",
+    title: "अफलाइन काम",
+    titleEn: "Works Offline",
+    description: "इन्टरनेट नभएमा पनि फोटो खिच्न सकिन्छ।",
+    gradient: "from-accent to-secondary",
   },
   {
-    icon: Cloud,
-    title: "YES-TECH Integration",
-    description:
-      "Seamlessly connects with satellite data and yield estimation systems for comprehensive analysis.",
-    color: "bg-success",
+    icon: Users,
+    title: "विशेषज्ञ सम्पर्क",
+    titleEn: "Expert Connect",
+    description: "नजिकको कृषि प्राविधिकसँग सिधै सम्पर्क।",
+    gradient: "from-success to-accent",
   },
 ];
 
 const FeaturesSection = () => {
   return (
-    <section className="py-24 bg-muted/30 relative">
-      <div className="absolute inset-0 bg-grain pointer-events-none" />
+    <section className="py-20 sm:py-24 relative overflow-hidden">
+      {/* Background */}
+      <div className="absolute inset-0 bg-mesh pointer-events-none" />
+      <div className="absolute inset-0 bg-gradient-to-b from-transparent via-muted/30 to-transparent pointer-events-none" />
 
       <div className="container mx-auto px-4 relative">
         <motion.div
@@ -80,18 +82,18 @@ const FeaturesSection = () => {
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
           transition={{ duration: 0.5 }}
-          className="text-center max-w-3xl mx-auto mb-16"
+          className="text-center max-w-3xl mx-auto mb-12 sm:mb-16"
         >
-          <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-4">
-            Everything You Need for Crop Monitoring
+          <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold text-foreground mb-4">
+            किसानका लागि{" "}
+            <span className="text-gradient">सम्पूर्ण समाधान</span>
           </h2>
           <p className="text-lg text-muted-foreground">
-            A comprehensive platform designed for farmers, field officials, and
-            insurance authorities to streamline crop assessment and claims.
+            आधुनिक AI प्रविधि र स्थानीय ज्ञानको संयोजनले तपाईंको खेतीलाई सुरक्षित बनाउँछ।
           </p>
         </motion.div>
 
-        <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
           {features.map((feature, index) => (
             <motion.div
               key={feature.title}
@@ -99,19 +101,24 @@ const FeaturesSection = () => {
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ duration: 0.4, delay: index * 0.05 }}
-              className="group bg-card rounded-2xl p-6 shadow-sm hover:shadow-md transition-all duration-300 border border-border hover:border-primary/20"
+              className="group"
             >
-              <div
-                className={`w-12 h-12 rounded-xl ${feature.color} flex items-center justify-center mb-4 group-hover:scale-110 transition-transform`}
-              >
-                <feature.icon className="w-6 h-6 text-primary-foreground" />
+              <div className="glass-card rounded-2xl p-6 h-full card-interactive border border-border/50 hover:border-primary/30">
+                <div
+                  className={`w-14 h-14 rounded-2xl bg-gradient-to-br ${feature.gradient} flex items-center justify-center mb-4 group-hover:scale-110 transition-transform shadow-lg`}
+                >
+                  <feature.icon className="w-7 h-7 text-white" />
+                </div>
+                <h3 className="text-lg font-semibold text-foreground mb-1">
+                  {feature.title}
+                </h3>
+                <p className="text-xs text-muted-foreground mb-2">
+                  {feature.titleEn}
+                </p>
+                <p className="text-sm text-muted-foreground leading-relaxed">
+                  {feature.description}
+                </p>
               </div>
-              <h3 className="text-lg font-semibold text-foreground mb-2">
-                {feature.title}
-              </h3>
-              <p className="text-sm text-muted-foreground leading-relaxed">
-                {feature.description}
-              </p>
             </motion.div>
           ))}
         </div>
