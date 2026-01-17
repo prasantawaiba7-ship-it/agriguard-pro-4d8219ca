@@ -58,9 +58,20 @@ serve(async (req) => {
     if (!response.ok) {
       const errorText = await response.text();
       console.error("ElevenLabs API error:", response.status, errorText);
+
+      // IMPORTANT: Return 200 so the frontend can gracefully fall back to browser TTS
+      // without the request being treated as a hard failure.
       return new Response(
-        JSON.stringify({ error: `ElevenLabs API error: ${response.status}` }),
-        { status: response.status, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        JSON.stringify({
+          ok: false,
+          status: response.status,
+          error: `ElevenLabs API error: ${response.status}`,
+          detail: errorText,
+        }),
+        {
+          status: 200,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        }
       );
     }
 

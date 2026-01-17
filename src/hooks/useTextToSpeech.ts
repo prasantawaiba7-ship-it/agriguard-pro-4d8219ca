@@ -280,8 +280,20 @@ export function useTextToSpeech(options: UseTextToSpeechOptions = {}) {
           signal: abortControllerRef.current.signal,
         });
 
-        if (!response.ok) {
-          // Key is blocked (401) -> fallback
+        const contentType = response.headers.get("content-type") || "";
+        const isJson = contentType.includes("application/json");
+
+        // When ElevenLabs is blocked, the backend returns 200 + JSON payload.
+        // Treat that as a soft failure and fall back to browser TTS.
+        if (!response.ok || isJson) {
+          if (isJson) {
+            try {
+              const payload = await response.json();
+              console.warn("ElevenLabs TTS unavailable, falling back:", payload);
+            } catch {
+              // ignore
+            }
+          }
           speakWithBrowser(textToSpeak, messageId);
           return;
         }
