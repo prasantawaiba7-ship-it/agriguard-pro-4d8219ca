@@ -35,7 +35,157 @@ const CROP_TYPES = [
   { value: 'tomato', label: 'गोलभेडा', emoji: '🍅' },
   { value: 'pepper', label: 'खुर्सानी', emoji: '🌶️' },
   { value: 'bean', label: 'सिमी', emoji: '🫘' },
+  { value: 'sugarcane', label: 'उखु', emoji: '🎋' },
+  { value: 'vegetables', label: 'तरकारी', emoji: '🥬' },
+  { value: 'fruits', label: 'फलफूल', emoji: '🍎' },
 ];
+
+// Common pests database in Nepali
+const PEST_DATABASE: Record<string, PestInfo[]> = {
+  rice: [
+    {
+      name: 'गाँडे कीरा (Stem Borer)',
+      scientificName: 'Scirpophaga incertulas',
+      symptoms: ['डाँठमा प्वाल', 'मध्य पात सुक्ने (Dead Heart)', 'सेतो बाला (White Ear)'],
+      control: 'कार्बोफुरान ३जी दाना प्रयोग, ट्राइकोग्रामा अण्डा पराजीवी प्रयोग',
+      prevention: ['खेत सरसफाइ', 'अण्डाको समूह नष्ट गर्ने', 'प्रकाश पासो प्रयोग'],
+      biologicalControl: ['ट्राइकोग्रामा', 'जाइनिड मक्खी'],
+      severity: 'high',
+      activeSeasons: ['असार-साउन', 'कात्तिक-मंसिर']
+    },
+    {
+      name: 'भूरो फड्के (Brown Planthopper)',
+      scientificName: 'Nilaparvata lugens',
+      symptoms: ['पातमा पहेंलो दाग', 'बिरुवा कमजोर', 'होपरबर्न देखिने'],
+      control: 'इमिडाक्लोप्रिड ०.५ मिलि/लिटर, बुप्रोफेजिन छर्ने',
+      prevention: ['नाइट्रोजन मल नियन्त्रित', 'पानी व्यवस्थापन', 'प्रतिरोधी जात'],
+      biologicalControl: ['माकुरा', 'मिरिड बग'],
+      severity: 'high',
+      activeSeasons: ['भदौ-असोज']
+    }
+  ],
+  maize: [
+    {
+      name: 'फल आर्मीवर्म (Fall Armyworm)',
+      scientificName: 'Spodoptera frugiperda',
+      symptoms: ['पातमा ठूलो प्वाल', 'फंडा खाइएको', 'विष्टा देखिने'],
+      control: 'स्पिनोसाड ०.५ मिलि/लिटर, क्लोरान्ट्रानिलिप्रोल छर्ने',
+      prevention: ['बालीको अवशेष नष्ट', 'समयमै बाली लगाउने', 'फेरोमोन ट्र्याप'],
+      biologicalControl: ['ट्राइकोग्रामा', 'ब्रेकोनिड वास्प'],
+      severity: 'high',
+      activeSeasons: ['जेठ-असार', 'भदौ-असोज']
+    },
+    {
+      name: 'मकै भुण्डी (Maize Stem Borer)',
+      scientificName: 'Chilo partellus',
+      symptoms: ['डाँठमा प्वाल', 'पात पहेंलो', 'बाली ढल्ने'],
+      control: 'कार्बोफुरान ३जी दाना डाँठमा हाल्ने',
+      prevention: ['बाली चक्र', 'संक्रमित डाँठ नष्ट', 'समयमा रोप्ने'],
+      biologicalControl: ['कोटेसिया', 'ट्राइकोग्रामा'],
+      severity: 'high',
+      activeSeasons: ['असार-साउन']
+    }
+  ],
+  potato: [
+    {
+      name: 'आलु भुवा किट (Potato Tuber Moth)',
+      scientificName: 'Phthorimaea operculella',
+      symptoms: ['आलुमा सुरुङ', 'पातमा खनिज', 'भण्डारमा क्षति'],
+      control: 'डायक्लोरभोस स्प्रे, भण्डारमा बालुवा तह',
+      prevention: ['गहिरो रोप्ने', 'समयमा खन्ने', 'भण्डार सरसफाइ'],
+      biologicalControl: ['ग्रानुलोसिस भाइरस'],
+      severity: 'medium',
+      activeSeasons: ['फागुन-चैत']
+    },
+    {
+      name: 'लाही (Aphids)',
+      scientificName: 'Myzus persicae',
+      symptoms: ['पातमा सानो कीरा समूह', 'पात मोडिने', 'मधुरस देखिने'],
+      control: 'इमिडाक्लोप्रिड ०.५ मिलि/लिटर, निम तेल ३ मिलि/लिटर',
+      prevention: ['पहेंलो ट्र्याप', 'प्राकृतिक शत्रु संरक्षण'],
+      biologicalControl: ['लेडीबर्ड बीटल', 'सिर्फिड फ्लाई'],
+      severity: 'medium',
+      activeSeasons: ['माघ-फागुन']
+    }
+  ],
+  tomato: [
+    {
+      name: 'टुटा एब्सोल्युटा (Tomato Leaf Miner)',
+      scientificName: 'Tuta absoluta',
+      symptoms: ['पातमा खनिज', 'फलमा प्वाल', 'पात सुक्ने'],
+      control: 'स्पिनोसाड, अबामेक्टिन छर्ने',
+      prevention: ['फेरोमोन ट्र्याप', 'संक्रमित पात हटाउने', 'नेट हाउस'],
+      biologicalControl: ['ट्राइकोग्रामा', 'नेस्टिडियोकोरिस'],
+      severity: 'high',
+      activeSeasons: ['वर्षभरि']
+    },
+    {
+      name: 'सेतो झिंगा (Whitefly)',
+      scientificName: 'Bemisia tabaci',
+      symptoms: ['पातमा सानो सेतो कीरा', 'पात पहेंलो', 'भाइरस फैलाउने'],
+      control: 'इमिडाक्लोप्रिड, निम तेल छर्ने',
+      prevention: ['पहेंलो स्टिकी ट्र्याप', 'रोपाइँ समय मिलाउने'],
+      biologicalControl: ['एनकार्सिया फोर्मोसा'],
+      severity: 'high',
+      activeSeasons: ['जेठ-भदौ']
+    }
+  ],
+  pepper: [
+    {
+      name: 'थ्रिप्स (Thrips)',
+      scientificName: 'Scirtothrips dorsalis',
+      symptoms: ['पात कुर्चिने', 'फूल झर्ने', 'फलमा दाग'],
+      control: 'स्पिनोसाड, फिप्रोनिल छर्ने',
+      prevention: ['निलो स्टिकी ट्र्याप', 'मल्चिङ'],
+      biologicalControl: ['प्रेडेटरी माइट'],
+      severity: 'medium',
+      activeSeasons: ['चैत-जेठ']
+    },
+    {
+      name: 'फल बेध्ने कीरा (Fruit Borer)',
+      scientificName: 'Helicoverpa armigera',
+      symptoms: ['फलमा प्वाल', 'फल कुहिने', 'किटको विष्टा देखिने'],
+      control: 'एचएनपीभी, स्पिनोसाड छर्ने',
+      prevention: ['फेरोमोन ट्र्याप', 'संक्रमित फल नष्ट'],
+      biologicalControl: ['ट्राइकोग्रामा', 'ब्रेकोनिड'],
+      severity: 'high',
+      activeSeasons: ['भदौ-कात्तिक']
+    }
+  ],
+  vegetables: [
+    {
+      name: 'डायमण्ड ब्याक मथ',
+      scientificName: 'Plutella xylostella',
+      symptoms: ['पातमा प्वाल', 'पातको छाला मात्र बाँकी', 'सानो हरियो कीरा'],
+      control: 'बीटी, स्पिनोसाड छर्ने',
+      prevention: ['ट्र्याप क्रप', 'बाली चक्र'],
+      biologicalControl: ['डायाडेग्मा', 'कोटेसिया'],
+      severity: 'high',
+      activeSeasons: ['माघ-चैत']
+    },
+    {
+      name: 'रातो खपटे (Red Spider Mite)',
+      scientificName: 'Tetranychus urticae',
+      symptoms: ['पातमा रातो दाग', 'जालो देखिने', 'पात सुक्ने'],
+      control: 'डायकोफोल, अबामेक्टिन छर्ने',
+      prevention: ['पानी छर्ने', 'आर्द्रता बढाउने'],
+      biologicalControl: ['फाइटोसियुलस माइट'],
+      severity: 'medium',
+      activeSeasons: ['चैत-जेठ']
+    }
+  ]
+};
+
+interface PestInfo {
+  name: string;
+  scientificName: string;
+  symptoms: string[];
+  control: string;
+  prevention: string[];
+  biologicalControl: string[];
+  severity: 'low' | 'medium' | 'high';
+  activeSeasons: string[];
+}
 
 // Disease database in Nepali
 const DISEASE_DATABASE: Record<string, DiseaseInfo[]> = {
@@ -173,7 +323,9 @@ interface DiseaseInfo {
 
 interface AnalysisResult {
   isHealthy: boolean;
+  issueType: 'disease' | 'pest' | 'deficiency' | 'healthy';
   detectedIssue: string;
+  detectedIssueEnglish?: string;
   confidence: number;
   severity: 'low' | 'medium' | 'high';
   symptoms: string[];
@@ -182,6 +334,17 @@ interface AnalysisResult {
   prevention: string[];
   affectedPart?: string;
   whenToSeekHelp?: string;
+  pestInfo?: {
+    scientificName?: string;
+    lifecycle?: string;
+    activeSeasons?: string[];
+    hostCrops?: string[];
+  };
+  biologicalControl?: {
+    naturalEnemies?: string[];
+    trapCrops?: string[];
+    culturalPractices?: string[];
+  };
 }
 
 export function NepaliDiseaseDetector() {
@@ -341,9 +504,11 @@ export function NepaliDiseaseDetector() {
       
       const analysisResult: AnalysisResult = {
         isHealthy: data.isHealthy ?? false,
-        detectedIssue: data.detectedIssue || 'रोग पहिचान गरियो',
+        issueType: data.issueType || (data.isHealthy ? 'healthy' : 'disease'),
+        detectedIssue: data.detectedIssue || 'समस्या पहिचान गरियो',
+        detectedIssueEnglish: data.detectedIssueEnglish,
         confidence: data.confidence || 0.85,
-        severity: data.severity || 'medium',
+        severity: data.severity === 'mild' ? 'low' : data.severity === 'moderate' ? 'medium' : data.severity === 'severe' ? 'high' : data.severity || 'medium',
         symptoms: data.symptoms || [],
         treatment: data.chemicalTreatment?.name 
           ? `${data.chemicalTreatment.name} - ${data.chemicalTreatment.dosage}`
@@ -353,7 +518,9 @@ export function NepaliDiseaseDetector() {
           : undefined,
         prevention: data.preventiveMeasures || [],
         affectedPart: data.affectedPart,
-        whenToSeekHelp: data.whenToSeekHelp
+        whenToSeekHelp: data.whenToSeekHelp,
+        pestInfo: data.pestInfo,
+        biologicalControl: data.biologicalControl
       };
 
       setResult(analysisResult);
@@ -567,13 +734,23 @@ export function NepaliDiseaseDetector() {
     high: 'गम्भीर'
   };
 
+  const issueTypeLabels: Record<string, { label: string; icon: string; color: string }> = {
+    disease: { label: 'रोग', icon: '🦠', color: 'bg-destructive/10 text-destructive border-destructive/20' },
+    pest: { label: 'कीरा/किट', icon: '🐛', color: 'bg-orange-500/10 text-orange-600 border-orange-500/20' },
+    deficiency: { label: 'पोषक तत्व कमी', icon: '🧪', color: 'bg-yellow-500/10 text-yellow-600 border-yellow-500/20' },
+    healthy: { label: 'स्वस्थ', icon: '✅', color: 'bg-success/10 text-success border-success/20' }
+  };
+
   return (
     <Card className="border-border/50 overflow-hidden">
       <CardHeader className="bg-gradient-to-r from-primary/10 to-accent/10">
         <CardTitle className="flex items-center gap-2 text-xl">
           <Leaf className="w-6 h-6 text-primary" />
-          🌿 नेपाली बाली रोग पहिचान प्रणाली
+          🌿 बाली रोग र कीरा पहिचान प्रणाली
         </CardTitle>
+        <p className="text-sm text-muted-foreground mt-1">
+          AI द्वारा रोग, कीरा-किट र पोषक तत्व कमी पहिचान
+        </p>
       </CardHeader>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
@@ -794,23 +971,40 @@ export function NepaliDiseaseDetector() {
                     <div className={`p-4 rounded-xl border ${
                       result.isHealthy 
                         ? 'bg-success/10 border-success/20' 
-                        : 'bg-destructive/10 border-destructive/20'
+                        : result.issueType === 'pest'
+                          ? 'bg-orange-500/10 border-orange-500/20'
+                          : 'bg-destructive/10 border-destructive/20'
                     }`}>
                       <div className="flex items-center gap-3">
                         {result.isHealthy ? (
                           <CheckCircle2 className="w-8 h-8 text-success" />
+                        ) : result.issueType === 'pest' ? (
+                          <Bug className="w-8 h-8 text-orange-500" />
                         ) : (
                           <AlertTriangle className="w-8 h-8 text-destructive" />
                         )}
                         <div>
                           <h3 className="font-semibold text-lg">
-                            {result.isHealthy ? '✅ बाली स्वस्थ छ!' : '⚠️ रोग पहिचान भयो'}
+                            {result.isHealthy 
+                              ? '✅ बाली स्वस्थ छ!' 
+                              : result.issueType === 'pest'
+                                ? '🐛 कीरा/किट पहिचान भयो'
+                                : result.issueType === 'deficiency'
+                                  ? '🧪 पोषक तत्व कमी'
+                                  : '⚠️ रोग पहिचान भयो'
+                            }
                           </h3>
                           <p className="text-sm text-muted-foreground">{result.detectedIssue}</p>
+                          {result.detectedIssueEnglish && (
+                            <p className="text-xs text-muted-foreground italic">({result.detectedIssueEnglish})</p>
+                          )}
                         </div>
                       </div>
                       
                       <div className="flex gap-2 mt-3 flex-wrap">
+                        <Badge variant="outline" className={issueTypeLabels[result.issueType]?.color}>
+                          {issueTypeLabels[result.issueType]?.icon} {issueTypeLabels[result.issueType]?.label}
+                        </Badge>
                         <Badge variant="outline">
                           विश्वास: {Math.round(result.confidence * 100)}%
                         </Badge>
@@ -822,6 +1016,35 @@ export function NepaliDiseaseDetector() {
                         )}
                       </div>
                     </div>
+
+                    {/* Pest-specific information */}
+                    {result.issueType === 'pest' && result.pestInfo && (
+                      <div className="p-4 bg-orange-500/5 rounded-xl border border-orange-500/20">
+                        <h4 className="font-semibold mb-2 flex items-center gap-2">
+                          🐛 कीरा जानकारी
+                        </h4>
+                        <div className="grid grid-cols-2 gap-3 text-sm">
+                          {result.pestInfo.scientificName && (
+                            <div>
+                              <span className="text-muted-foreground">वैज्ञानिक नाम:</span>
+                              <p className="italic">{result.pestInfo.scientificName}</p>
+                            </div>
+                          )}
+                          {result.pestInfo.activeSeasons && result.pestInfo.activeSeasons.length > 0 && (
+                            <div>
+                              <span className="text-muted-foreground">सक्रिय समय:</span>
+                              <p>{result.pestInfo.activeSeasons.join(', ')}</p>
+                            </div>
+                          )}
+                          {result.pestInfo.hostCrops && result.pestInfo.hostCrops.length > 0 && (
+                            <div className="col-span-2">
+                              <span className="text-muted-foreground">प्रभावित बालीहरू:</span>
+                              <p>{result.pestInfo.hostCrops.join(', ')}</p>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    )}
 
                     {/* Symptoms */}
                     {result.symptoms.length > 0 && (
@@ -854,6 +1077,35 @@ export function NepaliDiseaseDetector() {
                         </div>
                       )}
                     </div>
+
+                    {/* Biological Control (for pests) */}
+                    {result.biologicalControl && (
+                      <div className="p-4 bg-green-500/5 rounded-xl border border-green-500/20">
+                        <h4 className="font-semibold mb-2 flex items-center gap-2">
+                          🌱 जैविक नियन्त्रण
+                        </h4>
+                        <div className="space-y-2 text-sm">
+                          {result.biologicalControl.naturalEnemies && result.biologicalControl.naturalEnemies.length > 0 && (
+                            <div>
+                              <span className="text-muted-foreground font-medium">प्राकृतिक शत्रुहरू:</span>
+                              <p className="text-muted-foreground">{result.biologicalControl.naturalEnemies.join(', ')}</p>
+                            </div>
+                          )}
+                          {result.biologicalControl.trapCrops && result.biologicalControl.trapCrops.length > 0 && (
+                            <div>
+                              <span className="text-muted-foreground font-medium">ट्र्याप बाली:</span>
+                              <p className="text-muted-foreground">{result.biologicalControl.trapCrops.join(', ')}</p>
+                            </div>
+                          )}
+                          {result.biologicalControl.culturalPractices && result.biologicalControl.culturalPractices.length > 0 && (
+                            <div>
+                              <span className="text-muted-foreground font-medium">सांस्कृतिक विधि:</span>
+                              <p className="text-muted-foreground">{result.biologicalControl.culturalPractices.join(', ')}</p>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    )}
 
                     {/* Prevention */}
                     {result.prevention.length > 0 && (
@@ -1229,10 +1481,10 @@ export function NepaliDiseaseDetector() {
           )}
         </TabsContent>
 
-        {/* Disease Database Tab */}
+        {/* Disease & Pest Database Tab */}
         <TabsContent value="database" className="p-4 pt-0 space-y-4">
           <p className="text-sm text-muted-foreground">
-            बाली छानेर त्यसका सामान्य रोगहरू हेर्नुहोस्:
+            बाली छानेर त्यसका सामान्य रोग र कीराहरू हेर्नुहोस्:
           </p>
           <Select value={selectedCrop} onValueChange={setSelectedCrop}>
             <SelectTrigger>
@@ -1247,56 +1499,133 @@ export function NepaliDiseaseDetector() {
             </SelectContent>
           </Select>
 
-          {selectedCrop && DISEASE_DATABASE[selectedCrop] && (
-            <div className="space-y-4">
-              {DISEASE_DATABASE[selectedCrop].map((disease, index) => (
-                <motion.div
-                  key={index}
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: index * 0.1 }}
-                  className="p-4 bg-card rounded-xl border border-border/50"
-                >
-                  <div className="flex items-center justify-between mb-3">
-                    <h4 className="font-semibold">{disease.name}</h4>
-                    <Badge className={severityColors[disease.severity]}>
-                      {severityLabels[disease.severity]}
-                    </Badge>
-                  </div>
-                  
-                  <div className="space-y-3 text-sm">
-                    <div>
-                      <p className="font-medium text-primary mb-1">🔍 लक्षणहरू:</p>
-                      <ul className="text-muted-foreground space-y-1">
-                        {disease.symptoms.map((s, i) => (
-                          <li key={i}>• {s}</li>
-                        ))}
-                      </ul>
-                    </div>
-                    
-                    <div className="p-3 bg-primary/5 rounded-lg">
-                      <p className="font-medium text-primary mb-1">💊 उपचार:</p>
-                      <p className="text-muted-foreground">{disease.treatment}</p>
-                    </div>
-                    
-                    <div>
-                      <p className="font-medium text-success mb-1">🛡️ रोकथाम:</p>
-                      <ul className="text-muted-foreground space-y-1">
-                        {disease.prevention.map((p, i) => (
-                          <li key={i}>✓ {p}</li>
-                        ))}
-                      </ul>
-                    </div>
-                  </div>
-                </motion.div>
-              ))}
+          {selectedCrop && (
+            <div className="space-y-6">
+              {/* Disease Section */}
+              {DISEASE_DATABASE[selectedCrop] && DISEASE_DATABASE[selectedCrop].length > 0 && (
+                <div className="space-y-4">
+                  <h3 className="font-semibold text-lg flex items-center gap-2">
+                    🦠 रोगहरू
+                  </h3>
+                  {DISEASE_DATABASE[selectedCrop].map((disease, index) => (
+                    <motion.div
+                      key={`disease-${index}`}
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: index * 0.1 }}
+                      className="p-4 bg-card rounded-xl border border-border/50"
+                    >
+                      <div className="flex items-center justify-between mb-3">
+                        <h4 className="font-semibold">{disease.name}</h4>
+                        <Badge className={severityColors[disease.severity]}>
+                          {severityLabels[disease.severity]}
+                        </Badge>
+                      </div>
+                      
+                      <div className="space-y-3 text-sm">
+                        <div>
+                          <p className="font-medium text-primary mb-1">🔍 लक्षणहरू:</p>
+                          <ul className="text-muted-foreground space-y-1">
+                            {disease.symptoms.map((s, i) => (
+                              <li key={i}>• {s}</li>
+                            ))}
+                          </ul>
+                        </div>
+                        
+                        <div className="p-3 bg-primary/5 rounded-lg">
+                          <p className="font-medium text-primary mb-1">💊 उपचार:</p>
+                          <p className="text-muted-foreground">{disease.treatment}</p>
+                        </div>
+                        
+                        <div>
+                          <p className="font-medium text-success mb-1">🛡️ रोकथाम:</p>
+                          <ul className="text-muted-foreground space-y-1">
+                            {disease.prevention.map((p, i) => (
+                              <li key={i}>✓ {p}</li>
+                            ))}
+                          </ul>
+                        </div>
+                      </div>
+                    </motion.div>
+                  ))}
+                </div>
+              )}
+
+              {/* Pest Section */}
+              {PEST_DATABASE[selectedCrop] && PEST_DATABASE[selectedCrop].length > 0 && (
+                <div className="space-y-4">
+                  <h3 className="font-semibold text-lg flex items-center gap-2">
+                    🐛 कीरा-किटहरू
+                  </h3>
+                  {PEST_DATABASE[selectedCrop].map((pest, index) => (
+                    <motion.div
+                      key={`pest-${index}`}
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: index * 0.1 }}
+                      className="p-4 bg-card rounded-xl border border-orange-500/20"
+                    >
+                      <div className="flex items-center justify-between mb-3">
+                        <div>
+                          <h4 className="font-semibold">{pest.name}</h4>
+                          <p className="text-xs italic text-muted-foreground">{pest.scientificName}</p>
+                        </div>
+                        <div className="flex gap-2">
+                          <Badge variant="outline" className="bg-orange-500/10 text-orange-600 border-orange-500/20">
+                            🐛 कीरा
+                          </Badge>
+                          <Badge className={severityColors[pest.severity]}>
+                            {severityLabels[pest.severity]}
+                          </Badge>
+                        </div>
+                      </div>
+                      
+                      <div className="space-y-3 text-sm">
+                        <div>
+                          <p className="font-medium text-orange-600 mb-1">🔍 क्षतिको लक्षण:</p>
+                          <ul className="text-muted-foreground space-y-1">
+                            {pest.symptoms.map((s, i) => (
+                              <li key={i}>• {s}</li>
+                            ))}
+                          </ul>
+                        </div>
+
+                        <div className="flex gap-2 flex-wrap">
+                          <Badge variant="outline" className="text-xs">
+                            📅 सक्रिय: {pest.activeSeasons.join(', ')}
+                          </Badge>
+                        </div>
+                        
+                        <div className="p-3 bg-orange-500/5 rounded-lg">
+                          <p className="font-medium text-orange-600 mb-1">💊 नियन्त्रण:</p>
+                          <p className="text-muted-foreground">{pest.control}</p>
+                        </div>
+
+                        <div className="p-3 bg-green-500/5 rounded-lg">
+                          <p className="font-medium text-green-600 mb-1">🌱 जैविक नियन्त्रण:</p>
+                          <p className="text-muted-foreground">{pest.biologicalControl.join(', ')}</p>
+                        </div>
+                        
+                        <div>
+                          <p className="font-medium text-success mb-1">🛡️ रोकथाम:</p>
+                          <ul className="text-muted-foreground space-y-1">
+                            {pest.prevention.map((p, i) => (
+                              <li key={i}>✓ {p}</li>
+                            ))}
+                          </ul>
+                        </div>
+                      </div>
+                    </motion.div>
+                  ))}
+                </div>
+              )}
             </div>
           )}
 
           {!selectedCrop && (
             <div className="text-center py-8 text-muted-foreground">
               <BookOpen className="w-12 h-12 mx-auto mb-3 opacity-50" />
-              <p>बाली छानेर रोगहरूको जानकारी हेर्नुहोस्</p>
+              <p>बाली छानेर रोग र कीराहरूको जानकारी हेर्नुहोस्</p>
             </div>
           )}
         </TabsContent>

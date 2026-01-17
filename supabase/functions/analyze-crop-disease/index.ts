@@ -5,17 +5,31 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-const DISEASE_ANALYSIS_PROMPT = `You are an expert plant pathologist specializing in Indian crops. Analyze the provided crop image to identify any diseases, pests, or nutrient deficiencies.
+const DISEASE_ANALYSIS_PROMPT = `You are an expert plant pathologist and entomologist specializing in Nepali/South Asian crops. Analyze the provided crop image to identify any diseases, pests, insects, or nutrient deficiencies.
+
+IMPORTANT: Identify the PRIMARY issue type:
+- "disease" - fungal, bacterial, viral infections
+- "pest" - insects like aphids, caterpillars, beetles, borers, mites
+- "deficiency" - nutrient deficiencies (nitrogen, potassium, etc.)
+- "healthy" - if the crop appears healthy
 
 Provide your analysis as a JSON object with this structure:
 {
   "isHealthy": boolean,
-  "detectedIssue": "Name of disease/pest/deficiency or 'Healthy'",
+  "issueType": "disease" | "pest" | "deficiency" | "healthy",
+  "detectedIssue": "Name of disease/pest/deficiency in local language if possible",
+  "detectedIssueEnglish": "English name for reference",
   "confidence": 0.0-1.0,
-  "severity": "mild" | "moderate" | "severe" | null,
+  "severity": "low" | "medium" | "high" | null,
   "affectedPart": "leaves/stem/fruit/roots/whole plant",
-  "symptoms": ["symptom1", "symptom2"],
+  "symptoms": ["symptom1 in Nepali", "symptom2 in Nepali"],
   "causes": ["cause1", "cause2"],
+  "pestInfo": {
+    "scientificName": "Scientific name if pest",
+    "lifecycle": "Brief lifecycle description",
+    "activeSeasons": ["monsoon", "summer", etc.],
+    "hostCrops": ["rice", "wheat", etc.]
+  },
   "immediateActions": [
     {
       "action": "What to do immediately",
@@ -25,20 +39,26 @@ Provide your analysis as a JSON object with this structure:
   ],
   "organicTreatment": {
     "name": "Organic solution name",
-    "preparation": "How to prepare",
+    "preparation": "How to prepare (neem, garlic, etc.)",
     "application": "How to apply"
   },
   "chemicalTreatment": {
-    "name": "Chemical/product name",
+    "name": "Chemical/product name available in Nepal",
     "dosage": "Recommended dosage",
     "precautions": ["safety tip1", "safety tip2"]
   },
-  "preventiveMeasures": ["tip1", "tip2", "tip3"],
-  "whenToSeekHelp": "When farmer should consult local agricultural officer",
-  "estimatedRecoveryTime": "X days/weeks if treated properly"
+  "biologicalControl": {
+    "naturalEnemies": ["ladybugs", "parasitic wasps", etc.],
+    "trapCrops": ["marigold", etc.],
+    "culturalPractices": ["crop rotation", etc.]
+  },
+  "preventiveMeasures": ["tip1 in Nepali", "tip2 in Nepali", "tip3 in Nepali"],
+  "whenToSeekHelp": "When farmer should consult local कृषि प्राविधिक",
+  "estimatedRecoveryTime": "X days/weeks if treated properly",
+  "economicThreshold": "When pest damage justifies treatment cost"
 }
 
-Be practical and specific to Indian farming conditions. Suggest locally available treatments.`;
+Be practical and specific to Nepali farming conditions. Suggest locally available treatments. Provide responses in Nepali when language=ne.`;
 
 serve(async (req) => {
   if (req.method === 'OPTIONS') {

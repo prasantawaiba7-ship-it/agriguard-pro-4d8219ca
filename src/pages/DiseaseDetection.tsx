@@ -13,10 +13,10 @@ export default function DiseaseDetection() {
   return (
     <>
       <Helmet>
-        <title>बाली रोग पहिचान | KrishiMitra Nepal</title>
+        <title>बाली रोग र कीरा पहिचान | KrishiMitra Nepal</title>
         <meta 
           name="description" 
-          content="AI-powered crop disease detection system in Nepali. Upload plant photos for instant disease diagnosis, treatment recommendations, and prevention tips." 
+          content="AI-powered crop disease and pest identification system in Nepali. Upload plant photos for instant diagnosis of diseases, pests, insects, treatment recommendations, and prevention tips." 
         />
       </Helmet>
 
@@ -26,11 +26,11 @@ export default function DiseaseDetection() {
         <main className="container mx-auto px-4 py-8 max-w-4xl">
           <div className="text-center mb-8">
             <h1 className="text-3xl md:text-4xl font-bold mb-3">
-              🌿 बाली रोग पहिचान प्रणाली
+              🌿 बाली रोग र कीरा पहिचान प्रणाली
             </h1>
             <p className="text-muted-foreground max-w-2xl mx-auto">
-              फोटो अपलोड गरेर तपाईंको बालीको रोग पहिचान गर्नुहोस्। 
-              AI ले रोगको निदान, उपचार र रोकथामका उपायहरू सुझाव दिनेछ।
+              फोटो अपलोड गरेर तपाईंको बालीको रोग वा कीरा पहिचान गर्नुहोस्। 
+              AI ले रोग/कीराको निदान, जैविक र रासायनिक उपचार, र रोकथामका उपायहरू सुझाव दिनेछ।
             </p>
           </div>
 
@@ -54,10 +54,10 @@ export default function DiseaseDetection() {
             <div className="grid md:grid-cols-5 gap-4">
               {[
                 { step: '१', title: 'बाली छान्नुहोस्', desc: 'ड्रपडाउनबाट बालीको प्रकार छान्नुहोस्' },
-                { step: '२', title: 'फोटो लिनुहोस्', desc: 'प्रभावित पात/फलको नजिकबाट फोटो' },
+                { step: '२', title: 'फोटो लिनुहोस्', desc: 'प्रभावित पात/फल/कीराको नजिकबाट फोटो' },
                 { step: '३', title: 'अपलोड गर्नुहोस्', desc: 'क्यामेरा वा गेलेरीबाट फोटो अपलोड' },
-                { step: '४', title: 'विश्लेषण गर्नुहोस्', desc: '"विश्लेषण गर्नुहोस्" बटन थिच्नुहोस्' },
-                { step: '५', title: 'रिपोर्ट डाउनलोड', desc: 'PDF रिपोर्ट डाउनलोड गर्नुहोस्' }
+                { step: '४', title: 'विश्लेषण गर्नुहोस्', desc: 'AI ले रोग/कीरा पहिचान गर्नेछ' },
+                { step: '५', title: 'उपचार पाउनुहोस्', desc: 'जैविक र रासायनिक उपचार विधि' }
               ].map((item, i) => (
                 <div key={i} className="text-center">
                   <div className="w-10 h-10 mx-auto mb-2 rounded-full bg-primary text-primary-foreground flex items-center justify-center font-bold">
@@ -67,6 +67,18 @@ export default function DiseaseDetection() {
                   <p className="text-xs text-muted-foreground">{item.desc}</p>
                 </div>
               ))}
+            </div>
+
+            {/* Pest identification tips */}
+            <div className="mt-6 p-4 bg-orange-500/10 rounded-xl border border-orange-500/20">
+              <h3 className="font-medium mb-2 flex items-center gap-2">
+                🐛 कीरा पहिचानको लागि सुझावहरू:
+              </h3>
+              <ul className="text-sm text-muted-foreground space-y-1">
+                <li>• कीराको नजिकबाट स्पष्ट फोटो लिनुहोस्</li>
+                <li>• क्षति भएको पात वा फलको फोटो राख्नुहोस्</li>
+                <li>• सकेसम्म दिनको उज्यालोमा फोटो खिच्नुहोस्</li>
+              </ul>
             </div>
           </div>
         </main>
