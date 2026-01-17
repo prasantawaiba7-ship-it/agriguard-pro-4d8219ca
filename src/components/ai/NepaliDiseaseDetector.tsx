@@ -1,9 +1,10 @@
-import { useState, useRef, useCallback } from 'react';
+import { useState, useRef, useCallback, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   Camera, Upload, X, Loader2, AlertTriangle, CheckCircle2, 
   Download, Leaf, Bug, Shield, Pill, BookOpen, ChevronDown,
-  Droplets, ThermometerSun, Wind, Mic, MicOff
+  Droplets, ThermometerSun, Wind, Mic, MicOff, Share2, 
+  MessageCircle, Phone, History, Calendar
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -14,6 +15,14 @@ import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
 import { useTextToSpeech } from '@/hooks/useTextToSpeech';
 import { useVoiceInput } from '@/hooks/useVoiceInput';
+import { useAuth } from '@/hooks/useAuth';
+import { 
+  useDiseaseHistory, 
+  useSaveDiseaseDetection, 
+  generateShareText, 
+  shareViaWhatsApp, 
+  shareViaSMS 
+} from '@/hooks/useDiseaseDetection';
 
 // Nepali crop types
 const CROP_TYPES = [
@@ -181,10 +190,16 @@ export function NepaliDiseaseDetector() {
   const [result, setResult] = useState<AnalysisResult | null>(null);
   const [activeTab, setActiveTab] = useState('detect');
   const [symptomDescription, setSymptomDescription] = useState('');
+  const [selectedHistoryItem, setSelectedHistoryItem] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const cameraInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
   const { speak } = useTextToSpeech({ language: 'ne' });
+  const { user } = useAuth();
+  
+  // Database hooks
+  const { data: diseaseHistory, isLoading: historyLoading } = useDiseaseHistory();
+  const saveDetection = useSaveDiseaseDetection();
 
   // Voice input for symptom description
   const { 
@@ -321,6 +336,19 @@ export function NepaliDiseaseDetector() {
       };
 
       setResult(analysisResult);
+
+      // Save to database if user is logged in
+      if (user && image && !analysisResult.isHealthy) {
+        saveDetection.mutate({
+          imageUrl: image.substring(0, 500), // Store truncated data URL or use storage
+          detectedDisease: analysisResult.detectedIssue,
+          severity: analysisResult.severity,
+          confidence: analysisResult.confidence,
+          treatment: analysisResult.treatment,
+          organicTreatment: analysisResult.organicTreatment,
+          prevention: analysisResult.prevention,
+        });
+      }
 
       // Speak the result
       const speechText = analysisResult.isHealthy 
@@ -483,13 +511,36 @@ export function NepaliDiseaseDetector() {
     }
   };
 
-  const severityColors = {
+  // Share functions
+  const handleShareWhatsApp = () => {
+    if (!result) return;
+    const text = generateShareText({
+      detectedDisease: result.detectedIssue,
+      severity: result.severity,
+      treatment: result.treatment,
+      prevention: result.prevention,
+    });
+    shareViaWhatsApp(text);
+  };
+
+  const handleShareSMS = () => {
+    if (!result) return;
+    const text = generateShareText({
+      detectedDisease: result.detectedIssue,
+      severity: result.severity,
+      treatment: result.treatment,
+      prevention: result.prevention,
+    });
+    shareViaSMS(text);
+  };
+
+  const severityColors: Record<string, string> = {
     low: 'bg-success/10 text-success border-success/20',
     medium: 'bg-warning/10 text-warning border-warning/20',
     high: 'bg-destructive/10 text-destructive border-destructive/20'
   };
 
-  const severityLabels = {
+  const severityLabels: Record<string, string> = {
     low: 'सामान्य',
     medium: 'मध्यम',
     high: 'गम्भीर'
@@ -505,18 +556,26 @@ export function NepaliDiseaseDetector() {
       </CardHeader>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="grid w-full grid-cols-3 m-4 max-w-[calc(100%-2rem)]">
-          <TabsTrigger value="detect" className="flex items-center gap-1">
+        <TabsList className="grid w-full grid-cols-4 m-4 max-w-[calc(100%-2rem)]">
+          <TabsTrigger value="detect" className="flex items-center gap-1 text-xs sm:text-sm">
             <Camera className="w-4 h-4" />
-            रोग पहिचान
+            <span className="hidden sm:inline">रोग पहिचान</span>
+            <span className="sm:hidden">पहिचान</span>
           </TabsTrigger>
-          <TabsTrigger value="database" className="flex items-center gap-1">
+          <TabsTrigger value="history" className="flex items-center gap-1 text-xs sm:text-sm">
+            <History className="w-4 h-4" />
+            <span className="hidden sm:inline">इतिहास</span>
+            <span className="sm:hidden">इतिहास</span>
+          </TabsTrigger>
+          <TabsTrigger value="database" className="flex items-center gap-1 text-xs sm:text-sm">
             <BookOpen className="w-4 h-4" />
-            रोग पुस्तिका
+            <span className="hidden sm:inline">रोग पुस्तिका</span>
+            <span className="sm:hidden">पुस्तिका</span>
           </TabsTrigger>
-          <TabsTrigger value="tips" className="flex items-center gap-1">
+          <TabsTrigger value="tips" className="flex items-center gap-1 text-xs sm:text-sm">
             <Shield className="w-4 h-4" />
-            रोकथाम
+            <span className="hidden sm:inline">रोकथाम</span>
+            <span className="sm:hidden">रोकथाम</span>
           </TabsTrigger>
         </TabsList>
 
@@ -803,25 +862,141 @@ export function NepaliDiseaseDetector() {
                     )}
 
                     {/* Actions */}
-                    <div className="flex gap-3">
-                      <Button onClick={downloadReport} variant="outline" className="flex-1">
-                        <Download className="w-4 h-4 mr-2" />
-                        रिपोर्ट डाउनलोड (PDF)
-                      </Button>
-                      <Button 
-                        variant="secondary" 
-                        className="flex-1"
-                        onClick={() => {
-                          setImage(null);
-                          setResult(null);
-                        }}
-                      >
-                        नयाँ विश्लेषण
-                      </Button>
+                    <div className="space-y-3">
+                      {/* Share buttons */}
+                      <div className="flex gap-2">
+                        <Button 
+                          onClick={handleShareWhatsApp} 
+                          variant="outline" 
+                          className="flex-1 bg-[#25D366]/10 hover:bg-[#25D366]/20 border-[#25D366]/30"
+                        >
+                          <MessageCircle className="w-4 h-4 mr-2 text-[#25D366]" />
+                          WhatsApp
+                        </Button>
+                        <Button 
+                          onClick={handleShareSMS} 
+                          variant="outline" 
+                          className="flex-1"
+                        >
+                          <Phone className="w-4 h-4 mr-2" />
+                          SMS
+                        </Button>
+                      </div>
+                      
+                      {/* Download and new analysis */}
+                      <div className="flex gap-3">
+                        <Button onClick={downloadReport} variant="outline" className="flex-1">
+                          <Download className="w-4 h-4 mr-2" />
+                          PDF
+                        </Button>
+                        <Button 
+                          variant="secondary" 
+                          className="flex-1"
+                          onClick={() => {
+                            setImage(null);
+                            setResult(null);
+                            setSymptomDescription('');
+                          }}
+                        >
+                          नयाँ विश्लेषण
+                        </Button>
+                      </div>
                     </div>
                   </motion.div>
                 )}
               </AnimatePresence>
+            </div>
+          )}
+        </TabsContent>
+
+        {/* History Tab */}
+        <TabsContent value="history" className="p-4 pt-0 space-y-4">
+          {!user ? (
+            <div className="text-center py-8 text-muted-foreground">
+              <History className="w-12 h-12 mx-auto mb-3 opacity-50" />
+              <p className="mb-2">इतिहास हेर्न लगइन गर्नुहोस्</p>
+              <p className="text-xs">तपाईंको विश्लेषण इतिहास सुरक्षित गर्न खाता चाहिन्छ</p>
+            </div>
+          ) : historyLoading ? (
+            <div className="flex justify-center py-8">
+              <Loader2 className="w-8 h-8 animate-spin text-primary" />
+            </div>
+          ) : diseaseHistory && diseaseHistory.length > 0 ? (
+            <div className="space-y-3">
+              <p className="text-sm text-muted-foreground">
+                तपाईंको विगतका {diseaseHistory.length} विश्लेषणहरू:
+              </p>
+              {diseaseHistory.map((item) => (
+                <motion.div
+                  key={item.id}
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="p-4 bg-card rounded-xl border border-border/50 cursor-pointer hover:shadow-md transition-shadow"
+                  onClick={() => setSelectedHistoryItem(selectedHistoryItem === item.id ? null : item.id)}
+                >
+                  <div className="flex items-start justify-between">
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2 mb-1">
+                        <Bug className="w-4 h-4 text-destructive" />
+                        <span className="font-medium">{item.detected_disease || 'रोग पहिचान'}</span>
+                      </div>
+                      <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                        <Calendar className="w-3 h-3" />
+                        {new Date(item.analyzed_at).toLocaleDateString('ne-NP')}
+                      </div>
+                    </div>
+                    {item.severity && (
+                      <Badge className={severityColors[item.severity] || severityColors.medium}>
+                        {severityLabels[item.severity] || item.severity}
+                      </Badge>
+                    )}
+                  </div>
+                  
+                  {/* Expanded details */}
+                  <AnimatePresence>
+                    {selectedHistoryItem === item.id && (
+                      <motion.div
+                        initial={{ opacity: 0, height: 0 }}
+                        animate={{ opacity: 1, height: 'auto' }}
+                        exit={{ opacity: 0, height: 0 }}
+                        className="mt-4 pt-4 border-t border-border/50 space-y-3"
+                      >
+                        {item.treatment_recommendations && (
+                          <div>
+                            <p className="text-xs font-medium mb-1">💊 उपचार:</p>
+                            <p className="text-xs text-muted-foreground">
+                              {typeof item.treatment_recommendations === 'object' 
+                                ? (item.treatment_recommendations as any).chemical || 'N/A'
+                                : String(item.treatment_recommendations)}
+                            </p>
+                          </div>
+                        )}
+                        {item.prevention_tips && item.prevention_tips.length > 0 && (
+                          <div>
+                            <p className="text-xs font-medium mb-1">🛡️ रोकथाम:</p>
+                            <ul className="text-xs text-muted-foreground space-y-1">
+                              {item.prevention_tips.slice(0, 3).map((tip, i) => (
+                                <li key={i}>• {tip}</li>
+                              ))}
+                            </ul>
+                          </div>
+                        )}
+                        {item.confidence_score && (
+                          <p className="text-xs text-muted-foreground">
+                            विश्वास: {Math.round(item.confidence_score * 100)}%
+                          </p>
+                        )}
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </motion.div>
+              ))}
+            </div>
+          ) : (
+            <div className="text-center py-8 text-muted-foreground">
+              <History className="w-12 h-12 mx-auto mb-3 opacity-50" />
+              <p>कुनै विश्लेषण इतिहास छैन</p>
+              <p className="text-xs mt-1">रोग पहिचान गर्दा स्वतः सुरक्षित हुनेछ</p>
             </div>
           )}
         </TabsContent>
