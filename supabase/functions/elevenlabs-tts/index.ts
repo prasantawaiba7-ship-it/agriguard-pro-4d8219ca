@@ -11,7 +11,7 @@ serve(async (req) => {
   }
 
   try {
-    const { text, voiceId } = await req.json();
+    const { text, voiceId, language } = await req.json();
     const ELEVENLABS_API_KEY = Deno.env.get("ELEVENLABS_API_KEY");
 
     if (!ELEVENLABS_API_KEY) {
@@ -28,10 +28,21 @@ serve(async (req) => {
       );
     }
 
-    // Default to a natural female voice (Sarah - warm and natural)
-    const selectedVoiceId = voiceId || "EXAVITQu4vr4xnSDxMaL";
+    // Voice selection based on language
+    // For Nepali/Hindi: Use Lily (warm multilingual female voice that handles Devanagari well)
+    // For English: Use Sarah (natural female voice)
+    let selectedVoiceId = voiceId;
+    if (!selectedVoiceId) {
+      if (language === 'ne' || language === 'hi') {
+        // Lily - works well with Nepali/Hindi (multilingual)
+        selectedVoiceId = "pFZP5JQG7iQjIQuC4Bku";
+      } else {
+        // Sarah - warm English voice
+        selectedVoiceId = "EXAVITQu4vr4xnSDxMaL";
+      }
+    }
 
-    console.log(`Generating TTS for text length: ${text.length}, voice: ${selectedVoiceId}`);
+    console.log(`Generating TTS for text length: ${text.length}, voice: ${selectedVoiceId}, language: ${language || 'auto'}`);
 
     const response = await fetch(
       `https://api.elevenlabs.io/v1/text-to-speech/${selectedVoiceId}?output_format=mp3_44100_128`,
@@ -43,13 +54,13 @@ serve(async (req) => {
         },
         body: JSON.stringify({
           text,
-          model_id: "eleven_multilingual_v2",
+          model_id: "eleven_multilingual_v2", // Supports 29 languages including Nepali
           voice_settings: {
-            stability: 0.5,
+            stability: 0.6, // Slightly higher for clearer Nepali pronunciation
             similarity_boost: 0.75,
-            style: 0.3,
+            style: 0.2, // Lower for more natural speech
             use_speaker_boost: true,
-            speed: 1.0,
+            speed: 0.95, // Slightly slower for clearer Nepali
           },
         }),
       }

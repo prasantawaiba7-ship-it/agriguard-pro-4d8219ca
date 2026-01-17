@@ -285,8 +285,8 @@ export function useTextToSpeech(options: UseTextToSpeechOptions = {}) {
           },
           body: JSON.stringify({
             text: textToSpeak,
-            // Sarah (female)
-            voiceId: "EXAVITQu4vr4xnSDxMaL",
+            language: language, // Pass language for voice selection (ne, hi, en)
+            // Voice will be auto-selected based on language in the edge function
           }),
           signal: abortControllerRef.current.signal,
         });
