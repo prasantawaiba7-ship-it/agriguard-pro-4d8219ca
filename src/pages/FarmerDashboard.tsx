@@ -12,6 +12,7 @@ import { AIAssistant } from "@/components/ai/AIAssistant";
 import { KrishiMitraBar } from "@/components/ai/KrishiMitraBar";
 import { OfflineDataViewer } from "@/components/farmer/OfflineDataViewer";
 import CropCalendar from "@/components/farmer/CropCalendar";
+import WeatherPlantingAlerts from "@/components/farmer/WeatherPlantingAlerts";
 import { LanguageSelector } from "@/components/farmer/LanguageSelector";
 import { useAuth } from "@/hooks/useAuth";
 import { useLanguage } from "@/hooks/useLanguage";
@@ -36,6 +37,7 @@ import {
   Sparkles,
   WifiOff,
   Bug,
+  CloudSun,
 } from "lucide-react";
 import { Database } from "@/integrations/supabase/types";
 
@@ -65,7 +67,7 @@ const cropStages: { value: CropStage; label: string }[] = [
 ];
 
 const FarmerDashboard = () => {
-  const [activeTab, setActiveTab] = useState<"plots" | "capture" | "history" | "offline" | "calendar">("plots");
+  const [activeTab, setActiveTab] = useState<"plots" | "capture" | "history" | "offline" | "calendar" | "weather">("plots");
   const [isAddPlotOpen, setIsAddPlotOpen] = useState(false);
   const [selectedPlot, setSelectedPlot] = useState<string>("");
   const [selectedStage, setSelectedStage] = useState<CropStage>("vegetative");
@@ -283,6 +285,7 @@ const FarmerDashboard = () => {
               {[
                 { id: "plots", label: t('myPlots'), icon: MapPin },
                 { id: "capture", label: "Capture", icon: Camera },
+                { id: "weather", label: "मौसम सुझाव", icon: CloudSun },
                 { id: "calendar", label: "बाली पात्रो", icon: Calendar },
                 { id: "history", label: t('history'), icon: History },
                 { id: "offline", label: "Offline", icon: WifiOff },
@@ -629,6 +632,12 @@ const FarmerDashboard = () => {
                         </CardContent>
                       </Card>
                     )}
+                  </div>
+                )}
+
+                {activeTab === "weather" && (
+                  <div className="space-y-4">
+                    <WeatherPlantingAlerts />
                   </div>
                 )}
 
