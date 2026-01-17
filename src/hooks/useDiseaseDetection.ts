@@ -98,6 +98,30 @@ export function useSaveDiseaseDetection() {
         .single();
 
       if (error) throw error;
+
+      // Trigger outbreak check in background
+      try {
+        await fetch(
+          `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/check-outbreak`,
+          {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+            },
+            body: JSON.stringify({
+              diseaseDetection: {
+                detected_disease: detection.detectedDisease,
+                farmer_id: profile.id,
+                severity: detection.severity,
+              },
+            }),
+          }
+        );
+      } catch (outbreakError) {
+        console.warn('Outbreak check failed:', outbreakError);
+      }
+
       return data;
     },
     onSuccess: () => {
