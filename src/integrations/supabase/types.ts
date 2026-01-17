@@ -58,6 +58,8 @@ export type Database = {
           id: string
           is_active: boolean | null
           is_available: boolean | null
+          latitude: number | null
+          longitude: number | null
           municipality: string | null
           name: string
           name_ne: string | null
@@ -83,6 +85,8 @@ export type Database = {
           id?: string
           is_active?: boolean | null
           is_available?: boolean | null
+          latitude?: number | null
+          longitude?: number | null
           municipality?: string | null
           name: string
           name_ne?: string | null
@@ -108,6 +112,8 @@ export type Database = {
           id?: string
           is_active?: boolean | null
           is_available?: boolean | null
+          latitude?: number | null
+          longitude?: number | null
           municipality?: string | null
           name?: string
           name_ne?: string | null
@@ -732,6 +738,63 @@ export type Database = {
           state?: string
         }
         Relationships: []
+      }
+      officer_appointments: {
+        Row: {
+          appointment_date: string
+          appointment_time: string
+          created_at: string
+          farmer_id: string
+          farmer_phone: string | null
+          id: string
+          notes: string | null
+          officer_id: string
+          purpose: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          appointment_date: string
+          appointment_time: string
+          created_at?: string
+          farmer_id: string
+          farmer_phone?: string | null
+          id?: string
+          notes?: string | null
+          officer_id: string
+          purpose: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          appointment_date?: string
+          appointment_time?: string
+          created_at?: string
+          farmer_id?: string
+          farmer_phone?: string | null
+          id?: string
+          notes?: string | null
+          officer_id?: string
+          purpose?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "officer_appointments_farmer_id_fkey"
+            columns: ["farmer_id"]
+            isOneToOne: false
+            referencedRelation: "farmer_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "officer_appointments_officer_id_fkey"
+            columns: ["officer_id"]
+            isOneToOne: false
+            referencedRelation: "agricultural_officers"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       pdf_reports: {
         Row: {

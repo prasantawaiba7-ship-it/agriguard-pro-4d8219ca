@@ -47,6 +47,7 @@ import { ActivityLogsViewer } from "@/components/admin/ActivityLogsViewer";
 import { UserManagement } from "@/components/admin/UserManagement";
 import { DiseaseAnalyticsDashboard } from "@/components/admin/DiseaseAnalyticsDashboard";
 import CropManager from "@/components/admin/CropManager";
+import { OfficerManager } from "@/components/admin/OfficerManager";
 
 interface FarmerProfile {
   id: string;
@@ -397,6 +398,10 @@ const AdminDashboard = () => {
                   <RefreshCw className="h-4 w-4" />
                   <span className="hidden sm:inline">Activity</span>
                 </TabsTrigger>
+                <TabsTrigger value="officers" className="flex items-center gap-2">
+                  <Users className="h-4 w-4" />
+                  <span className="hidden sm:inline">Officers</span>
+                </TabsTrigger>
               </TabsList>
 
               {/* Overview Tab */}
@@ -663,6 +668,10 @@ const AdminDashboard = () => {
               {/* Activity Tab */}
               <TabsContent value="activity">
                 <ActivityLogsViewer />
+              </TabsContent>
+
+              <TabsContent value="officers">
+                <OfficerManager />
               </TabsContent>
             </Tabs>
           </div>

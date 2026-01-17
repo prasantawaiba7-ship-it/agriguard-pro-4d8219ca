@@ -1,9 +1,9 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   Phone, Mail, MapPin, Clock, Search, Filter, User, 
   Building2, ChevronDown, CheckCircle, X, PhoneCall,
-  MessageCircle, Briefcase
+  MessageCircle, Briefcase, Navigation, Calendar, Loader2
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -13,6 +13,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Skeleton } from '@/components/ui/skeleton';
+import { useAuth } from '@/hooks/useAuth';
+import { AppointmentBooking, FarmerAppointments } from './AppointmentBooking';
+import { toast } from 'sonner';
 
 interface AgriculturalOfficer {
   id: string;
@@ -33,6 +36,8 @@ interface AgriculturalOfficer {
   working_hours: string | null;
   is_available: boolean | null;
   profile_image_url: string | null;
+  latitude: number | null;
+  longitude: number | null;
 }
 
 // Nepal provinces
@@ -47,10 +52,28 @@ const PROVINCES = [
   { value: 'Sudurpashchim', label: 'सुदूरपश्चिम प्रदेश' },
 ];
 
+// Calculate distance between two coordinates using Haversine formula
+function calculateDistance(lat1: number, lon1: number, lat2: number, lon2: number): number {
+  const R = 6371; // Earth's radius in km
+  const dLat = (lat2 - lat1) * Math.PI / 180;
+  const dLon = (lon2 - lon1) * Math.PI / 180;
+  const a = 
+    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+    Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+    Math.sin(dLon / 2) * Math.sin(dLon / 2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  return R * c;
+}
+
 export function AgriculturalOfficerDirectory() {
+  const { user } = useAuth();
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedProvince, setSelectedProvince] = useState('all');
   const [selectedOfficer, setSelectedOfficer] = useState<AgriculturalOfficer | null>(null);
+  const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null);
+  const [isLocating, setIsLocating] = useState(false);
+  const [sortByDistance, setSortByDistance] = useState(false);
+  const [bookingOfficer, setBookingOfficer] = useState<AgriculturalOfficer | null>(null);
 
   // Fetch officers from database
   const { data: officers, isLoading } = useQuery({
@@ -67,11 +90,47 @@ export function AgriculturalOfficerDirectory() {
     }
   });
 
-  // Filter officers
+  // Get user's location
+  const getUserLocation = () => {
+    if (!navigator.geolocation) {
+      toast.error('तपाईंको ब्राउजरले स्थान सेवा समर्थन गर्दैन');
+      return;
+    }
+
+    setIsLocating(true);
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        setUserLocation({
+          lat: position.coords.latitude,
+          lng: position.coords.longitude
+        });
+        setSortByDistance(true);
+        setIsLocating(false);
+        toast.success('स्थान प्राप्त भयो! नजिकका अधिकारीहरू देखाइँदै');
+      },
+      (error) => {
+        setIsLocating(false);
+        switch (error.code) {
+          case error.PERMISSION_DENIED:
+            toast.error('स्थान अनुमति अस्वीकार गरियो');
+            break;
+          case error.POSITION_UNAVAILABLE:
+            toast.error('स्थान जानकारी उपलब्ध छैन');
+            break;
+          case error.TIMEOUT:
+            toast.error('स्थान अनुरोध समय सकियो');
+            break;
+        }
+      },
+      { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+    );
+  };
+
+  // Filter and sort officers
   const filteredOfficers = useMemo(() => {
     if (!officers) return [];
     
-    return officers.filter(officer => {
+    let filtered = officers.filter(officer => {
       const matchesSearch = 
         searchTerm === '' ||
         officer.name_ne?.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -86,7 +145,19 @@ export function AgriculturalOfficerDirectory() {
       
       return matchesSearch && matchesProvince;
     });
-  }, [officers, searchTerm, selectedProvince]);
+
+    // Sort by distance if user location is available
+    if (sortByDistance && userLocation) {
+      filtered = filtered.map(officer => ({
+        ...officer,
+        distance: officer.latitude && officer.longitude
+          ? calculateDistance(userLocation.lat, userLocation.lng, officer.latitude, officer.longitude)
+          : Infinity
+      })).sort((a, b) => (a as any).distance - (b as any).distance);
+    }
+
+    return filtered;
+  }, [officers, searchTerm, selectedProvince, userLocation, sortByDistance]);
 
   // Get unique districts for the selected province
   const availableDistricts = useMemo(() => {
@@ -112,6 +183,15 @@ export function AgriculturalOfficerDirectory() {
     window.location.href = `mailto:${email}`;
   };
 
+  const getDistanceText = (officer: AgriculturalOfficer) => {
+    if (!userLocation || !officer.latitude || !officer.longitude) return null;
+    const distance = calculateDistance(userLocation.lat, userLocation.lng, officer.latitude, officer.longitude);
+    if (distance < 1) {
+      return `${Math.round(distance * 1000)} मीटर`;
+    }
+    return `${distance.toFixed(1)} कि.मी.`;
+  };
+
   return (
     <Card className="border-border/50 overflow-hidden">
       <CardHeader className="bg-gradient-to-r from-blue-500/10 to-primary/10">
@@ -125,6 +205,9 @@ export function AgriculturalOfficerDirectory() {
       </CardHeader>
 
       <CardContent className="p-4 space-y-4">
+        {/* Farmer's Appointments */}
+        {user && <FarmerAppointments />}
+
         {/* Search and Filter */}
         <div className="flex flex-col sm:flex-row gap-3">
           <div className="relative flex-1">
@@ -149,6 +232,37 @@ export function AgriculturalOfficerDirectory() {
               ))}
             </SelectContent>
           </Select>
+        </div>
+
+        {/* Location Button */}
+        <div className="flex items-center gap-3">
+          <Button
+            variant={sortByDistance ? "default" : "outline"}
+            size="sm"
+            onClick={getUserLocation}
+            disabled={isLocating}
+            className="gap-2"
+          >
+            {isLocating ? (
+              <Loader2 className="w-4 h-4 animate-spin" />
+            ) : (
+              <Navigation className="w-4 h-4" />
+            )}
+            {sortByDistance ? 'नजिककै देखाउँदै' : 'नजिकको खोज्नुहोस्'}
+          </Button>
+          {sortByDistance && (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => {
+                setSortByDistance(false);
+                setUserLocation(null);
+              }}
+            >
+              <X className="w-4 h-4 mr-1" />
+              रिसेट
+            </Button>
+          )}
         </div>
 
         {/* Results count */}
@@ -228,12 +342,20 @@ export function AgriculturalOfficerDirectory() {
                             {officer.designation_ne || officer.designation}
                           </p>
                         </div>
-                        {officer.is_available && (
-                          <Badge variant="outline" className="bg-success/10 text-success border-success/20 flex-shrink-0">
-                            <CheckCircle className="w-3 h-3 mr-1" />
-                            उपलब्ध
-                          </Badge>
-                        )}
+                        <div className="flex flex-col items-end gap-1">
+                          {officer.is_available && (
+                            <Badge variant="outline" className="bg-success/10 text-success border-success/20 flex-shrink-0">
+                              <CheckCircle className="w-3 h-3 mr-1" />
+                              उपलब्ध
+                            </Badge>
+                          )}
+                          {getDistanceText(officer) && (
+                            <Badge variant="secondary" className="text-xs">
+                              <Navigation className="w-3 h-3 mr-1" />
+                              {getDistanceText(officer)}
+                            </Badge>
+                          )}
+                        </div>
                       </div>
 
                       <div className="mt-2 flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
@@ -356,6 +478,20 @@ export function AgriculturalOfficerDirectory() {
                                 इमेल
                               </Button>
                             )}
+                            {user && (
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setBookingOfficer(officer);
+                                }}
+                                className="gap-2 bg-primary/10 hover:bg-primary/20"
+                              >
+                                <Calendar className="w-4 h-4 text-primary" />
+                                भेटघाट तय गर्नुहोस्
+                              </Button>
+                            )}
                           </div>
 
                           {/* Contact Info */}
@@ -400,7 +536,7 @@ export function AgriculturalOfficerDirectory() {
                     className="mt-4"
                     onClick={() => setSearchTerm('')}
                   >
-                    <X className="w-4 h-4 mr-2" />
+                    <X className="w-4 h-4 mr-1" />
                     खोज हटाउनुहोस्
                   </Button>
                 )}
@@ -408,20 +544,16 @@ export function AgriculturalOfficerDirectory() {
             )}
           </div>
         )}
-
-        {/* Help Section */}
-        <div className="mt-6 p-4 bg-blue-500/10 rounded-xl border border-blue-500/20">
-          <h4 className="font-semibold mb-2 flex items-center gap-2">
-            💡 सहायता कसरी लिने?
-          </h4>
-          <ul className="text-sm text-muted-foreground space-y-1">
-            <li>• आफ्नो जिल्लाको कृषि प्राविधिक खोज्नुहोस्</li>
-            <li>• विशेषज्ञता अनुसार छान्न सक्नुहुन्छ (रोग, कीट, बाली)</li>
-            <li>• कार्यालय समयमा फोन वा भ्रमण गर्नुहोस्</li>
-            <li>• गम्भीर समस्यामा तुरुन्त सम्पर्क गर्नुहोस्</li>
-          </ul>
-        </div>
       </CardContent>
+
+      {/* Appointment Booking Dialog */}
+      {bookingOfficer && (
+        <AppointmentBooking
+          officer={bookingOfficer}
+          isOpen={!!bookingOfficer}
+          onClose={() => setBookingOfficer(null)}
+        />
+      )}
     </Card>
   );
 }
