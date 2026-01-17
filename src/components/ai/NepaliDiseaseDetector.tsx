@@ -23,6 +23,7 @@ import {
   shareViaWhatsApp, 
   shareViaSMS 
 } from '@/hooks/useDiseaseDetection';
+import { uploadDiseaseImage } from '@/lib/uploadDiseaseImage';
 
 // Nepali crop types
 const CROP_TYPES = [
@@ -291,7 +292,21 @@ export function NepaliDiseaseDetector() {
     }
 
     setIsAnalyzing(true);
+    let uploadedImageUrl: string | null = null;
+    
     try {
+      // Upload image to storage first if user is logged in
+      if (user) {
+        try {
+          uploadedImageUrl = await uploadDiseaseImage(image, user.id);
+        } catch (uploadError) {
+          console.warn('Image upload failed, continuing with data URL:', uploadError);
+        }
+      }
+      
+      // Use uploaded URL or fallback to data URL for analysis
+      const imageForAnalysis = uploadedImageUrl || image;
+      
       const response = await fetch(
         `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/analyze-crop-disease`,
         {
@@ -301,7 +316,7 @@ export function NepaliDiseaseDetector() {
             Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
           },
           body: JSON.stringify({
-            imageUrl: image,
+            imageUrl: imageForAnalysis,
             cropType: selectedCrop,
             description: symptomDescription || undefined,
             language: 'ne'
@@ -337,10 +352,10 @@ export function NepaliDiseaseDetector() {
 
       setResult(analysisResult);
 
-      // Save to database if user is logged in
-      if (user && image && !analysisResult.isHealthy) {
+      // Save to database if user is logged in with the permanent storage URL
+      if (user && !analysisResult.isHealthy) {
         saveDetection.mutate({
-          imageUrl: image.substring(0, 500), // Store truncated data URL or use storage
+          imageUrl: uploadedImageUrl || image.substring(0, 500), // Use storage URL or truncated fallback
           detectedDisease: analysisResult.detectedIssue,
           severity: analysisResult.severity,
           confidence: analysisResult.confidence,
