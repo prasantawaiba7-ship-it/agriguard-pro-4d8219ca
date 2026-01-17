@@ -3,15 +3,17 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { 
   Camera, Upload, X, Loader2, AlertTriangle, CheckCircle2, 
   Download, Leaf, Bug, Shield, Pill, BookOpen, ChevronDown,
-  Droplets, ThermometerSun, Wind
+  Droplets, ThermometerSun, Wind, Mic, MicOff
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
 import { useTextToSpeech } from '@/hooks/useTextToSpeech';
+import { useVoiceInput } from '@/hooks/useVoiceInput';
 
 // Nepali crop types
 const CROP_TYPES = [
@@ -178,10 +180,47 @@ export function NepaliDiseaseDetector() {
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [result, setResult] = useState<AnalysisResult | null>(null);
   const [activeTab, setActiveTab] = useState('detect');
+  const [symptomDescription, setSymptomDescription] = useState('');
   const fileInputRef = useRef<HTMLInputElement>(null);
   const cameraInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
   const { speak } = useTextToSpeech({ language: 'ne' });
+
+  // Voice input for symptom description
+  const { 
+    isListening, 
+    isSupported: voiceSupported, 
+    transcript, 
+    startListening, 
+    stopListening,
+    resetTranscript 
+  } = useVoiceInput({
+    language: 'ne',
+    continuous: true,
+    onResult: (text) => {
+      setSymptomDescription(prev => prev ? `${prev} ${text}` : text);
+    },
+    onError: (error) => {
+      toast({
+        title: 'आवाज इनपुट त्रुटि',
+        description: error,
+        variant: 'destructive'
+      });
+    }
+  });
+
+  const toggleVoiceInput = () => {
+    if (isListening) {
+      stopListening();
+    } else {
+      resetTranscript();
+      startListening();
+      toast({
+        title: '🎤 बोल्न सुरु गर्नुहोस्',
+        description: 'लक्षणहरू नेपालीमा बोल्नुहोस्...'
+      });
+    }
+  };
 
   const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -249,6 +288,7 @@ export function NepaliDiseaseDetector() {
           body: JSON.stringify({
             imageUrl: image,
             cropType: selectedCrop,
+            description: symptomDescription || undefined,
             language: 'ne'
           }),
         }
@@ -497,6 +537,63 @@ export function NepaliDiseaseDetector() {
                 ))}
               </SelectContent>
             </Select>
+          </div>
+
+          {/* Voice Input for Symptom Description */}
+          <div className="space-y-2">
+            <div className="flex items-center justify-between">
+              <label className="text-sm font-medium">
+                🎤 लक्षण बर्णन गर्नुहोस् (ऐच्छिक):
+              </label>
+              {voiceSupported && (
+                <Button
+                  variant={isListening ? "destructive" : "outline"}
+                  size="sm"
+                  onClick={toggleVoiceInput}
+                  className="gap-2"
+                >
+                  {isListening ? (
+                    <>
+                      <MicOff className="w-4 h-4" />
+                      रोक्नुहोस्
+                    </>
+                  ) : (
+                    <>
+                      <Mic className="w-4 h-4" />
+                      बोल्नुहोस्
+                    </>
+                  )}
+                </Button>
+              )}
+            </div>
+            <div className="relative">
+              <Textarea
+                placeholder="उदाहरण: पातमा खैरो दाग देखिएको छ, पात पहेंलो भएको छ..."
+                value={symptomDescription || transcript}
+                onChange={(e) => setSymptomDescription(e.target.value)}
+                rows={3}
+                className={`resize-none ${isListening ? 'border-primary ring-2 ring-primary/20' : ''}`}
+              />
+              {isListening && (
+                <motion.div
+                  className="absolute top-2 right-2"
+                  animate={{ scale: [1, 1.2, 1] }}
+                  transition={{ repeat: Infinity, duration: 1 }}
+                >
+                  <div className="w-3 h-3 rounded-full bg-destructive" />
+                </motion.div>
+              )}
+            </div>
+            {isListening && transcript && (
+              <p className="text-xs text-muted-foreground">
+                सुन्दै: {transcript}
+              </p>
+            )}
+            {!voiceSupported && (
+              <p className="text-xs text-muted-foreground">
+                💡 आफ्नो ब्राउजरमा आवाज इनपुट उपलब्ध छैन
+              </p>
+            )}
           </div>
 
           {/* Image Upload Area */}

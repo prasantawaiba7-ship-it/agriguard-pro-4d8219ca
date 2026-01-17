@@ -34,6 +34,7 @@ import {
   User,
   Sparkles,
   WifiOff,
+  Bug,
 } from "lucide-react";
 import { Database } from "@/integrations/supabase/types";
 
@@ -247,6 +248,34 @@ const FarmerDashboard = () => {
                 </motion.div>
               ))}
             </div>
+
+            {/* Quick Access - Disease Detection */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.5 }}
+              className="mb-8"
+            >
+              <Card 
+                className="border-primary/20 bg-gradient-to-r from-primary/5 to-success/5 cursor-pointer hover:shadow-lg transition-all"
+                onClick={() => navigate('/disease-detection')}
+              >
+                <CardContent className="p-4 sm:p-6 flex items-center gap-4">
+                  <div className="w-14 h-14 rounded-xl bg-primary/10 flex items-center justify-center flex-shrink-0">
+                    <Bug className="w-7 h-7 text-primary" />
+                  </div>
+                  <div className="flex-1">
+                    <h3 className="font-semibold text-lg text-foreground">🌿 बाली रोग पहिचान</h3>
+                    <p className="text-sm text-muted-foreground">
+                      फोटो अपलोड गरेर तपाईंको बालीको रोग पहिचान गर्नुहोस्
+                    </p>
+                  </div>
+                  <Button variant="outline" size="sm" className="hidden sm:flex">
+                    Open →
+                  </Button>
+                </CardContent>
+              </Card>
+            </motion.div>
 
             {/* Tab Navigation */}
             <div className="flex gap-2 mb-6 overflow-x-auto pb-2 scrollbar-hide">

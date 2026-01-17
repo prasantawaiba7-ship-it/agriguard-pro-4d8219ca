@@ -14,6 +14,7 @@ const Header = () => {
   const navLinks = [
     { href: "/", label: "Home" },
     { href: "/farmer", label: "Farmer Portal" },
+    { href: "/disease-detection", label: "🌿 रोग पहिचान" },
     { href: "/krishi-mitra", label: "Krishi Mitra" },
     { href: "/authority", label: "Authority Dashboard" },
     { href: "/admin", label: "Admin" },
