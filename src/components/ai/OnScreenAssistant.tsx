@@ -471,39 +471,39 @@ export function OnScreenAssistant({ isFullScreen: isEmbeddedFullScreen = false, 
   if (isEmbeddedFullScreen) {
     return (
       <>
-        <div className="flex flex-col h-full bg-background">
-          {/* Header */}
-          <div className="flex items-center justify-between px-4 py-3 sm:px-6 sm:py-4 border-b border-border bg-gradient-to-r from-primary/10 to-accent/10 shrink-0">
+        <div className="flex flex-col h-full krishi-chat-container">
+          {/* Header - Farm themed gradient */}
+          <div className="flex items-center justify-between px-4 py-3 sm:px-6 sm:py-4 krishi-chat-header shrink-0 shadow-md">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-primary/20 flex items-center justify-center">
+              <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center border border-white/30">
                 <span className="text-2xl sm:text-3xl">🌾</span>
               </div>
               <div>
-                <h1 className="font-bold text-lg sm:text-xl text-foreground">
+                <h1 className="font-bold text-lg sm:text-xl text-white">
                   {language === 'ne' ? 'कृषि मित्र AI सहायक' : language === 'hi' ? 'कृषि मित्र AI सहायक' : 'Krishi Mitra AI Assistant'}
                 </h1>
-                <p className="text-xs sm:text-sm text-muted-foreground">
-                  {language === 'ne' ? 'तपाईंको खेती सहयोगी' : language === 'hi' ? 'आपका खेती सहायक' : 'Your farming companion'}
+                <p className="text-xs sm:text-sm text-white/80">
+                  {language === 'ne' ? 'नेपाली वा English मा सोध्नुहोस्' : language === 'hi' ? 'नेपाली, हिन्दी या English में पूछें' : 'Ask in Nepali or English'}
                 </p>
               </div>
               {subscribed && (
-                <span className="text-xs bg-accent text-accent-foreground px-2 py-1 rounded-full flex items-center gap-1">
+                <span className="text-xs bg-accent text-accent-foreground px-2 py-1 rounded-full flex items-center gap-1 ml-2">
                   <Crown className="w-3 h-3" />
-                  {plan === 'monthly' ? (language === 'ne' ? 'मासिक' : 'Pro') : (language === 'ne' ? 'वार्षिक' : 'Pro')}
+                  {plan === 'monthly' ? (language === 'ne' ? 'Pro' : 'Pro') : 'Pro'}
                 </span>
               )}
             </div>
             <div className="flex items-center gap-1 sm:gap-2">
               {/* Offline Indicator */}
               {!isOnline && (
-                <span className="text-xs bg-destructive/10 text-destructive px-2 py-1 rounded-full flex items-center gap-1">
+                <span className="text-xs bg-white/20 text-white px-2 py-1 rounded-full flex items-center gap-1 backdrop-blur-sm">
                   <WifiOff className="w-3 h-3" />
                   <span className="hidden sm:inline">Offline</span>
                 </span>
               )}
               
               {!subscribed && (
-                <span className="text-xs text-muted-foreground mr-1 hidden sm:inline">
+                <span className="text-xs text-white/80 mr-1 hidden sm:inline">
                   {queries_used}/{queries_limit}
                 </span>
               )}
@@ -511,7 +511,7 @@ export function OnScreenAssistant({ isFullScreen: isEmbeddedFullScreen = false, 
               {/* Language Selector */}
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" size="icon" className="h-9 w-9 sm:h-10 sm:w-10" title="Change language">
+                  <Button variant="ghost" size="icon" className="h-9 w-9 sm:h-10 sm:w-10 text-white hover:bg-white/20" title="Change language">
                     <Globe className="w-4 h-4 sm:w-5 sm:h-5" />
                   </Button>
                 </DropdownMenuTrigger>
@@ -538,14 +538,14 @@ export function OnScreenAssistant({ isFullScreen: isEmbeddedFullScreen = false, 
               <Button 
                 variant="ghost" 
                 size="icon" 
-                className="h-9 w-9 sm:h-10 sm:w-10"
+                className="h-9 w-9 sm:h-10 sm:w-10 text-white hover:bg-white/20"
                 onClick={() => setAutoSpeak(!autoSpeak)}
                 title={autoSpeak ? 'Disable auto-speak' : 'Enable auto-speak'}
               >
                 {autoSpeak ? (
-                  <Volume2 className="w-4 h-4 sm:w-5 sm:h-5 text-primary" />
+                  <Volume2 className="w-4 h-4 sm:w-5 sm:h-5" />
                 ) : (
-                  <VolumeX className="w-4 h-4 sm:w-5 sm:h-5 text-muted-foreground" />
+                  <VolumeX className="w-4 h-4 sm:w-5 sm:h-5 opacity-60" />
                 )}
               </Button>
             </div>
@@ -555,48 +555,55 @@ export function OnScreenAssistant({ isFullScreen: isEmbeddedFullScreen = false, 
           <div className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-4">
             {messages.length === 0 ? (
               <div className="flex flex-col items-center justify-center h-full text-center">
-                <div className="text-6xl sm:text-7xl mb-4">🌾</div>
-                <h2 className="font-bold text-xl sm:text-2xl text-foreground mb-2">
-                  {language === 'ne' ? 'नमस्ते दाइ/दिदी!' : language === 'hi' ? 'नमस्ते!' : 'Namaste!'}
-                </h2>
-                <p className="text-muted-foreground mb-6 max-w-md text-sm sm:text-base">
-                  {language === 'ne' 
-                    ? 'म कृषि मित्र AI सहायक। तपाईंको बालीनालीका प्रश्नहरू सुन्छु, कृपया आफ्नो समस्या लेख्नुहोस् वा बोल्नुहोस्।' 
-                    : language === 'hi'
-                    ? 'मैं कृषि मित्र AI सहायक। आपकी खेती के सवालों का जवाब दूंगा, कृपया अपनी समस्या लिखें या बोलें।'
-                    : "I'm Krishi Mitra AI Assistant. I'll answer your farming questions, please type or speak your problem."}
-                </p>
-                
-                {/* Quick Action Buttons */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 w-full max-w-lg px-4">
-                  {quickQuestions[getQuickQuestionsLang()].map((q, idx) => (
-                    <motion.button
-                      key={idx}
-                      initial={{ opacity: 0, y: 10 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: idx * 0.1 }}
-                      onClick={() => handleSendMessage(q.text)}
-                      disabled={isLoading}
-                      className={cn(
-                        "flex items-center gap-3 p-4 rounded-xl border border-border bg-card",
-                        "hover:border-primary/50 hover:bg-primary/5 transition-all text-left",
-                        "text-sm sm:text-base touch-manipulation active:scale-95"
-                      )}
-                    >
-                      <q.icon className={cn("w-5 h-5 sm:w-6 sm:h-6 shrink-0", q.color)} />
-                      <span>{q.text}</span>
-                    </motion.button>
-                  ))}
-                </div>
-                
-                <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground mt-6">
-                  <Mic className="w-4 h-4" />
-                  <span>
-                    {language === 'ne' ? 'बोल्नुहोस् वा टाइप गर्नुहोस्' : 
-                     language === 'hi' ? 'बोलें या टाइप करें' :
-                     'Speak or type'}
-                  </span>
-                </div>
+                {/* Welcome Card */}
+                <motion.div 
+                  initial={{ opacity: 0, scale: 0.95 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  className="krishi-welcome-card rounded-3xl p-6 sm:p-8 max-w-lg mx-auto"
+                >
+                  <div className="text-6xl sm:text-7xl mb-4">🌾</div>
+                  <h2 className="font-bold text-xl sm:text-2xl text-foreground mb-2">
+                    {language === 'ne' ? 'नमस्ते दाइ/दिदी!' : language === 'hi' ? 'नमस्ते!' : 'Namaste!'}
+                  </h2>
+                  <p className="text-muted-foreground mb-6 text-sm sm:text-base leading-relaxed">
+                    {language === 'ne' 
+                      ? 'म कृषि मित्र AI सहायक। तपाईंको बालीनालीका प्रश्नहरू नेपाली वा English मा लेखेर वा बोलेर सोध्नुहोस्। सकिन्छ भने बालीको फोटो पनि पठाउनुहोस्।' 
+                      : language === 'hi'
+                      ? 'मैं कृषि मित्र AI सहायक। अपने खेती के सवाल नेपाली, हिन्दी या English में लिखकर या बोलकर पूछें। हो सके तो फसल की फोटो भी भेजें।'
+                      : "I'm Krishi Mitra AI Assistant. Ask your farming questions in Nepali or English by typing or speaking. You can also share crop photos for better diagnosis."}
+                  </p>
+                  
+                  {/* Quick Action Buttons */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    {quickQuestions[getQuickQuestionsLang()].map((q, idx) => (
+                      <motion.button
+                        key={idx}
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: idx * 0.1 }}
+                        onClick={() => handleSendMessage(q.text)}
+                        disabled={isLoading}
+                        className={cn(
+                          "flex items-center gap-3 p-4 rounded-xl border border-border bg-background/80",
+                          "hover:border-primary/50 hover:bg-primary/5 transition-all text-left",
+                          "text-sm sm:text-base touch-manipulation active:scale-95"
+                        )}
+                      >
+                        <q.icon className={cn("w-5 h-5 sm:w-6 sm:h-6 shrink-0", q.color)} />
+                        <span className="font-medium">{q.text}</span>
+                      </motion.button>
+                    ))}
+                  </div>
+                  
+                  <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground mt-6 pt-4 border-t border-border/50">
+                    <Mic className="w-4 h-4 text-primary" />
+                    <span>
+                      {language === 'ne' ? 'बोल्नुहोस्, टाइप गर्नुहोस्, वा फोटो पठाउनुहोस्' : 
+                       language === 'hi' ? 'बोलें, टाइप करें, या फोटो भेजें' :
+                       'Speak, type, or send a photo'}
+                    </span>
+                  </div>
+                </motion.div>
               </div>
             ) : (
               <div className="max-w-3xl mx-auto space-y-4">
@@ -606,19 +613,19 @@ export function OnScreenAssistant({ isFullScreen: isEmbeddedFullScreen = false, 
                     initial={{ opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}
                     className={cn(
-                      "rounded-2xl p-4 text-sm sm:text-base max-w-[85%]",
+                      "p-4 text-sm sm:text-base max-w-[85%]",
                       msg.role === 'user'
-                        ? "bg-primary text-primary-foreground ml-auto"
-                        : "bg-muted mr-auto"
+                        ? "krishi-chat-bubble-user text-primary-foreground ml-auto"
+                        : "krishi-chat-bubble-assistant mr-auto"
                     )}
                   >
                     {/* Show image if present */}
                     {msg.imageUrl && (
-                      <div className="mb-2 rounded-lg overflow-hidden">
+                      <div className="mb-3 rounded-xl overflow-hidden border border-white/20">
                         <img 
                           src={msg.imageUrl} 
                           alt="Crop photo" 
-                          className="max-w-full max-h-48 object-contain rounded-lg"
+                          className="max-w-full max-h-48 object-contain rounded-xl"
                         />
                       </div>
                     )}
@@ -630,11 +637,12 @@ export function OnScreenAssistant({ isFullScreen: isEmbeddedFullScreen = false, 
                         <span>{language === 'ne' ? 'अफलाइन जवाफ' : language === 'hi' ? 'ऑफलाइन जवाब' : 'Offline response'}</span>
                       </div>
                     )}
+                    {/* Voice button for assistant messages */}
                     {msg.role === 'assistant' && ttsSupported && (
                       <Button
                         variant="ghost"
                         size="sm"
-                        className="mt-2 h-8 px-3 text-xs"
+                        className="mt-3 h-8 px-3 text-xs bg-background/50 hover:bg-background/80 rounded-full"
                         onClick={() => isSpeaking ? stop() : speak(msg.content)}
                       >
                         {isSpeaking ? (
@@ -643,7 +651,7 @@ export function OnScreenAssistant({ isFullScreen: isEmbeddedFullScreen = false, 
                           <Volume2 className="w-3.5 h-3.5 mr-1.5" />
                         )}
                         {isSpeaking 
-                          ? (language === 'ne' ? 'बन्द' : language === 'hi' ? 'बंद' : 'Stop') 
+                          ? (language === 'ne' ? 'रोक्नुहोस्' : language === 'hi' ? 'रोकें' : 'Stop') 
                           : (language === 'ne' ? 'सुन्नुहोस्' : language === 'hi' ? 'सुनें' : 'Listen')}
                       </Button>
                     )}
@@ -653,11 +661,11 @@ export function OnScreenAssistant({ isFullScreen: isEmbeddedFullScreen = false, 
                   <motion.div
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
-                    className="bg-muted rounded-2xl p-4 mr-auto flex items-center gap-3 max-w-[85%]"
+                    className="krishi-chat-bubble-assistant rounded-2xl p-4 mr-auto flex items-center gap-3 max-w-[85%]"
                   >
                     <Loader2 className="w-5 h-5 animate-spin text-primary" />
                     <span className="text-sm text-muted-foreground">
-                      {language === 'ne' ? 'सोच्दैछ...' : language === 'hi' ? 'सोच रहा हूँ...' : 'Thinking...'}
+                      {language === 'ne' ? 'सोच्दैछु...' : language === 'hi' ? 'सोच रहा हूँ...' : 'Thinking...'}
                     </span>
                   </motion.div>
                 )}
@@ -666,8 +674,8 @@ export function OnScreenAssistant({ isFullScreen: isEmbeddedFullScreen = false, 
             )}
           </div>
 
-          {/* Input Area */}
-          <div className="p-4 sm:p-6 border-t border-border bg-muted/30 shrink-0">
+          {/* Input Area - Farm friendly soft background */}
+          <div className="p-4 sm:p-6 border-t border-border/50 bg-card/80 backdrop-blur-sm shrink-0">
             <div className="max-w-3xl mx-auto space-y-3">
               {/* Selected Image Preview */}
               {selectedImage && (
@@ -679,11 +687,11 @@ export function OnScreenAssistant({ isFullScreen: isEmbeddedFullScreen = false, 
                   <img 
                     src={selectedImage} 
                     alt="Selected crop" 
-                    className="max-h-24 rounded-lg border border-border"
+                    className="max-h-24 rounded-xl border-2 border-primary/30 shadow-md"
                   />
                   <button
                     onClick={removeSelectedImage}
-                    className="absolute -top-2 -right-2 w-6 h-6 bg-destructive text-destructive-foreground rounded-full flex items-center justify-center text-xs"
+                    className="absolute -top-2 -right-2 w-6 h-6 bg-destructive text-destructive-foreground rounded-full flex items-center justify-center text-xs shadow-md"
                   >
                     <X className="w-3 h-3" />
                   </button>
@@ -705,8 +713,8 @@ export function OnScreenAssistant({ isFullScreen: isEmbeddedFullScreen = false, 
                   size="icon"
                   onClick={() => imageInputRef.current?.click()}
                   disabled={isLoading || !!selectedImage}
-                  className="shrink-0 h-12 w-12 sm:h-14 sm:w-14 touch-manipulation rounded-xl"
-                  title={language === 'ne' ? 'फोटो थप्नुहोस्' : 'Add photo'}
+                  className="shrink-0 h-12 w-12 sm:h-14 sm:w-14 touch-manipulation rounded-xl border-2 hover:border-primary/50 hover:bg-primary/5"
+                  title={language === 'ne' ? 'फोटो थप्नुहोस्' : language === 'hi' ? 'फोटो जोड़ें' : 'Add photo'}
                 >
                   <ImagePlus className="w-5 h-5 sm:w-6 sm:h-6" />
                 </Button>
@@ -716,7 +724,11 @@ export function OnScreenAssistant({ isFullScreen: isEmbeddedFullScreen = false, 
                   size="icon"
                   onClick={toggleListening}
                   disabled={isLoading}
-                  className="shrink-0 h-12 w-12 sm:h-14 sm:w-14 touch-manipulation rounded-xl"
+                  className={cn(
+                    "shrink-0 h-12 w-12 sm:h-14 sm:w-14 touch-manipulation rounded-xl border-2",
+                    !isListening && "hover:border-primary/50 hover:bg-primary/5"
+                  )}
+                  title={language === 'ne' ? 'बोल्नुहोस्' : language === 'hi' ? 'बोलें' : 'Speak'}
                 >
                   {isListening ? (
                     <motion.div
@@ -740,26 +752,33 @@ export function OnScreenAssistant({ isFullScreen: isEmbeddedFullScreen = false, 
                   }
                   onKeyPress={(e) => e.key === 'Enter' && handleSendMessage()}
                   disabled={isLoading || isListening}
-                  className="flex-1 h-12 sm:h-14 text-base sm:text-lg rounded-xl px-4"
+                  className="flex-1 h-12 sm:h-14 text-base sm:text-lg rounded-xl px-4 border-2 focus:border-primary"
                 />
                 <Button
                   onClick={() => handleSendMessage()}
                   disabled={(!inputText.trim() && !selectedImage) || isLoading}
                   size="icon"
-                  className="shrink-0 h-12 w-12 sm:h-14 sm:w-14 touch-manipulation rounded-xl"
+                  className="shrink-0 h-12 w-12 sm:h-14 sm:w-14 touch-manipulation rounded-xl shadow-md"
                 >
                   <Send className="w-5 h-5 sm:w-6 sm:h-6" />
                 </Button>
               </div>
               
               {isListening && (
-                <motion.p
+                <motion.div
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
-                  className="text-sm text-center text-primary"
+                  className="flex items-center justify-center gap-2 py-2 px-4 rounded-full bg-primary/10 border border-primary/20 mx-auto w-fit"
                 >
-                  {language === 'ne' ? '🎤 सुन्दैछ... बोल्नुहोस्' : language === 'hi' ? '🎤 सुन रहा हूँ... बोलें' : '🎤 Listening... speak now'}
-                </motion.p>
+                  <motion.div
+                    animate={{ scale: [1, 1.3, 1] }}
+                    transition={{ repeat: Infinity, duration: 0.6 }}
+                    className="w-2.5 h-2.5 rounded-full bg-destructive"
+                  />
+                  <span className="text-sm text-primary font-medium">
+                    {language === 'ne' ? 'सुन्दैछु... बोल्नुहोस्' : language === 'hi' ? 'सुन रहा हूँ... बोलें' : 'Listening... speak now'}
+                  </span>
+                </motion.div>
               )}
               
               {/* Quick Actions */}
