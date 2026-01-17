@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect, useRef } from 'react';
+import { useState, useCallback, useRef } from 'react';
 
 interface UseTextToSpeechOptions {
   language?: string;
@@ -9,75 +9,10 @@ interface UseTextToSpeechOptions {
   onError?: (error: string) => void;
 }
 
-// Map app language codes to speech synthesis language codes
-const languageMap: Record<string, string> = {
-  en: 'en-US',
-  ne: 'ne-NP',
-  tamang: 'ne-NP',
-  newar: 'ne-NP',
-  maithili: 'hi-IN',
-  magar: 'ne-NP',
-  rai: 'ne-NP',
-};
-
-// Helper to check if a voice is likely female
-function isFemaleVoice(voice: SpeechSynthesisVoice): boolean {
-  const name = voice.name.toLowerCase();
-  const femaleIndicators = [
-    'female', 'woman', 'girl', 
-    'zira', 'samantha', 'victoria', 'karen', 'moira', 'tessa', 
-    'veena', 'lekha', 'priya', 'aditi', 'raveena',
-    'google us english female', 'heera', 'kalpana'
-  ];
-  const maleIndicators = ['male', 'man', 'boy', 'david', 'daniel', 'alex', 'fred', 'tom', 'rishi'];
-  
-  if (femaleIndicators.some(ind => name.includes(ind))) return true;
-  if (maleIndicators.some(ind => name.includes(ind))) return false;
-  if (name.includes('google')) return true;
-  return false;
-}
-
-// Helper to find the best voice - prefer female voices
-function findBestVoice(voices: SpeechSynthesisVoice[], targetLang: string): SpeechSynthesisVoice | null {
-  if (voices.length === 0) return null;
-  
-  const langCode = targetLang.split('-')[0];
-  const femaleVoices = voices.filter(isFemaleVoice);
-  const voicePool = femaleVoices.length > 0 ? femaleVoices : voices;
-  
-  // Priority 1: Female Nepali voice
-  let voice = voicePool.find(v => 
-    v.lang.toLowerCase().includes('ne') || v.name.toLowerCase().includes('nepali')
-  );
-  if (voice) return voice;
-  
-  // Priority 2: Female Hindi voice
-  voice = voicePool.find(v => v.lang.startsWith('hi') || v.name.toLowerCase().includes('hindi'));
-  if (voice && langCode !== 'en') return voice;
-  
-  // Priority 3: Female Indian language voice
-  voice = voicePool.find(v => v.lang.includes('IN'));
-  if (voice && langCode !== 'en') return voice;
-  
-  // Priority 4: Voice matching target language
-  voice = voicePool.find(v => v.lang.startsWith(langCode));
-  if (voice) return voice;
-  
-  // Priority 5: Any female English voice
-  voice = femaleVoices.find(v => v.lang.startsWith('en'));
-  if (voice) return voice;
-  
-  // Priority 6: Google voice
-  voice = voices.find(v => v.name.toLowerCase().includes('google'));
-  if (voice) return voice;
-  
-  // Priority 7: Default
-  return voices.find(v => v.default) || voices[0] || null;
-}
-
-// Clean text for speech
+// Clean text for speech - remove markdown, emojis, etc.
 function cleanTextForSpeech(text: string): string {
   return text
+    // Remove markdown formatting
     .replace(/\*\*([^*]+)\*\*/g, '$1')
     .replace(/\*([^*]+)\*/g, '$1')
     .replace(/__([^_]+)__/g, '$1')
@@ -85,15 +20,18 @@ function cleanTextForSpeech(text: string): string {
     .replace(/#{1,6}\s/g, '')
     .replace(/^\s*[-•]\s*/gm, '')
     .replace(/^\d+\.\s/gm, '')
+    // Clean up punctuation issues
     .replace(/\?{2,}/g, '?')
     .replace(/!{2,}/g, '!')
     .replace(/\.{3,}/g, '.')
     .replace(/^\s*[\?\!\.]+\s*$/gm, '')
     .replace(/\s+[\?\!]+\s+/g, ' ')
+    // Replace emojis with spoken equivalents
     .replace(/✅/g, 'Good news: ')
     .replace(/⚠️/g, 'Warning: ')
     .replace(/💡/g, 'Tip: ')
     .replace(/📴/g, 'Offline mode: ')
+    // Remove other emojis
     .replace(/🔍|🌾|🍂|🐛|🥀|⚪|🌿|💊|🥇|🥈|🥉/g, '')
     .replace(/[\u{1F600}-\u{1F64F}]/gu, '')
     .replace(/[\u{1F300}-\u{1F5FF}]/gu, '')
@@ -102,8 +40,10 @@ function cleanTextForSpeech(text: string): string {
     .replace(/[\u{2600}-\u{26FF}]/gu, '')
     .replace(/[\u{2700}-\u{27BF}]/gu, '')
     .replace(/[\u200B-\u200D\uFEFF]/g, '')
+    // Remove code blocks
     .replace(/```[\s\S]*?```/g, '')
     .replace(/`[^`]+`/g, '')
+    // Clean up whitespace
     .replace(/\n{3,}/g, '\n\n')
     .replace(/[ ]{2,}/g, ' ')
     .trim();
@@ -111,48 +51,35 @@ function cleanTextForSpeech(text: string): string {
 
 export function useTextToSpeech(options: UseTextToSpeechOptions = {}) {
   const {
-    language = 'en',
-    rate = 0.9,
-    pitch = 1,
     onStart,
     onEnd,
     onError
   } = options;
 
   const [isSpeaking, setIsSpeaking] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
   const [currentMessageId, setCurrentMessageId] = useState<string | null>(null);
-  const utteranceRef = useRef<SpeechSynthesisUtterance | null>(null);
-  const voicesRef = useRef<SpeechSynthesisVoice[]>([]);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
+  const abortControllerRef = useRef<AbortController | null>(null);
 
-  const isSupported = typeof window !== 'undefined' && 'speechSynthesis' in window;
-
-  // Load voices
-  useEffect(() => {
-    if (!isSupported) return;
-    
-    const loadVoices = () => {
-      const voices = window.speechSynthesis.getVoices();
-      if (voices.length > 0) {
-        voicesRef.current = voices;
-      }
-    };
-    
-    loadVoices();
-    window.speechSynthesis.onvoiceschanged = loadVoices;
-    
-    return () => {
-      window.speechSynthesis.onvoiceschanged = null;
-      window.speechSynthesis.cancel();
-    };
-  }, [isSupported]);
-
-  const speak = useCallback((text: string, messageId?: string) => {
-    if (!isSupported) {
-      onError?.('Text-to-speech is not supported');
-      return;
+  const stop = useCallback(() => {
+    if (audioRef.current) {
+      audioRef.current.pause();
+      audioRef.current.src = '';
+      audioRef.current = null;
     }
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort();
+      abortControllerRef.current = null;
+    }
+    setIsSpeaking(false);
+    setIsLoading(false);
+    setCurrentMessageId(null);
+  }, []);
 
-    window.speechSynthesis.cancel();
+  const speak = useCallback(async (text: string, messageId?: string) => {
+    // Stop any current speech
+    stop();
 
     const cleanedText = cleanTextForSpeech(text);
     if (!cleanedText || cleanedText.length < 2) {
@@ -160,71 +87,96 @@ export function useTextToSpeech(options: UseTextToSpeechOptions = {}) {
       return;
     }
 
-    const utterance = new SpeechSynthesisUtterance(cleanedText);
-    utteranceRef.current = utterance;
+    // Limit text length to avoid API limits (max ~5000 chars)
+    const textToSpeak = cleanedText.slice(0, 4500);
 
-    const speechLang = languageMap[language] || 'en-US';
-    utterance.lang = speechLang;
-    utterance.rate = rate;
-    utterance.pitch = pitch;
+    setIsLoading(true);
+    setCurrentMessageId(messageId || null);
+    abortControllerRef.current = new AbortController();
 
-    const voices = voicesRef.current.length > 0 ? voicesRef.current : window.speechSynthesis.getVoices();
-    const preferredVoice = findBestVoice(voices, speechLang);
-    
-    if (preferredVoice) {
-      utterance.voice = preferredVoice;
-      if (language !== 'en' && preferredVoice.lang.startsWith('hi')) {
-        utterance.lang = preferredVoice.lang;
+    try {
+      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+      const functionUrl = `${supabaseUrl}/functions/v1/elevenlabs-tts`;
+      
+      const response = await fetch(functionUrl, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'apikey': import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
+          'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+        },
+        body: JSON.stringify({ 
+          text: textToSpeak,
+          // Sarah - natural female voice
+          voiceId: 'EXAVITQu4vr4xnSDxMaL'
+        }),
+        signal: abortControllerRef.current.signal,
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || `TTS request failed: ${response.status}`);
       }
+
+      const audioBlob = await response.blob();
+      const audioUrl = URL.createObjectURL(audioBlob);
+      
+      const audio = new Audio(audioUrl);
+      audioRef.current = audio;
+
+      audio.onloadeddata = () => {
+        setIsLoading(false);
+        setIsSpeaking(true);
+        onStart?.();
+      };
+
+      audio.onended = () => {
+        setIsSpeaking(false);
+        setCurrentMessageId(null);
+        URL.revokeObjectURL(audioUrl);
+        audioRef.current = null;
+        onEnd?.();
+      };
+
+      audio.onerror = (e) => {
+        console.error('Audio playback error:', e);
+        setIsSpeaking(false);
+        setIsLoading(false);
+        setCurrentMessageId(null);
+        URL.revokeObjectURL(audioUrl);
+        audioRef.current = null;
+        onError?.('Audio playback failed');
+      };
+
+      await audio.play();
+    } catch (error: any) {
+      if (error.name === 'AbortError') {
+        console.log('TTS request aborted');
+        return;
+      }
+      console.error('TTS error:', error);
+      setIsSpeaking(false);
+      setIsLoading(false);
+      setCurrentMessageId(null);
+      onError?.(error.message || 'Failed to generate speech');
     }
-
-    utterance.onstart = () => {
-      setIsSpeaking(true);
-      setCurrentMessageId(messageId || null);
-      onStart?.();
-    };
-
-    utterance.onend = () => {
-      setIsSpeaking(false);
-      setCurrentMessageId(null);
-      utteranceRef.current = null;
-      onEnd?.();
-    };
-
-    utterance.onerror = (event) => {
-      setIsSpeaking(false);
-      setCurrentMessageId(null);
-      utteranceRef.current = null;
-      if (event.error !== 'canceled') {
-        onError?.(`Speech error: ${event.error}`);
-      }
-    };
-
-    window.speechSynthesis.speak(utterance);
-  }, [isSupported, language, rate, pitch, onStart, onEnd, onError]);
-
-  const stop = useCallback(() => {
-    window.speechSynthesis.cancel();
-    setIsSpeaking(false);
-    setCurrentMessageId(null);
-    utteranceRef.current = null;
-  }, []);
+  }, [stop, onStart, onEnd, onError]);
 
   const toggle = useCallback((text: string, messageId?: string) => {
-    if (isSpeaking && currentMessageId === messageId) {
+    if ((isSpeaking || isLoading) && currentMessageId === messageId) {
       stop();
     } else {
       speak(text, messageId);
     }
-  }, [isSpeaking, currentMessageId, speak, stop]);
+  }, [isSpeaking, isLoading, currentMessageId, speak, stop]);
 
   return {
     speak,
     stop,
     toggle,
     isSpeaking,
-    isLoading: false,
-    isSupported,
+    isLoading,
+    isSupported: true, // ElevenLabs is always supported
     currentMessageId
   };
 }
