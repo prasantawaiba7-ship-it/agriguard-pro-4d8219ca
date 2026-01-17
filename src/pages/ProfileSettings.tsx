@@ -5,7 +5,7 @@ import { Helmet } from 'react-helmet-async';
 import { z } from 'zod';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { ArrowLeft, User, Phone, MapPin, Building, Flag, Loader2, Save, Camera } from 'lucide-react';
+import { ArrowLeft, User, Phone, MapPin, Building, Flag, Loader2, Save, Camera, Bell } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -17,6 +17,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { SubscriptionCard } from '@/components/profile/SubscriptionCard';
 import { QueryHistoryCard } from '@/components/profile/QueryHistoryCard';
+import { NotificationPreferencesCard } from '@/components/profile/NotificationPreferencesCard';
 
 const profileSchema = z.object({
   full_name: z.string().min(2, 'Name must be at least 2 characters').max(100),
@@ -400,7 +401,7 @@ const ProfileSettings = () => {
               </motion.div>
             </div>
 
-            {/* Right Column - Subscription & Query History */}
+            {/* Right Column - Subscription, Notifications & Query History */}
             <div className="space-y-6">
               <motion.div
                 initial={{ opacity: 0, x: 20 }}
@@ -408,6 +409,14 @@ const ProfileSettings = () => {
                 transition={{ delay: 0.1 }}
               >
                 <SubscriptionCard />
+              </motion.div>
+
+              <motion.div
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: 0.15 }}
+              >
+                <NotificationPreferencesCard />
               </motion.div>
 
               <motion.div
