@@ -4,7 +4,7 @@ import {
   Camera, Upload, X, Loader2, AlertTriangle, CheckCircle2, 
   Download, Leaf, Bug, Shield, Pill, BookOpen, ChevronDown,
   Droplets, ThermometerSun, Wind, Mic, MicOff, Share2, 
-  MessageCircle, Phone, History, Calendar
+  MessageCircle, Phone, History, Calendar, Bell, Image, Grid3X3
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -24,6 +24,7 @@ import {
   shareViaSMS 
 } from '@/hooks/useDiseaseDetection';
 import { uploadDiseaseImage } from '@/lib/uploadDiseaseImage';
+import { useNotifications, useOutbreakAlertChecker } from '@/hooks/useNotifications';
 
 // Nepali crop types
 const CROP_TYPES = [
@@ -192,6 +193,7 @@ export function NepaliDiseaseDetector() {
   const [activeTab, setActiveTab] = useState('detect');
   const [symptomDescription, setSymptomDescription] = useState('');
   const [selectedHistoryItem, setSelectedHistoryItem] = useState<string | null>(null);
+  const [historyViewMode, setHistoryViewMode] = useState<'list' | 'gallery'>('gallery');
   const fileInputRef = useRef<HTMLInputElement>(null);
   const cameraInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
@@ -201,6 +203,10 @@ export function NepaliDiseaseDetector() {
   // Database hooks
   const { data: diseaseHistory, isLoading: historyLoading } = useDiseaseHistory();
   const saveDetection = useSaveDiseaseDetection();
+  
+  // Notifications and outbreak alerts
+  const { outbreakAlerts, enablePushNotifications, isPushSupported } = useNotifications();
+  useOutbreakAlertChecker();
 
   // Voice input for symptom description
   const { 
@@ -926,6 +932,42 @@ export function NepaliDiseaseDetector() {
 
         {/* History Tab */}
         <TabsContent value="history" className="p-4 pt-0 space-y-4">
+          {/* Outbreak Alerts Banner */}
+          {outbreakAlerts && outbreakAlerts.length > 0 && (
+            <motion.div
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="p-4 bg-destructive/10 border border-destructive/30 rounded-xl"
+            >
+              <div className="flex items-center gap-2 mb-2">
+                <AlertTriangle className="w-5 h-5 text-destructive" />
+                <span className="font-semibold text-destructive">रोग प्रकोप चेतावनी</span>
+              </div>
+              {outbreakAlerts.slice(0, 2).map(alert => (
+                <div key={alert.id} className="text-sm text-muted-foreground mb-1">
+                  <strong>{alert.disease_name}</strong> - {alert.district} जिल्लामा {alert.detection_count} रिपोर्ट
+                </div>
+              ))}
+            </motion.div>
+          )}
+
+          {/* Push Notification Prompt */}
+          {user && isPushSupported && Notification.permission === 'default' && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              className="p-3 bg-primary/10 rounded-lg flex items-center justify-between"
+            >
+              <div className="flex items-center gap-2">
+                <Bell className="w-4 h-4 text-primary" />
+                <span className="text-sm">रोग प्रकोप सूचना प्राप्त गर्नुहोस्</span>
+              </div>
+              <Button size="sm" variant="outline" onClick={enablePushNotifications}>
+                सक्षम गर्नुहोस्
+              </Button>
+            </motion.div>
+          )}
+
           {!user ? (
             <div className="text-center py-8 text-muted-foreground">
               <History className="w-12 h-12 mx-auto mb-3 opacity-50" />
@@ -937,75 +979,246 @@ export function NepaliDiseaseDetector() {
               <Loader2 className="w-8 h-8 animate-spin text-primary" />
             </div>
           ) : diseaseHistory && diseaseHistory.length > 0 ? (
-            <div className="space-y-3">
-              <p className="text-sm text-muted-foreground">
-                तपाईंको विगतका {diseaseHistory.length} विश्लेषणहरू:
-              </p>
-              {diseaseHistory.map((item) => (
-                <motion.div
-                  key={item.id}
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  className="p-4 bg-card rounded-xl border border-border/50 cursor-pointer hover:shadow-md transition-shadow"
-                  onClick={() => setSelectedHistoryItem(selectedHistoryItem === item.id ? null : item.id)}
-                >
-                  <div className="flex items-start justify-between">
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2 mb-1">
-                        <Bug className="w-4 h-4 text-destructive" />
-                        <span className="font-medium">{item.detected_disease || 'रोग पहिचान'}</span>
-                      </div>
-                      <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                        <Calendar className="w-3 h-3" />
-                        {new Date(item.analyzed_at).toLocaleDateString('ne-NP')}
-                      </div>
-                    </div>
-                    {item.severity && (
-                      <Badge className={severityColors[item.severity] || severityColors.medium}>
-                        {severityLabels[item.severity] || item.severity}
-                      </Badge>
-                    )}
-                  </div>
-                  
-                  {/* Expanded details */}
-                  <AnimatePresence>
-                    {selectedHistoryItem === item.id && (
+            <div className="space-y-4">
+              {/* View mode toggle and count */}
+              <div className="flex items-center justify-between">
+                <p className="text-sm text-muted-foreground">
+                  {diseaseHistory.length} विश्लेषणहरू
+                </p>
+                <div className="flex gap-1 bg-muted rounded-lg p-1">
+                  <Button 
+                    size="sm" 
+                    variant={historyViewMode === 'gallery' ? 'secondary' : 'ghost'}
+                    className="h-7 px-2"
+                    onClick={() => setHistoryViewMode('gallery')}
+                  >
+                    <Grid3X3 className="w-4 h-4" />
+                  </Button>
+                  <Button 
+                    size="sm" 
+                    variant={historyViewMode === 'list' ? 'secondary' : 'ghost'}
+                    className="h-7 px-2"
+                    onClick={() => setHistoryViewMode('list')}
+                  >
+                    <History className="w-4 h-4" />
+                  </Button>
+                </div>
+              </div>
+
+              {/* Gallery View */}
+              {historyViewMode === 'gallery' ? (
+                <div className="grid grid-cols-3 gap-2">
+                  {diseaseHistory.map((item) => {
+                    const isValidImageUrl = item.image_url && 
+                      (item.image_url.startsWith('http') || item.image_url.startsWith('data:'));
+                    
+                    return (
                       <motion.div
-                        initial={{ opacity: 0, height: 0 }}
-                        animate={{ opacity: 1, height: 'auto' }}
-                        exit={{ opacity: 0, height: 0 }}
-                        className="mt-4 pt-4 border-t border-border/50 space-y-3"
+                        key={item.id}
+                        initial={{ opacity: 0, scale: 0.9 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        className="relative aspect-square rounded-lg overflow-hidden cursor-pointer group"
+                        onClick={() => setSelectedHistoryItem(selectedHistoryItem === item.id ? null : item.id)}
                       >
-                        {item.treatment_recommendations && (
-                          <div>
-                            <p className="text-xs font-medium mb-1">💊 उपचार:</p>
-                            <p className="text-xs text-muted-foreground">
-                              {typeof item.treatment_recommendations === 'object' 
-                                ? (item.treatment_recommendations as any).chemical || 'N/A'
-                                : String(item.treatment_recommendations)}
-                            </p>
+                        {isValidImageUrl ? (
+                          <img
+                            src={item.image_url}
+                            alt={item.detected_disease || 'Disease detection'}
+                            className="w-full h-full object-cover transition-transform group-hover:scale-110"
+                            onError={(e) => {
+                              (e.target as HTMLImageElement).src = '/placeholder.svg';
+                            }}
+                          />
+                        ) : (
+                          <div className="w-full h-full bg-muted flex items-center justify-center">
+                            <Image className="w-8 h-8 text-muted-foreground" />
                           </div>
                         )}
-                        {item.prevention_tips && item.prevention_tips.length > 0 && (
-                          <div>
-                            <p className="text-xs font-medium mb-1">🛡️ रोकथाम:</p>
-                            <ul className="text-xs text-muted-foreground space-y-1">
-                              {item.prevention_tips.slice(0, 3).map((tip, i) => (
-                                <li key={i}>• {tip}</li>
-                              ))}
-                            </ul>
+                        
+                        {/* Overlay with severity badge */}
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity">
+                          <div className="absolute bottom-1 left-1 right-1">
+                            <Badge 
+                              className={`text-[10px] ${severityColors[item.severity || 'medium']}`}
+                            >
+                              {severityLabels[item.severity || 'medium']}
+                            </Badge>
                           </div>
-                        )}
-                        {item.confidence_score && (
-                          <p className="text-xs text-muted-foreground">
-                            विश्वास: {Math.round(item.confidence_score * 100)}%
-                          </p>
+                        </div>
+                        
+                        {/* Selected indicator */}
+                        {selectedHistoryItem === item.id && (
+                          <div className="absolute inset-0 border-2 border-primary rounded-lg" />
                         )}
                       </motion.div>
-                    )}
-                  </AnimatePresence>
-                </motion.div>
-              ))}
+                    );
+                  })}
+                </div>
+              ) : (
+                /* List View */
+                <div className="space-y-3">
+                  {diseaseHistory.map((item) => (
+                    <motion.div
+                      key={item.id}
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      className="p-4 bg-card rounded-xl border border-border/50 cursor-pointer hover:shadow-md transition-shadow"
+                      onClick={() => setSelectedHistoryItem(selectedHistoryItem === item.id ? null : item.id)}
+                    >
+                      <div className="flex items-start gap-3">
+                        {/* Thumbnail */}
+                        <div className="w-16 h-16 rounded-lg overflow-hidden flex-shrink-0 bg-muted">
+                          {item.image_url && (item.image_url.startsWith('http') || item.image_url.startsWith('data:')) ? (
+                            <img
+                              src={item.image_url}
+                              alt={item.detected_disease || 'Disease detection'}
+                              className="w-full h-full object-cover"
+                              onError={(e) => {
+                                (e.target as HTMLImageElement).src = '/placeholder.svg';
+                              }}
+                            />
+                          ) : (
+                            <div className="w-full h-full flex items-center justify-center">
+                              <Image className="w-6 h-6 text-muted-foreground" />
+                            </div>
+                          )}
+                        </div>
+                        
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-2 mb-1">
+                              <Bug className="w-4 h-4 text-destructive" />
+                              <span className="font-medium truncate">{item.detected_disease || 'रोग पहिचान'}</span>
+                            </div>
+                            {item.severity && (
+                              <Badge className={severityColors[item.severity] || severityColors.medium}>
+                                {severityLabels[item.severity] || item.severity}
+                              </Badge>
+                            )}
+                          </div>
+                          <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                            <Calendar className="w-3 h-3" />
+                            {new Date(item.analyzed_at).toLocaleDateString('ne-NP')}
+                          </div>
+                        </div>
+                      </div>
+                    </motion.div>
+                  ))}
+                </div>
+              )}
+
+              {/* Selected item details modal */}
+              <AnimatePresence>
+                {selectedHistoryItem && (
+                  <motion.div
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: 20 }}
+                    className="fixed inset-x-4 bottom-4 z-50 p-4 bg-card rounded-xl border shadow-xl max-h-[60vh] overflow-auto"
+                  >
+                    {(() => {
+                      const item = diseaseHistory.find(h => h.id === selectedHistoryItem);
+                      if (!item) return null;
+                      
+                      return (
+                        <div className="space-y-3">
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-2">
+                              <Bug className="w-5 h-5 text-destructive" />
+                              <span className="font-semibold">{item.detected_disease || 'रोग पहिचान'}</span>
+                            </div>
+                            <Button 
+                              size="sm" 
+                              variant="ghost" 
+                              onClick={() => setSelectedHistoryItem(null)}
+                            >
+                              <X className="w-4 h-4" />
+                            </Button>
+                          </div>
+                          
+                          {/* Image preview */}
+                          {item.image_url && (item.image_url.startsWith('http') || item.image_url.startsWith('data:')) && (
+                            <div className="w-full aspect-video rounded-lg overflow-hidden bg-muted">
+                              <img
+                                src={item.image_url}
+                                alt={item.detected_disease || 'Disease detection'}
+                                className="w-full h-full object-contain"
+                              />
+                            </div>
+                          )}
+                          
+                          <div className="flex items-center gap-2">
+                            <Calendar className="w-4 h-4 text-muted-foreground" />
+                            <span className="text-sm text-muted-foreground">
+                              {new Date(item.analyzed_at).toLocaleDateString('ne-NP', {
+                                year: 'numeric',
+                                month: 'long',
+                                day: 'numeric'
+                              })}
+                            </span>
+                            {item.severity && (
+                              <Badge className={severityColors[item.severity] || severityColors.medium}>
+                                {severityLabels[item.severity] || item.severity}
+                              </Badge>
+                            )}
+                          </div>
+                          
+                          {item.treatment_recommendations && (
+                            <div className="p-3 bg-primary/5 rounded-lg">
+                              <p className="text-xs font-medium mb-1">💊 उपचार:</p>
+                              <p className="text-sm text-muted-foreground">
+                                {typeof item.treatment_recommendations === 'object' 
+                                  ? (item.treatment_recommendations as any).chemical || 'N/A'
+                                  : String(item.treatment_recommendations)}
+                              </p>
+                            </div>
+                          )}
+                          
+                          {item.prevention_tips && item.prevention_tips.length > 0 && (
+                            <div>
+                              <p className="text-xs font-medium mb-1">🛡️ रोकथाम:</p>
+                              <ul className="text-sm text-muted-foreground space-y-1">
+                                {item.prevention_tips.slice(0, 3).map((tip, i) => (
+                                  <li key={i}>• {tip}</li>
+                                ))}
+                              </ul>
+                            </div>
+                          )}
+                          
+                          {item.confidence_score && (
+                            <p className="text-xs text-muted-foreground">
+                              विश्वास: {Math.round(item.confidence_score * 100)}%
+                            </p>
+                          )}
+                          
+                          {/* Share buttons */}
+                          <div className="flex gap-2 pt-2 border-t">
+                            <Button 
+                              size="sm"
+                              variant="outline" 
+                              className="flex-1 bg-[#25D366]/10 hover:bg-[#25D366]/20 border-[#25D366]/30"
+                              onClick={() => {
+                                const shareText = generateShareText({
+                                  detectedDisease: item.detected_disease || 'रोग',
+                                  severity: item.severity || 'medium',
+                                  treatment: typeof item.treatment_recommendations === 'object' 
+                                    ? (item.treatment_recommendations as any).chemical || '' 
+                                    : '',
+                                  prevention: item.prevention_tips || [],
+                                });
+                                shareViaWhatsApp(shareText);
+                              }}
+                            >
+                              <MessageCircle className="w-4 h-4 mr-1 text-[#25D366]" />
+                              Share
+                            </Button>
+                          </div>
+                        </div>
+                      );
+                    })()}
+                  </motion.div>
+                )}
+              </AnimatePresence>
             </div>
           ) : (
             <div className="text-center py-8 text-muted-foreground">

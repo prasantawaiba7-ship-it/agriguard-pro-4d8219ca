@@ -402,6 +402,51 @@ export type Database = {
           },
         ]
       }
+      disease_outbreak_alerts: {
+        Row: {
+          affected_crops: string[] | null
+          created_at: string
+          detection_count: number
+          disease_name: string
+          district: string
+          first_detected_at: string
+          id: string
+          is_active: boolean
+          last_detected_at: string
+          severity: string
+          state: string
+          updated_at: string
+        }
+        Insert: {
+          affected_crops?: string[] | null
+          created_at?: string
+          detection_count?: number
+          disease_name: string
+          district: string
+          first_detected_at?: string
+          id?: string
+          is_active?: boolean
+          last_detected_at?: string
+          severity?: string
+          state: string
+          updated_at?: string
+        }
+        Update: {
+          affected_crops?: string[] | null
+          created_at?: string
+          detection_count?: number
+          disease_name?: string
+          district?: string
+          first_detected_at?: string
+          id?: string
+          is_active?: boolean
+          last_detected_at?: string
+          severity?: string
+          state?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       email_settings: {
         Row: {
           body_template: string
@@ -431,6 +476,94 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      farmer_notification_preferences: {
+        Row: {
+          created_at: string
+          email_enabled: boolean
+          farmer_id: string
+          id: string
+          outbreak_alerts: boolean
+          push_enabled: boolean
+          push_subscription: Json | null
+          sms_enabled: boolean
+          updated_at: string
+          weather_alerts: boolean
+        }
+        Insert: {
+          created_at?: string
+          email_enabled?: boolean
+          farmer_id: string
+          id?: string
+          outbreak_alerts?: boolean
+          push_enabled?: boolean
+          push_subscription?: Json | null
+          sms_enabled?: boolean
+          updated_at?: string
+          weather_alerts?: boolean
+        }
+        Update: {
+          created_at?: string
+          email_enabled?: boolean
+          farmer_id?: string
+          id?: string
+          outbreak_alerts?: boolean
+          push_enabled?: boolean
+          push_subscription?: Json | null
+          sms_enabled?: boolean
+          updated_at?: string
+          weather_alerts?: boolean
+        }
+        Relationships: [
+          {
+            foreignKeyName: "farmer_notification_preferences_farmer_id_fkey"
+            columns: ["farmer_id"]
+            isOneToOne: true
+            referencedRelation: "farmer_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      farmer_notifications: {
+        Row: {
+          created_at: string
+          data: Json | null
+          farmer_id: string
+          id: string
+          message: string
+          read: boolean
+          title: string
+          type: string
+        }
+        Insert: {
+          created_at?: string
+          data?: Json | null
+          farmer_id: string
+          id?: string
+          message: string
+          read?: boolean
+          title: string
+          type: string
+        }
+        Update: {
+          created_at?: string
+          data?: Json | null
+          farmer_id?: string
+          id?: string
+          message?: string
+          read?: boolean
+          title?: string
+          type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "farmer_notifications_farmer_id_fkey"
+            columns: ["farmer_id"]
+            isOneToOne: false
+            referencedRelation: "farmer_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       farmer_profiles: {
         Row: {
