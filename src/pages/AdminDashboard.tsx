@@ -34,6 +34,7 @@ import {
   AlertTriangle,
   Crown,
   Bug,
+  Leaf,
 } from "lucide-react";
 import { toast } from "sonner";
 import { SubscriptionAnalytics } from "@/components/admin/SubscriptionAnalytics";
@@ -45,6 +46,7 @@ import { PdfReportsManager } from "@/components/admin/PdfReportsManager";
 import { ActivityLogsViewer } from "@/components/admin/ActivityLogsViewer";
 import { UserManagement } from "@/components/admin/UserManagement";
 import { DiseaseAnalyticsDashboard } from "@/components/admin/DiseaseAnalyticsDashboard";
+import CropManager from "@/components/admin/CropManager";
 
 interface FarmerProfile {
   id: string;
@@ -387,6 +389,10 @@ const AdminDashboard = () => {
                   <Settings className="h-4 w-4" />
                   <span className="hidden sm:inline">Settings</span>
                 </TabsTrigger>
+                <TabsTrigger value="crops" className="flex items-center gap-2">
+                  <Leaf className="h-4 w-4" />
+                  <span className="hidden sm:inline">बाली</span>
+                </TabsTrigger>
                 <TabsTrigger value="activity" className="flex items-center gap-2">
                   <RefreshCw className="h-4 w-4" />
                   <span className="hidden sm:inline">Activity</span>
@@ -647,6 +653,11 @@ const AdminDashboard = () => {
               {/* Settings Tab */}
               <TabsContent value="settings">
                 <AppSettingsManager />
+              </TabsContent>
+
+              {/* Crops Tab */}
+              <TabsContent value="crops">
+                <CropManager />
               </TabsContent>
 
               {/* Activity Tab */}
