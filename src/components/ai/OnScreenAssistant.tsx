@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { 
   Mic, MicOff, Volume2, VolumeX, Loader2, X, MessageSquare, 
   Send, Download, Crown, Camera, RefreshCw, Minimize2, Maximize2,
-  Globe, Leaf, Bug, CloudRain, HelpCircle, ImagePlus, WifiOff, Wifi
+  Globe, Leaf, Bug, CloudRain, HelpCircle, ImagePlus, WifiOff, Wifi, Scan
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -16,6 +16,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { cn } from '@/lib/utils';
 import { SubscriptionModal } from '@/components/subscription/SubscriptionModal';
 import { DiseaseImageUpload } from '@/components/ai/DiseaseImageUpload';
+import { DiseaseDetectionResult, DiseaseResult } from '@/components/ai/DiseaseDetectionResult';
 import { offlineStorage } from '@/lib/offlineStorage';
 import {
   DropdownMenu,
@@ -30,6 +31,8 @@ interface Message {
   timestamp: Date;
   imageUrl?: string;
   isOffline?: boolean;
+  diseaseResult?: DiseaseResult;
+  isAnalyzing?: boolean;
 }
 
 interface OnScreenAssistantProps {
@@ -40,21 +43,21 @@ interface OnScreenAssistantProps {
 // Quick action questions in different languages
 const quickQuestions = {
   ne: [
+    { icon: Camera, text: '📷 फोटो पठाएर रोग पहिचान गर्नुहोस्', color: 'text-destructive', isPhotoAction: true },
     { icon: Bug, text: 'मेरो बालीमा के समस्या छ?', color: 'text-destructive' },
     { icon: Leaf, text: 'कुन बाली लगाउँदा राम्रो हुन्छ?', color: 'text-primary' },
-    { icon: CloudRain, text: 'आजको मौसम कस्तो छ?', color: 'text-blue-500' },
     { icon: HelpCircle, text: 'मलखाद कहिले हाल्ने?', color: 'text-warning' },
   ],
   hi: [
+    { icon: Camera, text: '📷 फोटो भेजकर रोग पहचानें', color: 'text-destructive', isPhotoAction: true },
     { icon: Bug, text: 'मेरी फसल में क्या समस्या है?', color: 'text-destructive' },
     { icon: Leaf, text: 'कौन सी फसल लगाना अच्छा रहेगा?', color: 'text-primary' },
-    { icon: CloudRain, text: 'आज का मौसम कैसा है?', color: 'text-blue-500' },
     { icon: HelpCircle, text: 'खाद कब डालें?', color: 'text-warning' },
   ],
   en: [
+    { icon: Camera, text: '📷 Send photo to detect disease', color: 'text-destructive', isPhotoAction: true },
     { icon: Bug, text: "What's wrong with my crop?", color: 'text-destructive' },
     { icon: Leaf, text: 'Which crop should I plant?', color: 'text-primary' },
-    { icon: CloudRain, text: "How's the weather today?", color: 'text-blue-500' },
     { icon: HelpCircle, text: 'When to apply fertilizer?', color: 'text-warning' },
   ],
 };
@@ -327,7 +330,59 @@ export function OnScreenAssistant({ isFullScreen: isEmbeddedFullScreen = false, 
     }
 
     try {
-      // Prepare message content with image if present
+      // If image is present, run disease detection first
+      if (imageToSend) {
+        // Add analyzing message
+        const analyzingMessage: Message = {
+          role: 'assistant',
+          content: language === 'ne' ? '🔬 फोटो विश्लेषण गर्दैछु...' : language === 'hi' ? '🔬 फोटो का विश्लेषण कर रहा हूँ...' : '🔬 Analyzing photo...',
+          timestamp: new Date(),
+          isAnalyzing: true
+        };
+        setMessages(prev => [...prev, analyzingMessage]);
+
+        try {
+          const diseaseResponse = await supabase.functions.invoke('analyze-crop-disease', {
+            body: {
+              imageUrl: imageToSend,
+              description: messageText,
+              language: language === 'ne' ? 'ne' : language === 'hi' ? 'hi' : 'en'
+            }
+          });
+
+          // Remove analyzing message
+          setMessages(prev => prev.filter(m => !m.isAnalyzing));
+
+          if (diseaseResponse.error) throw diseaseResponse.error;
+
+          const diseaseResult = diseaseResponse.data as DiseaseResult;
+          
+          // Add disease detection result message
+          const resultMessage: Message = {
+            role: 'assistant',
+            content: diseaseResult.nepaliReport || diseaseResult.detectedIssue || '',
+            timestamp: new Date(),
+            diseaseResult
+          };
+          setMessages(prev => [...prev, resultMessage]);
+          setIsLoading(false);
+
+          // Auto-speak the result
+          if (autoSpeak && ttsSupported) {
+            const speakText = diseaseResult.isHealthy 
+              ? (language === 'ne' ? 'तपाईंको बाली स्वस्थ देखिन्छ।' : 'Your crop appears healthy.')
+              : `${diseaseResult.detectedIssue}. ${diseaseResult.treatment || ''}`;
+            speak(speakText);
+          }
+          return;
+        } catch (diseaseError) {
+          console.error('Disease detection failed, falling back to general AI:', diseaseError);
+          // Remove analyzing message and continue with general AI
+          setMessages(prev => prev.filter(m => !m.isAnalyzing));
+        }
+      }
+
+      // Prepare message content with image if present (fallback or non-image query)
       let messageContent: string | Array<{type: string; text?: string; image_url?: {url: string}}> = messageText || '';
       
       if (imageToSend) {
@@ -349,7 +404,7 @@ export function OnScreenAssistant({ isFullScreen: isEmbeddedFullScreen = false, 
       const response = await supabase.functions.invoke('ai-farm-assistant', {
         body: {
           messages: [
-            ...messages.map(m => ({ 
+            ...messages.filter(m => !m.isAnalyzing).map(m => ({ 
               role: m.role, 
               content: m.imageUrl ? [
                 { type: 'text', text: m.content },
@@ -581,12 +636,19 @@ export function OnScreenAssistant({ isFullScreen: isEmbeddedFullScreen = false, 
                         initial={{ opacity: 0, y: 10 }}
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ delay: idx * 0.1 }}
-                        onClick={() => handleSendMessage(q.text)}
+                        onClick={() => {
+                          if ('isPhotoAction' in q && q.isPhotoAction) {
+                            imageInputRef.current?.click();
+                          } else {
+                            handleSendMessage(q.text);
+                          }
+                        }}
                         disabled={isLoading}
                         className={cn(
                           "flex items-center gap-3 p-4 rounded-xl border border-border bg-background/80",
                           "hover:border-primary/50 hover:bg-primary/5 transition-all text-left",
-                          "text-sm sm:text-base touch-manipulation active:scale-95"
+                          "text-sm sm:text-base touch-manipulation active:scale-95",
+                          'isPhotoAction' in q && q.isPhotoAction && "border-destructive/30 bg-destructive/5 hover:bg-destructive/10"
                         )}
                       >
                         <q.icon className={cn("w-5 h-5 sm:w-6 sm:h-6 shrink-0", q.color)} />
@@ -607,56 +669,107 @@ export function OnScreenAssistant({ isFullScreen: isEmbeddedFullScreen = false, 
               </div>
             ) : (
               <div className="max-w-3xl mx-auto space-y-4">
-                {messages.map((msg, i) => (
-                  <motion.div
-                    key={i}
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    className={cn(
-                      "p-4 text-sm sm:text-base max-w-[85%]",
-                      msg.role === 'user'
-                        ? "krishi-chat-bubble-user text-primary-foreground ml-auto"
-                        : "krishi-chat-bubble-assistant mr-auto"
-                    )}
-                  >
-                    {/* Show image if present */}
-                    {msg.imageUrl && (
-                      <div className="mb-3 rounded-xl overflow-hidden border border-white/20">
-                        <img 
-                          src={msg.imageUrl} 
-                          alt="Crop photo" 
-                          className="max-w-full max-h-48 object-contain rounded-xl"
-                        />
-                      </div>
-                    )}
-                    <p className="whitespace-pre-wrap leading-relaxed">{msg.content}</p>
-                    {/* Offline indicator */}
-                    {msg.isOffline && (
-                      <div className="flex items-center gap-1 mt-2 text-xs opacity-70">
-                        <WifiOff className="w-3 h-3" />
-                        <span>{language === 'ne' ? 'अफलाइन जवाफ' : language === 'hi' ? 'ऑफलाइन जवाब' : 'Offline response'}</span>
-                      </div>
-                    )}
-                    {/* Voice button for assistant messages */}
-                    {msg.role === 'assistant' && ttsSupported && (
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="mt-3 h-8 px-3 text-xs bg-background/50 hover:bg-background/80 rounded-full"
-                        onClick={() => isSpeaking ? stop() : speak(msg.content)}
+                {messages.map((msg, i) => {
+                  // Render disease detection result with special component
+                  if (msg.diseaseResult) {
+                    return (
+                      <motion.div
+                        key={i}
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        className="max-w-[90%] mr-auto"
                       >
-                        {isSpeaking ? (
-                          <VolumeX className="w-3.5 h-3.5 mr-1.5" />
-                        ) : (
-                          <Volume2 className="w-3.5 h-3.5 mr-1.5" />
-                        )}
-                        {isSpeaking 
-                          ? (language === 'ne' ? 'रोक्नुहोस्' : language === 'hi' ? 'रोकें' : 'Stop') 
-                          : (language === 'ne' ? 'सुन्नुहोस्' : language === 'hi' ? 'सुनें' : 'Listen')}
-                      </Button>
-                    )}
-                  </motion.div>
-                ))}
+                        <DiseaseDetectionResult 
+                          result={msg.diseaseResult}
+                          language={language}
+                          onSpeak={ttsSupported ? (text) => speak(text) : undefined}
+                          isSpeaking={isSpeaking}
+                        />
+                      </motion.div>
+                    );
+                  }
+
+                  // Render analyzing state
+                  if (msg.isAnalyzing) {
+                    return (
+                      <motion.div
+                        key={i}
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        className="krishi-chat-bubble-assistant rounded-2xl p-4 mr-auto flex items-center gap-3 max-w-[85%]"
+                      >
+                        <div className="relative">
+                          <Scan className="w-6 h-6 text-primary" />
+                          <motion.div
+                            className="absolute inset-0 border-2 border-primary/50 rounded"
+                            animate={{ scale: [1, 1.3, 1], opacity: [1, 0, 1] }}
+                            transition={{ repeat: Infinity, duration: 1.5 }}
+                          />
+                        </div>
+                        <div>
+                          <span className="text-sm font-medium text-foreground">
+                            {language === 'ne' ? '🔬 फोटो विश्लेषण गर्दैछु...' : language === 'hi' ? '🔬 फोटो का विश्लेषण कर रहा हूँ...' : '🔬 Analyzing photo...'}
+                          </span>
+                          <p className="text-xs text-muted-foreground">
+                            {language === 'ne' ? 'रोग र कीरा खोज्दैछु' : language === 'hi' ? 'रोग और कीट खोज रहा हूँ' : 'Detecting diseases and pests'}
+                          </p>
+                        </div>
+                      </motion.div>
+                    );
+                  }
+
+                  // Regular message rendering
+                  return (
+                    <motion.div
+                      key={i}
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      className={cn(
+                        "p-4 text-sm sm:text-base max-w-[85%]",
+                        msg.role === 'user'
+                          ? "krishi-chat-bubble-user text-primary-foreground ml-auto"
+                          : "krishi-chat-bubble-assistant mr-auto"
+                      )}
+                    >
+                      {/* Show image if present */}
+                      {msg.imageUrl && (
+                        <div className="mb-3 rounded-xl overflow-hidden border border-white/20">
+                          <img 
+                            src={msg.imageUrl} 
+                            alt="Crop photo" 
+                            className="max-w-full max-h-48 object-contain rounded-xl"
+                          />
+                        </div>
+                      )}
+                      <p className="whitespace-pre-wrap leading-relaxed">{msg.content}</p>
+                      {/* Offline indicator */}
+                      {msg.isOffline && (
+                        <div className="flex items-center gap-1 mt-2 text-xs opacity-70">
+                          <WifiOff className="w-3 h-3" />
+                          <span>{language === 'ne' ? 'अफलाइन जवाफ' : language === 'hi' ? 'ऑफलाइन जवाब' : 'Offline response'}</span>
+                        </div>
+                      )}
+                      {/* Voice button for assistant messages */}
+                      {msg.role === 'assistant' && ttsSupported && !msg.diseaseResult && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="mt-3 h-8 px-3 text-xs bg-background/50 hover:bg-background/80 rounded-full"
+                          onClick={() => isSpeaking ? stop() : speak(msg.content)}
+                        >
+                          {isSpeaking ? (
+                            <VolumeX className="w-3.5 h-3.5 mr-1.5" />
+                          ) : (
+                            <Volume2 className="w-3.5 h-3.5 mr-1.5" />
+                          )}
+                          {isSpeaking 
+                            ? (language === 'ne' ? 'रोक्नुहोस्' : language === 'hi' ? 'रोकें' : 'Stop') 
+                            : (language === 'ne' ? 'सुन्नुहोस्' : language === 'hi' ? 'सुनें' : 'Listen')}
+                        </Button>
+                      )}
+                    </motion.div>
+                  );
+                })}
                 {isLoading && (
                   <motion.div
                     initial={{ opacity: 0 }}
