@@ -17,7 +17,11 @@ serve(async (req) => {
       throw new Error('OPENAI_API_KEY is not configured');
     }
 
-    const { language = 'ne' } = await req.json().catch(() => ({}));
+    const { language = 'ne', speed = 1.0 } = await req.json().catch(() => ({}));
+    
+    // Clamp speed to valid range (0.7 to 1.2)
+    const voiceSpeed = Math.max(0.7, Math.min(1.2, parseFloat(speed) || 1.0));
+    console.log('Creating session with speed:', voiceSpeed);
 
     // Enhanced Nepali-focused system instructions with natural speech
     const instructions = language === 'ne' 
@@ -88,6 +92,7 @@ serve(async (req) => {
         instructions,
         input_audio_format: "pcm16",
         output_audio_format: "pcm16",
+        speed: voiceSpeed, // Voice speed control
         input_audio_transcription: {
           model: "whisper-1"
         },

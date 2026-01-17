@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Phone, PhoneOff, Loader2, Volume2, Mic, X, MessageSquare } from 'lucide-react';
+import { Phone, PhoneOff, Loader2, Volume2, Mic, X, MessageSquare, Gauge } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Slider } from '@/components/ui/slider';
 import { useToast } from '@/hooks/use-toast';
 import { useLanguage } from '@/hooks/useLanguage';
 import { useRealtimeVoice } from '@/hooks/useRealtimeVoice';
@@ -20,7 +21,8 @@ export function FloatingVoiceButton() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [userTranscript, setUserTranscript] = useState('');
   const [aiTranscript, setAiTranscript] = useState('');
-
+  const [voiceSpeed, setVoiceSpeed] = useState(1.0);
+  const [showSpeedControl, setShowSpeedControl] = useState(false);
   const {
     status,
     isSpeaking,
@@ -31,6 +33,7 @@ export function FloatingVoiceButton() {
     isConnected
   } = useRealtimeVoice({
     language,
+    speed: voiceSpeed,
     onMessage: (msg) => {
       setMessages(prev => [...prev, { ...msg, timestamp: new Date() }]);
       if (msg.role === 'user') {
@@ -302,6 +305,66 @@ export function FloatingVoiceButton() {
                       <p className="line-clamp-2">{msg.content}</p>
                     </motion.div>
                   ))}
+                </div>
+              )}
+
+              {/* Voice Speed Control */}
+              {!isConnected && (
+                <div className="space-y-2">
+                  <button
+                    onClick={() => setShowSpeedControl(!showSpeedControl)}
+                    className="flex items-center gap-2 text-xs text-muted-foreground hover:text-foreground transition-colors w-full"
+                  >
+                    <Gauge className="w-3 h-3" />
+                    <span>{language === 'ne' ? 'आवाज गति' : 'Voice Speed'}</span>
+                    <span className="ml-auto text-primary font-medium">
+                      {voiceSpeed === 1.0 ? (language === 'ne' ? 'सामान्य' : 'Normal') : 
+                       voiceSpeed < 1.0 ? (language === 'ne' ? 'ढिलो' : 'Slow') : 
+                       (language === 'ne' ? 'छिटो' : 'Fast')}
+                    </span>
+                  </button>
+                  
+                  <AnimatePresence>
+                    {showSpeedControl && (
+                      <motion.div
+                        initial={{ opacity: 0, height: 0 }}
+                        animate={{ opacity: 1, height: 'auto' }}
+                        exit={{ opacity: 0, height: 0 }}
+                        className="space-y-3 pt-2"
+                      >
+                        <div className="flex items-center justify-between text-[10px] text-muted-foreground px-1">
+                          <span>{language === 'ne' ? 'ढिलो' : 'Slow'}</span>
+                          <span>{language === 'ne' ? 'छिटो' : 'Fast'}</span>
+                        </div>
+                        <Slider
+                          value={[voiceSpeed]}
+                          onValueChange={(value) => setVoiceSpeed(value[0])}
+                          min={0.7}
+                          max={1.2}
+                          step={0.1}
+                          className="w-full"
+                        />
+                        <div className="flex justify-center gap-2">
+                          {[0.8, 1.0, 1.1].map((speed) => (
+                            <button
+                              key={speed}
+                              onClick={() => setVoiceSpeed(speed)}
+                              className={cn(
+                                "px-3 py-1 rounded-full text-[10px] border transition-colors",
+                                voiceSpeed === speed 
+                                  ? "bg-primary text-primary-foreground border-primary" 
+                                  : "border-border hover:border-primary/50"
+                              )}
+                            >
+                              {speed === 0.8 ? (language === 'ne' ? 'ढिलो' : 'Slow') : 
+                               speed === 1.0 ? (language === 'ne' ? 'सामान्य' : 'Normal') : 
+                               (language === 'ne' ? 'छिटो' : 'Fast')}
+                            </button>
+                          ))}
+                        </div>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
                 </div>
               )}
 

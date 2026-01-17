@@ -3,6 +3,7 @@ import { supabase } from '@/integrations/supabase/client';
 
 interface UseRealtimeVoiceOptions {
   language?: string;
+  speed?: number;
   onMessage?: (message: { role: 'user' | 'assistant'; content: string }) => void;
   onError?: (error: string) => void;
   onStatusChange?: (status: 'disconnected' | 'connecting' | 'connected' | 'speaking') => void;
@@ -11,7 +12,7 @@ interface UseRealtimeVoiceOptions {
 }
 
 export function useRealtimeVoice(options: UseRealtimeVoiceOptions = {}) {
-  const { language = 'ne', onMessage, onError, onStatusChange, onUserTranscript, onAiTranscript } = options;
+  const { language = 'ne', speed = 1.0, onMessage, onError, onStatusChange, onUserTranscript, onAiTranscript } = options;
   
   const [status, setStatus] = useState<'disconnected' | 'connecting' | 'connected' | 'speaking'>('disconnected');
   const [isSpeaking, setIsSpeaking] = useState(false);
@@ -46,9 +47,9 @@ export function useRealtimeVoice(options: UseRealtimeVoiceOptions = {}) {
       });
       streamRef.current = stream;
 
-      // Get ephemeral token from edge function
+      // Get ephemeral token from edge function with speed setting
       const { data, error } = await supabase.functions.invoke('realtime-token', {
-        body: { language }
+        body: { language, speed }
       });
 
       if (error || !data?.client_secret?.value) {
