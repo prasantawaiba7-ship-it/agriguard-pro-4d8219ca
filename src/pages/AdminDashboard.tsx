@@ -33,6 +33,7 @@ import {
   RefreshCw,
   AlertTriangle,
   Crown,
+  Bug,
 } from "lucide-react";
 import { toast } from "sonner";
 import { SubscriptionAnalytics } from "@/components/admin/SubscriptionAnalytics";
@@ -43,6 +44,7 @@ import { EmailSettingsManager } from "@/components/admin/EmailSettingsManager";
 import { PdfReportsManager } from "@/components/admin/PdfReportsManager";
 import { ActivityLogsViewer } from "@/components/admin/ActivityLogsViewer";
 import { UserManagement } from "@/components/admin/UserManagement";
+import { DiseaseAnalyticsDashboard } from "@/components/admin/DiseaseAnalyticsDashboard";
 
 interface FarmerProfile {
   id: string;
@@ -353,6 +355,10 @@ const AdminDashboard = () => {
                   <BarChart3 className="h-4 w-4" />
                   <span className="hidden sm:inline">Overview</span>
                 </TabsTrigger>
+                <TabsTrigger value="disease" className="flex items-center gap-2">
+                  <Bug className="h-4 w-4" />
+                  <span className="hidden sm:inline">Disease</span>
+                </TabsTrigger>
                 <TabsTrigger value="users" className="flex items-center gap-2">
                   <Users className="h-4 w-4" />
                   <span className="hidden sm:inline">Users</span>
@@ -491,6 +497,11 @@ const AdminDashboard = () => {
                     </CardContent>
                   </Card>
                 </div>
+              </TabsContent>
+
+              {/* Disease Analytics Tab */}
+              <TabsContent value="disease">
+                <DiseaseAnalyticsDashboard />
               </TabsContent>
 
               {/* Users Tab */}
