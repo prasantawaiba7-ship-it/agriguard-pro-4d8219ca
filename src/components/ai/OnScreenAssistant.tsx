@@ -210,6 +210,15 @@ export function OnScreenAssistant({ isFullScreen: isEmbeddedFullScreen = false, 
     }
   }, [isEmbeddedFullScreen, inputRefToUse]);
 
+  // Get the speech recognition language code
+  const getSpeechLang = useCallback(() => {
+    switch (language) {
+      case 'ne': return 'ne-NP'; // Nepali
+      case 'hi': return 'hi-IN'; // Hindi
+      default: return 'en-US';   // English
+    }
+  }, [language]);
+
   // Initialize speech recognition with error handling
   useEffect(() => {
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
@@ -217,7 +226,8 @@ export function OnScreenAssistant({ isFullScreen: isEmbeddedFullScreen = false, 
       const recognition = new SpeechRecognition();
       recognition.continuous = false;
       recognition.interimResults = true;
-      recognition.lang = language === 'ne' ? 'ne-NP' : language === 'hi' ? 'hi-IN' : 'en-US';
+      recognition.lang = getSpeechLang();
+      recognition.maxAlternatives = 1;
 
       recognition.onresult = (event: any) => {
         const transcript = Array.from(event.results)
@@ -254,7 +264,14 @@ export function OnScreenAssistant({ isFullScreen: isEmbeddedFullScreen = false, 
 
       recognitionRef.current = recognition;
     }
-  }, [language]);
+  }, [getSpeechLang]);
+
+  // Update recognition language when language changes
+  useEffect(() => {
+    if (recognitionRef.current) {
+      recognitionRef.current.lang = getSpeechLang();
+    }
+  }, [language, getSpeechLang]);
 
   // Friendly error messages
   const showFriendlyError = useCallback((errorType: string) => {
