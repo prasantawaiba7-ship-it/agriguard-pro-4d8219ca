@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { 
   Mic, MicOff, Volume2, VolumeX, Loader2, X, MessageSquare, 
   Send, Download, Crown, Camera, RefreshCw, Minimize2, Maximize2,
-  Globe, Leaf, Bug, CloudRain, HelpCircle
+  Globe, Leaf, Bug, CloudRain, HelpCircle, ImagePlus, WifiOff, Wifi
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -11,10 +11,12 @@ import { useToast } from '@/hooks/use-toast';
 import { useLanguage } from '@/hooks/useLanguage';
 import { useTextToSpeech } from '@/hooks/useTextToSpeech';
 import { useSubscription } from '@/hooks/useSubscription';
+import { useNetworkStatus } from '@/hooks/useNetworkStatus';
 import { supabase } from '@/integrations/supabase/client';
 import { cn } from '@/lib/utils';
 import { SubscriptionModal } from '@/components/subscription/SubscriptionModal';
 import { DiseaseImageUpload } from '@/components/ai/DiseaseImageUpload';
+import { offlineStorage } from '@/lib/offlineStorage';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -26,6 +28,8 @@ interface Message {
   role: 'user' | 'assistant';
   content: string;
   timestamp: Date;
+  imageUrl?: string;
+  isOffline?: boolean;
 }
 
 interface OnScreenAssistantProps {
@@ -64,6 +68,7 @@ const languageOptions = [
 export function OnScreenAssistant({ isFullScreen: isEmbeddedFullScreen = false, inputRef: externalInputRef }: OnScreenAssistantProps) {
   const { toast } = useToast();
   const { language: globalLanguage, setLanguage: setGlobalLanguage } = useLanguage();
+  const { isOnline } = useNetworkStatus();
   const [showPanel, setShowPanel] = useState(false);
   const [isFullScreen, setIsFullScreen] = useState(false);
   const [showSubscriptionModal, setShowSubscriptionModal] = useState(false);
@@ -74,10 +79,13 @@ export function OnScreenAssistant({ isFullScreen: isEmbeddedFullScreen = false, 
   const [isListening, setIsListening] = useState(false);
   const [autoSpeak, setAutoSpeak] = useState(true);
   const [assistantLang, setAssistantLang] = useState(globalLanguage);
+  const [selectedImage, setSelectedImage] = useState<string | null>(null);
+  const [isUploadingImage, setIsUploadingImage] = useState(false);
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const recognitionRef = useRef<any>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const internalInputRef = useRef<HTMLInputElement>(null);
+  const imageInputRef = useRef<HTMLInputElement>(null);
   
   // Use external ref if provided, otherwise use internal
   const inputRefToUse = externalInputRef || internalInputRef;
@@ -114,6 +122,47 @@ export function OnScreenAssistant({ isFullScreen: isEmbeddedFullScreen = false, 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
+
+  // Handle image selection
+  const handleImageSelect = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    // Validate file type
+    if (!file.type.startsWith('image/')) {
+      toast({
+        title: language === 'ne' ? 'त्रुटि' : 'Error',
+        description: language === 'ne' ? 'कृपया फोटो मात्र छान्नुहोस्।' : 'Please select an image file.',
+        variant: 'destructive'
+      });
+      return;
+    }
+
+    // Validate file size (max 5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      toast({
+        title: language === 'ne' ? 'त्रुटि' : 'Error',
+        description: language === 'ne' ? 'फोटो 5MB भन्दा सानो हुनुपर्छ।' : 'Image must be less than 5MB.',
+        variant: 'destructive'
+      });
+      return;
+    }
+
+    // Convert to base64 for preview
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      setSelectedImage(event.target?.result as string);
+    };
+    reader.readAsDataURL(file);
+  }, [language, toast]);
+
+  // Remove selected image
+  const removeSelectedImage = useCallback(() => {
+    setSelectedImage(null);
+    if (imageInputRef.current) {
+      imageInputRef.current.value = '';
+    }
+  }, []);
 
   // Auto-focus input on embedded full screen mode
   useEffect(() => {
@@ -228,7 +277,7 @@ export function OnScreenAssistant({ isFullScreen: isEmbeddedFullScreen = false, 
 
   const handleSendMessage = async (text?: string) => {
     const messageText = text || inputText.trim();
-    if (!messageText || isLoading) return;
+    if ((!messageText && !selectedImage) || isLoading) return;
 
     // Check subscription
     if (!can_query && !subscribed) {
@@ -236,15 +285,41 @@ export function OnScreenAssistant({ isFullScreen: isEmbeddedFullScreen = false, 
       return;
     }
 
-    // Add user message
+    const imageToSend = selectedImage;
+    
+    // Add user message with image if present
     const userMessage: Message = {
       role: 'user',
-      content: messageText,
-      timestamp: new Date()
+      content: messageText || (language === 'ne' ? 'यो फोटो हेर्नुहोस्' : language === 'hi' ? 'यह फोटो देखें' : 'Please check this photo'),
+      timestamp: new Date(),
+      imageUrl: imageToSend || undefined
     };
     setMessages(prev => [...prev, userMessage]);
     setInputText('');
+    setSelectedImage(null);
+    if (imageInputRef.current) {
+      imageInputRef.current.value = '';
+    }
     setIsLoading(true);
+
+    // Check if offline - use cached responses
+    if (!isOnline) {
+      const offlineResponse = offlineStorage.getOfflineResponse(messageText);
+      const aiMessage: Message = {
+        role: 'assistant',
+        content: offlineResponse,
+        timestamp: new Date(),
+        isOffline: true
+      };
+      setMessages(prev => [...prev, aiMessage]);
+      setIsLoading(false);
+      
+      // Auto-speak the response
+      if (autoSpeak && ttsSupported && offlineResponse) {
+        speak(offlineResponse);
+      }
+      return;
+    }
 
     // Increment query count for free users
     if (!subscribed) {
@@ -252,13 +327,39 @@ export function OnScreenAssistant({ isFullScreen: isEmbeddedFullScreen = false, 
     }
 
     try {
+      // Prepare message content with image if present
+      let messageContent: string | Array<{type: string; text?: string; image_url?: {url: string}}> = messageText || '';
+      
+      if (imageToSend) {
+        // If we have an image, use multimodal format
+        messageContent = [
+          {
+            type: 'text',
+            text: messageText || (language === 'ne' ? 'कृपया यो बालीको फोटो हेरेर समस्या पहिचान गर्नुहोस् र सल्लाह दिनुहोस्।' : 
+                  language === 'hi' ? 'कृपया इस फसल की फोटो देखकर समस्या पहचानें और सलाह दें।' :
+                  'Please analyze this crop photo and identify any problems and provide advice.')
+          },
+          {
+            type: 'image_url',
+            image_url: { url: imageToSend }
+          }
+        ];
+      }
+
       const response = await supabase.functions.invoke('ai-farm-assistant', {
         body: {
           messages: [
-            ...messages.map(m => ({ role: m.role, content: m.content })),
-            { role: 'user', content: messageText }
+            ...messages.map(m => ({ 
+              role: m.role, 
+              content: m.imageUrl ? [
+                { type: 'text', text: m.content },
+                { type: 'image_url', image_url: { url: m.imageUrl } }
+              ] : m.content 
+            })),
+            { role: 'user', content: messageContent }
           ],
-          language
+          language,
+          hasImage: !!imageToSend
         }
       });
 
@@ -393,6 +494,14 @@ export function OnScreenAssistant({ isFullScreen: isEmbeddedFullScreen = false, 
               )}
             </div>
             <div className="flex items-center gap-1 sm:gap-2">
+              {/* Offline Indicator */}
+              {!isOnline && (
+                <span className="text-xs bg-destructive/10 text-destructive px-2 py-1 rounded-full flex items-center gap-1">
+                  <WifiOff className="w-3 h-3" />
+                  <span className="hidden sm:inline">Offline</span>
+                </span>
+              )}
+              
               {!subscribed && (
                 <span className="text-xs text-muted-foreground mr-1 hidden sm:inline">
                   {queries_used}/{queries_limit}
@@ -503,7 +612,24 @@ export function OnScreenAssistant({ isFullScreen: isEmbeddedFullScreen = false, 
                         : "bg-muted mr-auto"
                     )}
                   >
+                    {/* Show image if present */}
+                    {msg.imageUrl && (
+                      <div className="mb-2 rounded-lg overflow-hidden">
+                        <img 
+                          src={msg.imageUrl} 
+                          alt="Crop photo" 
+                          className="max-w-full max-h-48 object-contain rounded-lg"
+                        />
+                      </div>
+                    )}
                     <p className="whitespace-pre-wrap leading-relaxed">{msg.content}</p>
+                    {/* Offline indicator */}
+                    {msg.isOffline && (
+                      <div className="flex items-center gap-1 mt-2 text-xs opacity-70">
+                        <WifiOff className="w-3 h-3" />
+                        <span>{language === 'ne' ? 'अफलाइन जवाफ' : language === 'hi' ? 'ऑफलाइन जवाब' : 'Offline response'}</span>
+                      </div>
+                    )}
                     {msg.role === 'assistant' && ttsSupported && (
                       <Button
                         variant="ghost"
@@ -543,7 +669,48 @@ export function OnScreenAssistant({ isFullScreen: isEmbeddedFullScreen = false, 
           {/* Input Area */}
           <div className="p-4 sm:p-6 border-t border-border bg-muted/30 shrink-0">
             <div className="max-w-3xl mx-auto space-y-3">
+              {/* Selected Image Preview */}
+              {selectedImage && (
+                <motion.div
+                  initial={{ opacity: 0, scale: 0.95 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  className="relative inline-block"
+                >
+                  <img 
+                    src={selectedImage} 
+                    alt="Selected crop" 
+                    className="max-h-24 rounded-lg border border-border"
+                  />
+                  <button
+                    onClick={removeSelectedImage}
+                    className="absolute -top-2 -right-2 w-6 h-6 bg-destructive text-destructive-foreground rounded-full flex items-center justify-center text-xs"
+                  >
+                    <X className="w-3 h-3" />
+                  </button>
+                </motion.div>
+              )}
+              
               <div className="flex gap-2 sm:gap-3">
+                {/* Image Upload Button */}
+                <input
+                  ref={imageInputRef}
+                  type="file"
+                  accept="image/*"
+                  capture="environment"
+                  onChange={handleImageSelect}
+                  className="hidden"
+                />
+                <Button
+                  variant="outline"
+                  size="icon"
+                  onClick={() => imageInputRef.current?.click()}
+                  disabled={isLoading || !!selectedImage}
+                  className="shrink-0 h-12 w-12 sm:h-14 sm:w-14 touch-manipulation rounded-xl"
+                  title={language === 'ne' ? 'फोटो थप्नुहोस्' : 'Add photo'}
+                >
+                  <ImagePlus className="w-5 h-5 sm:w-6 sm:h-6" />
+                </Button>
+                
                 <Button
                   variant={isListening ? "destructive" : "outline"}
                   size="icon"
@@ -567,9 +734,9 @@ export function OnScreenAssistant({ isFullScreen: isEmbeddedFullScreen = false, 
                   value={inputText}
                   onChange={(e) => setInputText(e.target.value)}
                   placeholder={
-                    language === 'ne' ? 'तपाईंको प्रश्न यहाँ लेख्नुहोस्...' : 
-                    language === 'hi' ? 'अपना सवाल यहाँ लिखें...' :
-                    'Type your question here...'
+                    selectedImage
+                      ? (language === 'ne' ? 'फोटोको बारेमा सोध्नुहोस्...' : language === 'hi' ? 'फोटो के बारे में पूछें...' : 'Ask about the photo...')
+                      : (language === 'ne' ? 'तपाईंको प्रश्न यहाँ लेख्नुहोस्...' : language === 'hi' ? 'अपना सवाल यहाँ लिखें...' : 'Type your question here...')
                   }
                   onKeyPress={(e) => e.key === 'Enter' && handleSendMessage()}
                   disabled={isLoading || isListening}
@@ -577,7 +744,7 @@ export function OnScreenAssistant({ isFullScreen: isEmbeddedFullScreen = false, 
                 />
                 <Button
                   onClick={() => handleSendMessage()}
-                  disabled={!inputText.trim() || isLoading}
+                  disabled={(!inputText.trim() && !selectedImage) || isLoading}
                   size="icon"
                   className="shrink-0 h-12 w-12 sm:h-14 sm:w-14 touch-manipulation rounded-xl"
                 >
@@ -600,11 +767,12 @@ export function OnScreenAssistant({ isFullScreen: isEmbeddedFullScreen = false, 
                 <Button 
                   variant="outline" 
                   size="sm" 
-                  onClick={() => setShowDiseaseUpload(true)}
+                  onClick={() => imageInputRef.current?.click()}
+                  disabled={isLoading || !!selectedImage}
                   className="text-xs sm:text-sm h-9 sm:h-10 touch-manipulation rounded-lg"
                 >
                   <Camera className="w-4 h-4 mr-1.5" />
-                  {language === 'ne' ? 'रोग पहिचान' : language === 'hi' ? 'रोग पहचान' : 'Disease Check'}
+                  {language === 'ne' ? 'फोटो पठाउनुहोस्' : language === 'hi' ? 'फोटो भेजें' : 'Send Photo'}
                 </Button>
                 {messages.length > 0 && (
                   <>
@@ -770,6 +938,13 @@ export function OnScreenAssistant({ isFullScreen: isEmbeddedFullScreen = false, 
                 )}
               </div>
               <div className="flex items-center gap-1">
+                {/* Offline Indicator */}
+                {!isOnline && (
+                  <span className="text-xs bg-destructive/10 text-destructive px-1.5 py-0.5 rounded-full flex items-center gap-1">
+                    <WifiOff className="w-3 h-3" />
+                  </span>
+                )}
+                
                 {!subscribed && (
                   <span className="text-xs text-muted-foreground mr-1">
                     {queries_used}/{queries_limit}
@@ -895,7 +1070,24 @@ export function OnScreenAssistant({ isFullScreen: isEmbeddedFullScreen = false, 
                         : "bg-muted mr-auto"
                     )}
                   >
+                    {/* Show image if present */}
+                    {msg.imageUrl && (
+                      <div className="mb-2 rounded-lg overflow-hidden">
+                        <img 
+                          src={msg.imageUrl} 
+                          alt="Crop photo" 
+                          className="max-w-full max-h-32 object-contain rounded-lg"
+                        />
+                      </div>
+                    )}
                     <p className="whitespace-pre-wrap leading-relaxed">{msg.content}</p>
+                    {/* Offline indicator */}
+                    {msg.isOffline && (
+                      <div className="flex items-center gap-1 mt-1 text-xs opacity-70">
+                        <WifiOff className="w-3 h-3" />
+                        <span>{language === 'ne' ? 'अफलाइन' : 'Offline'}</span>
+                      </div>
+                    )}
                     {msg.role === 'assistant' && ttsSupported && (
                       <Button
                         variant="ghost"
@@ -933,7 +1125,40 @@ export function OnScreenAssistant({ isFullScreen: isEmbeddedFullScreen = false, 
 
             {/* Input Area */}
             <div className="p-3 sm:p-4 border-t border-border bg-muted/30 shrink-0">
+              {/* Selected Image Preview */}
+              {selectedImage && (
+                <motion.div
+                  initial={{ opacity: 0, scale: 0.95 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  className="relative inline-block mb-2"
+                >
+                  <img 
+                    src={selectedImage} 
+                    alt="Selected crop" 
+                    className="max-h-16 rounded-lg border border-border"
+                  />
+                  <button
+                    onClick={removeSelectedImage}
+                    className="absolute -top-1 -right-1 w-5 h-5 bg-destructive text-destructive-foreground rounded-full flex items-center justify-center text-xs"
+                  >
+                    <X className="w-2.5 h-2.5" />
+                  </button>
+                </motion.div>
+              )}
+              
               <div className="flex gap-2">
+                {/* Image Upload Button */}
+                <Button
+                  variant="outline"
+                  size="icon"
+                  onClick={() => imageInputRef.current?.click()}
+                  disabled={isLoading || !!selectedImage}
+                  className="shrink-0 h-10 w-10 sm:h-11 sm:w-11 touch-manipulation"
+                  title={language === 'ne' ? 'फोटो थप्नुहोस्' : 'Add photo'}
+                >
+                  <ImagePlus className="w-4 h-4 sm:w-5 sm:h-5" />
+                </Button>
+                
                 <Button
                   variant={isListening ? "destructive" : "outline"}
                   size="icon"
@@ -955,14 +1180,18 @@ export function OnScreenAssistant({ isFullScreen: isEmbeddedFullScreen = false, 
                 <Input
                   value={inputText}
                   onChange={(e) => setInputText(e.target.value)}
-                  placeholder={language === 'ne' ? 'सोध्नुहोस्...' : 'Ask something...'}
+                  placeholder={
+                    selectedImage
+                      ? (language === 'ne' ? 'फोटोको बारेमा...' : 'About photo...')
+                      : (language === 'ne' ? 'सोध्नुहोस्...' : 'Ask something...')
+                  }
                   onKeyPress={(e) => e.key === 'Enter' && handleSendMessage()}
                   disabled={isLoading || isListening}
                   className="flex-1 h-10 sm:h-11 text-sm sm:text-base"
                 />
                 <Button
                   onClick={() => handleSendMessage()}
-                  disabled={!inputText.trim() || isLoading}
+                  disabled={(!inputText.trim() && !selectedImage) || isLoading}
                   size="icon"
                   className="shrink-0 h-10 w-10 sm:h-11 sm:w-11 touch-manipulation"
                 >
