@@ -1,12 +1,13 @@
 import { motion } from 'framer-motion';
 import { 
   AlertTriangle, CheckCircle, Leaf, Bug, Droplet, 
-  Activity, Stethoscope, ShieldCheck, Clock, Volume2, VolumeX, ChevronDown, ChevronUp
+  Activity, Stethoscope, ShieldCheck, Clock, Volume2, VolumeX, ChevronDown, ChevronUp,
+  Share2, MessageCircle, Phone, Save, Check
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { cn } from '@/lib/utils';
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 
 export interface DiseaseResult {
   isHealthy: boolean;
@@ -32,10 +33,66 @@ interface DiseaseDetectionResultProps {
   language: string;
   onSpeak?: (text: string) => void;
   isSpeaking?: boolean;
+  onSave?: () => void;
+  isSaved?: boolean;
+  imageUrl?: string;
 }
 
-export function DiseaseDetectionResult({ result, language, onSpeak, isSpeaking }: DiseaseDetectionResultProps) {
+export function DiseaseDetectionResult({ result, language, onSpeak, isSpeaking, onSave, isSaved, imageUrl }: DiseaseDetectionResultProps) {
   const [isExpanded, setIsExpanded] = useState(false);
+  const [showShareMenu, setShowShareMenu] = useState(false);
+
+  // Generate shareable message
+  const getShareMessage = useCallback(() => {
+    const severityText = result.severity === 'high' ? 'गम्भीर' : result.severity === 'medium' ? 'मध्यम' : 'सामान्य';
+    
+    let message = language === 'ne' 
+      ? `🌾 *कृषि मित्र रोग पहिचान*\n\n`
+      : `🌾 *Krishi Mitra Disease Detection*\n\n`;
+    
+    message += language === 'ne'
+      ? `📋 *पहिचान:* ${result.detectedIssue}\n`
+      : `📋 *Detected:* ${result.detectedIssue}\n`;
+    
+    if (result.severity) {
+      message += language === 'ne'
+        ? `⚠️ *गम्भीरता:* ${severityText}\n`
+        : `⚠️ *Severity:* ${result.severity}\n`;
+    }
+    
+    if (result.symptoms && result.symptoms.length > 0) {
+      message += language === 'ne' ? `\n🔍 *लक्षणहरू:*\n` : `\n🔍 *Symptoms:*\n`;
+      result.symptoms.slice(0, 3).forEach(s => {
+        message += `• ${s}\n`;
+      });
+    }
+    
+    if (result.treatment) {
+      message += language === 'ne'
+        ? `\n💊 *उपचार:*\n${result.treatment}\n`
+        : `\n💊 *Treatment:*\n${result.treatment}\n`;
+    }
+    
+    message += language === 'ne'
+      ? `\n_कृषि मित्र AI बाट पठाइएको_`
+      : `\n_Sent from Krishi Mitra AI_`;
+    
+    return message;
+  }, [result, language]);
+
+  // Share via WhatsApp
+  const shareViaWhatsApp = useCallback(() => {
+    const message = encodeURIComponent(getShareMessage());
+    window.open(`https://wa.me/?text=${message}`, '_blank');
+    setShowShareMenu(false);
+  }, [getShareMessage]);
+
+  // Share via SMS
+  const shareViaSMS = useCallback(() => {
+    const message = encodeURIComponent(getShareMessage().replace(/\*/g, '').replace(/_/g, ''));
+    window.open(`sms:?body=${message}`, '_blank');
+    setShowShareMenu(false);
+  }, [getShareMessage]);
 
   const getSeverityColor = (severity: string | null) => {
     switch (severity) {
@@ -325,22 +382,75 @@ export function DiseaseDetectionResult({ result, language, onSpeak, isSpeaking }
         )}
       </div>
 
-      {/* Footer with voice button */}
-      <div className="p-3 border-t bg-muted/30 flex justify-between items-center">
-        <p className="text-xs text-muted-foreground">
-          {language === 'ne' ? '⚠️ यो डिजिटल अनुमान हो' : '⚠️ This is a digital estimate'}
-        </p>
-        {onSpeak && (
+      {/* Footer with action buttons */}
+      <div className="p-3 border-t bg-muted/30 space-y-2">
+        <div className="flex items-center justify-between gap-2">
+          <p className="text-xs text-muted-foreground shrink-0">
+            {language === 'ne' ? '⚠️ डिजिटल अनुमान' : '⚠️ Digital estimate'}
+          </p>
+          <div className="flex items-center gap-1">
+            {/* Save button */}
+            {onSave && (
+              <Button
+                variant="ghost"
+                size="sm"
+                className="text-xs h-8"
+                onClick={onSave}
+                disabled={isSaved}
+              >
+                {isSaved ? (
+                  <>
+                    <Check className="w-3.5 h-3.5 mr-1 text-success" />
+                    {language === 'ne' ? 'सुरक्षित' : 'Saved'}
+                  </>
+                ) : (
+                  <>
+                    <Save className="w-3.5 h-3.5 mr-1" />
+                    {language === 'ne' ? 'सुरक्षित' : 'Save'}
+                  </>
+                )}
+              </Button>
+            )}
+            
+            {/* Voice button */}
+            {onSpeak && (
+              <Button
+                variant="ghost"
+                size="sm"
+                className="text-xs h-8"
+                onClick={() => onSpeak(getReadableText())}
+              >
+                {isSpeaking ? <VolumeX className="w-3.5 h-3.5 mr-1" /> : <Volume2 className="w-3.5 h-3.5 mr-1" />}
+                {language === 'ne' ? 'सुन्नुहोस्' : 'Listen'}
+              </Button>
+            )}
+          </div>
+        </div>
+        
+        {/* Share buttons */}
+        <div className="flex items-center gap-2">
+          <span className="text-xs text-muted-foreground">
+            {language === 'ne' ? 'शेयर गर्नुहोस्:' : 'Share:'}
+          </span>
           <Button
-            variant="ghost"
+            variant="outline"
+            size="sm"
+            className="text-xs h-8 bg-[#25D366]/10 border-[#25D366]/30 text-[#25D366] hover:bg-[#25D366]/20"
+            onClick={shareViaWhatsApp}
+          >
+            <MessageCircle className="w-3.5 h-3.5 mr-1" />
+            WhatsApp
+          </Button>
+          <Button
+            variant="outline"
             size="sm"
             className="text-xs h-8"
-            onClick={() => onSpeak(getReadableText())}
+            onClick={shareViaSMS}
           >
-            {isSpeaking ? <VolumeX className="w-3.5 h-3.5 mr-1" /> : <Volume2 className="w-3.5 h-3.5 mr-1" />}
-            {language === 'ne' ? 'सुन्नुहोस्' : 'Listen'}
+            <Phone className="w-3.5 h-3.5 mr-1" />
+            SMS
           </Button>
-        )}
+        </div>
       </div>
     </motion.div>
   );
