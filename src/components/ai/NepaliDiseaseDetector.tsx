@@ -5,7 +5,8 @@ import {
   Camera, Upload, X, Loader2, AlertTriangle, CheckCircle2, 
   Download, Leaf, Bug, Shield, Pill, BookOpen, ChevronDown,
   Droplets, ThermometerSun, Wind, Mic, MicOff, Share2, 
-  MessageCircle, Phone, History, Calendar, Bell, Image, Grid3X3
+  MessageCircle, Phone, History, Calendar, Bell, Image, Grid3X3,
+  MapPin, Navigation
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -26,6 +27,7 @@ import {
 } from '@/hooks/useDiseaseDetection';
 import { uploadDiseaseImage } from '@/lib/uploadDiseaseImage';
 import { useNotifications, useOutbreakAlertChecker } from '@/hooks/useNotifications';
+import { useGeolocation } from '@/hooks/useGeolocation';
 
 // Nepali crop types
 const CROP_TYPES = [
@@ -385,6 +387,15 @@ export function NepaliDiseaseDetector() {
   const { outbreakAlerts, enablePushNotifications, isPushSupported } = useNotifications();
   useOutbreakAlertChecker();
 
+  // Geolocation for farmer location
+  const { 
+    locationName, 
+    isLoading: locationLoading, 
+    error: locationError, 
+    fetchLocation,
+    isSupported: geoSupported 
+  } = useGeolocation({ autoFetch: true });
+
   // Voice input for symptom description
   const { 
     isListening, 
@@ -581,13 +592,13 @@ export function NepaliDiseaseDetector() {
     const cropLabel = CROP_TYPES.find(c => c.value === selectedCrop)?.label || 'बाली';
     
     try {
-      // Prepare data for the new unified PDF endpoint
+      // Prepare data for the new unified PDF endpoint with geolocation
       const reportData = {
         crop_name: cropLabel,
         disease_name: result.detectedIssue,
         confidence: result.confidence,
         severity: result.severity,
-        farmer_location: '', // Can be enhanced to get user location
+        farmer_location: locationName || '', // Auto-populated from geolocation
         symptoms_keypoints: result.symptoms || [],
         recommended_chemicals: result.recommended_chemicals || [],
         organic_treatment: result.organic_treatment || (result.organicTreatment ? {
@@ -627,16 +638,74 @@ export function NepaliDiseaseDetector() {
     }
   };
 
-  // Share functions
+  // Generate enhanced report text for sharing
+  const generateReportShareText = () => {
+    if (!result) return '';
+    
+    const cropLabel = CROP_TYPES.find(c => c.value === selectedCrop)?.label || 'बाली';
+    const severityLabel = result.severity === 'high' ? 'गम्भीर' : result.severity === 'medium' ? 'मध्यम' : 'सामान्य';
+    const confidencePercent = Math.round(result.confidence * 100);
+    
+    let text = `🌾 *कृषि मित्र - रोग विश्लेषण रिपोर्ट*\n`;
+    text += `━━━━━━━━━━━━━━━━━━━━\n\n`;
+    text += `📅 मिति: ${new Date().toLocaleDateString('ne-NP')}\n`;
+    if (locationName) {
+      text += `📍 स्थान: ${locationName}\n`;
+    }
+    text += `🌱 बाली: ${cropLabel}\n`;
+    text += `🦠 पहिचान: *${result.detectedIssue}*\n`;
+    text += `⚠️ गम्भीरता: ${severityLabel}\n`;
+    text += `📊 विश्वासनियता: ${confidencePercent}%\n\n`;
+    
+    if (result.symptoms && result.symptoms.length > 0) {
+      text += `*🔍 लक्षणहरू:*\n`;
+      result.symptoms.slice(0, 3).forEach(s => {
+        text += `• ${s}\n`;
+      });
+      text += `\n`;
+    }
+    
+    if (result.treatment) {
+      text += `*💊 उपचार:*\n${result.treatment}\n\n`;
+    }
+    
+    if (result.prevention && result.prevention.length > 0) {
+      text += `*🛡️ रोकथाम:*\n`;
+      result.prevention.slice(0, 2).forEach(p => {
+        text += `• ${p}\n`;
+      });
+      text += `\n`;
+    }
+    
+    text += `⚠️ *सावधानी:* यो AI अनुमान हो। कृषि प्राविधिकसँग सल्लाह लिनुहोस्।\n\n`;
+    text += `━━━━━━━━━━━━━━━━━━━━\n`;
+    text += `🌾 कृषि मित्र - तपाईंको कृषि सहायक`;
+    
+    return text;
+  };
+
+  // Share functions with enhanced report
   const handleShareWhatsApp = () => {
     if (!result) return;
-    const text = generateShareText({
-      detectedDisease: result.detectedIssue,
-      severity: result.severity,
-      treatment: result.treatment,
-      prevention: result.prevention,
-    });
-    shareViaWhatsApp(text);
+    const text = generateReportShareText();
+    const encodedText = encodeURIComponent(text);
+    window.open(`https://wa.me/?text=${encodedText}`, '_blank');
+  };
+
+  // Share to specific WhatsApp contact (for officers)
+  const handleShareToOfficer = (phoneNumber?: string) => {
+    if (!result) return;
+    const text = generateReportShareText();
+    const encodedText = encodeURIComponent(text);
+    
+    if (phoneNumber) {
+      // Remove any non-numeric characters and ensure country code
+      const cleanPhone = phoneNumber.replace(/\D/g, '');
+      const fullPhone = cleanPhone.startsWith('977') ? cleanPhone : `977${cleanPhone}`;
+      window.open(`https://wa.me/${fullPhone}?text=${encodedText}`, '_blank');
+    } else {
+      window.open(`https://wa.me/?text=${encodedText}`, '_blank');
+    }
   };
 
   const handleShareSMS = () => {
@@ -1062,25 +1131,62 @@ export function NepaliDiseaseDetector() {
                       </div>
                     )}
 
+                    {/* Location indicator */}
+                    <div className="flex items-center gap-2 p-3 bg-muted/50 rounded-lg">
+                      <MapPin className="w-4 h-4 text-primary" />
+                      <span className="text-sm text-muted-foreground">स्थान:</span>
+                      {locationLoading ? (
+                        <span className="text-sm flex items-center gap-1">
+                          <Loader2 className="w-3 h-3 animate-spin" />
+                          पत्ता लगाउँदै...
+                        </span>
+                      ) : locationName ? (
+                        <span className="text-sm font-medium text-foreground">{locationName}</span>
+                      ) : (
+                        <Button 
+                          variant="ghost" 
+                          size="sm" 
+                          onClick={fetchLocation}
+                          className="h-auto py-1 px-2 text-xs"
+                          disabled={!geoSupported}
+                        >
+                          <Navigation className="w-3 h-3 mr-1" />
+                          स्थान पत्ता लगाउनुहोस्
+                        </Button>
+                      )}
+                    </div>
+
                     {/* Actions */}
                     <div className="space-y-3">
                       {/* Share buttons */}
-                      <div className="flex gap-2">
+                      <div className="flex flex-col gap-2">
+                        <div className="flex gap-2">
+                          <Button 
+                            onClick={handleShareWhatsApp} 
+                            variant="outline" 
+                            className="flex-1 bg-[#25D366]/10 hover:bg-[#25D366]/20 border-[#25D366]/30"
+                          >
+                            <MessageCircle className="w-4 h-4 mr-2 text-[#25D366]" />
+                            WhatsApp मा Share
+                          </Button>
+                          <Button 
+                            onClick={handleShareSMS} 
+                            variant="outline" 
+                            className="flex-1"
+                          >
+                            <Phone className="w-4 h-4 mr-2" />
+                            SMS
+                          </Button>
+                        </div>
+                        
+                        {/* Share to officer button */}
                         <Button 
-                          onClick={handleShareWhatsApp} 
-                          variant="outline" 
-                          className="flex-1 bg-[#25D366]/10 hover:bg-[#25D366]/20 border-[#25D366]/30"
+                          onClick={() => handleShareToOfficer()} 
+                          variant="outline"
+                          className="w-full bg-primary/5 hover:bg-primary/10 border-primary/20"
                         >
-                          <MessageCircle className="w-4 h-4 mr-2 text-[#25D366]" />
-                          WhatsApp
-                        </Button>
-                        <Button 
-                          onClick={handleShareSMS} 
-                          variant="outline" 
-                          className="flex-1"
-                        >
-                          <Phone className="w-4 h-4 mr-2" />
-                          SMS
+                          <Share2 className="w-4 h-4 mr-2 text-primary" />
+                          कृषि अधिकारीलाई रिपोर्ट पठाउनुहोस्
                         </Button>
                       </div>
                       
@@ -1088,7 +1194,7 @@ export function NepaliDiseaseDetector() {
                       <div className="flex gap-3">
                         <Button onClick={downloadReport} variant="outline" className="flex-1">
                           <Download className="w-4 h-4 mr-2" />
-                          PDF
+                          PDF रिपोर्ट
                         </Button>
                         <Button 
                           variant="secondary" 
