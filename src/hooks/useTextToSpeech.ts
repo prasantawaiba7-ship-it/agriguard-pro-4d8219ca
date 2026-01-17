@@ -132,7 +132,8 @@ function getElevenLabsFunctionUrl(): string {
 let elevenLabsDisabled = false;
 
 export function useTextToSpeech(options: UseTextToSpeechOptions = {}) {
-  const { language = "en", rate = 0.9, pitch = 1, onStart, onEnd, onError } = options;
+  // Default to faster rate (1.15) for quicker voice responses
+  const { language = "en", rate = 1.15, pitch = 1, onStart, onEnd, onError } = options;
 
   const [isSpeaking, setIsSpeaking] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
