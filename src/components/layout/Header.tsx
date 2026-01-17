@@ -1,24 +1,34 @@
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Leaf, Menu, X, LogIn, User } from "lucide-react";
+import { Leaf, Menu, X, LogIn, User, Shield } from "lucide-react";
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useAuth } from "@/hooks/useAuth";
+import { useUserRole } from "@/hooks/useUserRole";
 
 const Header = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
   const { user, profile } = useAuth();
+  const { isAdmin, isAuthority } = useUserRole();
 
-  const navLinks = [
+  // Base nav links for all users
+  const baseNavLinks = [
     { href: "/", label: "Home" },
     { href: "/farmer", label: "Farmer Portal" },
     { href: "/disease-detection", label: "🌿 रोग पहिचान" },
     { href: "/expert-directory", label: "👨‍🌾 विशेषज्ञ" },
     { href: "/krishi-mitra", label: "Krishi Mitra" },
-    { href: "/authority", label: "Authority Dashboard" },
-    { href: "/admin", label: "Admin" },
+  ];
+
+  // Build nav links based on user role
+  const navLinks = [
+    ...baseNavLinks,
+    // Show Authority Dashboard only to authority/admin users
+    ...(isAuthority() ? [{ href: "/authority", label: "Authority Dashboard" }] : []),
+    // Show Admin only to admin users
+    ...(isAdmin() ? [{ href: "/admin", label: "Admin" }] : []),
   ];
 
   const isActive = (path: string) => location.pathname === path;
@@ -53,15 +63,20 @@ const Header = () => {
 
           <div className="hidden md:flex items-center gap-3">
             {user ? (
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => navigate('/farmer')}
-                className="gap-2"
-              >
-                <User className="w-4 h-4" />
-                {profile?.full_name || 'Dashboard'}
-              </Button>
+              <div className="flex items-center gap-2">
+                {isAdmin() && (
+                  <Shield className="w-4 h-4 text-primary" aria-label="Admin" />
+                )}
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => navigate('/farmer')}
+                  className="gap-2"
+                >
+                  <User className="w-4 h-4" />
+                  {profile?.full_name || 'Dashboard'}
+                </Button>
+              </div>
             ) : (
               <>
                 <Button variant="outline" size="sm" onClick={() => navigate('/auth')}>
