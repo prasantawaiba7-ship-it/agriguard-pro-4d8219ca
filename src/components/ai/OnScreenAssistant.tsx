@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect, useCallback, RefObject } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useLocation } from 'react-router-dom';
 import { 
   Mic, MicOff, Volume2, VolumeX, Loader2, X, MessageSquare, 
   Send, Download, Crown, Camera, RefreshCw, Minimize2, Maximize2,
@@ -13,6 +14,7 @@ import { useTextToSpeech } from '@/hooks/useTextToSpeech';
 import { useSubscription } from '@/hooks/useSubscription';
 import { useNetworkStatus } from '@/hooks/useNetworkStatus';
 import { useAuth } from '@/hooks/useAuth';
+import { useUserRole } from '@/hooks/useUserRole';
 import { useSaveDiseaseDetection } from '@/hooks/useDiseaseHistory';
 import { supabase } from '@/integrations/supabase/client';
 import { cn } from '@/lib/utils';
@@ -76,7 +78,12 @@ export function OnScreenAssistant({ isFullScreen: isEmbeddedFullScreen = false, 
   const { language: globalLanguage, setLanguage: setGlobalLanguage } = useLanguage();
   const { isOnline } = useNetworkStatus();
   const { profile } = useAuth();
+  const { isAdmin } = useUserRole();
+  const location = useLocation();
   const saveDiseaseDetection = useSaveDiseaseDetection();
+  
+  // Hide floating button on Krishi Mitra page (only show embedded full screen version there)
+  const isKrishiMitraPage = location.pathname === '/krishi-mitra';
   const [showPanel, setShowPanel] = useState(false);
   const [isFullScreen, setIsFullScreen] = useState(false);
   const [showSubscriptionModal, setShowSubscriptionModal] = useState(false);
@@ -308,10 +315,11 @@ export function OnScreenAssistant({ isFullScreen: isEmbeddedFullScreen = false, 
     const messageText = text || inputText.trim();
     if ((!messageText && !selectedImage) || isLoading) return;
 
-    // Check subscription
-    if (!can_query && !subscribed) {
+    // Check subscription - admins bypass subscription checks
+    if (!can_query && !subscribed && !isAdmin()) {
       setShowSubscriptionModal(true);
       return;
+    }
     }
 
     const imageToSend = selectedImage;
@@ -1036,46 +1044,48 @@ export function OnScreenAssistant({ isFullScreen: isEmbeddedFullScreen = false, 
 
   return (
     <>
-      {/* Floating Button - Always visible */}
-      <motion.div
-        className="fixed bottom-4 right-4 sm:bottom-6 sm:right-6 z-50"
-        initial={{ scale: 0 }}
-        animate={{ scale: 1 }}
-        transition={{ delay: 0.5, type: 'spring' }}
-      >
-        <Button
-          onClick={() => setShowPanel(!showPanel)}
-          size="lg"
-          className={cn(
-            "rounded-full w-14 h-14 sm:w-16 sm:h-16 shadow-lg touch-manipulation",
-            showPanel 
-              ? "bg-primary hover:bg-primary/90" 
-              : "bg-gradient-to-r from-primary to-accent hover:opacity-90"
-          )}
+      {/* Floating Button - Hidden on Krishi Mitra page and in embedded full screen mode */}
+      {!isKrishiMitraPage && !isEmbeddedFullScreen && (
+        <motion.div
+          className="fixed bottom-4 right-4 sm:bottom-6 sm:right-6 z-50"
+          initial={{ scale: 0 }}
+          animate={{ scale: 1 }}
+          transition={{ delay: 0.5, type: 'spring' }}
         >
-          {isSpeaking ? (
-            <motion.div
-              animate={{ scale: [1, 1.2, 1] }}
-              transition={{ repeat: Infinity, duration: 0.5 }}
-            >
-              <Volume2 className="w-6 h-6 sm:w-7 sm:h-7 text-primary-foreground" />
-            </motion.div>
-          ) : isLoading ? (
-            <Loader2 className="w-6 h-6 sm:w-7 sm:h-7 text-primary-foreground animate-spin" />
-          ) : (
-            <MessageSquare className="w-6 h-6 sm:w-7 sm:h-7 text-primary-foreground" />
-          )}
-        </Button>
+          <Button
+            onClick={() => setShowPanel(!showPanel)}
+            size="lg"
+            className={cn(
+              "rounded-full w-14 h-14 sm:w-16 sm:h-16 shadow-lg touch-manipulation",
+              showPanel 
+                ? "bg-primary hover:bg-primary/90" 
+                : "bg-gradient-to-r from-primary to-accent hover:opacity-90"
+            )}
+          >
+            {isSpeaking ? (
+              <motion.div
+                animate={{ scale: [1, 1.2, 1] }}
+                transition={{ repeat: Infinity, duration: 0.5 }}
+              >
+                <Volume2 className="w-6 h-6 sm:w-7 sm:h-7 text-primary-foreground" />
+              </motion.div>
+            ) : isLoading ? (
+              <Loader2 className="w-6 h-6 sm:w-7 sm:h-7 text-primary-foreground animate-spin" />
+            ) : (
+              <MessageSquare className="w-6 h-6 sm:w-7 sm:h-7 text-primary-foreground" />
+            )}
+          </Button>
 
-        {/* Pulse animation when speaking */}
-        {isSpeaking && (
-          <motion.div
-            className="absolute inset-0 rounded-full border-2 border-primary"
-            animate={{ scale: [1, 1.5], opacity: [0.5, 0] }}
-            transition={{ repeat: Infinity, duration: 2 }}
-          />
-        )}
-      </motion.div>
+          {/* Pulse animation when speaking */}
+          {isSpeaking && (
+            <motion.div
+              className="absolute inset-0 rounded-full border-2 border-primary"
+              animate={{ scale: [1, 1.5], opacity: [0.5, 0] }}
+              transition={{ repeat: Infinity, duration: 2 }}
+            />
+          )}
+        </motion.div>
+      )}
 
       {/* Chat Panel */}
       <AnimatePresence>
@@ -1411,8 +1421,8 @@ export function OnScreenAssistant({ isFullScreen: isEmbeddedFullScreen = false, 
                 )}
               </div>
               
-              {/* Subscription CTA for free users */}
-              {!subscribed && !subLoading && (
+              {/* Subscription CTA for free users - hidden for admins */}
+              {!subscribed && !subLoading && !isAdmin() && (
                 <Button 
                   variant="ghost" 
                   size="sm" 

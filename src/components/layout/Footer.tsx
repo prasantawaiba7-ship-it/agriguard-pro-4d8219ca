@@ -95,9 +95,9 @@ const Footer = () => {
             </div>
           </div>
           <div className="flex items-center justify-center gap-2 text-sm text-background/50">
-            <span>विकासकर्ता:</span>
+            <span>Powered by</span>
             <Heart className="w-4 h-4 text-red-400 fill-red-400" />
-            <span className="font-medium text-background/70">प्रशान्त वाइबा (Prashanta Waiba)</span>
+            <span className="font-medium text-background/70">Pragati Tech</span>
           </div>
         </div>
       </div>
