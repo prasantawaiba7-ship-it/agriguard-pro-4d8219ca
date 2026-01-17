@@ -3,6 +3,7 @@ import Header from '@/components/layout/Header';
 import Footer from '@/components/layout/Footer';
 import { NepaliDiseaseDetector } from '@/components/ai/NepaliDiseaseDetector';
 import { FloatingVoiceButton } from '@/components/ai/FloatingVoiceButton';
+import { OutbreakAlertsBanner } from '@/components/disease/OutbreakAlertsBanner';
 
 export default function DiseaseDetection() {
   return (
@@ -28,6 +29,9 @@ export default function DiseaseDetection() {
               AI ले रोगको निदान, उपचार र रोकथामका उपायहरू सुझाव दिनेछ।
             </p>
           </div>
+
+          {/* Outbreak Alerts Banner */}
+          <OutbreakAlertsBanner />
 
           <NepaliDiseaseDetector />
 
