@@ -320,7 +320,6 @@ export function OnScreenAssistant({ isFullScreen: isEmbeddedFullScreen = false, 
       setShowSubscriptionModal(true);
       return;
     }
-    }
 
     const imageToSend = selectedImage;
     
