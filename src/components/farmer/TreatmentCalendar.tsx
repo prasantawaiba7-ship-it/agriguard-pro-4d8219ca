@@ -2,12 +2,13 @@ import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { 
   Calendar, AlertTriangle, CheckCircle, Clock, 
-  ChevronLeft, ChevronRight, Bug, Leaf, Bell
+  ChevronLeft, ChevronRight, Bug, Leaf, Bell, BellRing
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { useTreatmentReminders } from '@/hooks/useDiseaseHistory';
+import { useTreatmentNotifications } from '@/hooks/useTreatmentNotifications';
 import { useLanguage } from '@/hooks/useLanguage';
 import { cn } from '@/lib/utils';
 import { format, startOfMonth, endOfMonth, eachDayOfInterval, isSameDay, addMonths, subMonths } from 'date-fns';
@@ -15,6 +16,13 @@ import { format, startOfMonth, endOfMonth, eachDayOfInterval, isSameDay, addMont
 export function TreatmentCalendar() {
   const { language } = useLanguage();
   const { data: reminders = [], isLoading } = useTreatmentReminders();
+  const { 
+    enableNotifications, 
+    isPushSupported, 
+    notificationPermission,
+    overdueCount,
+    upcomingCount 
+  } = useTreatmentNotifications();
   const [currentMonth, setCurrentMonth] = useState(new Date());
 
   const monthStart = startOfMonth(currentMonth);
@@ -55,6 +63,41 @@ export function TreatmentCalendar() {
 
   return (
     <div className="space-y-4">
+      {/* Push Notification Enable Card */}
+      {isPushSupported && notificationPermission !== 'granted' && (
+        <Card className="border-primary/50 bg-primary/5">
+          <CardContent className="p-4 flex items-center gap-4">
+            <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
+              <BellRing className="w-6 h-6 text-primary" />
+            </div>
+            <div className="flex-1">
+              <h3 className="font-medium text-foreground">
+                {language === 'ne' ? 'पुश सूचना सक्षम गर्नुहोस्' : 'Enable Push Notifications'}
+              </h3>
+              <p className="text-sm text-muted-foreground">
+                {language === 'ne' 
+                  ? 'उपचार रिमाइन्डरहरू समयमा प्राप्त गर्नुहोस्' 
+                  : 'Get treatment reminders on time'}
+              </p>
+            </div>
+            <Button onClick={enableNotifications} size="sm" className="shrink-0">
+              <Bell className="w-4 h-4 mr-1" />
+              {language === 'ne' ? 'सक्षम' : 'Enable'}
+            </Button>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Notification Status Badge */}
+      {notificationPermission === 'granted' && (overdueCount > 0 || upcomingCount > 0) && (
+        <div className="flex items-center gap-2 text-sm text-muted-foreground">
+          <Bell className="w-4 h-4 text-success" />
+          {language === 'ne' 
+            ? `सूचना सक्षम • ${overdueCount} बिलम्ब, ${upcomingCount} आगामी` 
+            : `Notifications on • ${overdueCount} overdue, ${upcomingCount} upcoming`}
+        </div>
+      )}
+
       {/* Alerts Section */}
       {(overdueReminders.length > 0 || upcomingReminders.length > 0) && (
         <Card className="border-warning/50 bg-warning/5">

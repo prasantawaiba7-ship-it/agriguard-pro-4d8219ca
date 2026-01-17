@@ -12,6 +12,7 @@ import { AIAssistant } from "@/components/ai/AIAssistant";
 import { KrishiMitraBar } from "@/components/ai/KrishiMitraBar";
 import { OfflineDataViewer } from "@/components/farmer/OfflineDataViewer";
 import CropCalendar from "@/components/farmer/CropCalendar";
+import { TreatmentCalendar } from "@/components/farmer/TreatmentCalendar";
 import WeatherPlantingAlerts from "@/components/farmer/WeatherPlantingAlerts";
 import { LanguageSelector } from "@/components/farmer/LanguageSelector";
 import { useAuth } from "@/hooks/useAuth";
@@ -38,6 +39,7 @@ import {
   WifiOff,
   Bug,
   CloudSun,
+  Stethoscope,
 } from "lucide-react";
 import { Database } from "@/integrations/supabase/types";
 
@@ -67,7 +69,7 @@ const cropStages: { value: CropStage; label: string }[] = [
 ];
 
 const FarmerDashboard = () => {
-  const [activeTab, setActiveTab] = useState<"plots" | "capture" | "history" | "offline" | "calendar" | "weather">("plots");
+  const [activeTab, setActiveTab] = useState<"plots" | "capture" | "history" | "offline" | "calendar" | "weather" | "treatments">("plots");
   const [isAddPlotOpen, setIsAddPlotOpen] = useState(false);
   const [selectedPlot, setSelectedPlot] = useState<string>("");
   const [selectedStage, setSelectedStage] = useState<CropStage>("vegetative");
@@ -285,6 +287,7 @@ const FarmerDashboard = () => {
               {[
                 { id: "plots", label: t('myPlots'), icon: MapPin },
                 { id: "capture", label: "Capture", icon: Camera },
+                { id: "treatments", label: "उपचार", icon: Stethoscope },
                 { id: "weather", label: "मौसम सुझाव", icon: CloudSun },
                 { id: "calendar", label: "बाली पात्रो", icon: Calendar },
                 { id: "history", label: t('history'), icon: History },
@@ -638,6 +641,16 @@ const FarmerDashboard = () => {
                 {activeTab === "weather" && (
                   <div className="space-y-4">
                     <WeatherPlantingAlerts />
+                  </div>
+                )}
+
+                {activeTab === "treatments" && (
+                  <div className="space-y-4">
+                    <h2 className="text-xl font-semibold text-foreground flex items-center gap-2">
+                      <Stethoscope className="w-5 h-5 text-primary" />
+                      उपचार क्यालेन्डर
+                    </h2>
+                    <TreatmentCalendar />
                   </div>
                 )}
 
