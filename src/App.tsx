@@ -19,6 +19,7 @@ import DeviceSettings from "./pages/DeviceSettings";
 import InstallPage from "./pages/InstallPage";
 import PaymentSuccess from "./pages/PaymentSuccess";
 import PaymentCancelled from "./pages/PaymentCancelled";
+import DiseaseDetection from "./pages/DiseaseDetection";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -45,6 +46,7 @@ const App = () => (
                 <Route path="/payment/cancelled" element={<PaymentCancelled />} />
                 <Route path="/authority" element={<AuthorityDashboard />} />
                 <Route path="/admin" element={<AdminDashboard />} />
+                <Route path="/disease-detection" element={<DiseaseDetection />} />
                 {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
                 <Route path="*" element={<NotFound />} />
               </Routes>
