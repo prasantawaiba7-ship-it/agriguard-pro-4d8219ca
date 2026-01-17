@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { 
   Mic, MicOff, Volume2, VolumeX, Loader2, X, MessageSquare, 
   Send, Download, Crown, Camera, RefreshCw, Minimize2, Maximize2,
-  Globe, Leaf, Bug, CloudRain, HelpCircle, ImagePlus, WifiOff, Wifi, Scan
+  Globe, Leaf, Bug, CloudRain, HelpCircle, ImagePlus, WifiOff, Wifi, Scan, Calendar
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -12,6 +12,8 @@ import { useLanguage } from '@/hooks/useLanguage';
 import { useTextToSpeech } from '@/hooks/useTextToSpeech';
 import { useSubscription } from '@/hooks/useSubscription';
 import { useNetworkStatus } from '@/hooks/useNetworkStatus';
+import { useAuth } from '@/hooks/useAuth';
+import { useSaveDiseaseDetection } from '@/hooks/useDiseaseHistory';
 import { supabase } from '@/integrations/supabase/client';
 import { cn } from '@/lib/utils';
 import { SubscriptionModal } from '@/components/subscription/SubscriptionModal';
@@ -33,6 +35,7 @@ interface Message {
   isOffline?: boolean;
   diseaseResult?: DiseaseResult;
   isAnalyzing?: boolean;
+  isSaved?: boolean;
 }
 
 interface OnScreenAssistantProps {
@@ -72,6 +75,8 @@ export function OnScreenAssistant({ isFullScreen: isEmbeddedFullScreen = false, 
   const { toast } = useToast();
   const { language: globalLanguage, setLanguage: setGlobalLanguage } = useLanguage();
   const { isOnline } = useNetworkStatus();
+  const { profile } = useAuth();
+  const saveDiseaseDetection = useSaveDiseaseDetection();
   const [showPanel, setShowPanel] = useState(false);
   const [isFullScreen, setIsFullScreen] = useState(false);
   const [showSubscriptionModal, setShowSubscriptionModal] = useState(false);
@@ -107,6 +112,27 @@ export function OnScreenAssistant({ isFullScreen: isEmbeddedFullScreen = false, 
     setAssistantLang(langCode);
     setGlobalLanguage(langCode);
   };
+
+  // Handle saving disease detection
+  const handleSaveDiseaseResult = useCallback(async (messageIndex: number, imageUrl: string, result: DiseaseResult) => {
+    if (!profile) {
+      toast({
+        title: language === 'ne' ? 'लगइन आवश्यक' : 'Login Required',
+        description: language === 'ne' ? 'कृपया सुरक्षित गर्न लगइन गर्नुहोस्' : 'Please login to save results',
+        variant: 'default'
+      });
+      return;
+    }
+
+    try {
+      await saveDiseaseDetection.mutateAsync({ imageUrl, result, language });
+      setMessages(prev => prev.map((msg, i) => 
+        i === messageIndex ? { ...msg, isSaved: true } : msg
+      ));
+    } catch (error) {
+      console.error('Save failed:', error);
+    }
+  }, [profile, language, saveDiseaseDetection, toast]);
   
   const { can_query, queries_used, queries_limit, subscribed, plan, incrementQueryCount, startCheckout, loading: subLoading } = useSubscription();
 
@@ -672,6 +698,10 @@ export function OnScreenAssistant({ isFullScreen: isEmbeddedFullScreen = false, 
                 {messages.map((msg, i) => {
                   // Render disease detection result with special component
                   if (msg.diseaseResult) {
+                    // Find the user message with image that triggered this result
+                    const userMsgWithImage = messages.slice(0, i).reverse().find(m => m.role === 'user' && m.imageUrl);
+                    const imageUrl = userMsgWithImage?.imageUrl || '';
+                    
                     return (
                       <motion.div
                         key={i}
@@ -684,6 +714,9 @@ export function OnScreenAssistant({ isFullScreen: isEmbeddedFullScreen = false, 
                           language={language}
                           onSpeak={ttsSupported ? (text) => speak(text) : undefined}
                           isSpeaking={isSpeaking}
+                          onSave={profile ? () => handleSaveDiseaseResult(i, imageUrl, msg.diseaseResult!) : undefined}
+                          isSaved={msg.isSaved}
+                          imageUrl={imageUrl}
                         />
                       </motion.div>
                     );
