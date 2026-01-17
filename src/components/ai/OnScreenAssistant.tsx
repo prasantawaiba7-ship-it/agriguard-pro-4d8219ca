@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect, useCallback } from 'react';
+import { useState, useRef, useEffect, useCallback, RefObject } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   Mic, MicOff, Volume2, VolumeX, Loader2, X, MessageSquare, 
@@ -26,6 +26,11 @@ interface Message {
   role: 'user' | 'assistant';
   content: string;
   timestamp: Date;
+}
+
+interface OnScreenAssistantProps {
+  isFullScreen?: boolean;
+  inputRef?: RefObject<HTMLInputElement>;
 }
 
 // Quick action questions in different languages
@@ -56,7 +61,7 @@ const languageOptions = [
   { code: 'en', label: 'English', flag: '🇬🇧' },
 ];
 
-export function OnScreenAssistant() {
+export function OnScreenAssistant({ isFullScreen: isEmbeddedFullScreen = false, inputRef: externalInputRef }: OnScreenAssistantProps) {
   const { toast } = useToast();
   const { language: globalLanguage, setLanguage: setGlobalLanguage } = useLanguage();
   const [showPanel, setShowPanel] = useState(false);
@@ -72,6 +77,10 @@ export function OnScreenAssistant() {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const recognitionRef = useRef<any>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const internalInputRef = useRef<HTMLInputElement>(null);
+  
+  // Use external ref if provided, otherwise use internal
+  const inputRefToUse = externalInputRef || internalInputRef;
   
   // Use local language for assistant
   const language = assistantLang;
@@ -106,6 +115,16 @@ export function OnScreenAssistant() {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
 
+  // Auto-focus input on embedded full screen mode
+  useEffect(() => {
+    if (isEmbeddedFullScreen && inputRefToUse.current) {
+      const timer = setTimeout(() => {
+        inputRefToUse.current?.focus();
+      }, 300);
+      return () => clearTimeout(timer);
+    }
+  }, [isEmbeddedFullScreen, inputRefToUse]);
+
   // Initialize speech recognition with error handling
   useEffect(() => {
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
@@ -113,7 +132,7 @@ export function OnScreenAssistant() {
       const recognition = new SpeechRecognition();
       recognition.continuous = false;
       recognition.interimResults = true;
-      recognition.lang = language === 'ne' ? 'ne-NP' : 'en-US';
+      recognition.lang = language === 'ne' ? 'ne-NP' : language === 'hi' ? 'hi-IN' : 'en-US';
 
       recognition.onresult = (event: any) => {
         const transcript = Array.from(event.results)
@@ -154,29 +173,34 @@ export function OnScreenAssistant() {
 
   // Friendly error messages
   const showFriendlyError = useCallback((errorType: string) => {
-    const messages: Record<string, { ne: string; en: string }> = {
+    const messages: Record<string, { ne: string; hi: string; en: string }> = {
       mic_permission: {
         ne: 'माइक्रोफोन अनुमति छैन। कृपया टाइप गर्नुहोस्।',
+        hi: 'माइक्रोफोन की अनुमति नहीं। कृपया टाइप करें।',
         en: 'Microphone not allowed. Please type instead.'
       },
       network: {
         ne: 'माफ गर्नुहोस्, जडानमा समस्या आयो। फेरि प्रयास गरौँ।',
+        hi: 'माफ़ कीजिए, कनेक्शन में समस्या। फिर से प्रयास करें।',
         en: 'Connection issue. Please try again.'
       },
       no_speech: {
         ne: 'आवाज सुनिएन। कृपया फेरि बोल्नुहोस्।',
+        hi: 'आवाज़ सुनाई नहीं दी। कृपया फिर से बोलें।',
         en: "Didn't hear you. Please speak again."
       },
       api_error: {
         ne: 'माफ गर्नुहोस्, जवाफ प्राप्त गर्न सकिएन। फेरि प्रयास गर्नुहोस्।',
+        hi: 'माफ़ कीजिए, जवाब नहीं मिला। फिर से प्रयास करें।',
         en: 'Could not get response. Please try again.'
       }
     };
 
     const msg = messages[errorType] || messages.api_error;
+    const errorMsg = language === 'ne' ? msg.ne : language === 'hi' ? msg.hi : msg.en;
     toast({
-      title: language === 'ne' ? 'समस्या' : 'Issue',
-      description: language === 'ne' ? msg.ne : msg.en,
+      title: language === 'ne' ? 'समस्या' : language === 'hi' ? 'समस्या' : 'Issue',
+      description: errorMsg,
       variant: 'default'
     });
   }, [language, toast]);
@@ -277,7 +301,7 @@ export function OnScreenAssistant() {
       // Add AI response
       const aiMessage: Message = {
         role: 'assistant',
-        content: fullResponse || (language === 'ne' ? 'माफ गर्नुहोस्, जवाफ प्राप्त भएन।' : 'Sorry, no response received.'),
+        content: fullResponse || (language === 'ne' ? 'माफ गर्नुहोस्, जवाफ प्राप्त भएन।' : language === 'hi' ? 'माफ़ कीजिए, जवाब नहीं मिला।' : 'Sorry, no response received.'),
         timestamp: new Date()
       };
       setMessages(prev => [...prev, aiMessage]);
@@ -341,6 +365,333 @@ export function OnScreenAssistant() {
       console.error('Report error:', error);
     }
   };
+
+  // If embedded full screen mode, render directly without floating button
+  if (isEmbeddedFullScreen) {
+    return (
+      <>
+        <div className="flex flex-col h-full bg-background">
+          {/* Header */}
+          <div className="flex items-center justify-between px-4 py-3 sm:px-6 sm:py-4 border-b border-border bg-gradient-to-r from-primary/10 to-accent/10 shrink-0">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-primary/20 flex items-center justify-center">
+                <span className="text-2xl sm:text-3xl">🌾</span>
+              </div>
+              <div>
+                <h1 className="font-bold text-lg sm:text-xl text-foreground">
+                  {language === 'ne' ? 'कृषि मित्र AI सहायक' : language === 'hi' ? 'कृषि मित्र AI सहायक' : 'Krishi Mitra AI Assistant'}
+                </h1>
+                <p className="text-xs sm:text-sm text-muted-foreground">
+                  {language === 'ne' ? 'तपाईंको खेती सहयोगी' : language === 'hi' ? 'आपका खेती सहायक' : 'Your farming companion'}
+                </p>
+              </div>
+              {subscribed && (
+                <span className="text-xs bg-accent text-accent-foreground px-2 py-1 rounded-full flex items-center gap-1">
+                  <Crown className="w-3 h-3" />
+                  {plan === 'monthly' ? (language === 'ne' ? 'मासिक' : 'Pro') : (language === 'ne' ? 'वार्षिक' : 'Pro')}
+                </span>
+              )}
+            </div>
+            <div className="flex items-center gap-1 sm:gap-2">
+              {!subscribed && (
+                <span className="text-xs text-muted-foreground mr-1 hidden sm:inline">
+                  {queries_used}/{queries_limit}
+                </span>
+              )}
+              
+              {/* Language Selector */}
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" size="icon" className="h-9 w-9 sm:h-10 sm:w-10" title="Change language">
+                    <Globe className="w-4 h-4 sm:w-5 sm:h-5" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="min-w-[140px]">
+                  {languageOptions.map((lang) => (
+                    <DropdownMenuItem
+                      key={lang.code}
+                      onClick={() => handleLanguageChange(lang.code as 'ne' | 'hi' | 'en')}
+                      className={cn(
+                        "cursor-pointer",
+                        assistantLang === lang.code && "bg-primary/10 text-primary"
+                      )}
+                    >
+                      <span className="mr-2">{lang.flag}</span>
+                      <span>{lang.label}</span>
+                      {assistantLang === lang.code && (
+                        <span className="ml-auto text-primary">✓</span>
+                      )}
+                    </DropdownMenuItem>
+                  ))}
+                </DropdownMenuContent>
+              </DropdownMenu>
+              
+              <Button 
+                variant="ghost" 
+                size="icon" 
+                className="h-9 w-9 sm:h-10 sm:w-10"
+                onClick={() => setAutoSpeak(!autoSpeak)}
+                title={autoSpeak ? 'Disable auto-speak' : 'Enable auto-speak'}
+              >
+                {autoSpeak ? (
+                  <Volume2 className="w-4 h-4 sm:w-5 sm:h-5 text-primary" />
+                ) : (
+                  <VolumeX className="w-4 h-4 sm:w-5 sm:h-5 text-muted-foreground" />
+                )}
+              </Button>
+            </div>
+          </div>
+
+          {/* Messages Area */}
+          <div className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-4">
+            {messages.length === 0 ? (
+              <div className="flex flex-col items-center justify-center h-full text-center">
+                <div className="text-6xl sm:text-7xl mb-4">🌾</div>
+                <h2 className="font-bold text-xl sm:text-2xl text-foreground mb-2">
+                  {language === 'ne' ? 'नमस्ते दाइ/दिदी!' : language === 'hi' ? 'नमस्ते!' : 'Namaste!'}
+                </h2>
+                <p className="text-muted-foreground mb-6 max-w-md text-sm sm:text-base">
+                  {language === 'ne' 
+                    ? 'म कृषि मित्र AI सहायक। तपाईंको बालीनालीका प्रश्नहरू सुन्छु, कृपया आफ्नो समस्या लेख्नुहोस् वा बोल्नुहोस्।' 
+                    : language === 'hi'
+                    ? 'मैं कृषि मित्र AI सहायक। आपकी खेती के सवालों का जवाब दूंगा, कृपया अपनी समस्या लिखें या बोलें।'
+                    : "I'm Krishi Mitra AI Assistant. I'll answer your farming questions, please type or speak your problem."}
+                </p>
+                
+                {/* Quick Action Buttons */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 w-full max-w-lg px-4">
+                  {quickQuestions[getQuickQuestionsLang()].map((q, idx) => (
+                    <motion.button
+                      key={idx}
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: idx * 0.1 }}
+                      onClick={() => handleSendMessage(q.text)}
+                      disabled={isLoading}
+                      className={cn(
+                        "flex items-center gap-3 p-4 rounded-xl border border-border bg-card",
+                        "hover:border-primary/50 hover:bg-primary/5 transition-all text-left",
+                        "text-sm sm:text-base touch-manipulation active:scale-95"
+                      )}
+                    >
+                      <q.icon className={cn("w-5 h-5 sm:w-6 sm:h-6 shrink-0", q.color)} />
+                      <span>{q.text}</span>
+                    </motion.button>
+                  ))}
+                </div>
+                
+                <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground mt-6">
+                  <Mic className="w-4 h-4" />
+                  <span>
+                    {language === 'ne' ? 'बोल्नुहोस् वा टाइप गर्नुहोस्' : 
+                     language === 'hi' ? 'बोलें या टाइप करें' :
+                     'Speak or type'}
+                  </span>
+                </div>
+              </div>
+            ) : (
+              <div className="max-w-3xl mx-auto space-y-4">
+                {messages.map((msg, i) => (
+                  <motion.div
+                    key={i}
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className={cn(
+                      "rounded-2xl p-4 text-sm sm:text-base max-w-[85%]",
+                      msg.role === 'user'
+                        ? "bg-primary text-primary-foreground ml-auto"
+                        : "bg-muted mr-auto"
+                    )}
+                  >
+                    <p className="whitespace-pre-wrap leading-relaxed">{msg.content}</p>
+                    {msg.role === 'assistant' && ttsSupported && (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="mt-2 h-8 px-3 text-xs"
+                        onClick={() => isSpeaking ? stop() : speak(msg.content)}
+                      >
+                        {isSpeaking ? (
+                          <VolumeX className="w-3.5 h-3.5 mr-1.5" />
+                        ) : (
+                          <Volume2 className="w-3.5 h-3.5 mr-1.5" />
+                        )}
+                        {isSpeaking 
+                          ? (language === 'ne' ? 'बन्द' : language === 'hi' ? 'बंद' : 'Stop') 
+                          : (language === 'ne' ? 'सुन्नुहोस्' : language === 'hi' ? 'सुनें' : 'Listen')}
+                      </Button>
+                    )}
+                  </motion.div>
+                ))}
+                {isLoading && (
+                  <motion.div
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    className="bg-muted rounded-2xl p-4 mr-auto flex items-center gap-3 max-w-[85%]"
+                  >
+                    <Loader2 className="w-5 h-5 animate-spin text-primary" />
+                    <span className="text-sm text-muted-foreground">
+                      {language === 'ne' ? 'सोच्दैछ...' : language === 'hi' ? 'सोच रहा हूँ...' : 'Thinking...'}
+                    </span>
+                  </motion.div>
+                )}
+                <div ref={messagesEndRef} />
+              </div>
+            )}
+          </div>
+
+          {/* Input Area */}
+          <div className="p-4 sm:p-6 border-t border-border bg-muted/30 shrink-0">
+            <div className="max-w-3xl mx-auto space-y-3">
+              <div className="flex gap-2 sm:gap-3">
+                <Button
+                  variant={isListening ? "destructive" : "outline"}
+                  size="icon"
+                  onClick={toggleListening}
+                  disabled={isLoading}
+                  className="shrink-0 h-12 w-12 sm:h-14 sm:w-14 touch-manipulation rounded-xl"
+                >
+                  {isListening ? (
+                    <motion.div
+                      animate={{ scale: [1, 1.2, 1] }}
+                      transition={{ repeat: Infinity, duration: 0.5 }}
+                    >
+                      <MicOff className="w-5 h-5 sm:w-6 sm:h-6" />
+                    </motion.div>
+                  ) : (
+                    <Mic className="w-5 h-5 sm:w-6 sm:h-6" />
+                  )}
+                </Button>
+                <Input
+                  ref={inputRefToUse as RefObject<HTMLInputElement>}
+                  value={inputText}
+                  onChange={(e) => setInputText(e.target.value)}
+                  placeholder={
+                    language === 'ne' ? 'तपाईंको प्रश्न यहाँ लेख्नुहोस्...' : 
+                    language === 'hi' ? 'अपना सवाल यहाँ लिखें...' :
+                    'Type your question here...'
+                  }
+                  onKeyPress={(e) => e.key === 'Enter' && handleSendMessage()}
+                  disabled={isLoading || isListening}
+                  className="flex-1 h-12 sm:h-14 text-base sm:text-lg rounded-xl px-4"
+                />
+                <Button
+                  onClick={() => handleSendMessage()}
+                  disabled={!inputText.trim() || isLoading}
+                  size="icon"
+                  className="shrink-0 h-12 w-12 sm:h-14 sm:w-14 touch-manipulation rounded-xl"
+                >
+                  <Send className="w-5 h-5 sm:w-6 sm:h-6" />
+                </Button>
+              </div>
+              
+              {isListening && (
+                <motion.p
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  className="text-sm text-center text-primary"
+                >
+                  {language === 'ne' ? '🎤 सुन्दैछ... बोल्नुहोस्' : language === 'hi' ? '🎤 सुन रहा हूँ... बोलें' : '🎤 Listening... speak now'}
+                </motion.p>
+              )}
+              
+              {/* Quick Actions */}
+              <div className="flex flex-wrap gap-2 justify-center">
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  onClick={() => setShowDiseaseUpload(true)}
+                  className="text-xs sm:text-sm h-9 sm:h-10 touch-manipulation rounded-lg"
+                >
+                  <Camera className="w-4 h-4 mr-1.5" />
+                  {language === 'ne' ? 'रोग पहिचान' : language === 'hi' ? 'रोग पहचान' : 'Disease Check'}
+                </Button>
+                {messages.length > 0 && (
+                  <>
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      onClick={retryLastMessage}
+                      className="text-xs sm:text-sm h-9 sm:h-10 touch-manipulation rounded-lg"
+                      title={language === 'ne' ? 'फेरि प्रयास' : 'Retry'}
+                    >
+                      <RefreshCw className="w-4 h-4 mr-1.5" />
+                      {language === 'ne' ? 'फेरि' : language === 'hi' ? 'दोबारा' : 'Retry'}
+                    </Button>
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      onClick={downloadReport}
+                      className="text-xs sm:text-sm h-9 sm:h-10 touch-manipulation rounded-lg"
+                      title={language === 'ne' ? 'रिपोर्ट' : 'Report'}
+                    >
+                      <Download className="w-4 h-4 mr-1.5" />
+                      {language === 'ne' ? 'रिपोर्ट' : language === 'hi' ? 'रिपोर्ट' : 'Report'}
+                    </Button>
+                    <Button 
+                      variant="ghost" 
+                      size="sm" 
+                      onClick={clearChat}
+                      className="text-xs sm:text-sm h-9 sm:h-10 text-muted-foreground touch-manipulation rounded-lg"
+                    >
+                      {language === 'ne' ? 'मेटाउनुहोस्' : language === 'hi' ? 'मिटाएं' : 'Clear'}
+                    </Button>
+                  </>
+                )}
+              </div>
+              
+              {/* Subscription CTA for free users */}
+              {!subscribed && !subLoading && (
+                <Button 
+                  variant="ghost" 
+                  size="sm" 
+                  onClick={() => setShowSubscriptionModal(true)}
+                  className="w-full text-xs sm:text-sm bg-accent/10 hover:bg-accent/20 text-accent h-10 touch-manipulation rounded-lg"
+                >
+                  <Crown className="w-4 h-4 mr-1.5" />
+                  {language === 'ne' ? 'असीमित सल्लाहका लागि सदस्यता लिनुहोस्' : 
+                   language === 'hi' ? 'असीमित सलाह के लिए सदस्यता लें' :
+                   'Subscribe for unlimited advice'}
+                </Button>
+              )}
+            </div>
+          </div>
+        </div>
+
+        {/* Subscription Modal */}
+        <SubscriptionModal
+          isOpen={showSubscriptionModal}
+          onClose={() => setShowSubscriptionModal(false)}
+          onSubscribe={startCheckout}
+          queriesUsed={queries_used}
+          queriesLimit={queries_limit}
+        />
+
+        {/* Disease Upload Modal */}
+        <AnimatePresence>
+          {showDiseaseUpload && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 z-[60] flex items-center justify-center bg-black/50 p-4"
+              onClick={() => setShowDiseaseUpload(false)}
+            >
+              <motion.div
+                initial={{ scale: 0.9 }}
+                animate={{ scale: 1 }}
+                exit={{ scale: 0.9 }}
+                onClick={(e) => e.stopPropagation()}
+                className="w-full max-w-md"
+              >
+                <DiseaseImageUpload onClose={() => setShowDiseaseUpload(false)} />
+              </motion.div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </>
+    );
+  }
 
   // Panel classes based on screen size and fullscreen mode
   const panelClasses = cn(
