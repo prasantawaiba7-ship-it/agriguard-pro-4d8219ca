@@ -21,6 +21,7 @@ import PaymentSuccess from "./pages/PaymentSuccess";
 import PaymentCancelled from "./pages/PaymentCancelled";
 import DiseaseDetection from "./pages/DiseaseDetection";
 import ExpertDirectory from "./pages/ExpertDirectory";
+import TreatmentLibrary from "./pages/TreatmentLibrary";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -49,6 +50,7 @@ const App = () => (
                 <Route path="/admin" element={<AdminDashboard />} />
                 <Route path="/disease-detection" element={<DiseaseDetection />} />
                 <Route path="/expert-directory" element={<ExpertDirectory />} />
+                <Route path="/treatment-library" element={<TreatmentLibrary />} />
                 {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
                 <Route path="*" element={<NotFound />} />
               </Routes>
