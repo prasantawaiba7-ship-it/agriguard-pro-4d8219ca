@@ -5,14 +5,8 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-// Shorter prompt = faster response
-const SYSTEM_PROMPT = `You are Krishi Mitra, a farming assistant.
-- Reply in Nepali if user writes Nepali, else English
-- Keep answers 2-4 short sentences
-- Use bullet points for steps
-- NEVER greet with "नमस्ते" or "Namaste" after the first message
-- Do NOT repeat greetings like "दाइ", "दिदी" in every message
-- Just answer the question directly without greeting phrases`;
+// Minimal prompt for fastest response
+const SYSTEM_PROMPT = `You are Kisan Sathi, a farming assistant. Be brief and direct. Answer in 1-2 sentences only. No greetings.`;
 
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
@@ -41,14 +35,8 @@ serve(async (req) => {
       return { role: msg.role, content: msg.content };
     });
 
-    // Add language hint to system prompt
-    const languageHint = language === 'ne' 
-      ? '\n\nIMPORTANT: The user prefers Nepali. Please respond in नेपाली unless they write in English or Hindi.'
-      : language === 'hi'
-      ? '\n\nIMPORTANT: The user prefers Hindi. Please respond in हिन्दी unless they write in Nepali or English.'
-      : language === 'en'
-      ? '\n\nIMPORTANT: The user prefers English. Please respond in English unless they write in Nepali or Hindi.'
-      : '\n\nIMPORTANT: Match the language the user is using (Nepali, Hindi, or English only).';
+    // Minimal language hint
+    const langHint = language === 'ne' ? ' Reply in Nepali.' : language === 'hi' ? ' Reply in Hindi.' : '';
 
     const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
@@ -59,7 +47,7 @@ serve(async (req) => {
       body: JSON.stringify({
         model: "google/gemini-3-flash-preview", // Fastest model
         messages: [
-          { role: "system", content: SYSTEM_PROMPT + languageHint },
+          { role: "system", content: SYSTEM_PROMPT + langHint },
           ...userMessages
         ],
         stream: true,

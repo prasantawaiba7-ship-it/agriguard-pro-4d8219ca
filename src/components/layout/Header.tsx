@@ -17,8 +17,8 @@ const Header = () => {
   const baseNavLinks = [
     { href: "/", label: "Home" },
     { href: "/farmer", label: "Farmer Portal" },
-    { href: "/disease-detection", label: "🌿 रोग पहिचान" },
-    { href: "/expert-directory", label: "👨‍🌾 विशेषज्ञ" },
+    { href: "/disease-detection", label: "रोग पहिचान" },
+    { href: "/expert-directory", label: "विशेषज्ञ" },
     { href: "/krishi-mitra", label: "Krishi Mitra" },
   ];
 
@@ -41,7 +41,7 @@ const Header = () => {
             <div className="w-10 h-10 rounded-xl bg-primary flex items-center justify-center shadow-md group-hover:shadow-lg transition-shadow">
               <Leaf className="w-5 h-5 text-primary-foreground" />
             </div>
-            <span className="font-bold text-xl text-foreground">CROPIC</span>
+            <span className="font-bold text-xl text-foreground">Kisan Sathi</span>
           </Link>
 
           {/* Desktop Navigation */}
