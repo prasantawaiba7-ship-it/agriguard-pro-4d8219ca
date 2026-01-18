@@ -7,6 +7,7 @@ interface UseTextToSpeechOptions {
   onStart?: () => void;
   onEnd?: () => void;
   onError?: (error: string) => void;
+  onOfflineLimitReached?: () => void; // Callback when offline TTS limit is reached
 }
 
 // Map app language codes to speech synthesis language codes
@@ -128,16 +129,37 @@ function getElevenLabsFunctionUrl(): string {
   return `${base}/functions/v1/elevenlabs-tts`;
 }
 
+// Offline TTS usage tracking
+const OFFLINE_TTS_LIMIT = 3;
+const OFFLINE_TTS_STORAGE_KEY = 'offline_tts_count';
+
+function getOfflineTTSCount(): number {
+  try {
+    return parseInt(localStorage.getItem(OFFLINE_TTS_STORAGE_KEY) || '0', 10);
+  } catch {
+    return 0;
+  }
+}
+
+function incrementOfflineTTSCount(): number {
+  const count = getOfflineTTSCount() + 1;
+  try {
+    localStorage.setItem(OFFLINE_TTS_STORAGE_KEY, count.toString());
+  } catch {}
+  return count;
+}
+
 // Circuit-breaker: once ElevenLabs fails, skip it for the rest of the session
 let elevenLabsDisabled = false;
 
 export function useTextToSpeech(options: UseTextToSpeechOptions = {}) {
   // Default to faster rate (1.15) for quicker voice responses
-  const { language = "en", rate = 1.15, pitch = 1, onStart, onEnd, onError } = options;
+  const { language = "en", rate = 1.15, pitch = 1, onStart, onEnd, onError, onOfflineLimitReached } = options;
 
   const [isSpeaking, setIsSpeaking] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [currentMessageId, setCurrentMessageId] = useState<string | null>(null);
+  const [offlineTTSUsed, setOfflineTTSUsed] = useState(getOfflineTTSCount());
 
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const abortControllerRef = useRef<AbortController | null>(null);
@@ -190,13 +212,28 @@ export function useTextToSpeech(options: UseTextToSpeechOptions = {}) {
   }, [isBrowserTTSSupported]);
 
   const speakWithBrowser = useCallback(
-    (cleanedText: string, messageId?: string) => {
+    (cleanedText: string, messageId?: string, isOfflineFallback: boolean = false) => {
       if (!isBrowserTTSSupported) {
         setIsLoading(false);
         setIsSpeaking(false);
         setCurrentMessageId(null);
         onError?.("Text-to-speech is not supported on this device");
         return;
+      }
+
+      // Check offline TTS limit when using as fallback (offline mode)
+      if (isOfflineFallback && !navigator.onLine) {
+        const currentCount = getOfflineTTSCount();
+        if (currentCount >= OFFLINE_TTS_LIMIT) {
+          setIsLoading(false);
+          setIsSpeaking(false);
+          setCurrentMessageId(null);
+          onOfflineLimitReached?.();
+          return;
+        }
+        // Increment and track usage
+        const newCount = incrementOfflineTTSCount();
+        setOfflineTTSUsed(newCount);
       }
 
       try {
@@ -249,7 +286,7 @@ export function useTextToSpeech(options: UseTextToSpeechOptions = {}) {
         onError?.("Browser speech synthesis failed");
       }
     },
-    [isBrowserTTSSupported, language, rate, pitch, onStart, onEnd, onError]
+    [isBrowserTTSSupported, language, rate, pitch, onStart, onEnd, onError, onOfflineLimitReached]
   );
 
   const speak = useCallback(
@@ -309,13 +346,13 @@ export function useTextToSpeech(options: UseTextToSpeechOptions = {}) {
               // ignore
             }
           }
-          speakWithBrowser(textToSpeak, messageId);
+          speakWithBrowser(textToSpeak, messageId, true);
           return;
         }
 
         const audioBlob = await response.blob();
         if (audioBlob.size < 1000) {
-          speakWithBrowser(textToSpeak, messageId);
+          speakWithBrowser(textToSpeak, messageId, true);
           return;
         }
 
@@ -340,13 +377,13 @@ export function useTextToSpeech(options: UseTextToSpeechOptions = {}) {
         audio.onerror = () => {
           URL.revokeObjectURL(audioUrl);
           audioRef.current = null;
-          speakWithBrowser(textToSpeak, messageId);
+          speakWithBrowser(textToSpeak, messageId, true);
         };
 
         await audio.play();
       } catch (err: any) {
         if (err?.name === "AbortError") return;
-        speakWithBrowser(textToSpeak, messageId);
+        speakWithBrowser(textToSpeak, messageId, true);
       }
     },
     [stop, speakWithBrowser, onStart, onEnd, onError]
@@ -368,5 +405,7 @@ export function useTextToSpeech(options: UseTextToSpeechOptions = {}) {
     isLoading,
     isSupported: true,
     currentMessageId,
+    offlineTTSUsed,
+    offlineTTSLimit: OFFLINE_TTS_LIMIT,
   };
 }
