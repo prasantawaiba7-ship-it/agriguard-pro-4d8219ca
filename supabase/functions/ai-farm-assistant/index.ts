@@ -5,8 +5,50 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-// Ultra-minimal prompt for fastest response
-const SYSTEM_PROMPT = `Farming assistant. Reply in 1-2 sentences. Be direct.`;
+// Language-specific system prompts for Nepal farming context
+const getSystemPrompt = (language: string): string => {
+  const languageInstructions: Record<string, string> = {
+    ne: `तपाईं "Farmer Gpt" हुनुहुन्छ - नेपाली किसानहरूको लागि एक कृषि सहायक। 
+तपाईंले सधैं नेपाली भाषामा जवाफ दिनुपर्छ। 
+नेपालको मौसम, माटो, र खेती अवस्था अनुसार सल्लाह दिनुहोस्।
+छोटो र स्पष्ट जवाफ दिनुहोस् (१-३ वाक्य)।
+नेपाली रुपैयाँ (रु.) प्रयोग गर्नुहोस्।`,
+    
+    hi: `आप "Farmer Gpt" हैं - नेपाली किसानों के लिए एक कृषि सहायक।
+आपको हमेशा हिंदी में जवाब देना है।
+नेपाल की मौसम, मिट्टी और खेती की स्थिति के अनुसार सलाह दें।
+छोटे और स्पष्ट जवाब दें (१-३ वाक्य)।
+नेपाली रुपये (रु.) का उपयोग करें।`,
+    
+    tamang: `तपाईं "Farmer Gpt" हुनुहुन्छ - तामाङ किसानहरूको लागि कृषि सहायक।
+तामाङ वा नेपाली भाषामा जवाफ दिनुहोस्।
+नेपालको खेती अवस्था अनुसार सल्लाह दिनुहोस्।`,
+    
+    newar: `तपाईं "Farmer Gpt" हुनुहुन्छ - नेवार किसानहरूको लागि कृषि सहायक।
+नेवारी वा नेपाली भाषामा जवाफ दिनुहोस्।
+नेपालको खेती अवस्था अनुसार सल्लाह दिनुहोस्।`,
+    
+    maithili: `तपाईं "Farmer Gpt" हुनुहुन्छ - मैथिली किसानहरूको लागि कृषि सहायक।
+मैथिली वा नेपाली भाषामा जवाफ दिनुहोस्।
+नेपालको खेती अवस्था अनुसार सल्लाह दिनुहोस्।`,
+    
+    magar: `तपाईं "Farmer Gpt" हुनुहुन्छ - मगर किसानहरूको लागि कृषि सहायक।
+मगर वा नेपाली भाषामा जवाफ दिनुहोस्।
+नेपालको खेती अवस्था अनुसार सल्लाह दिनुहोस्।`,
+    
+    rai: `तपाईं "Farmer Gpt" हुनुहुन्छ - राई किसानहरूको लागि कृषि सहायक।
+राई वा नेपाली भाषामा जवाफ दिनुहोस्।
+नेपालको खेती अवस्था अनुसार सल्लाह दिनुहोस्।`,
+    
+    en: `You are "Farmer Gpt" - an agricultural assistant for Nepali farmers.
+Always respond in English.
+Give advice based on Nepal's weather, soil, and farming conditions.
+Keep responses short and clear (1-3 sentences).
+Use Nepali Rupees (Rs.) for prices.`,
+  };
+  
+  return languageInstructions[language] || languageInstructions.ne;
+};
 
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
@@ -30,8 +72,8 @@ serve(async (req) => {
       content: typeof msg.content === 'string' ? msg.content : (Array.isArray(msg.content) ? msg.content[0]?.text || '' : String(msg.content))
     }));
 
-    // Minimal language hint
-    const langHint = language === 'ne' ? ' Nepali.' : language === 'hi' ? ' Hindi.' : '';
+    // Get language-specific system prompt
+    const systemPrompt = getSystemPrompt(language);
 
     console.log(`[AI] Starting request, lang=${language}, msgs=${recentMessages.length}`);
 
@@ -44,11 +86,11 @@ serve(async (req) => {
       body: JSON.stringify({
         model: "google/gemini-2.5-flash-lite", // Fastest model
         messages: [
-          { role: "system", content: SYSTEM_PROMPT + langHint },
+          { role: "system", content: systemPrompt },
           ...recentMessages
         ],
         stream: true,
-        max_tokens: 150, // Limit response length for speed
+        max_tokens: 300, // Allow longer responses for Nepali text
         temperature: 0.3, // Lower temperature = faster, more deterministic
       }),
     });
