@@ -10,10 +10,10 @@ const Index = () => {
   return (
     <>
       <Helmet>
-        <title>CROPIC - AI-Powered Crop Monitoring & Insurance Platform</title>
+        <title>Kisan Sathi - AI-Powered Farming Assistant</title>
         <meta
           name="description"
-          content="CROPIC revolutionizes agricultural insurance with real-time photo documentation, AI-based crop analysis, and seamless PMFBY integration. Protect your harvest with technology."
+          content="Kisan Sathi helps farmers with AI-powered crop disease detection, weather advisories, and personalized farming recommendations in Nepali and English."
         />
       </Helmet>
       <div className="min-h-screen bg-background">

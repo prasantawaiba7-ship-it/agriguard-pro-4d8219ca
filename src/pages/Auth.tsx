@@ -89,8 +89,8 @@ const Auth = () => {
             <div className="inline-flex items-center justify-center w-14 h-14 sm:w-16 sm:h-16 rounded-xl sm:rounded-2xl bg-primary mb-3 sm:mb-4">
               <Leaf className="w-7 h-7 sm:w-8 sm:h-8 text-primary-foreground" />
             </div>
-            <h1 className="text-2xl sm:text-3xl font-bold text-foreground">CROPIC</h1>
-            <p className="text-muted-foreground mt-1 sm:mt-2 text-sm sm:text-base">AI-Powered Crop Monitoring</p>
+            <h1 className="text-2xl sm:text-3xl font-bold text-foreground">Kisan Sathi</h1>
+            <p className="text-muted-foreground mt-1 sm:mt-2 text-sm sm:text-base">AI-Powered Farming Assistant</p>
           </div>
 
           <Card className="border-border/50 shadow-xl">

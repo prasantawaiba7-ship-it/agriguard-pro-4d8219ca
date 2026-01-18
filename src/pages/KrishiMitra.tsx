@@ -9,10 +9,10 @@ const KrishiMitra = () => {
   return (
     <>
       <Helmet>
-        <title>Krishi Mitra - AI Farming Assistant | CROPIC Nepal</title>
+        <title>Krishi Mitra - AI Farming Assistant | Kisan Sathi</title>
         <meta
           name="description"
-          content="Krishi Mitra is your AI-powered farming assistant for Nepal. Get instant help with crop diseases, weather advisories, pest management, and personalized farming recommendations in Nepali, Hindi, and English."
+          content="Krishi Mitra is your AI-powered farming assistant. Get instant help with crop diseases, weather advisories, pest management, and personalized farming recommendations in Nepali, Hindi, and English."
         />
       </Helmet>
 
