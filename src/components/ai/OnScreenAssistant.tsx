@@ -1164,16 +1164,29 @@ export function OnScreenAssistant({ isFullScreen: isEmbeddedFullScreen = false, 
                     </motion.div>
                   );
                 })}
-                {isLoading && (
+                {isLoading && messages[messages.length - 1]?.role === 'user' && (
                   <motion.div
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
                     className="krishi-chat-bubble-assistant rounded-2xl p-4 mr-auto flex items-center gap-3 max-w-[85%]"
                   >
-                    <Loader2 className="w-5 h-5 animate-spin text-primary" />
-                    <span className="text-sm text-muted-foreground">
-                      {language === 'ne' ? 'सोच्दैछु...' : language === 'hi' ? 'सोच रहा हूँ...' : 'Thinking...'}
-                    </span>
+                    <div className="flex gap-1">
+                      <motion.div 
+                        className="w-2 h-2 rounded-full bg-primary"
+                        animate={{ scale: [1, 1.3, 1], opacity: [0.5, 1, 0.5] }}
+                        transition={{ repeat: Infinity, duration: 0.6, delay: 0 }}
+                      />
+                      <motion.div 
+                        className="w-2 h-2 rounded-full bg-primary"
+                        animate={{ scale: [1, 1.3, 1], opacity: [0.5, 1, 0.5] }}
+                        transition={{ repeat: Infinity, duration: 0.6, delay: 0.2 }}
+                      />
+                      <motion.div 
+                        className="w-2 h-2 rounded-full bg-primary"
+                        animate={{ scale: [1, 1.3, 1], opacity: [0.5, 1, 0.5] }}
+                        transition={{ repeat: Infinity, duration: 0.6, delay: 0.4 }}
+                      />
+                    </div>
                   </motion.div>
                 )}
                 <div ref={messagesEndRef} />

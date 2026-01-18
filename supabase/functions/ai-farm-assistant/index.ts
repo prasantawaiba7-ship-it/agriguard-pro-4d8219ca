@@ -5,38 +5,35 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-// Minimal prompt for fastest response
-const SYSTEM_PROMPT = `You are Kisan Sathi, a farming assistant. Be brief and direct. Answer in 1-2 sentences only. No greetings.`;
+// Ultra-minimal prompt for fastest response
+const SYSTEM_PROMPT = `Farming assistant. Reply in 1-2 sentences. Be direct.`;
 
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
 
+  const startTime = Date.now();
+
   try {
-    const { messages, imageUrl, language = 'ne' } = await req.json();
+    const { messages, language = 'ne' } = await req.json();
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     
     if (!LOVABLE_API_KEY) {
       throw new Error("LOVABLE_API_KEY is not configured");
     }
 
-    // Build message content
-    const userMessages = messages.map((msg: { role: string; content: string; imageUrl?: string }) => {
-      if (msg.imageUrl) {
-        return {
-          role: msg.role,
-          content: [
-            { type: "text", text: msg.content },
-            { type: "image_url", image_url: { url: msg.imageUrl } }
-          ]
-        };
-      }
-      return { role: msg.role, content: msg.content };
-    });
+    // Build simple messages - only take last 2 messages for context
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const recentMessages = messages.slice(-2).map((msg: any) => ({
+      role: msg.role,
+      content: typeof msg.content === 'string' ? msg.content : (Array.isArray(msg.content) ? msg.content[0]?.text || '' : String(msg.content))
+    }));
 
     // Minimal language hint
-    const langHint = language === 'ne' ? ' Reply in Nepali.' : language === 'hi' ? ' Reply in Hindi.' : '';
+    const langHint = language === 'ne' ? ' Nepali.' : language === 'hi' ? ' Hindi.' : '';
+
+    console.log(`[AI] Starting request, lang=${language}, msgs=${recentMessages.length}`);
 
     const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
@@ -45,31 +42,29 @@ serve(async (req) => {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        model: "google/gemini-3-flash-preview", // Fastest model
+        model: "google/gemini-2.5-flash-lite", // Fastest model
         messages: [
           { role: "system", content: SYSTEM_PROMPT + langHint },
-          ...userMessages
+          ...recentMessages
         ],
         stream: true,
+        max_tokens: 150, // Limit response length for speed
+        temperature: 0.3, // Lower temperature = faster, more deterministic
       }),
     });
 
+    console.log(`[AI] Response received in ${Date.now() - startTime}ms, status=${response.status}`);
+
     if (!response.ok) {
       if (response.status === 429) {
-        return new Response(JSON.stringify({ error: "धेरै अनुरोध भयो। कृपया केही समय पछि पुनः प्रयास गर्नुहोस्।" }), {
+        return new Response(JSON.stringify({ error: "धेरै अनुरोध। केही समय पछि प्रयास गर्नुहोस्।" }), {
           status: 429,
           headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
-      if (response.status === 402) {
-        return new Response(JSON.stringify({ error: "सेवा अस्थायी रूपमा उपलब्ध छैन। कृपया पछि प्रयास गर्नुहोस्।" }), {
-          status: 402,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
-      }
       const errorText = await response.text();
-      console.error("AI gateway error:", response.status, errorText);
-      return new Response(JSON.stringify({ error: "AI सेवा त्रुटि" }), {
+      console.error("[AI] Error:", response.status, errorText);
+      return new Response(JSON.stringify({ error: "त्रुटि" }), {
         status: 500,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
@@ -79,8 +74,8 @@ serve(async (req) => {
       headers: { ...corsHeaders, "Content-Type": "text/event-stream" },
     });
   } catch (error) {
-    console.error("AI assistant error:", error);
-    return new Response(JSON.stringify({ error: error instanceof Error ? error.message : "Unknown error" }), {
+    console.error("[AI] Error:", error);
+    return new Response(JSON.stringify({ error: "त्रुटि" }), {
       status: 500,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
