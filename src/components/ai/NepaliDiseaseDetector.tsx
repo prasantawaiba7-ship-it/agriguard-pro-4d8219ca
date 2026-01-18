@@ -401,6 +401,7 @@ export function NepaliDiseaseDetector() {
     isListening, 
     isSupported: voiceSupported, 
     transcript, 
+    interimTranscript,
     startListening, 
     stopListening,
     resetTranscript 
@@ -412,25 +413,30 @@ export function NepaliDiseaseDetector() {
     },
     onError: (error) => {
       toast({
-        title: 'आवाज इनपुट त्रुटि',
+        title: '🎤 आवाज इनपुट त्रुटि',
         description: error,
         variant: 'destructive'
       });
     }
   });
 
-  const toggleVoiceInput = () => {
+  const toggleVoiceInput = useCallback(() => {
     if (isListening) {
       stopListening();
+      toast({
+        title: '✅ रेकर्डिङ रोकियो',
+        description: 'तपाईंको आवाज सुरक्षित भयो'
+      });
     } else {
       resetTranscript();
+      setSymptomDescription(''); // Clear previous text when starting new recording
       startListening();
       toast({
         title: '🎤 बोल्न सुरु गर्नुहोस्',
-        description: 'लक्षणहरू नेपालीमा बोल्नुहोस्...'
+        description: 'नेपालीमा लक्षणहरू बोल्नुहोस्... (माइक्रोफोन सक्रिय छ)'
       });
     }
-  };
+  }, [isListening, stopListening, startListening, resetTranscript, toast]);
 
   const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -795,7 +801,7 @@ export function NepaliDiseaseDetector() {
 
           {/* Voice Input for Symptom Description */}
           <div className="space-y-2">
-            <div className="flex items-center justify-between">
+            <div className="flex items-center justify-between flex-wrap gap-2">
               <label className="text-sm font-medium">
                 🎤 लक्षण बर्णन गर्नुहोस् (ऐच्छिक):
               </label>
@@ -804,48 +810,71 @@ export function NepaliDiseaseDetector() {
                   variant={isListening ? "destructive" : "outline"}
                   size="sm"
                   onClick={toggleVoiceInput}
-                  className="gap-2"
+                  className={`gap-2 transition-all ${isListening ? 'animate-pulse ring-2 ring-destructive/50' : ''}`}
                 >
                   {isListening ? (
                     <>
                       <MicOff className="w-4 h-4" />
-                      रोक्नुहोस्
+                      <span className="hidden sm:inline">रोक्नुहोस्</span>
+                      <span className="sm:hidden">रोक</span>
                     </>
                   ) : (
                     <>
                       <Mic className="w-4 h-4" />
-                      बोल्नुहोस्
+                      <span className="hidden sm:inline">बोल्नुहोस्</span>
+                      <span className="sm:hidden">बोल्नु</span>
                     </>
                   )}
                 </Button>
               )}
             </div>
+            
             <div className="relative">
               <Textarea
                 placeholder="उदाहरण: पातमा खैरो दाग देखिएको छ, पात पहेंलो भएको छ..."
                 value={symptomDescription || transcript}
                 onChange={(e) => setSymptomDescription(e.target.value)}
                 rows={3}
-                className={`resize-none ${isListening ? 'border-primary ring-2 ring-primary/20' : ''}`}
+                disabled={isListening}
+                className={`resize-none transition-all ${isListening ? 'border-primary ring-2 ring-primary/30 bg-primary/5' : ''}`}
               />
               {isListening && (
                 <motion.div
-                  className="absolute top-2 right-2"
-                  animate={{ scale: [1, 1.2, 1] }}
-                  transition={{ repeat: Infinity, duration: 1 }}
+                  className="absolute top-2 right-2 flex items-center gap-2"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
                 >
-                  <div className="w-3 h-3 rounded-full bg-destructive" />
+                  <motion.div
+                    animate={{ scale: [1, 1.3, 1] }}
+                    transition={{ repeat: Infinity, duration: 0.8 }}
+                  >
+                    <div className="w-3 h-3 rounded-full bg-destructive" />
+                  </motion.div>
+                  <span className="text-xs text-destructive font-medium">सुन्दै...</span>
                 </motion.div>
               )}
             </div>
-            {isListening && transcript && (
-              <p className="text-xs text-muted-foreground">
-                सुन्दै: {transcript}
-              </p>
+            
+            {/* Live transcript display */}
+            {isListening && (
+              <motion.div 
+                initial={{ opacity: 0, y: -5 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="p-3 bg-primary/10 rounded-lg border border-primary/20"
+              >
+                <div className="flex items-center gap-2 mb-1">
+                  <Mic className="w-4 h-4 text-primary animate-pulse" />
+                  <span className="text-xs font-medium text-primary">लाइभ ट्रान्सक्रिप्ट:</span>
+                </div>
+                <p className="text-sm text-muted-foreground min-h-[20px]">
+                  {interimTranscript || transcript || 'बोल्नुहोस्...'}
+                </p>
+              </motion.div>
             )}
+            
             {!voiceSupported && (
-              <p className="text-xs text-muted-foreground">
-                💡 आफ्नो ब्राउजरमा आवाज इनपुट उपलब्ध छैन
+              <p className="text-xs text-muted-foreground flex items-center gap-1">
+                ⚠️ तपाईंको ब्राउजरमा आवाज इनपुट उपलब्ध छैन। Chrome वा Edge प्रयोग गर्नुहोस्।
               </p>
             )}
           </div>
@@ -1156,58 +1185,82 @@ export function NepaliDiseaseDetector() {
                       )}
                     </div>
 
-                    {/* Actions */}
+                    {/* Actions - Responsive Share & Download */}
                     <div className="space-y-3">
-                      {/* Share buttons */}
-                      <div className="flex flex-col gap-2">
-                        <div className="flex gap-2">
-                          <Button 
-                            onClick={handleShareWhatsApp} 
-                            variant="outline" 
-                            className="flex-1 bg-[#25D366]/10 hover:bg-[#25D366]/20 border-[#25D366]/30"
-                          >
-                            <MessageCircle className="w-4 h-4 mr-2 text-[#25D366]" />
-                            WhatsApp मा Share
-                          </Button>
-                          <Button 
-                            onClick={handleShareSMS} 
-                            variant="outline" 
-                            className="flex-1"
-                          >
-                            <Phone className="w-4 h-4 mr-2" />
-                            SMS
-                          </Button>
-                        </div>
-                        
-                        {/* Share to officer button */}
+                      {/* Primary Download Button - Easy Access */}
+                      <Button 
+                        onClick={downloadReport} 
+                        className="w-full h-12 text-base bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70"
+                        size="lg"
+                      >
+                        <Download className="w-5 h-5 mr-2" />
+                        📥 रिपोर्ट डाउनलोड गर्नुहोस्
+                      </Button>
+
+                      {/* Share buttons - Responsive Grid */}
+                      <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
                         <Button 
-                          onClick={() => handleShareToOfficer()} 
-                          variant="outline"
-                          className="w-full bg-primary/5 hover:bg-primary/10 border-primary/20"
+                          onClick={handleShareWhatsApp} 
+                          variant="outline" 
+                          className="h-11 bg-[#25D366]/10 hover:bg-[#25D366]/20 border-[#25D366]/30"
                         >
-                          <Share2 className="w-4 h-4 mr-2 text-primary" />
-                          कृषि अधिकारीलाई रिपोर्ट पठाउनुहोस्
+                          <MessageCircle className="w-4 h-4 mr-1.5 text-[#25D366]" />
+                          <span className="text-sm">WhatsApp</span>
+                        </Button>
+                        <Button 
+                          onClick={handleShareSMS} 
+                          variant="outline" 
+                          className="h-11"
+                        >
+                          <Phone className="w-4 h-4 mr-1.5" />
+                          <span className="text-sm">SMS</span>
+                        </Button>
+                        <Button 
+                          onClick={() => {
+                            // Native share API for mobile
+                            if (navigator.share) {
+                              navigator.share({
+                                title: 'कृषि रोग रिपोर्ट',
+                                text: generateReportShareText(),
+                              }).catch(() => {
+                                // Fallback to WhatsApp
+                                handleShareWhatsApp();
+                              });
+                            } else {
+                              handleShareWhatsApp();
+                            }
+                          }} 
+                          variant="outline"
+                          className="h-11 col-span-2 sm:col-span-1"
+                        >
+                          <Share2 className="w-4 h-4 mr-1.5" />
+                          <span className="text-sm">अरू</span>
                         </Button>
                       </div>
                       
-                      {/* Download and new analysis */}
-                      <div className="flex gap-3">
-                        <Button onClick={downloadReport} variant="outline" className="flex-1">
-                          <Download className="w-4 h-4 mr-2" />
-                          PDF रिपोर्ट
-                        </Button>
-                        <Button 
-                          variant="secondary" 
-                          className="flex-1"
-                          onClick={() => {
-                            setImage(null);
-                            setResult(null);
-                            setSymptomDescription('');
-                          }}
-                        >
-                          नयाँ विश्लेषण
-                        </Button>
-                      </div>
+                      {/* Share to officer button */}
+                      <Button 
+                        onClick={() => handleShareToOfficer()} 
+                        variant="outline"
+                        className="w-full h-11 bg-primary/5 hover:bg-primary/10 border-primary/20"
+                      >
+                        <Share2 className="w-4 h-4 mr-2 text-primary" />
+                        <span className="hidden sm:inline">कृषि अधिकारीलाई रिपोर्ट पठाउनुहोस्</span>
+                        <span className="sm:hidden">अधिकारीलाई पठाउनु</span>
+                      </Button>
+
+                      {/* New analysis button */}
+                      <Button 
+                        variant="secondary" 
+                        className="w-full"
+                        onClick={() => {
+                          setImage(null);
+                          setResult(null);
+                          setSymptomDescription('');
+                        }}
+                      >
+                        🔄 नयाँ विश्लेषण गर्नुहोस्
+                      </Button>
                     </div>
                   </motion.div>
                 )}
