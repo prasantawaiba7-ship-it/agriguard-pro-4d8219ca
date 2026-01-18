@@ -90,6 +90,7 @@ export function OnScreenAssistant({ isFullScreen: isEmbeddedFullScreen = false, 
   const [showDiseaseUpload, setShowDiseaseUpload] = useState(false);
   const [messages, setMessages] = useState<Message[]>([]);
   const [inputText, setInputText] = useState('');
+  const [pendingCount, setPendingCount] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
   const [isListening, setIsListening] = useState(false);
   const [autoSpeak, setAutoSpeak] = useState(true);
@@ -158,6 +159,42 @@ export function OnScreenAssistant({ isFullScreen: isEmbeddedFullScreen = false, 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
+
+  // Load pending messages count on mount
+  useEffect(() => {
+    const pending = offlineStorage.getPendingMessages();
+    setPendingCount(pending.length);
+  }, []);
+
+  // Process queued messages when coming back online
+  useEffect(() => {
+    if (isOnline) {
+      const pending = offlineStorage.getPendingMessages();
+      if (pending.length > 0) {
+        toast({
+          title: language === 'ne' ? '🌐 अनलाइन भयो!' : '🌐 Back Online!',
+          description: language === 'ne' 
+            ? `${pending.length} पेन्डिङ प्रश्नहरू पठाउँदैछु...` 
+            : `Sending ${pending.length} pending question(s)...`,
+        });
+        
+        // Process each pending message
+        pending.forEach(async (pendingMsg, index) => {
+          // Small delay between messages to avoid overwhelming the API
+          await new Promise(resolve => setTimeout(resolve, index * 1000));
+          
+          const lastMessage = pendingMsg.messages[pendingMsg.messages.length - 1];
+          if (lastMessage && lastMessage.content) {
+            handleSendMessage(lastMessage.content, lastMessage.imageUrl);
+          }
+          
+          // Remove from queue after processing
+          offlineStorage.removePendingMessage(pendingMsg.id);
+          setPendingCount(prev => Math.max(0, prev - 1));
+        });
+      }
+    }
+  }, [isOnline]);
 
   // Handle image selection
   const handleImageSelect = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
@@ -328,9 +365,9 @@ export function OnScreenAssistant({ isFullScreen: isEmbeddedFullScreen = false, 
     }
   };
 
-  const handleSendMessage = async (text?: string) => {
+  const handleSendMessage = async (text?: string, imageFromQueue?: string) => {
     const messageText = text || inputText.trim();
-    if ((!messageText && !selectedImage) || isLoading) return;
+    if ((!messageText && !selectedImage && !imageFromQueue) || isLoading) return;
 
     // Check subscription - admins bypass subscription checks
     if (!can_query && !subscribed && !isAdmin()) {
@@ -338,7 +375,7 @@ export function OnScreenAssistant({ isFullScreen: isEmbeddedFullScreen = false, 
       return;
     }
 
-    const imageToSend = selectedImage;
+    const imageToSend = imageFromQueue || selectedImage;
     
     // Add user message with image if present
     const userMessage: Message = {
@@ -355,17 +392,41 @@ export function OnScreenAssistant({ isFullScreen: isEmbeddedFullScreen = false, 
     }
     setIsLoading(true);
 
-    // Check if offline - use cached responses
+    // Check if offline - queue message and show cached response
     if (!isOnline) {
+      // Queue the message for later sending
+      const pendingMessage = {
+        id: crypto.randomUUID(),
+        messages: [{ role: 'user', content: messageText, imageUrl: imageToSend }],
+        timestamp: new Date()
+      };
+      offlineStorage.queuePendingMessage(pendingMessage);
+      setPendingCount(prev => prev + 1);
+      
+      // Show offline indicator on user message
+      setMessages(prev => prev.map((msg, i) => 
+        i === prev.length - 1 ? { ...msg, isOffline: true } : msg
+      ));
+      
+      // Show cached response
       const offlineResponse = offlineStorage.getOfflineResponse(messageText);
       const aiMessage: Message = {
         role: 'assistant',
-        content: offlineResponse,
+        content: offlineResponse + (language === 'ne' 
+          ? '\n\n📤 **तपाईंको प्रश्न सुरक्षित गरियो।** इन्टरनेट आएपछि पठाइनेछ।'
+          : '\n\n📤 **Your question has been saved.** It will be sent when you\'re back online.'),
         timestamp: new Date(),
         isOffline: true
       };
       setMessages(prev => [...prev, aiMessage]);
       setIsLoading(false);
+      
+      toast({
+        title: language === 'ne' ? '📴 अफलाइन मोड' : '📴 Offline Mode',
+        description: language === 'ne' 
+          ? 'प्रश्न सुरक्षित गरियो। अनलाइन हुँदा पठाइनेछ।' 
+          : 'Question saved. Will be sent when online.',
+      });
       
       // Auto-speak the response
       if (autoSpeak && ttsSupported && offlineResponse) {
@@ -645,11 +706,23 @@ export function OnScreenAssistant({ isFullScreen: isEmbeddedFullScreen = false, 
               )}
             </div>
             <div className="flex items-center gap-1 sm:gap-2">
-              {/* Offline Indicator */}
+              {/* Offline/Pending Indicator */}
               {!isOnline && (
                 <span className="text-xs bg-white/20 text-white px-2 py-1 rounded-full flex items-center gap-1 backdrop-blur-sm">
                   <WifiOff className="w-3 h-3" />
                   <span className="hidden sm:inline">Offline</span>
+                  {pendingCount > 0 && (
+                    <span className="bg-warning text-warning-foreground px-1.5 rounded-full text-[10px] font-bold">
+                      {pendingCount}
+                    </span>
+                  )}
+                </span>
+              )}
+              {/* Online but has pending */}
+              {isOnline && pendingCount > 0 && (
+                <span className="text-xs bg-warning/20 text-warning px-2 py-1 rounded-full flex items-center gap-1 backdrop-blur-sm animate-pulse">
+                  <Wifi className="w-3 h-3" />
+                  <span>{language === 'ne' ? 'पठाउँदै' : 'Sending'}...</span>
                 </span>
               )}
               
@@ -834,6 +907,13 @@ export function OnScreenAssistant({ isFullScreen: isEmbeddedFullScreen = false, 
                           : "krishi-chat-bubble-assistant mr-auto"
                       )}
                     >
+                      {/* Pending queue indicator for user messages */}
+                      {msg.role === 'user' && msg.isOffline && (
+                        <div className="flex items-center gap-1 mb-2 text-xs opacity-80">
+                          <WifiOff className="w-3 h-3" />
+                          <span>{language === 'ne' ? '📤 पठाउन बाँकी' : '📤 Queued'}</span>
+                        </div>
+                      )}
                       {/* Show image if present */}
                       {msg.imageUrl && (
                         <div className="mb-3 rounded-xl overflow-hidden border border-white/20">
