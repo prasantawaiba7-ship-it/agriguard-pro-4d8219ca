@@ -656,7 +656,10 @@ export type Database = {
           district: string | null
           full_name: string
           id: string
+          irrigation_type: string | null
           land_record_id: string | null
+          land_size_hectares: number | null
+          main_crops: string[] | null
           phone: string | null
           pmfby_enrollment_id: string | null
           preferred_language: string | null
@@ -671,7 +674,10 @@ export type Database = {
           district?: string | null
           full_name: string
           id?: string
+          irrigation_type?: string | null
           land_record_id?: string | null
+          land_size_hectares?: number | null
+          main_crops?: string[] | null
           phone?: string | null
           pmfby_enrollment_id?: string | null
           preferred_language?: string | null
@@ -686,7 +692,10 @@ export type Database = {
           district?: string | null
           full_name?: string
           id?: string
+          irrigation_type?: string | null
           land_record_id?: string | null
+          land_size_hectares?: number | null
+          main_crops?: string[] | null
           phone?: string | null
           pmfby_enrollment_id?: string | null
           preferred_language?: string | null
