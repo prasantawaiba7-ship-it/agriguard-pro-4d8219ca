@@ -14,14 +14,14 @@ serve(async (req) => {
     const { conversation, language = 'ne' } = await req.json();
     
     // Generate HTML report
-    const title = language === 'ne' ? 'कृषि सल्लाह रिपोर्ट – किसान साथी' : 'Agricultural Advice Report – Kisan Saathi';
+    const title = language === 'ne' ? 'कृषि सल्लाह रिपोर्ट – Farmer Gpt' : 'Agricultural Advice Report – Farmer Gpt';
     const date = new Date().toLocaleDateString(language === 'ne' ? 'ne-NP' : 'en-US');
     
     let conversationHtml = '';
     for (const msg of conversation) {
       const roleLabel = msg.role === 'user' 
         ? (language === 'ne' ? 'किसान' : 'Farmer')
-        : (language === 'ne' ? 'किसान साथी' : 'Kisan Saathi');
+        : (language === 'ne' ? 'Farmer Gpt' : 'Farmer Gpt');
       
       const bgColor = msg.role === 'user' ? '#e3f2fd' : '#f5f5f5';
       conversationHtml += `
@@ -76,7 +76,7 @@ serve(async (req) => {
         ${disclaimer}
         
         <footer style="margin-top: 30px; text-align: center; color: #666; border-top: 1px solid #ddd; padding-top: 20px;">
-          ${language === 'ne' ? 'किसान साथी - तपाईंको कृषि सहायक' : 'Kisan Saathi - Your Agricultural Assistant'}
+          ${language === 'ne' ? 'Farmer Gpt - तपाईंको कृषि सहायक' : 'Farmer Gpt - Your Agricultural Assistant'}
         </footer>
       </body>
       </html>

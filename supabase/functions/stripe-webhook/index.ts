@@ -53,8 +53,8 @@ const getSuccessEmailHtml = (customerName: string, planName: string, amount: str
     
     <hr style="border: none; border-top: 1px solid #eee; margin: 25px 0;">
     <p style="color: #999; font-size: 12px; text-align: center;">
-      किसान साथी - तपाईंको कृषि साथी<br>
-      Kisan Saathi - Your Farming Companion
+      Farmer Gpt - तपाईंको कृषि साथी<br>
+      Farmer Gpt - Your Farming Companion
     </p>
   </div>
 </body>
@@ -97,8 +97,8 @@ const getFailedEmailHtml = (customerName: string, reason: string) => `
     
     <hr style="border: none; border-top: 1px solid #eee; margin: 25px 0;">
     <p style="color: #999; font-size: 12px; text-align: center;">
-      किसान साथी - तपाईंको कृषि साथी<br>
-      Kisan Saathi - Your Farming Companion
+      Farmer Gpt - तपाईंको कृषि साथी<br>
+      Farmer Gpt - Your Farming Companion
     </p>
   </div>
 </body>
@@ -143,8 +143,8 @@ const getRenewalReminderHtml = (customerName: string, renewalDate: string, planN
     
     <hr style="border: none; border-top: 1px solid #eee; margin: 25px 0;">
     <p style="color: #999; font-size: 12px; text-align: center;">
-      किसान साथी - तपाईंको कृषि साथी<br>
-      Kisan Saathi - Your Farming Companion
+      Farmer Gpt - तपाईंको कृषि साथी<br>
+      Farmer Gpt - Your Farming Companion
     </p>
   </div>
 </body>
@@ -207,9 +207,9 @@ serve(async (req) => {
         // Send success email
         if (customerEmail) {
           const { error: emailError } = await resend.emails.send({
-            from: "किसान साथी <noreply@resend.dev>",
+            from: "Farmer Gpt <noreply@resend.dev>",
             to: [customerEmail],
-            subject: "✅ भुक्तानी सफल - Payment Successful | Kisan Saathi",
+            subject: "✅ भुक्तानी सफल - Payment Successful | Farmer Gpt",
             html: getSuccessEmailHtml(customerName, planName, `रु. ${amountPaid}`),
           });
 
@@ -236,9 +236,9 @@ serve(async (req) => {
         // Send failure email
         if (customerEmail) {
           const { error: emailError } = await resend.emails.send({
-            from: "किसान साथी <noreply@resend.dev>",
+            from: "Farmer Gpt <noreply@resend.dev>",
             to: [customerEmail],
-            subject: "⚠️ भुक्तानी असफल - Payment Failed | Kisan Saathi",
+            subject: "⚠️ भुक्तानी असफल - Payment Failed | Farmer Gpt",
             html: getFailedEmailHtml(customerName, failureReason),
           });
 
@@ -271,9 +271,9 @@ serve(async (req) => {
         // Send renewal reminder email
         if (customerEmail) {
           const { error: emailError } = await resend.emails.send({
-            from: "किसान साथी <noreply@resend.dev>",
+            from: "Farmer Gpt <noreply@resend.dev>",
             to: [customerEmail],
-            subject: "🔔 नवीकरण सूचना - Renewal Reminder | Kisan Saathi",
+            subject: "🔔 नवीकरण सूचना - Renewal Reminder | Farmer Gpt",
             html: getRenewalReminderHtml(customerName, renewalDate, planName, `रु. ${amountDue}`),
           });
 
