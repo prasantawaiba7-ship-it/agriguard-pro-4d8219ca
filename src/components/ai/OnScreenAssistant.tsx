@@ -4,9 +4,10 @@ import { useLocation } from 'react-router-dom';
 import { 
   Mic, MicOff, Volume2, VolumeX, Loader2, X, MessageSquare, 
   Send, Download, Crown, Camera, RefreshCw, Minimize2, Maximize2,
-  Globe, Leaf, Bug, CloudRain, HelpCircle, ImagePlus, WifiOff, Wifi, Scan, Calendar, History, FileDown, CloudSun
+  Globe, Leaf, Bug, CloudRain, HelpCircle, ImagePlus, WifiOff, Wifi, Scan, Calendar, History, FileDown, CloudSun, Phone
 } from 'lucide-react';
 import { WeatherAdvisoryCard } from '@/components/ai/WeatherAdvisoryCard';
+import { RealtimeVoiceChat } from '@/components/ai/RealtimeVoiceChat';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
@@ -104,6 +105,8 @@ export function OnScreenAssistant({ isFullScreen: isEmbeddedFullScreen = false, 
   const [isLoadingHistory, setIsLoadingHistory] = useState(false);
   const [showChatHistory, setShowChatHistory] = useState(false);
   const [isExportingPdf, setIsExportingPdf] = useState(false);
+  const [showVoiceCall, setShowVoiceCall] = useState(false);
+  const [showOfflinePremiumPrompt, setShowOfflinePremiumPrompt] = useState(false);
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const recognitionRef = useRef<any>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -1037,7 +1040,23 @@ export function OnScreenAssistant({ isFullScreen: isEmbeddedFullScreen = false, 
                     </motion.button>
                   )}
                   
-                  <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground mt-6 pt-4 border-t border-border/50">
+                  {/* Voice Call Button */}
+                  <motion.button
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    transition={{ delay: 0.6 }}
+                    onClick={() => setShowVoiceCall(true)}
+                    className="flex items-center justify-center gap-2 w-full py-3 px-4 rounded-xl bg-green-600 text-white font-medium hover:bg-green-700 transition-colors mt-4"
+                  >
+                    <Phone className="w-5 h-5" />
+                    <span>
+                      {language === 'ne' ? 'AI सँग बोल्नुहोस्' : 
+                       language === 'hi' ? 'AI से बात करें' :
+                       'Talk with AI'}
+                    </span>
+                  </motion.button>
+                  
+                  <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground mt-4 pt-4 border-t border-border/50">
                     <Mic className="w-4 h-4 text-primary" />
                     <span>
                       {language === 'ne' ? 'बोल्नुहोस्, टाइप गर्नुहोस्, वा फोटो पठाउनुहोस्' : 
@@ -1384,6 +1403,70 @@ export function OnScreenAssistant({ isFullScreen: isEmbeddedFullScreen = false, 
             onLoadSession={handleLoadSession}
           />
         )}
+
+        {/* Realtime Voice Chat */}
+        <AnimatePresence>
+          {showVoiceCall && (
+            <RealtimeVoiceChat
+              language={assistantLang as 'ne' | 'hi' | 'en'}
+              onClose={() => setShowVoiceCall(false)}
+              onShowPremium={() => {
+                setShowVoiceCall(false);
+                setShowSubscriptionModal(true);
+              }}
+            />
+          )}
+        </AnimatePresence>
+
+        {/* Offline Premium Prompt */}
+        <AnimatePresence>
+          {showOfflinePremiumPrompt && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 z-[60] flex items-center justify-center bg-black/50 p-4"
+              onClick={() => setShowOfflinePremiumPrompt(false)}
+            >
+              <motion.div
+                initial={{ scale: 0.9 }}
+                animate={{ scale: 1 }}
+                exit={{ scale: 0.9 }}
+                onClick={(e) => e.stopPropagation()}
+                className="w-full max-w-sm bg-card rounded-2xl p-6 text-center shadow-xl"
+              >
+                <Crown className="w-12 h-12 text-amber-500 mx-auto mb-4" />
+                <h3 className="text-lg font-bold mb-2">
+                  {language === 'ne' ? 'अफलाइन आवाज सीमा पुग्यो' : 'Offline Voice Limit Reached'}
+                </h3>
+                <p className="text-sm text-muted-foreground mb-4">
+                  {language === 'ne' 
+                    ? 'तपाईंले ३ वटा निःशुल्क अफलाइन आवाज प्रयोग गर्नुभयो। असीमित आवाजको लागि प्रीमियम लिनुहोस्।' 
+                    : 'You have used 3 free offline voice responses. Get premium for unlimited voice.'}
+                </p>
+                <div className="flex gap-2">
+                  <Button
+                    variant="outline"
+                    className="flex-1"
+                    onClick={() => setShowOfflinePremiumPrompt(false)}
+                  >
+                    {language === 'ne' ? 'पछि' : 'Later'}
+                  </Button>
+                  <Button
+                    className="flex-1 bg-amber-500 hover:bg-amber-600"
+                    onClick={() => {
+                      setShowOfflinePremiumPrompt(false);
+                      setShowSubscriptionModal(true);
+                    }}
+                  >
+                    <Crown className="w-4 h-4 mr-1" />
+                    {language === 'ne' ? 'प्रीमियम' : 'Premium'}
+                  </Button>
+                </div>
+              </motion.div>
+            </motion.div>
+          )}
+        </AnimatePresence>
 
         {/* Disease Upload Modal */}
         <AnimatePresence>
