@@ -31,8 +31,8 @@ import { uploadDiseaseImage } from '@/lib/uploadDiseaseImage';
 import { useNotifications, useOutbreakAlertChecker } from '@/hooks/useNotifications';
 import { useGeolocation } from '@/hooks/useGeolocation';
 
-// Nepali crop types
-const CROP_TYPES = [
+// Default Nepali crop types (fallback if admin hasn't configured)
+const DEFAULT_CROP_TYPES = [
   { value: 'rice', label: 'धान', emoji: '🌾' },
   { value: 'wheat', label: 'गहुँ', emoji: '🌾' },
   { value: 'maize', label: 'मकै', emoji: '🌽' },
@@ -44,6 +44,13 @@ const CROP_TYPES = [
   { value: 'vegetables', label: 'तरकारी', emoji: '🥬' },
   { value: 'fruits', label: 'फलफूल', emoji: '🍎' },
 ];
+
+// Emoji mapping for admin-added crops
+const CROP_EMOJI_MAP: Record<string, string> = {
+  rice: '🌾', wheat: '🌾', maize: '🌽', potato: '🥔', tomato: '🍅',
+  pepper: '🌶️', bean: '🫘', sugarcane: '🎋', vegetables: '🥬', fruits: '🍎',
+  default: '🌱'
+};
 
 // Common pests database in Nepali
 const PEST_DATABASE: Record<string, PestInfo[]> = {
@@ -375,6 +382,8 @@ export function NepaliDiseaseDetector() {
   const [symptomDescription, setSymptomDescription] = useState('');
   const [selectedHistoryItem, setSelectedHistoryItem] = useState<string | null>(null);
   const [historyViewMode, setHistoryViewMode] = useState<'list' | 'gallery'>('gallery');
+  const [cropTypes, setCropTypes] = useState<Array<{ value: string; label: string; emoji: string }>>(DEFAULT_CROP_TYPES);
+  const [cropsLoading, setCropsLoading] = useState(true);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const cameraInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
@@ -397,6 +406,51 @@ export function NepaliDiseaseDetector() {
     fetchLocation,
     isSupported: geoSupported 
   } = useGeolocation({ autoFetch: true });
+
+  // Fetch crops from app_settings (admin-managed)
+  useEffect(() => {
+    const fetchCrops = async () => {
+      setCropsLoading(true);
+      try {
+        const { data, error } = await supabase
+          .from('app_settings')
+          .select('value')
+          .eq('key', 'crops_list')
+          .single();
+
+        if (error && error.code !== 'PGRST116') {
+          console.error('Error fetching crops:', error);
+        }
+
+        if (data?.value && Array.isArray(data.value)) {
+          // Transform admin-managed crops to the format we need
+          const adminCrops = (data.value as Array<{ 
+            id: string; 
+            name: string; 
+            name_ne: string; 
+            is_active: boolean 
+          }>)
+            .filter(crop => crop.is_active)
+            .map(crop => ({
+              value: crop.name.toLowerCase().replace(/\s+/g, '_'),
+              label: crop.name_ne || crop.name,
+              emoji: CROP_EMOJI_MAP[crop.name.toLowerCase()] || CROP_EMOJI_MAP.default
+            }));
+          
+          if (adminCrops.length > 0) {
+            setCropTypes(adminCrops);
+          }
+        }
+      } catch (error) {
+        console.error('Error fetching crops:', error);
+        // Keep default crops on error
+      } finally {
+        setCropsLoading(false);
+      }
+    };
+
+    fetchCrops();
+  }, []);
 
   // Voice input for symptom description
   const { 
@@ -604,7 +658,7 @@ export function NepaliDiseaseDetector() {
     if (!result) return;
     
     setIsDownloading(true);
-    const cropLabel = CROP_TYPES.find(c => c.value === selectedCrop)?.label || 'बाली';
+    const cropLabel = cropTypes.find(c => c.value === selectedCrop)?.label || 'बाली';
     
     try {
       // Prepare data for the PDF endpoint
@@ -669,7 +723,7 @@ export function NepaliDiseaseDetector() {
     if (!result || !resultSectionRef.current) return;
     
     setIsDownloadingImage(true);
-    const cropLabel = CROP_TYPES.find(c => c.value === selectedCrop)?.label || 'बाली';
+    const cropLabel = cropTypes.find(c => c.value === selectedCrop)?.label || 'बाली';
     
     try {
       const canvas = await html2canvas(resultSectionRef.current, {
@@ -717,7 +771,7 @@ export function NepaliDiseaseDetector() {
     if (!result || !resultSectionRef.current) return;
     
     setIsDownloadingPdf(true);
-    const cropLabel = CROP_TYPES.find(c => c.value === selectedCrop)?.label || 'बाली';
+    const cropLabel = cropTypes.find(c => c.value === selectedCrop)?.label || 'बाली';
     
     try {
       const canvas = await html2canvas(resultSectionRef.current, {
@@ -848,7 +902,7 @@ export function NepaliDiseaseDetector() {
   const generateReportShareText = () => {
     if (!result) return '';
     
-    const cropLabel = CROP_TYPES.find(c => c.value === selectedCrop)?.label || 'बाली';
+    const cropLabel = cropTypes.find(c => c.value === selectedCrop)?.label || 'बाली';
     const severityLabel = result.severity === 'high' ? 'गम्भीर' : result.severity === 'medium' ? 'मध्यम' : 'सामान्य';
     const confidencePercent = Math.round(result.confidence * 100);
     
@@ -1024,7 +1078,7 @@ export function NepaliDiseaseDetector() {
                 <SelectValue placeholder="बाली छान्नुहोस्..." />
               </SelectTrigger>
               <SelectContent>
-                {CROP_TYPES.map((crop) => (
+                {cropTypes.map((crop) => (
                   <SelectItem key={crop.value} value={crop.value}>
                     {crop.emoji} {crop.label}
                   </SelectItem>
@@ -1885,7 +1939,7 @@ export function NepaliDiseaseDetector() {
               <SelectValue placeholder="बाली छान्नुहोस्..." />
             </SelectTrigger>
             <SelectContent>
-              {CROP_TYPES.map((crop) => (
+              {cropTypes.map((crop) => (
                 <SelectItem key={crop.value} value={crop.value}>
                   {crop.emoji} {crop.label}
                 </SelectItem>
