@@ -751,8 +751,10 @@ I've saved your crop image. I'll analyze it when you're back online.
   const toggleRecording = () => {
     if (!isVoiceSupported) {
       toast({
-        title: "Voice not supported",
-        description: "Your browser doesn't support voice input. Try Chrome or Edge.",
+        title: language === 'ne' ? "आवाज समर्थित छैन" : "Voice not supported",
+        description: language === 'ne' 
+          ? "तपाईंको ब्राउजरले आवाज इनपुट समर्थन गर्दैन। Chrome वा Edge प्रयोग गर्नुहोस्।"
+          : "Your browser doesn't support voice input. Try Chrome or Edge.",
         variant: "destructive"
       });
       return;
@@ -760,15 +762,19 @@ I've saved your crop image. I'll analyze it when you're back online.
 
     if (isListening) {
       stopListening();
-      toast({
-        title: "Voice stopped",
-        description: "Processing your message...",
-      });
+      if (transcript) {
+        toast({
+          title: language === 'ne' ? "✅ आवाज रेकर्ड भयो" : "✅ Voice recorded",
+          description: language === 'ne' ? "तपाईंको सन्देश तयार छ।" : "Your message is ready.",
+        });
+      }
     } else {
       startListening();
       toast({
-        title: "Listening...",
-        description: "Speak now in your language",
+        title: language === 'ne' ? "🎤 सुनिरहेको छ..." : "🎤 Listening...",
+        description: language === 'ne' 
+          ? "नेपालीमा बोल्नुहोस्। बोल्न सकेपछि माइक थिच्नुहोस्।"
+          : "Speak in your language. Tap mic when done.",
       });
     }
   };
@@ -1127,6 +1133,39 @@ I've saved your crop image. I'll analyze it when you're back online.
             </motion.div>
           )}
         </AnimatePresence>
+
+        {/* Voice Input Active Indicator */}
+        <AnimatePresence>
+          {isListening && (
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: 10 }}
+              className="mb-2 sm:mb-3 p-3 bg-primary/10 border border-primary/30 rounded-lg"
+            >
+              <div className="flex items-center gap-2 mb-2">
+                <div className="flex gap-1">
+                  <span className="w-2 h-2 bg-primary rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
+                  <span className="w-2 h-2 bg-primary rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
+                  <span className="w-2 h-2 bg-primary rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
+                </div>
+                <span className="text-sm font-medium text-primary">
+                  {language === 'ne' ? '🎤 सुनिरहेको छ...' : '🎤 Listening...'}
+                </span>
+              </div>
+              {transcript && (
+                <p className="text-sm text-foreground bg-background/50 p-2 rounded border border-border">
+                  {transcript}
+                </p>
+              )}
+              <p className="text-xs text-muted-foreground mt-2">
+                {language === 'ne' 
+                  ? 'नेपालीमा बोल्नुहोस्। बोल्न सकेपछि माइक बटन थिच्नुहोस्।'
+                  : 'Speak in your language. Tap the mic button when done.'}
+              </p>
+            </motion.div>
+          )}
+        </AnimatePresence>
         
         <div className="flex gap-1.5 sm:gap-2 items-end">
           <input
@@ -1149,12 +1188,12 @@ I've saved your crop image. I'll analyze it when you're back online.
             variant={isListening ? "destructive" : "outline"}
             size="icon"
             onClick={toggleRecording}
-            className={`flex-shrink-0 relative h-9 w-9 sm:h-10 sm:w-10 ${isListening ? 'animate-pulse' : ''}`}
+            className={`flex-shrink-0 relative h-9 w-9 sm:h-10 sm:w-10 ${isListening ? 'ring-2 ring-destructive ring-offset-2' : ''}`}
             disabled={isProcessing}
             title={isVoiceSupported 
               ? (isListening 
                   ? (language === 'ne' ? 'सुन्न रोक्नुहोस्' : 'Stop listening') 
-                  : (language === 'ne' ? 'बोल्न थाल्नुहोस्' : 'Start voice input')) 
+                  : (language === 'ne' ? '🎤 बोल्नुहोस्' : '🎤 Speak')) 
               : (language === 'ne' ? 'आवाज समर्थित छैन' : 'Voice not supported')}
           >
             {isListening ? <MicOff className="w-4 h-4" /> : <Mic className="w-4 h-4" />}
@@ -1166,12 +1205,14 @@ I've saved your crop image. I'll analyze it when you're back online.
             value={input}
             onChange={(e) => setInput(e.target.value)}
             onKeyPress={handleKeyPress}
-            placeholder={isOnline 
-              ? (language === 'ne' ? 'आफ्नो प्रश्न टाइप गर्नुहोस्...' : t('typeMessage'))
-              : (language === 'ne' ? 'अफलाइन सुझावको लागि टाइप गर्नुहोस्...' : 'Type for offline tips...')}
+            placeholder={isListening
+              ? (language === 'ne' ? '🎤 बोलिरहनुहोस्...' : '🎤 Speaking...')
+              : isOnline 
+                ? (language === 'ne' ? 'नेपालीमा टाइप गर्नुहोस् वा 🎤 थिच्नुहोस्...' : 'Type or tap 🎤 to speak...')
+                : (language === 'ne' ? 'अफलाइन सुझावको लागि टाइप गर्नुहोस्...' : 'Type for offline tips...')}
             className="min-h-[36px] sm:min-h-[44px] max-h-24 sm:max-h-32 resize-none text-sm"
             rows={1}
-            disabled={isProcessing}
+            disabled={isProcessing || isListening}
           />
           <Button
             onClick={sendMessage}
