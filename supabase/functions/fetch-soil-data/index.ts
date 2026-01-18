@@ -105,7 +105,7 @@ serve(async (req) => {
         }
       }
 
-      // Estimate P and K from organic carbon (rough estimation for India)
+      // Estimate P and K from organic carbon (rough estimation for Nepal)
       if (soilData.organicCarbon) {
         const oc = parseFloat(soilData.organicCarbon);
         // Higher OC generally indicates better nutrient availability
@@ -115,8 +115,8 @@ serve(async (req) => {
     } else {
       console.log("SoilGrids API failed, using estimates based on location");
       
-      // Provide reasonable estimates for Indian conditions
-      // These are typical values for alluvial soils in Indo-Gangetic plains
+      // Provide reasonable estimates for Nepali conditions
+      // These are typical values for soils in Nepal's Terai and mid-hills
       soilData = {
         ph: (6.5 + Math.random() * 1.5).toFixed(1),
         moisture: (25 + Math.random() * 20).toFixed(0),

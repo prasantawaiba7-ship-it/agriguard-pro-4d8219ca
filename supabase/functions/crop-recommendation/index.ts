@@ -31,7 +31,7 @@ interface PlotInfo {
   previousCrop?: string;
 }
 
-const RECOMMENDATION_PROMPT = `You are an expert agricultural scientist specializing in Indian farming conditions. Analyze the provided soil, weather, and location data to recommend the best crops for the farmer.
+const RECOMMENDATION_PROMPT = `You are an expert agricultural scientist specializing in Nepali farming conditions. Analyze the provided soil, weather, and location data to recommend the best crops for the farmer.
 
 Consider:
 1. Soil NPK levels and pH for crop suitability
@@ -49,7 +49,7 @@ Provide your response as a JSON object with this structure:
       "crop": "Crop name",
       "suitabilityScore": 0.0-1.0,
       "expectedYieldPerHectare": "X quintals",
-      "estimatedProfitPerHectare": "₹X-Y",
+      "estimatedProfitPerHectare": "रु.X-Y",
       "waterRequirement": "low/medium/high",
       "growthDuration": "X days",
       "bestPractices": ["tip1", "tip2"],
@@ -66,7 +66,7 @@ Provide your response as a JSON object with this structure:
   "reasoning": "Brief explanation of recommendations"
 }
 
-Recommend 3-5 crops, ranked by suitability. Use realistic yield and profit estimates for Indian conditions.`;
+Recommend 3-5 crops, ranked by suitability. Use realistic yield and profit estimates for Nepali conditions.`;
 
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
