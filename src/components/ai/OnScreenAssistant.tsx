@@ -4,8 +4,9 @@ import { useLocation } from 'react-router-dom';
 import { 
   Mic, MicOff, Volume2, VolumeX, Loader2, X, MessageSquare, 
   Send, Download, Crown, Camera, RefreshCw, Minimize2, Maximize2,
-  Globe, Leaf, Bug, CloudRain, HelpCircle, ImagePlus, WifiOff, Wifi, Scan, Calendar, History, FileDown
+  Globe, Leaf, Bug, CloudRain, HelpCircle, ImagePlus, WifiOff, Wifi, Scan, Calendar, History, FileDown, CloudSun
 } from 'lucide-react';
+import { WeatherAdvisoryCard } from '@/components/ai/WeatherAdvisoryCard';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
@@ -52,20 +53,20 @@ const quickQuestions = {
   ne: [
     { icon: Camera, text: 'फोटो पठाएर रोग पहिचान गर्नुहोस्', color: 'text-destructive', isPhotoAction: true },
     { icon: Bug, text: 'मेरो बालीमा के समस्या छ?', color: 'text-destructive' },
+    { icon: CloudSun, text: 'आजको मौसम अनुसार के गर्ने?', color: 'text-blue-500' },
     { icon: Leaf, text: 'कुन बाली लगाउँदा राम्रो हुन्छ?', color: 'text-primary' },
-    { icon: HelpCircle, text: 'मलखाद कहिले हाल्ने?', color: 'text-warning' },
   ],
   hi: [
     { icon: Camera, text: 'फोटो भेजकर रोग पहचानें', color: 'text-destructive', isPhotoAction: true },
     { icon: Bug, text: 'मेरी फसल में क्या समस्या है?', color: 'text-destructive' },
+    { icon: CloudSun, text: 'आज के मौसम के अनुसार क्या करें?', color: 'text-blue-500' },
     { icon: Leaf, text: 'कौन सी फसल लगाना अच्छा रहेगा?', color: 'text-primary' },
-    { icon: HelpCircle, text: 'खाद कब डालें?', color: 'text-warning' },
   ],
   en: [
     { icon: Camera, text: 'Send photo to detect disease', color: 'text-destructive', isPhotoAction: true },
     { icon: Bug, text: "What's wrong with my crop?", color: 'text-destructive' },
+    { icon: CloudSun, text: "What should I do based on today's weather?", color: 'text-blue-500' },
     { icon: Leaf, text: 'Which crop should I plant?', color: 'text-primary' },
-    { icon: HelpCircle, text: 'When to apply fertilizer?', color: 'text-warning' },
   ],
 };
 
@@ -1007,6 +1008,16 @@ export function OnScreenAssistant({ isFullScreen: isEmbeddedFullScreen = false, 
                       </motion.button>
                     ))}
                   </div>
+                  
+                  {/* Weather Advisory Card */}
+                  <motion.div
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.5 }}
+                    className="mt-4"
+                  >
+                    <WeatherAdvisoryCard language={language as 'ne' | 'hi' | 'en'} />
+                  </motion.div>
                   
                   {/* View Chat History Button for logged-in users */}
                   {profile && (
