@@ -2,12 +2,13 @@ import { useState, useRef, useCallback, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { motion, AnimatePresence } from 'framer-motion';
 import html2canvas from 'html2canvas';
+import jsPDF from 'jspdf';
 import { 
   Camera, Upload, X, Loader2, AlertTriangle, CheckCircle2, 
   Download, Leaf, Bug, Shield, Pill, BookOpen, ChevronDown,
   Droplets, ThermometerSun, Wind, Mic, MicOff, Share2, 
   MessageCircle, Phone, History, Calendar, Bell, Image, Grid3X3,
-  MapPin, Navigation, ImageDown
+  MapPin, Navigation, ImageDown, FileText
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -595,6 +596,8 @@ export function NepaliDiseaseDetector() {
 
   const [isDownloading, setIsDownloading] = useState(false);
   const [isDownloadingImage, setIsDownloadingImage] = useState(false);
+  const [isDownloadingPdf, setIsDownloadingPdf] = useState(false);
+  const [isSharingToWhatsApp, setIsSharingToWhatsApp] = useState(false);
   const resultSectionRef = useRef<HTMLDivElement>(null);
 
   const downloadReport = async () => {
@@ -709,7 +712,139 @@ export function NepaliDiseaseDetector() {
     }
   };
 
-  // Generate enhanced report text for sharing
+  // Download report as PDF using jsPDF
+  const downloadReportAsPdf = async () => {
+    if (!result || !resultSectionRef.current) return;
+    
+    setIsDownloadingPdf(true);
+    const cropLabel = CROP_TYPES.find(c => c.value === selectedCrop)?.label || 'बाली';
+    
+    try {
+      const canvas = await html2canvas(resultSectionRef.current, {
+        backgroundColor: '#ffffff',
+        scale: 2,
+        useCORS: true,
+        logging: false,
+      });
+      
+      const imgData = canvas.toDataURL('image/png');
+      const pdf = new jsPDF({
+        orientation: 'portrait',
+        unit: 'mm',
+        format: 'a4'
+      });
+      
+      const imgWidth = 190; // A4 width minus margins
+      const imgHeight = (canvas.height * imgWidth) / canvas.width;
+      
+      // Add header
+      pdf.setFontSize(16);
+      pdf.text('कृषि मित्र - रोग विश्लेषण रिपोर्ट', 10, 15);
+      pdf.setFontSize(10);
+      pdf.text(`मिति: ${new Date().toLocaleDateString('ne-NP')}`, 10, 22);
+      if (locationName) {
+        pdf.text(`स्थान: ${locationName}`, 10, 28);
+      }
+      
+      // Add image
+      pdf.addImage(imgData, 'PNG', 10, 35, imgWidth, imgHeight);
+      
+      // Add footer
+      const pageHeight = pdf.internal.pageSize.getHeight();
+      pdf.setFontSize(8);
+      pdf.text('⚠️ यो AI अनुमान हो। कृषि प्राविधिकसँग सल्लाह लिनुहोस्।', 10, pageHeight - 10);
+      
+      const fileName = `कृषि-रिपोर्ट-${cropLabel}-${new Date().toLocaleDateString('ne-NP').replace(/\//g, '-')}.pdf`;
+      pdf.save(fileName);
+      
+      toast({
+        title: '✅ PDF डाउनलोड भयो!',
+        description: 'रिपोर्ट PDF को रूपमा सेभ भयो।',
+      });
+    } catch (error) {
+      console.error('PDF download error:', error);
+      toast({
+        title: 'माफ गर्नुहोस्, PDF डाउनलोड हुन सकेन',
+        description: 'कृपया फेरि प्रयास गर्नुहोस्।',
+        variant: 'destructive'
+      });
+    } finally {
+      setIsDownloadingPdf(false);
+    }
+  };
+
+  // Share report image directly to WhatsApp
+  const shareImageToWhatsApp = async () => {
+    if (!result || !resultSectionRef.current) return;
+    
+    setIsSharingToWhatsApp(true);
+    
+    try {
+      const canvas = await html2canvas(resultSectionRef.current, {
+        backgroundColor: '#ffffff',
+        scale: 2,
+        useCORS: true,
+        logging: false,
+      });
+      
+      // Convert canvas to blob
+      const blob = await new Promise<Blob>((resolve, reject) => {
+        canvas.toBlob((b) => {
+          if (b) resolve(b);
+          else reject(new Error('Failed to create blob'));
+        }, 'image/png', 1.0);
+      });
+      
+      // Check if Web Share API with files is supported
+      if (navigator.canShare && navigator.canShare({ files: [new File([blob], 'report.png', { type: 'image/png' })] })) {
+        const file = new File([blob], `कृषि-रिपोर्ट.png`, { type: 'image/png' });
+        
+        await navigator.share({
+          files: [file],
+          title: 'कृषि रोग रिपोर्ट',
+          text: generateReportShareText(),
+        });
+        
+        toast({
+          title: '✅ Share सफल भयो!',
+          description: 'रिपोर्ट इमेज सहित share भयो।',
+        });
+      } else {
+        // Fallback: Download image first, then open WhatsApp
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = 'कृषि-रिपोर्ट.png';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+        
+        // Then open WhatsApp with text
+        setTimeout(() => {
+          handleShareWhatsApp();
+        }, 500);
+        
+        toast({
+          title: '📥 इमेज डाउनलोड भयो',
+          description: 'WhatsApp मा इमेज attach गर्नुहोस्।',
+        });
+      }
+    } catch (error) {
+      console.error('WhatsApp image share error:', error);
+      // Fallback to text share
+      handleShareWhatsApp();
+      toast({
+        title: 'इमेज share हुन सकेन',
+        description: 'Text रिपोर्ट share गरिएको छ।',
+        variant: 'default'
+      });
+    } finally {
+      setIsSharingToWhatsApp(false);
+    }
+  };
+
+
   const generateReportShareText = () => {
     if (!result) return '';
     
@@ -1287,24 +1422,24 @@ export function NepaliDiseaseDetector() {
 
                     {/* Actions - Responsive Share & Download */}
                     <div className="space-y-3">
-                      {/* Download Buttons - Two options */}
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                        {/* HTML Report Download */}
+                      {/* Download Buttons - Three options */}
+                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                        {/* PDF Download Button */}
                         <Button 
-                          onClick={downloadReport} 
-                          disabled={isDownloading}
+                          onClick={downloadReportAsPdf} 
+                          disabled={isDownloadingPdf}
                           className="h-12 text-base bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70"
                           size="lg"
                         >
-                          {isDownloading ? (
+                          {isDownloadingPdf ? (
                             <>
                               <Loader2 className="w-5 h-5 mr-2 animate-spin" />
-                              डाउनलोड हुँदैछ...
+                              PDF बन्दैछ...
                             </>
                           ) : (
                             <>
-                              <Download className="w-5 h-5 mr-2" />
-                              📄 HTML रिपोर्ट
+                              <FileText className="w-5 h-5 mr-2" />
+                              📄 PDF रिपोर्ट
                             </>
                           )}
                         </Button>
@@ -1325,24 +1460,62 @@ export function NepaliDiseaseDetector() {
                           ) : (
                             <>
                               <ImageDown className="w-5 h-5 mr-2" />
-                              🖼️ फोटो सेभ गर्नु
+                              🖼️ फोटो सेभ
+                            </>
+                          )}
+                        </Button>
+
+                        {/* HTML Report Download */}
+                        <Button 
+                          onClick={downloadReport} 
+                          disabled={isDownloading}
+                          variant="outline"
+                          className="h-12 text-base border-2 border-muted-foreground/30 hover:bg-muted/50"
+                          size="lg"
+                        >
+                          {isDownloading ? (
+                            <>
+                              <Loader2 className="w-5 h-5 mr-2 animate-spin" />
+                              डाउनलोड...
+                            </>
+                          ) : (
+                            <>
+                              <Download className="w-5 h-5 mr-2" />
+                              HTML
                             </>
                           )}
                         </Button>
                       </div>
 
                       {/* Share buttons - Responsive Grid */}
-                      <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                        {/* WhatsApp with Image */}
+                        <Button 
+                          onClick={shareImageToWhatsApp} 
+                          disabled={isSharingToWhatsApp}
+                          variant="outline" 
+                          className="h-11 bg-[#25D366]/10 hover:bg-[#25D366]/20 border-[#25D366]/30 col-span-2 sm:col-span-1"
+                        >
+                          {isSharingToWhatsApp ? (
+                            <Loader2 className="w-4 h-4 mr-1.5 animate-spin" />
+                          ) : (
+                            <MessageCircle className="w-4 h-4 mr-1.5 text-[#25D366]" />
+                          )}
+                          <span className="text-sm">WhatsApp + फोटो</span>
+                        </Button>
+
+                        {/* WhatsApp text only */}
                         <Button 
                           onClick={handleShareWhatsApp} 
                           variant="outline" 
-                          className="h-11 bg-[#25D366]/10 hover:bg-[#25D366]/20 border-[#25D366]/30"
+                          className="h-11 bg-[#25D366]/5 hover:bg-[#25D366]/10 border-[#25D366]/20"
                         >
                           <MessageCircle className="w-4 h-4 mr-1.5 text-[#25D366]" />
-                          <span className="text-sm">WhatsApp</span>
+                          <span className="text-sm">Text</span>
                         </Button>
+
                         <Button 
-                          onClick={handleShareSMS} 
+                          onClick={handleShareSMS}
                           variant="outline" 
                           className="h-11"
                         >
