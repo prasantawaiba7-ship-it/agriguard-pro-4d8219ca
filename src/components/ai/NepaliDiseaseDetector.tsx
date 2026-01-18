@@ -30,6 +30,7 @@ import {
 import { uploadDiseaseImage } from '@/lib/uploadDiseaseImage';
 import { useNotifications, useOutbreakAlertChecker } from '@/hooks/useNotifications';
 import { useGeolocation } from '@/hooks/useGeolocation';
+import { TreatmentGuideCard } from './TreatmentGuideCard';
 
 // Default Nepali crop types (fallback if admin hasn't configured)
 const DEFAULT_CROP_TYPES = [
@@ -1439,6 +1440,13 @@ export function NepaliDiseaseDetector() {
                         </ul>
                       </div>
                     )}
+
+                    {/* Treatment Guide from Admin Database */}
+                    <TreatmentGuideCard 
+                      cropName={selectedCrop} 
+                      diseaseName={result.detectedIssue || ''} 
+                      autoExpand={true}
+                    />
 
                     {/* When to seek help */}
                     {result.whenToSeekHelp && (
