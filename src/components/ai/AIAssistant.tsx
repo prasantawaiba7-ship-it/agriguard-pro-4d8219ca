@@ -13,6 +13,7 @@ import { useVoiceInput } from '@/hooks/useVoiceInput';
 import { useTextToSpeech } from '@/hooks/useTextToSpeech';
 import { offlineStorage } from '@/lib/offlineStorage';
 import { VoiceChatButton } from './VoiceChatButton';
+import { TreatmentVideoCards, type TreatmentVideo } from './TreatmentVideoCards';
 
 interface Message {
   id: string;
@@ -22,6 +23,7 @@ interface Message {
   timestamp: Date;
   pending?: boolean;
   isOfflineResponse?: boolean;
+  treatments?: TreatmentVideo[];
 }
 
 interface AIAssistantProps {
@@ -694,6 +696,7 @@ I've saved your crop image. I'll analyze it when you're back online.
 
       if (reader) {
         let textBuffer = '';
+        let receivedTreatments: TreatmentVideo[] = [];
         
         while (true) {
           const { done, value } = await reader.read();
@@ -715,12 +718,26 @@ I've saved your crop image. I'll analyze it when you're back online.
             
             try {
               const parsed = JSON.parse(jsonStr);
+              
+              // Check if this is a treatments object
+              if (parsed.treatments && Array.isArray(parsed.treatments)) {
+                receivedTreatments = parsed.treatments;
+                console.log('[AI] Received treatments:', receivedTreatments.length);
+                // Update the message with treatments
+                setMessages(prev => prev.map(m => 
+                  m.id === assistantMessageId 
+                    ? { ...m, treatments: receivedTreatments }
+                    : m
+                ));
+                continue;
+              }
+              
               const content = parsed.choices?.[0]?.delta?.content;
               if (content) {
                 assistantContent += content;
                 setMessages(prev => prev.map(m => 
                   m.id === assistantMessageId 
-                    ? { ...m, content: assistantContent }
+                    ? { ...m, content: assistantContent, treatments: receivedTreatments }
                     : m
                 ));
               }
@@ -1000,6 +1017,11 @@ I've saved your crop image. I'll analyze it when you're back online.
                       )}
                     </Button>
                   </div>
+                )}
+                
+                {/* Treatment Video Cards for disease-related responses */}
+                {message.role === 'assistant' && message.treatments && message.treatments.length > 0 && !isProcessing && (
+                  <TreatmentVideoCards treatments={message.treatments} />
                 )}
               </Card>
             </motion.div>

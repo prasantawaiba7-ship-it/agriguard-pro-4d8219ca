@@ -1,9 +1,90 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
+
+// Function to extract disease/pest keywords from user message
+function extractDiseaseKeywords(message: string): string[] {
+  const keywords: string[] = [];
+  
+  // Common disease/pest patterns in English and Nepali
+  const diseasePatterns = [
+    // English patterns
+    /blast|blight|rust|wilt|rot|mildew|virus|curl|spot|smut|borer|armyworm|aphid|mite|moth|hopper|caterpillar/gi,
+    // Nepali patterns
+    /झुल्सा|रोग|कीरा|माहुरी|लाही|काट|ढुसी|सुक्ने|कुहिने|पहेँलो|खैरो|सेतो/gi,
+    // Crop-disease combinations
+    /rice blast|late blight|early blight|leaf curl|yellow rust|brown rust|fall armyworm|stem borer|powdery mildew|downy mildew|bacterial wilt|fusarium wilt/gi
+  ];
+
+  for (const pattern of diseasePatterns) {
+    const matches = message.match(pattern);
+    if (matches) {
+      keywords.push(...matches.map(m => m.toLowerCase()));
+    }
+  }
+
+  // Also extract crop names for better matching
+  const cropPatterns = /rice|wheat|maize|corn|potato|tomato|vegetables|आलु|धान|गहुँ|मकै|गोलभेडा|तरकारी/gi;
+  const cropMatches = message.match(cropPatterns);
+  if (cropMatches) {
+    keywords.push(...cropMatches.map(m => m.toLowerCase()));
+  }
+
+  return [...new Set(keywords)]; // Remove duplicates
+}
+
+// Fetch relevant treatments from database
+async function fetchRelevantTreatments(keywords: string[], supabaseUrl: string, supabaseKey: string) {
+  if (keywords.length === 0) return [];
+
+  try {
+    const supabase = createClient(supabaseUrl, supabaseKey);
+    
+    // Build search query
+    let query = supabase
+      .from('crop_treatments')
+      .select('id, crop_name, disease_or_pest_name, disease_or_pest_name_ne, treatment_title, treatment_title_ne, youtube_video_url, severity_level')
+      .eq('is_active', true);
+
+    // Search for matching treatments
+    const searchTerms = keywords.join(' ');
+    const { data, error } = await query
+      .or(`disease_or_pest_name.ilike.%${keywords[0]}%,crop_name.ilike.%${keywords[0]}%,treatment_title.ilike.%${keywords[0]}%`)
+      .limit(5);
+
+    if (error) {
+      console.error('[AI] Error fetching treatments:', error);
+      return [];
+    }
+
+    // Further filter by relevance score
+    const scoredResults = (data || []).map(treatment => {
+      let score = 0;
+      const treatmentText = `${treatment.crop_name} ${treatment.disease_or_pest_name} ${treatment.treatment_title}`.toLowerCase();
+      
+      for (const keyword of keywords) {
+        if (treatmentText.includes(keyword)) {
+          score += 2;
+        }
+      }
+      
+      return { ...treatment, score };
+    });
+
+    // Sort by relevance and return top 3
+    return scoredResults
+      .filter(t => t.score > 0)
+      .sort((a, b) => b.score - a.score)
+      .slice(0, 3);
+  } catch (error) {
+    console.error('[AI] Treatment fetch error:', error);
+    return [];
+  }
+}
 
 // Language-specific system prompts for Nepal farming context
 const getSystemPrompt = (language: string): string => {
@@ -114,6 +195,8 @@ serve(async (req) => {
   try {
     const { messages, language = 'ne' } = await req.json();
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
+    const SUPABASE_URL = Deno.env.get("SUPABASE_URL");
+    const SUPABASE_ANON_KEY = Deno.env.get("SUPABASE_ANON_KEY");
     
     if (!LOVABLE_API_KEY) {
       throw new Error("LOVABLE_API_KEY is not configured");
@@ -125,6 +208,19 @@ serve(async (req) => {
       role: msg.role,
       content: typeof msg.content === 'string' ? msg.content : (Array.isArray(msg.content) ? msg.content[0]?.text || '' : String(msg.content))
     }));
+
+    // Extract the latest user message for keyword extraction
+    const latestUserMessage = recentMessages.find((m: any) => m.role === 'user')?.content || '';
+    
+    // Extract disease/pest keywords and fetch relevant treatments
+    const keywords = extractDiseaseKeywords(latestUserMessage);
+    let treatments: any[] = [];
+    
+    if (keywords.length > 0 && SUPABASE_URL && SUPABASE_ANON_KEY) {
+      console.log(`[AI] Extracted keywords: ${keywords.join(', ')}`);
+      treatments = await fetchRelevantTreatments(keywords, SUPABASE_URL, SUPABASE_ANON_KEY);
+      console.log(`[AI] Found ${treatments.length} relevant treatments`);
+    }
 
     // Get language-specific system prompt
     const systemPrompt = getSystemPrompt(language);
@@ -163,6 +259,39 @@ serve(async (req) => {
       return new Response(JSON.stringify({ error: "त्रुटि" }), {
         status: 500,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    // If we have treatments, we need to append them after the streaming response
+    // We'll do this by transforming the stream
+    if (treatments.length > 0) {
+      const originalStream = response.body;
+      
+      const transformedStream = new TransformStream({
+        async start(controller) {
+          // Process original stream
+          if (originalStream) {
+            const reader = originalStream.getReader();
+            try {
+              while (true) {
+                const { done, value } = await reader.read();
+                if (done) break;
+                controller.enqueue(value);
+              }
+            } finally {
+              reader.releaseLock();
+            }
+          }
+          
+          // Append treatments data as a custom SSE event
+          const treatmentsEvent = `\n\ndata: ${JSON.stringify({ treatments })}\n\n`;
+          controller.enqueue(new TextEncoder().encode(treatmentsEvent));
+          controller.terminate();
+        }
+      });
+
+      return new Response(transformedStream.readable, {
+        headers: { ...corsHeaders, "Content-Type": "text/event-stream" },
       });
     }
 
