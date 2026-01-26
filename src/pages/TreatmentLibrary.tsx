@@ -143,7 +143,7 @@ export default function TreatmentLibrary() {
       <div className="min-h-screen bg-gradient-to-b from-background to-muted/30">
         <Header />
 
-        <main className="container mx-auto px-4 py-8">
+        <main className="container mx-auto px-4 pt-20 sm:pt-24 pb-20">
           {/* Hero Section */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}

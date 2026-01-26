@@ -121,7 +121,7 @@ const MarketPage = () => {
       <div className="min-h-screen bg-background">
         <Header />
 
-        <main className="pt-24 pb-16">
+        <main className="pt-20 sm:pt-24 pb-20">
           <div className="container mx-auto px-4">
             <div className="mb-6">
               <h1 className="text-2xl font-bold flex items-center gap-2">
