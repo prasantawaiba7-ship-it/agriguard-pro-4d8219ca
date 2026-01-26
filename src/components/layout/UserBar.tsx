@@ -20,10 +20,10 @@ export function UserBar() {
 
   const displayName = profile?.full_name || user.email?.split("@")[0] || "User";
 
-  // Handle user name click - navigate to profile without adding to history stack
+  // Handle user name click - navigate to profile with replace to avoid back loop
   const handleProfileClick = () => {
     if (location.pathname !== "/farmer/profile") {
-      navigate("/farmer/profile");
+      navigate("/farmer/profile", { replace: true });
     }
   };
 
