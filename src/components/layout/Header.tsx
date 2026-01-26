@@ -1,6 +1,6 @@
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Leaf, Menu, X, LogIn, User, Shield } from "lucide-react";
+import { Leaf, Menu, X, LogIn, User, Shield, Camera, Cloud, Store } from "lucide-react";
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useAuth } from "@/hooks/useAuth";
@@ -11,22 +11,16 @@ const Header = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const { user, profile } = useAuth();
-  const { isAdmin, isAuthority } = useUserRole();
+  const { isAdmin } = useUserRole();
 
-  // Base nav links for all users
-  const baseNavLinks = [
-    { href: "/", label: "Home" },
-    { href: "/farmer", label: "Farmer Portal" },
-    { href: "/disease-detection", label: "रोग पहिचान" },
-    { href: "/expert-directory", label: "विशेषज्ञ" },
-    { href: "/krishi-mitra", label: "Krishi Mitra" },
-  ];
-
-  // Build nav links based on user role
+  // Simplified nav links for mobile-first design
   const navLinks = [
-    ...baseNavLinks,
+    { href: "/disease-detection", label: "रोग पहिचान", icon: Camera },
+    { href: "/farmer", label: "मेरो खेत", icon: Leaf },
+    { href: "/market", label: "बजार", icon: Store },
+    { href: "/krishi-mitra", label: "AI सहायक", icon: Cloud },
     // Show Admin only to admin users
-    ...(isAdmin() ? [{ href: "/admin", label: "Admin" }] : []),
+    ...(isAdmin() ? [{ href: "/admin", label: "Admin", icon: Shield }] : []),
   ];
 
   const isActive = (path: string) => location.pathname === path;
@@ -34,32 +28,37 @@ const Header = () => {
   return (
     <header className="fixed top-0 left-0 right-0 z-50 bg-background/80 backdrop-blur-lg border-b border-border">
       <div className="container mx-auto px-4">
-        <div className="flex items-center justify-between h-16">
+        <div className="flex items-center justify-between h-14 sm:h-16">
+          {/* Logo - HUNCHA branding */}
           <Link to="/" className="flex items-center gap-2 group">
-            <div className="w-10 h-10 rounded-xl bg-primary flex items-center justify-center shadow-md group-hover:shadow-lg transition-shadow">
+            <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-gradient-to-br from-primary to-secondary flex items-center justify-center shadow-md group-hover:shadow-lg transition-shadow">
               <Leaf className="w-5 h-5 text-primary-foreground" />
             </div>
-            <span className="font-bold text-xl text-foreground">Farmer Gpt</span>
+            <div className="flex flex-col">
+              <span className="font-bold text-lg sm:text-xl text-foreground leading-tight">HUNCHA</span>
+              <span className="text-[10px] sm:text-xs text-muted-foreground leading-none">किसान साथी</span>
+            </div>
           </Link>
 
           {/* Desktop Navigation */}
-          <nav className="hidden md:flex items-center gap-1">
+          <nav className="hidden lg:flex items-center gap-1">
             {navLinks.map((link) => (
               <Link
                 key={link.href}
                 to={link.href}
-                className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors flex items-center gap-2 ${
                   isActive(link.href)
                     ? "bg-primary text-primary-foreground"
                     : "text-muted-foreground hover:text-foreground hover:bg-muted"
                 }`}
               >
+                {link.icon && <link.icon className="w-4 h-4" />}
                 {link.label}
               </Link>
             ))}
           </nav>
 
-          <div className="hidden md:flex items-center gap-3">
+          <div className="hidden lg:flex items-center gap-3">
             {user ? (
               <div className="flex items-center gap-2">
                 {isAdmin() && (
@@ -81,14 +80,14 @@ const Header = () => {
                   <LogIn className="w-4 h-4 mr-2" />
                   Login
                 </Button>
-                <Button size="sm" onClick={() => navigate('/auth')}>Get Started</Button>
+                <Button size="sm" onClick={() => navigate('/auth')}>सुरु गर्नुहोस्</Button>
               </>
             )}
           </div>
 
           {/* Mobile Menu Button */}
           <button
-            className="md:hidden p-2 rounded-lg hover:bg-muted"
+            className="lg:hidden p-2 rounded-lg hover:bg-muted"
             onClick={() => setIsMenuOpen(!isMenuOpen)}
           >
             {isMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
@@ -103,7 +102,7 @@ const Header = () => {
             initial={{ opacity: 0, height: 0 }}
             animate={{ opacity: 1, height: "auto" }}
             exit={{ opacity: 0, height: 0 }}
-            className="md:hidden bg-background border-b border-border overflow-hidden"
+            className="lg:hidden bg-background border-b border-border overflow-hidden"
           >
             <nav className="container mx-auto px-4 py-4 flex flex-col gap-2">
               {navLinks.map((link) => (
@@ -111,12 +110,13 @@ const Header = () => {
                   key={link.href}
                   to={link.href}
                   onClick={() => setIsMenuOpen(false)}
-                  className={`px-4 py-3 rounded-lg text-sm font-medium transition-colors ${
+                  className={`px-4 py-3 rounded-xl text-base font-medium transition-colors flex items-center gap-3 ${
                     isActive(link.href)
                       ? "bg-primary text-primary-foreground"
                       : "text-muted-foreground hover:text-foreground hover:bg-muted"
                   }`}
                 >
+                  {link.icon && <link.icon className="w-5 h-5" />}
                   {link.label}
                 </Link>
               ))}
@@ -124,8 +124,8 @@ const Header = () => {
                 {user ? (
                   <Button
                     variant="outline"
-                    size="sm"
-                    className="flex-1"
+                    size="lg"
+                    className="flex-1 rounded-xl"
                     onClick={() => {
                       navigate('/farmer');
                       setIsMenuOpen(false);
@@ -138,8 +138,8 @@ const Header = () => {
                   <>
                     <Button
                       variant="outline"
-                      size="sm"
-                      className="flex-1"
+                      size="lg"
+                      className="flex-1 rounded-xl"
                       onClick={() => {
                         navigate('/auth');
                         setIsMenuOpen(false);
@@ -148,14 +148,14 @@ const Header = () => {
                       Login
                     </Button>
                     <Button
-                      size="sm"
-                      className="flex-1"
+                      size="lg"
+                      className="flex-1 rounded-xl"
                       onClick={() => {
                         navigate('/auth');
                         setIsMenuOpen(false);
                       }}
                     >
-                      Get Started
+                      सुरु गर्नुहोस्
                     </Button>
                   </>
                 )}

@@ -870,6 +870,48 @@ export type Database = {
         }
         Relationships: []
       }
+      fields: {
+        Row: {
+          area: number | null
+          area_unit: string
+          created_at: string
+          district: string | null
+          id: string
+          latitude: number | null
+          longitude: number | null
+          municipality: string | null
+          name: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          area?: number | null
+          area_unit?: string
+          created_at?: string
+          district?: string | null
+          id?: string
+          latitude?: number | null
+          longitude?: number | null
+          municipality?: string | null
+          name: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          area?: number | null
+          area_unit?: string
+          created_at?: string
+          district?: string | null
+          id?: string
+          latitude?: number | null
+          longitude?: number | null
+          municipality?: string | null
+          name?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       listing_contacts: {
         Row: {
           contact_type: string
@@ -1322,6 +1364,62 @@ export type Database = {
             columns: ["plot_id"]
             isOneToOne: false
             referencedRelation: "plots"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      soil_tests: {
+        Row: {
+          created_at: string
+          ec: number | null
+          field_id: string
+          id: string
+          lab_name: string | null
+          nitrogen_level: number | null
+          notes: string | null
+          organic_matter_percent: number | null
+          ph: number | null
+          phosphorus_level: number | null
+          potassium_level: number | null
+          sample_date: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          ec?: number | null
+          field_id: string
+          id?: string
+          lab_name?: string | null
+          nitrogen_level?: number | null
+          notes?: string | null
+          organic_matter_percent?: number | null
+          ph?: number | null
+          phosphorus_level?: number | null
+          potassium_level?: number | null
+          sample_date?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          ec?: number | null
+          field_id?: string
+          id?: string
+          lab_name?: string | null
+          nitrogen_level?: number | null
+          notes?: string | null
+          organic_matter_percent?: number | null
+          ph?: number | null
+          phosphorus_level?: number | null
+          potassium_level?: number | null
+          sample_date?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "soil_tests_field_id_fkey"
+            columns: ["field_id"]
+            isOneToOne: false
+            referencedRelation: "fields"
             referencedColumns: ["id"]
           },
         ]
