@@ -22,6 +22,7 @@ import { useToast } from '@/hooks/use-toast';
 import { SubscriptionCard } from '@/components/profile/SubscriptionCard';
 import { QueryHistoryCard } from '@/components/profile/QueryHistoryCard';
 import { NotificationPreferencesCard } from '@/components/profile/NotificationPreferencesCard';
+import { WeatherAlertSettingsCard } from '@/components/farmer/WeatherAlertSettingsCard';
 
 const profileSchema = z.object({
   full_name: z.string().min(2, 'Name must be at least 2 characters').max(100),
@@ -724,6 +725,14 @@ const ProfileSettings = () => {
                 transition={{ delay: 0.15 }}
               >
                 <NotificationPreferencesCard />
+              </motion.div>
+
+              <motion.div
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: 0.18 }}
+              >
+                <WeatherAlertSettingsCard />
               </motion.div>
 
               <motion.div
