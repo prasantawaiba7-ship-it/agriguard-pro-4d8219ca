@@ -275,7 +275,7 @@ const ProfileSettings = () => {
         <meta name="description" content="Update your farmer profile settings on CROPIC." />
       </Helmet>
 
-      <div className="min-h-screen bg-gradient-to-br from-primary/5 via-background to-accent/5 p-3 sm:p-4 md:p-6">
+      <div className="min-h-screen bg-gradient-to-br from-primary/5 via-background to-accent/5 p-3 sm:p-4 md:p-6 pt-20 pb-24">
         <div className="max-w-5xl mx-auto">
           {/* Header */}
           <motion.div

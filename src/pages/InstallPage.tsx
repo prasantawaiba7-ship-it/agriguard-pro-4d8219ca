@@ -114,7 +114,7 @@ export default function InstallPage() {
       </header>
 
       {/* Main Content */}
-      <main className="flex-1 flex flex-col items-center justify-center p-4 md:p-8 gap-6 max-w-lg mx-auto w-full">
+      <main className="flex-1 flex flex-col items-center justify-center p-4 md:p-8 gap-6 max-w-lg mx-auto w-full pt-20 pb-20">
         
         {/* Install Status Card */}
         <motion.div

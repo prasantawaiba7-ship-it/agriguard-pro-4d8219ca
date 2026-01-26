@@ -20,10 +20,11 @@ export default function DiseaseDetection() {
         />
       </Helmet>
 
-      <div className="min-h-screen bg-background">
+      <div className="min-h-screen bg-background overflow-y-auto">
         <Header />
         
-        <main className="container mx-auto px-4 py-8 max-w-4xl">
+        {/* pt-20 for header, pb-20 for UserBar */}
+        <main className="container mx-auto px-4 pt-20 pb-24 max-w-4xl">
           <div className="text-center mb-8">
             <h1 className="text-3xl md:text-4xl font-bold mb-3">
               🌿 बाली रोग र कीरा पहिचान प्रणाली

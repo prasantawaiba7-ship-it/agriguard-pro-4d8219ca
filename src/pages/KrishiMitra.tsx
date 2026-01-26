@@ -19,8 +19,8 @@ const KrishiMitra = () => {
       <div className="min-h-screen bg-background flex flex-col">
         <Header />
 
-        {/* Full-screen AI Assistant Chat */}
-        <main className="flex-1 flex flex-col">
+        {/* Full-screen AI Assistant Chat - pt for header */}
+        <main className="flex-1 flex flex-col pt-16 sm:pt-20">
           <OnScreenAssistant 
             isFullScreen={true} 
             inputRef={inputRef}

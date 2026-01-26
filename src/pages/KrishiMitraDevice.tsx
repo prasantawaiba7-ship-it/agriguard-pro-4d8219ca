@@ -291,7 +291,7 @@ export default function KrishiMitraDevice() {
       </AnimatePresence>
 
       {/* Main Content */}
-      <main className="flex-1 flex flex-col items-center justify-center p-4 md:p-8 gap-6">
+      <main className="flex-1 flex flex-col items-center justify-center p-4 md:p-8 gap-6 pt-20 pb-20">
         
         {/* Status Indicator */}
         <motion.div

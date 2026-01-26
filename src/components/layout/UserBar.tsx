@@ -88,12 +88,6 @@ export function UserBar() {
         </div>
       </div>
 
-      {/* Add padding to prevent content from hiding behind the bar */}
-      <style>{`
-        @media (min-width: 0px) {
-          main { padding-bottom: 60px !important; }
-        }
-      `}</style>
     </>
   );
 }
