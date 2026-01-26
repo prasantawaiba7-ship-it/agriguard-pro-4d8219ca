@@ -18,6 +18,7 @@ import { useNetworkStatus } from '@/hooks/useNetworkStatus';
 import { useAuth } from '@/hooks/useAuth';
 import { useUserRole } from '@/hooks/useUserRole';
 import { useSaveDiseaseDetection } from '@/hooks/useDiseaseHistory';
+import { useAIChatStore } from '@/hooks/useAIChatStore';
 import { supabase } from '@/integrations/supabase/client';
 import { cn } from '@/lib/utils';
 import { SubscriptionModal } from '@/components/subscription/SubscriptionModal';
@@ -86,6 +87,18 @@ export function OnScreenAssistant({ isFullScreen: isEmbeddedFullScreen = false, 
   const location = useLocation();
   const saveDiseaseDetection = useSaveDiseaseDetection();
   
+  // Global chat state from zustand store
+  const { 
+    messages: storeMessages, 
+    isLoading: storeIsLoading,
+    setMessages: setStoreMessages,
+    addMessage: addStoreMessage,
+    updateLastMessage: updateStoreLastMessage,
+    setIsLoading: setStoreIsLoading,
+    clearMessages: clearStoreMessages,
+    sessionId: storeSessionId
+  } = useAIChatStore();
+  
   // Hide floating button on Krishi Mitra page (only show embedded full screen version there)
   const isKrishiMitraPage = location.pathname === '/krishi-mitra';
   const [showPanel, setShowPanel] = useState(false);
@@ -101,12 +114,13 @@ export function OnScreenAssistant({ isFullScreen: isEmbeddedFullScreen = false, 
   const [assistantLang, setAssistantLang] = useState(globalLanguage);
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const [isUploadingImage, setIsUploadingImage] = useState(false);
-  const [sessionId] = useState(() => crypto.randomUUID());
+  const [sessionId] = useState(() => storeSessionId || crypto.randomUUID());
   const [isLoadingHistory, setIsLoadingHistory] = useState(false);
   const [showChatHistory, setShowChatHistory] = useState(false);
   const [isExportingPdf, setIsExportingPdf] = useState(false);
   const [showVoiceCall, setShowVoiceCall] = useState(false);
   const [showOfflinePremiumPrompt, setShowOfflinePremiumPrompt] = useState(false);
+  const [hasInitialized, setHasInitialized] = useState(false);
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const recognitionRef = useRef<any>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -115,6 +129,40 @@ export function OnScreenAssistant({ isFullScreen: isEmbeddedFullScreen = false, 
   
   // Use external ref if provided, otherwise use internal
   const inputRefToUse = externalInputRef || internalInputRef;
+
+  // Sync local state with store on mount/navigation
+  useEffect(() => {
+    if (!hasInitialized && storeMessages.length > 0) {
+      // Restore messages from store when navigating back
+      const restoredMessages: Message[] = storeMessages.map(m => ({
+        role: m.role as 'user' | 'assistant',
+        content: m.content,
+        timestamp: new Date(m.timestamp),
+        imageUrl: m.imageUrl
+      }));
+      setMessages(restoredMessages);
+      setIsLoading(storeIsLoading);
+      setHasInitialized(true);
+    }
+  }, [storeMessages, storeIsLoading, hasInitialized]);
+
+  // Sync messages to store whenever they change
+  useEffect(() => {
+    if (messages.length > 0 && hasInitialized) {
+      const storeFormat = messages.map(m => ({
+        role: m.role,
+        content: m.content,
+        timestamp: m.timestamp.toISOString(),
+        imageUrl: m.imageUrl
+      }));
+      setStoreMessages(storeFormat);
+    }
+  }, [messages, hasInitialized, setStoreMessages]);
+
+  // Sync loading state to store
+  useEffect(() => {
+    setStoreIsLoading(isLoading);
+  }, [isLoading, setStoreIsLoading]);
 
   // Load chat history for logged-in users
   useEffect(() => {
@@ -724,6 +772,7 @@ export function OnScreenAssistant({ isFullScreen: isEmbeddedFullScreen = false, 
 
   const clearChat = async () => {
     setMessages([]);
+    clearStoreMessages(); // Clear zustand store
     stop();
     
     // Clear chat history from database for this user
