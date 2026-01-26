@@ -13,8 +13,9 @@ const Header = () => {
   const { user, profile } = useAuth();
   const { isAdmin } = useUserRole();
 
-  // Main navigation - clean 4 items + admin (no home)
+  // Main navigation - 5 items + admin
   const navLinks = [
+    { href: "/", label: "गृह", icon: Home },
     { href: "/disease-detection", label: "रोग", icon: Camera },
     { href: "/fields", label: "खेत", icon: Mountain },
     { href: "/market", label: "बजार", icon: Store },
