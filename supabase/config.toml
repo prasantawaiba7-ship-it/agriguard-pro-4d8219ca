@@ -29,3 +29,6 @@ verify_jwt = false
 
 [functions.process-weather-alerts]
 verify_jwt = false
+
+[functions.update-daily-market]
+verify_jwt = false
