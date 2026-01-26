@@ -1,6 +1,6 @@
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Leaf, Menu, X, LogIn, User, Shield, Camera, Cloud, Store, Mountain, Crown, Book, Calendar, Phone } from "lucide-react";
+import { Leaf, Menu, X, LogIn, User, Shield, Camera, Cloud, Store, Mountain, Crown, Book, Calendar, Phone, Home } from "lucide-react";
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useAuth } from "@/hooks/useAuth";
@@ -15,6 +15,7 @@ const Header = () => {
 
   // Full navigation links for all screen sizes
   const navLinks = [
+    { href: "/", label: "गृह पृष्ठ", shortLabel: "Home", icon: Home },
     { href: "/disease-detection", label: "रोग पहिचान", shortLabel: "रोग", icon: Camera },
     { href: "/fields", label: "मेरो खेत", shortLabel: "खेत", icon: Mountain },
     { href: "/market", label: "बजार", shortLabel: "बजार", icon: Store },
