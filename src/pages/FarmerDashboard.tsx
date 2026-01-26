@@ -258,32 +258,70 @@ const FarmerDashboard = () => {
               ))}
             </div>
 
-            {/* Quick Access - Disease Detection */}
+            {/* Quick Access Cards */}
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.5 }}
               className="mb-8"
             >
-              <Card 
-                className="border-primary/20 bg-gradient-to-r from-primary/5 to-success/5 cursor-pointer hover:shadow-lg transition-all"
-                onClick={() => navigate('/disease-detection')}
-              >
-                <CardContent className="p-4 sm:p-6 flex items-center gap-4">
-                  <div className="w-14 h-14 rounded-xl bg-primary/10 flex items-center justify-center flex-shrink-0">
-                    <Bug className="w-7 h-7 text-primary" />
-                  </div>
-                  <div className="flex-1">
-                    <h3 className="font-semibold text-lg text-foreground">🌿 बाली रोग पहिचान</h3>
-                    <p className="text-sm text-muted-foreground">
-                      फोटो अपलोड गरेर तपाईंको बालीको रोग पहिचान गर्नुहोस्
-                    </p>
-                  </div>
-                  <Button variant="outline" size="sm" className="hidden sm:flex">
-                    Open →
-                  </Button>
-                </CardContent>
-              </Card>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4">
+                {/* Disease Detection */}
+                <Card 
+                  className="border-primary/20 bg-gradient-to-br from-primary/5 to-primary/10 cursor-pointer hover:shadow-lg transition-all"
+                  onClick={() => navigate('/disease-detection')}
+                >
+                  <CardContent className="p-4 flex flex-col items-center text-center gap-2">
+                    <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center">
+                      <Bug className="w-6 h-6 text-primary" />
+                    </div>
+                    <h3 className="font-semibold text-sm text-foreground">🌿 रोग पहिचान</h3>
+                    <p className="text-xs text-muted-foreground hidden sm:block">फोटो सोध्ने</p>
+                  </CardContent>
+                </Card>
+
+                {/* Market */}
+                <Card 
+                  className="border-success/20 bg-gradient-to-br from-success/5 to-success/10 cursor-pointer hover:shadow-lg transition-all"
+                  onClick={() => navigate('/market')}
+                >
+                  <CardContent className="p-4 flex flex-col items-center text-center gap-2">
+                    <div className="w-12 h-12 rounded-xl bg-success/10 flex items-center justify-center">
+                      <Sparkles className="w-6 h-6 text-success" />
+                    </div>
+                    <h3 className="font-semibold text-sm text-foreground">🛒 बजार</h3>
+                    <p className="text-xs text-muted-foreground hidden sm:block">बेच्ने / किन्ने</p>
+                  </CardContent>
+                </Card>
+
+                {/* Crop Guides */}
+                <Card 
+                  className="border-secondary/20 bg-gradient-to-br from-secondary/5 to-secondary/10 cursor-pointer hover:shadow-lg transition-all"
+                  onClick={() => navigate('/guides')}
+                >
+                  <CardContent className="p-4 flex flex-col items-center text-center gap-2">
+                    <div className="w-12 h-12 rounded-xl bg-secondary/10 flex items-center justify-center">
+                      <Leaf className="w-6 h-6 text-secondary" />
+                    </div>
+                    <h3 className="font-semibold text-sm text-foreground">📚 कृषि ज्ञान</h3>
+                    <p className="text-xs text-muted-foreground hidden sm:block">बाली गाइड</p>
+                  </CardContent>
+                </Card>
+
+                {/* Activities */}
+                <Card 
+                  className="border-warning/20 bg-gradient-to-br from-warning/5 to-warning/10 cursor-pointer hover:shadow-lg transition-all"
+                  onClick={() => navigate('/activities')}
+                >
+                  <CardContent className="p-4 flex flex-col items-center text-center gap-2">
+                    <div className="w-12 h-12 rounded-xl bg-warning/10 flex items-center justify-center">
+                      <Calendar className="w-6 h-6 text-warning" />
+                    </div>
+                    <h3 className="font-semibold text-sm text-foreground">📝 कृषि कार्य</h3>
+                    <p className="text-xs text-muted-foreground hidden sm:block">Activities Log</p>
+                  </CardContent>
+                </Card>
+              </div>
             </motion.div>
 
             {/* Tab Navigation */}
