@@ -656,59 +656,142 @@ export type Database = {
         }
         Relationships: []
       }
+      crops: {
+        Row: {
+          category: string | null
+          created_at: string
+          display_order: number | null
+          id: number
+          image_url: string | null
+          is_active: boolean | null
+          name_en: string
+          name_ne: string
+          unit: string | null
+          updated_at: string
+        }
+        Insert: {
+          category?: string | null
+          created_at?: string
+          display_order?: number | null
+          id?: number
+          image_url?: string | null
+          is_active?: boolean | null
+          name_en: string
+          name_ne: string
+          unit?: string | null
+          updated_at?: string
+        }
+        Update: {
+          category?: string | null
+          created_at?: string
+          display_order?: number | null
+          id?: number
+          image_url?: string | null
+          is_active?: boolean | null
+          name_en?: string
+          name_ne?: string
+          unit?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       daily_market_products: {
         Row: {
           created_at: string
+          crop_id: number | null
           crop_name: string
           crop_name_ne: string | null
           date: string
           district: string | null
+          district_id_fk: number | null
           id: string
           image_url: string | null
+          local_level_id: number | null
           market_name: string | null
           market_name_ne: string | null
           price_avg: number | null
           price_max: number | null
           price_min: number | null
+          province_id: number | null
           source: string | null
           unit: string
           updated_at: string
+          ward_number: number | null
         }
         Insert: {
           created_at?: string
+          crop_id?: number | null
           crop_name: string
           crop_name_ne?: string | null
           date?: string
           district?: string | null
+          district_id_fk?: number | null
           id?: string
           image_url?: string | null
+          local_level_id?: number | null
           market_name?: string | null
           market_name_ne?: string | null
           price_avg?: number | null
           price_max?: number | null
           price_min?: number | null
+          province_id?: number | null
           source?: string | null
           unit?: string
           updated_at?: string
+          ward_number?: number | null
         }
         Update: {
           created_at?: string
+          crop_id?: number | null
           crop_name?: string
           crop_name_ne?: string | null
           date?: string
           district?: string | null
+          district_id_fk?: number | null
           id?: string
           image_url?: string | null
+          local_level_id?: number | null
           market_name?: string | null
           market_name_ne?: string | null
           price_avg?: number | null
           price_max?: number | null
           price_min?: number | null
+          province_id?: number | null
           source?: string | null
           unit?: string
           updated_at?: string
+          ward_number?: number | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "daily_market_products_crop_id_fkey"
+            columns: ["crop_id"]
+            isOneToOne: false
+            referencedRelation: "crops"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "daily_market_products_district_id_fk_fkey"
+            columns: ["district_id_fk"]
+            isOneToOne: false
+            referencedRelation: "districts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "daily_market_products_local_level_id_fkey"
+            columns: ["local_level_id"]
+            isOneToOne: false
+            referencedRelation: "local_levels"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "daily_market_products_province_id_fkey"
+            columns: ["province_id"]
+            isOneToOne: false
+            referencedRelation: "provinces"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       disease_detections: {
         Row: {
@@ -814,6 +897,41 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      districts: {
+        Row: {
+          created_at: string
+          display_order: number | null
+          id: number
+          name_en: string
+          name_ne: string
+          province_id: number
+        }
+        Insert: {
+          created_at?: string
+          display_order?: number | null
+          id?: number
+          name_en: string
+          name_ne: string
+          province_id: number
+        }
+        Update: {
+          created_at?: string
+          display_order?: number | null
+          id?: number
+          name_en?: string
+          name_ne?: string
+          province_id?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "districts_province_id_fkey"
+            columns: ["province_id"]
+            isOneToOne: false
+            referencedRelation: "provinces"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       email_settings: {
         Row: {
@@ -1092,6 +1210,47 @@ export type Database = {
             columns: ["listing_id"]
             isOneToOne: false
             referencedRelation: "produce_listings"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      local_levels: {
+        Row: {
+          created_at: string
+          display_order: number | null
+          district_id: number
+          id: number
+          name_en: string
+          name_ne: string
+          total_wards: number | null
+          type: Database["public"]["Enums"]["local_level_type"]
+        }
+        Insert: {
+          created_at?: string
+          display_order?: number | null
+          district_id: number
+          id?: number
+          name_en: string
+          name_ne: string
+          total_wards?: number | null
+          type?: Database["public"]["Enums"]["local_level_type"]
+        }
+        Update: {
+          created_at?: string
+          display_order?: number | null
+          district_id?: number
+          id?: number
+          name_en?: string
+          name_ne?: string
+          total_wards?: number | null
+          type?: Database["public"]["Enums"]["local_level_type"]
+        }
+        Relationships: [
+          {
+            foreignKeyName: "local_levels_district_id_fkey"
+            columns: ["district_id"]
+            isOneToOne: false
+            referencedRelation: "districts"
             referencedColumns: ["id"]
           },
         ]
@@ -1435,6 +1594,30 @@ export type Database = {
           },
         ]
       }
+      provinces: {
+        Row: {
+          created_at: string
+          display_order: number | null
+          id: number
+          name_en: string
+          name_ne: string
+        }
+        Insert: {
+          created_at?: string
+          display_order?: number | null
+          id?: number
+          name_en: string
+          name_ne: string
+        }
+        Update: {
+          created_at?: string
+          display_order?: number | null
+          id?: number
+          name_en?: string
+          name_ne?: string
+        }
+        Relationships: []
+      }
       soil_data: {
         Row: {
           created_at: string
@@ -1670,6 +1853,35 @@ export type Database = {
         }
         Relationships: []
       }
+      wards: {
+        Row: {
+          created_at: string
+          id: number
+          local_level_id: number
+          ward_number: number
+        }
+        Insert: {
+          created_at?: string
+          id?: number
+          local_level_id: number
+          ward_number: number
+        }
+        Update: {
+          created_at?: string
+          id?: number
+          local_level_id?: number
+          ward_number?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "wards_local_level_id_fkey"
+            columns: ["local_level_id"]
+            isOneToOne: false
+            referencedRelation: "local_levels"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       weather_alert_settings: {
         Row: {
           created_at: string
@@ -1849,6 +2061,11 @@ export type Database = {
         | "moderate_stress"
         | "severe_damage"
         | "pending"
+      local_level_type:
+        | "metropolitan"
+        | "sub_metropolitan"
+        | "municipality"
+        | "rural_municipality"
       subscription_plan: "free" | "monthly" | "yearly"
       subscription_status: "active" | "expired" | "cancelled"
     }
@@ -2016,6 +2233,12 @@ export const Constants = {
         "moderate_stress",
         "severe_damage",
         "pending",
+      ],
+      local_level_type: [
+        "metropolitan",
+        "sub_metropolitan",
+        "municipality",
+        "rural_municipality",
       ],
       subscription_plan: ["free", "monthly", "yearly"],
       subscription_status: ["active", "expired", "cancelled"],
