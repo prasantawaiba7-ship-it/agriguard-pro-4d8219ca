@@ -309,6 +309,92 @@ export type Database = {
         }
         Relationships: []
       }
+      crop_activities: {
+        Row: {
+          activity_date: string
+          activity_type: string
+          cost_npr: number | null
+          created_at: string
+          crop_name: string
+          id: string
+          notes: string | null
+          plot_id: string | null
+          user_id: string
+        }
+        Insert: {
+          activity_date?: string
+          activity_type: string
+          cost_npr?: number | null
+          created_at?: string
+          crop_name: string
+          id?: string
+          notes?: string | null
+          plot_id?: string | null
+          user_id: string
+        }
+        Update: {
+          activity_date?: string
+          activity_type?: string
+          cost_npr?: number | null
+          created_at?: string
+          crop_name?: string
+          id?: string
+          notes?: string | null
+          plot_id?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "crop_activities_plot_id_fkey"
+            columns: ["plot_id"]
+            isOneToOne: false
+            referencedRelation: "plots"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      crop_guides: {
+        Row: {
+          content: string
+          content_ne: string | null
+          created_at: string
+          crop_name: string
+          display_order: number | null
+          id: string
+          is_active: boolean
+          section: string
+          title: string
+          title_ne: string | null
+          updated_at: string
+        }
+        Insert: {
+          content: string
+          content_ne?: string | null
+          created_at?: string
+          crop_name: string
+          display_order?: number | null
+          id?: string
+          is_active?: boolean
+          section: string
+          title: string
+          title_ne?: string | null
+          updated_at?: string
+        }
+        Update: {
+          content?: string
+          content_ne?: string | null
+          created_at?: string
+          crop_name?: string
+          display_order?: number | null
+          id?: string
+          is_active?: boolean
+          section?: string
+          title?: string
+          title_ne?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       crop_photos: {
         Row: {
           capture_stage: Database["public"]["Enums"]["crop_stage"]
@@ -1058,6 +1144,68 @@ export type Database = {
           },
         ]
       }
+      produce_listings: {
+        Row: {
+          contact_phone: string | null
+          created_at: string
+          crop_name: string
+          district: string | null
+          expected_price: number | null
+          farmer_id: string | null
+          id: string
+          is_active: boolean
+          municipality: string | null
+          notes: string | null
+          quantity: number
+          unit: string
+          updated_at: string
+          user_id: string
+          variety: string | null
+        }
+        Insert: {
+          contact_phone?: string | null
+          created_at?: string
+          crop_name: string
+          district?: string | null
+          expected_price?: number | null
+          farmer_id?: string | null
+          id?: string
+          is_active?: boolean
+          municipality?: string | null
+          notes?: string | null
+          quantity: number
+          unit?: string
+          updated_at?: string
+          user_id: string
+          variety?: string | null
+        }
+        Update: {
+          contact_phone?: string | null
+          created_at?: string
+          crop_name?: string
+          district?: string | null
+          expected_price?: number | null
+          farmer_id?: string | null
+          id?: string
+          is_active?: boolean
+          municipality?: string | null
+          notes?: string | null
+          quantity?: number
+          unit?: string
+          updated_at?: string
+          user_id?: string
+          variety?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "produce_listings_farmer_id_fkey"
+            columns: ["farmer_id"]
+            isOneToOne: false
+            referencedRelation: "farmer_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       soil_data: {
         Row: {
           created_at: string
@@ -1232,6 +1380,45 @@ export type Database = {
           status?: Database["public"]["Enums"]["subscription_status"]
           stripe_customer_id?: string | null
           stripe_subscription_id?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      weather_alert_settings: {
+        Row: {
+          created_at: string
+          enable_cold_alert: boolean
+          enable_heat_alert: boolean
+          enable_rain_alert: boolean
+          enable_spray_alert: boolean
+          enable_weather_alerts: boolean
+          id: string
+          preferred_time: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          enable_cold_alert?: boolean
+          enable_heat_alert?: boolean
+          enable_rain_alert?: boolean
+          enable_spray_alert?: boolean
+          enable_weather_alerts?: boolean
+          id?: string
+          preferred_time?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          enable_cold_alert?: boolean
+          enable_heat_alert?: boolean
+          enable_rain_alert?: boolean
+          enable_spray_alert?: boolean
+          enable_weather_alerts?: boolean
+          id?: string
+          preferred_time?: string | null
           updated_at?: string
           user_id?: string
         }

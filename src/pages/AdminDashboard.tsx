@@ -48,6 +48,7 @@ import { ActivityLogsViewer } from "@/components/admin/ActivityLogsViewer";
 import { UserManagement } from "@/components/admin/UserManagement";
 import { DiseaseAnalyticsDashboard } from "@/components/admin/DiseaseAnalyticsDashboard";
 import CropManager from "@/components/admin/CropManager";
+import { CropGuidesManager } from "@/components/admin/CropGuidesManager";
 import CropTreatmentManager from "@/components/admin/CropTreatmentManager";
 import { OfficerManager } from "@/components/admin/OfficerManager";
 
