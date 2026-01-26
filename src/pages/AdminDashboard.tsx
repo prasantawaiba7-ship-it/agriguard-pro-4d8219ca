@@ -59,6 +59,7 @@ import { MarketPricesManager } from "@/components/admin/MarketPricesManager";
 import { CropsManager } from "@/components/admin/CropsManager";
 import { LocationsManager } from "@/components/admin/LocationsManager";
 import { DailyMarketPricesManager } from "@/components/admin/DailyMarketPricesManager";
+import { MarketsManager } from "@/components/admin/MarketsManager";
 interface FarmerProfile {
   id: string;
   user_id: string;
@@ -437,6 +438,10 @@ const AdminDashboard = () => {
                   <MapPin className="h-4 w-4" />
                   <span className="hidden sm:inline">स्थान</span>
                 </TabsTrigger>
+                <TabsTrigger value="markets" className="flex items-center gap-2">
+                  <Store className="h-4 w-4" />
+                  <span className="hidden sm:inline">बजारहरू</span>
+                </TabsTrigger>
               </TabsList>
 
               {/* Overview Tab */}
@@ -737,6 +742,11 @@ const AdminDashboard = () => {
               {/* Locations Tab */}
               <TabsContent value="locations">
                 <LocationsManager />
+              </TabsContent>
+
+              {/* Markets Tab */}
+              <TabsContent value="markets">
+                <MarketsManager />
               </TabsContent>
             </Tabs>
           </div>

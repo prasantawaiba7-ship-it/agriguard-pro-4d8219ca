@@ -1297,6 +1297,91 @@ export type Database = {
         }
         Relationships: []
       }
+      markets: {
+        Row: {
+          address: string | null
+          address_ne: string | null
+          contact_phone: string | null
+          contact_whatsapp: string | null
+          created_at: string
+          district_id: number | null
+          id: string
+          is_active: boolean
+          latitude: number | null
+          local_level_id: number | null
+          longitude: number | null
+          market_type: string
+          name_en: string
+          name_ne: string
+          popular_products: string[] | null
+          province_id: number | null
+          updated_at: string
+          ward_number: number | null
+        }
+        Insert: {
+          address?: string | null
+          address_ne?: string | null
+          contact_phone?: string | null
+          contact_whatsapp?: string | null
+          created_at?: string
+          district_id?: number | null
+          id?: string
+          is_active?: boolean
+          latitude?: number | null
+          local_level_id?: number | null
+          longitude?: number | null
+          market_type?: string
+          name_en: string
+          name_ne: string
+          popular_products?: string[] | null
+          province_id?: number | null
+          updated_at?: string
+          ward_number?: number | null
+        }
+        Update: {
+          address?: string | null
+          address_ne?: string | null
+          contact_phone?: string | null
+          contact_whatsapp?: string | null
+          created_at?: string
+          district_id?: number | null
+          id?: string
+          is_active?: boolean
+          latitude?: number | null
+          local_level_id?: number | null
+          longitude?: number | null
+          market_type?: string
+          name_en?: string
+          name_ne?: string
+          popular_products?: string[] | null
+          province_id?: number | null
+          updated_at?: string
+          ward_number?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "markets_district_id_fkey"
+            columns: ["district_id"]
+            isOneToOne: false
+            referencedRelation: "districts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "markets_local_level_id_fkey"
+            columns: ["local_level_id"]
+            isOneToOne: false
+            referencedRelation: "local_levels"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "markets_province_id_fkey"
+            columns: ["province_id"]
+            isOneToOne: false
+            referencedRelation: "provinces"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       officer_appointments: {
         Row: {
           appointment_date: string
