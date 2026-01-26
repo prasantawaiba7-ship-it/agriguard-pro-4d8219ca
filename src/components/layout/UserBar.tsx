@@ -28,7 +28,7 @@ export function UserBar() {
           onClick={() => navigate("/")}
         >
           <div className="w-7 h-7 rounded-lg bg-primary flex items-center justify-center">
-            <span className="text-primary-foreground font-bold text-xs">ह</span>
+            <span className="text-primary-foreground text-lg">🌾</span>
           </div>
           <span className="hidden sm:inline text-sm font-semibold text-foreground">HUNCHA</span>
         </div>
