@@ -14,7 +14,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { useProduceListings } from '@/hooks/useProduceListings';
 import { 
   TrendingUp, TrendingDown, ShoppingCart, Store, Package, 
-  BarChart3, Eye, Phone, MapPin, Clock, Edit, Trash2
+  BarChart3, Eye, Phone, MapPin, Clock, Trash2
 } from 'lucide-react';
 import { format, formatDistanceToNow } from 'date-fns';
 
@@ -34,7 +34,6 @@ const MarketPage = () => {
   const { myListings, updateListing, deleteListing } = useProduceListings();
   const [activeTab, setActiveTab] = useState<'browse' | 'prices' | 'my'>('browse');
 
-  // Fetch market prices
   const { data: prices, isLoading: pricesLoading } = useQuery({
     queryKey: ['market-prices'],
     queryFn: async () => {
@@ -49,7 +48,6 @@ const MarketPage = () => {
     },
   });
 
-  // Fetch listing stats for owner
   const { data: listingStats } = useQuery({
     queryKey: ['my-listing-stats', user?.id],
     queryFn: async () => {
@@ -80,9 +78,9 @@ const MarketPage = () => {
   const getDemandBadge = (level: string | null) => {
     if (!level) return null;
     const colors: Record<string, string> = {
-      high: 'bg-success/20 text-success border-success/30',
-      medium: 'bg-warning/20 text-warning border-warning/30',
-      low: 'bg-destructive/20 text-destructive border-destructive/30',
+      high: 'bg-success/15 text-success border-success/30',
+      medium: 'bg-warning/15 text-warning border-warning/30',
+      low: 'bg-destructive/15 text-destructive border-destructive/30',
     };
     return (
       <Badge variant="outline" className={colors[level] || colors.medium}>
@@ -91,7 +89,6 @@ const MarketPage = () => {
     );
   };
 
-  // Group prices by crop
   const groupedPrices = useMemo(() => {
     return prices?.reduce((acc, price) => {
       if (!acc[price.crop_type]) {
@@ -115,7 +112,7 @@ const MarketPage = () => {
   return (
     <>
       <Helmet>
-        <title>बजार - Market | Farmer Gpt</title>
+        <title>बजार - Market | HUNCHA किसान साथी</title>
         <meta name="description" content="View market prices, list your produce for sale, and connect with buyers." />
       </Helmet>
 
@@ -124,126 +121,145 @@ const MarketPage = () => {
 
         <main className="pt-20 sm:pt-24 pb-28">
           <div className="container mx-auto px-4">
-            <div className="mb-6">
-              <h1 className="text-xl sm:text-2xl font-bold flex items-center gap-2">
-                <Store className="h-5 w-5 sm:h-6 sm:w-6 text-primary" />
-                बजार
-              </h1>
-              <p className="text-sm text-muted-foreground">भाउ हेर्नुहोस्, उब्जनी बेच्नुहोस्</p>
+            {/* Page Header */}
+            <div className="mb-6 sm:mb-8">
+              <div className="flex items-center gap-3 mb-2">
+                <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-primary flex items-center justify-center shadow-md">
+                  <Store className="h-5 w-5 sm:h-6 sm:w-6 text-primary-foreground" />
+                </div>
+                <div>
+                  <h1 className="text-xl sm:text-2xl font-bold text-foreground">
+                    बजार
+                  </h1>
+                  <p className="text-sm text-muted-foreground">भाउ हेर्नुहोस्, उब्जनी बेच्नुहोस्</p>
+                </div>
+              </div>
             </div>
 
             <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as typeof activeTab)}>
-              <TabsList className="grid w-full grid-cols-3 mb-6">
-                <TabsTrigger value="browse" className="gap-1 sm:gap-2 text-xs sm:text-sm">
+              <TabsList className="grid w-full grid-cols-3 mb-6 bg-muted/60 p-1 rounded-xl">
+                <TabsTrigger 
+                  value="browse" 
+                  className="gap-1.5 sm:gap-2 text-xs sm:text-sm rounded-lg data-[state=active]:bg-card data-[state=active]:shadow-sm"
+                >
                   <ShoppingCart className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
                   <span className="hidden sm:inline">उत्पादन</span>
                   <span className="sm:hidden">बजार</span>
                 </TabsTrigger>
-                <TabsTrigger value="prices" className="gap-1 sm:gap-2 text-xs sm:text-sm">
+                <TabsTrigger 
+                  value="prices" 
+                  className="gap-1.5 sm:gap-2 text-xs sm:text-sm rounded-lg data-[state=active]:bg-card data-[state=active]:shadow-sm"
+                >
                   <TrendingUp className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
                   मूल्य
                 </TabsTrigger>
                 {user && (
-                  <TabsTrigger value="my" className="gap-1 sm:gap-2 text-xs sm:text-sm">
+                  <TabsTrigger 
+                    value="my" 
+                    className="gap-1.5 sm:gap-2 text-xs sm:text-sm rounded-lg data-[state=active]:bg-card data-[state=active]:shadow-sm"
+                  >
                     <Package className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
                     मेरो ({myListings.length})
                   </TabsTrigger>
                 )}
               </TabsList>
 
-              {/* Browse Tab - Product Listings */}
+              {/* Browse Tab */}
               <TabsContent value="browse">
                 <ProduceListingsManager />
               </TabsContent>
 
-              {/* Prices Tab - Market Price Reference */}
+              {/* Prices Tab */}
               <TabsContent value="prices">
                 <div className="space-y-8">
-                  {/* Daily Market Products Section */}
                   <DailyMarketSection />
 
                   {/* Divider */}
-                  <div className="border-t pt-8">
+                  <div className="section-divider" />
+
+                  <div>
                     <h3 className="font-semibold mb-4 text-lg flex items-center gap-2">
                       <BarChart3 className="h-5 w-5 text-primary" />
                       बाली अनुसार मूल्य सूची
                     </h3>
-                  </div>
 
-                  {pricesLoading ? (
-                    <div className="flex items-center justify-center p-12">
-                      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-                    </div>
-                  ) : Object.keys(groupedPrices).length === 0 ? (
-                    <Card>
-                      <CardContent className="p-8 text-center text-muted-foreground">
-                        <TrendingUp className="h-12 w-12 mx-auto mb-4 text-muted-foreground/30" />
-                        बजार भाउ उपलब्ध छैन।
-                      </CardContent>
-                    </Card>
-                  ) : (
-                    <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-                      {Object.entries(groupedPrices).map(([cropType, cropPrices]) => {
-                        const latestPrice = cropPrices[0];
-                        const previousPrice = cropPrices[1];
-                        const trend = previousPrice && latestPrice.price_per_quintal && previousPrice.price_per_quintal
-                          ? latestPrice.price_per_quintal > previousPrice.price_per_quintal ? 'up' 
-                          : latestPrice.price_per_quintal < previousPrice.price_per_quintal ? 'down' : 'same'
-                          : null;
+                    {pricesLoading ? (
+                      <div className="flex items-center justify-center p-12">
+                        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+                      </div>
+                    ) : Object.keys(groupedPrices).length === 0 ? (
+                      <Card className="border-border/60">
+                        <CardContent className="p-8 text-center text-muted-foreground">
+                          <TrendingUp className="h-12 w-12 mx-auto mb-4 text-muted-foreground/30" />
+                          बजार भाउ उपलब्ध छैन।
+                        </CardContent>
+                      </Card>
+                    ) : (
+                      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                        {Object.entries(groupedPrices).map(([cropType, cropPrices]) => {
+                          const latestPrice = cropPrices[0];
+                          const previousPrice = cropPrices[1];
+                          const trend = previousPrice && latestPrice.price_per_quintal && previousPrice.price_per_quintal
+                            ? latestPrice.price_per_quintal > previousPrice.price_per_quintal ? 'up' 
+                            : latestPrice.price_per_quintal < previousPrice.price_per_quintal ? 'down' : 'same'
+                            : null;
 
-                        return (
-                          <Card key={cropType} className="hover:shadow-md transition-shadow">
-                            <CardHeader className="pb-2">
-                              <div className="flex justify-between items-start">
-                                <CardTitle className="text-lg capitalize flex items-center gap-2">
-                                  {cropType}
-                                  {trend === 'up' && <TrendingUp className="h-4 w-4 text-success" />}
-                                  {trend === 'down' && <TrendingDown className="h-4 w-4 text-destructive" />}
-                                </CardTitle>
-                                {getDemandBadge(latestPrice.demand_level)}
-                              </div>
-                            </CardHeader>
-                            <CardContent>
-                              <div className="space-y-2">
-                                {latestPrice.price_per_quintal && (
-                                  <div className="text-2xl font-bold text-primary">
-                                    रु. {latestPrice.price_per_quintal.toLocaleString()}
-                                    <span className="text-sm font-normal text-muted-foreground">/क्विन्टल</span>
+                          return (
+                            <Card key={cropType} className="border-border/60 hover:border-primary/30 hover:shadow-lg transition-all">
+                              <CardHeader className="pb-2">
+                                <div className="flex justify-between items-start">
+                                  <CardTitle className="text-lg capitalize flex items-center gap-2">
+                                    {cropType}
+                                    {trend === 'up' && <TrendingUp className="h-4 w-4 text-success" />}
+                                    {trend === 'down' && <TrendingDown className="h-4 w-4 text-destructive" />}
+                                  </CardTitle>
+                                  {getDemandBadge(latestPrice.demand_level)}
+                                </div>
+                              </CardHeader>
+                              <CardContent>
+                                <div className="space-y-2">
+                                  {latestPrice.price_per_quintal && (
+                                    <div className="text-2xl font-bold text-primary">
+                                      रु. {latestPrice.price_per_quintal.toLocaleString()}
+                                      <span className="text-sm font-normal text-muted-foreground">/क्विन्टल</span>
+                                    </div>
+                                  )}
+                                  <div className="text-sm text-muted-foreground">
+                                    {latestPrice.mandi_name && <span>{latestPrice.mandi_name}, </span>}
+                                    {latestPrice.district && <span>{latestPrice.district}</span>}
                                   </div>
-                                )}
-                                <div className="text-sm text-muted-foreground">
-                                  {latestPrice.mandi_name && <span>{latestPrice.mandi_name}, </span>}
-                                  {latestPrice.district && <span>{latestPrice.district}</span>}
+                                  <div className="text-xs text-muted-foreground flex items-center gap-1">
+                                    <Clock className="h-3 w-3" />
+                                    {format(new Date(latestPrice.price_date), 'yyyy-MM-dd')}
+                                  </div>
                                 </div>
-                                <div className="text-xs text-muted-foreground flex items-center gap-1">
-                                  <Clock className="h-3 w-3" />
-                                  {format(new Date(latestPrice.price_date), 'yyyy-MM-dd')}
-                                </div>
-                              </div>
-                            </CardContent>
-                          </Card>
-                        );
-                      })}
-                    </div>
-                  )}
+                              </CardContent>
+                            </Card>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </div>
                 </div>
               </TabsContent>
 
               {/* My Listings Tab */}
               <TabsContent value="my">
                 {!user ? (
-                  <Card>
-                    <CardContent className="p-6 sm:p-8 text-center text-muted-foreground">
+                  <Card className="border-border/60">
+                    <CardContent className="p-8 text-center text-muted-foreground">
                       कृपया login गर्नुहोस्।
                     </CardContent>
                   </Card>
                 ) : myListings.length === 0 ? (
-                  <Card>
-                    <CardContent className="p-6 sm:p-8 text-center">
-                      <Package className="h-10 w-10 sm:h-12 sm:w-12 text-muted-foreground/30 mx-auto mb-4" />
-                      <h3 className="font-semibold mb-2 text-sm sm:text-base">कुनै listing छैन</h3>
-                      <p className="text-xs sm:text-sm text-muted-foreground mb-4">उब्जनी बेच्न list गर्नुहोस्</p>
-                      <Button onClick={() => setActiveTab('browse')} size="sm">
+                  <Card className="border-border/60">
+                    <CardContent className="p-8 text-center">
+                      <div className="w-14 h-14 rounded-2xl bg-muted flex items-center justify-center mx-auto mb-4">
+                        <Package className="h-7 w-7 text-muted-foreground/50" />
+                      </div>
+                      <h3 className="font-semibold mb-2">कुनै listing छैन</h3>
+                      <p className="text-sm text-muted-foreground mb-4">उब्जनी बेच्न list गर्नुहोस्</p>
+                      <Button onClick={() => setActiveTab('browse')} size="sm" className="rounded-full">
                         नयाँ उत्पादन राख्ने
                       </Button>
                     </CardContent>
@@ -251,27 +267,33 @@ const MarketPage = () => {
                 ) : (
                   <div className="space-y-4">
                     {/* Stats summary */}
-                    <div className="grid grid-cols-3 gap-4">
-                      <Card>
+                    <div className="grid grid-cols-3 gap-3 sm:gap-4">
+                      <Card className="border-border/60">
                         <CardContent className="p-4 text-center">
-                          <Package className="h-6 w-6 mx-auto mb-2 text-primary" />
-                          <div className="text-2xl font-bold">{myListings.length}</div>
+                          <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center mx-auto mb-2">
+                            <Package className="h-5 w-5 text-primary" />
+                          </div>
+                          <div className="text-2xl font-bold text-foreground">{myListings.length}</div>
                           <div className="text-xs text-muted-foreground">कुल Listings</div>
                         </CardContent>
                       </Card>
-                      <Card>
+                      <Card className="border-border/60">
                         <CardContent className="p-4 text-center">
-                          <Eye className="h-6 w-6 mx-auto mb-2 text-primary" />
-                          <div className="text-2xl font-bold">
+                          <div className="w-10 h-10 rounded-xl bg-blue-100 dark:bg-blue-950/30 flex items-center justify-center mx-auto mb-2">
+                            <Eye className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+                          </div>
+                          <div className="text-2xl font-bold text-foreground">
                             {Object.values(listingStats?.views || {}).reduce((a, b) => a + b, 0)}
                           </div>
                           <div className="text-xs text-muted-foreground">Views</div>
                         </CardContent>
                       </Card>
-                      <Card>
+                      <Card className="border-border/60">
                         <CardContent className="p-4 text-center">
-                          <Phone className="h-6 w-6 mx-auto mb-2 text-success" />
-                          <div className="text-2xl font-bold">
+                          <div className="w-10 h-10 rounded-xl bg-success/10 flex items-center justify-center mx-auto mb-2">
+                            <Phone className="h-5 w-5 text-success" />
+                          </div>
+                          <div className="text-2xl font-bold text-foreground">
                             {Object.values(listingStats?.contacts || {}).reduce((a, b) => a + b, 0)}
                           </div>
                           <div className="text-xs text-muted-foreground">Inquiries</div>
@@ -282,27 +304,27 @@ const MarketPage = () => {
                     {/* My listings */}
                     <div className="space-y-3">
                       {myListings.map((listing) => (
-                        <Card key={listing.id} className="overflow-hidden">
+                        <Card key={listing.id} className="border-border/60 hover:border-primary/30 transition-all">
                           <CardContent className="p-4">
-                            <div className="flex justify-between items-start">
-                              <div className="flex-1">
-                                <div className="flex items-center gap-2 mb-1">
-                                  <h3 className="font-semibold">{listing.crop_name}</h3>
+                            <div className="flex justify-between items-start gap-3">
+                              <div className="flex-1 min-w-0">
+                                <div className="flex items-center gap-2 mb-1.5 flex-wrap">
+                                  <h3 className="font-semibold text-foreground">{listing.crop_name}</h3>
                                   {listing.variety && (
                                     <span className="text-sm text-muted-foreground">({listing.variety})</span>
                                   )}
-                                  <Badge variant={listing.is_active ? 'default' : 'secondary'}>
+                                  <Badge variant={listing.is_active ? 'default' : 'secondary'} className="text-xs">
                                     {listing.is_active ? 'सक्रिय' : 'निष्क्रिय'}
                                   </Badge>
                                 </div>
 
-                                <div className="flex flex-wrap gap-4 text-sm text-muted-foreground mb-2">
+                                <div className="flex flex-wrap gap-3 text-sm text-muted-foreground mb-2">
                                   <span className="flex items-center gap-1">
                                     <Package className="h-4 w-4" />
                                     {listing.quantity} {listing.unit}
                                   </span>
                                   {listing.expected_price && (
-                                    <span className="font-medium text-foreground">
+                                    <span className="font-medium text-primary">
                                       रु. {listing.expected_price}/{listing.unit}
                                     </span>
                                   )}
@@ -314,7 +336,7 @@ const MarketPage = () => {
                                   )}
                                 </div>
 
-                                <div className="flex gap-4 text-xs text-muted-foreground">
+                                <div className="flex gap-3 text-xs text-muted-foreground">
                                   <span className="flex items-center gap-1">
                                     <Eye className="h-3 w-3" />
                                     {listingStats?.views?.[listing.id] || 0} views
@@ -330,11 +352,11 @@ const MarketPage = () => {
                                 </div>
                               </div>
 
-                              <div className="flex flex-col gap-1">
+                              <div className="flex flex-col gap-1.5">
                                 <Button 
                                   size="sm" 
                                   variant="outline"
-                                  className="text-xs"
+                                  className="text-xs rounded-full"
                                   onClick={() => handleToggleActive(listing.id, listing.is_active)}
                                 >
                                   {listing.is_active ? 'निष्क्रिय' : 'सक्रिय'}
@@ -342,7 +364,7 @@ const MarketPage = () => {
                                 <Button 
                                   size="sm" 
                                   variant="ghost"
-                                  className="text-destructive"
+                                  className="text-destructive hover:text-destructive hover:bg-destructive/10"
                                   onClick={() => handleDelete(listing.id)}
                                 >
                                   <Trash2 className="h-4 w-4" />

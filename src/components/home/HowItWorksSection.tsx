@@ -1,5 +1,5 @@
 import { motion } from "framer-motion";
-import { Camera, Cpu, FileCheck, ArrowRight } from "lucide-react";
+import { Camera, Cpu, FileCheck, ArrowRight, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
 
@@ -8,29 +8,32 @@ const steps = [
     number: "१",
     icon: Camera,
     title: "फोटो खिच्नुहोस्",
-    description: "बालीको प्रभावित पात, डाँठ वा फलको नजिकबाट स्पष्ट फोटो खिच्नुहोस्।",
-    tip: "राम्रो प्रकाशमा नजिकबाट खिच्नुहोस्",
+    description: "बालीको प्रभावित पात वा फलको स्पष्ट फोटो खिच्नुहोस्।",
+    tip: "💡 राम्रो प्रकाशमा नजिकबाट खिच्नुहोस्",
+    color: "bg-red-500",
   },
   {
     number: "२",
     icon: Cpu,
     title: "AI विश्लेषण",
-    description: "हाम्रो AI प्रणालीले तपाईंको फोटो विश्लेषण गर्छ र समस्या पहिचान गर्छ।",
-    tip: "केही सेकेन्डमा नतिजा",
+    description: "हाम्रो AI प्रणालीले समस्या पहिचान गर्छ।",
+    tip: "⚡ केही सेकेन्डमा नतिजा",
+    color: "bg-primary",
   },
   {
     number: "३",
     icon: FileCheck,
-    title: "रिपोर्ट प्राप्त गर्नुहोस्",
-    description: "विस्तृत नेपाली रिपोर्ट, उपचार सुझाव र PDF डाउनलोड गर्नुहोस्।",
-    tip: "WhatsApp मा पनि Share गर्नुहोस्",
+    title: "रिपोर्ट पाउनुहोस्",
+    description: "विस्तृत उपचार सुझाव र PDF डाउनलोड गर्नुहोस्।",
+    tip: "📄 WhatsApp मा Share गर्नुहोस्",
+    color: "bg-secondary",
   },
 ];
 
 const HowItWorksSection = () => {
   return (
-    <section className="py-20 sm:py-24 bg-gradient-to-b from-muted/30 to-background relative overflow-hidden">
-      {/* Decorative Elements */}
+    <section className="py-16 sm:py-20 relative overflow-hidden">
+      {/* Top divider */}
       <div className="absolute top-0 left-0 w-full h-px bg-gradient-to-r from-transparent via-border to-transparent" />
       
       <div className="container mx-auto px-4 relative">
@@ -39,57 +42,57 @@ const HowItWorksSection = () => {
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
           transition={{ duration: 0.5 }}
-          className="text-center max-w-3xl mx-auto mb-12 sm:mb-16"
+          className="text-center max-w-2xl mx-auto mb-10 sm:mb-14"
         >
-          <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold text-foreground mb-4">
+          <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-foreground mb-3">
             कसरी <span className="text-gradient">प्रयोग गर्ने?</span>
           </h2>
-          <p className="text-lg text-muted-foreground">
+          <p className="text-base sm:text-lg text-muted-foreground">
             ३ सजिलो चरणमा तपाईंको बालीको समस्या पत्ता लगाउनुहोस्
           </p>
         </motion.div>
 
         {/* Steps */}
-        <div className="max-w-5xl mx-auto">
-          <div className="grid md:grid-cols-3 gap-6 sm:gap-8">
+        <div className="max-w-4xl mx-auto">
+          <div className="grid md:grid-cols-3 gap-5 sm:gap-6">
             {steps.map((step, index) => (
               <motion.div
                 key={step.title}
                 initial={{ opacity: 0, y: 30 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
-                transition={{ duration: 0.5, delay: index * 0.15 }}
+                transition={{ duration: 0.5, delay: index * 0.12 }}
                 className="relative"
               >
-                {/* Connector Line */}
+                {/* Connector Arrow (desktop only) */}
                 {index < steps.length - 1 && (
-                  <div className="hidden md:block absolute top-16 left-full w-full h-0.5 bg-gradient-to-r from-primary/30 via-primary/50 to-primary/30 z-0" style={{ width: 'calc(100% - 2rem)' }}>
-                    <ArrowRight className="absolute right-0 top-1/2 -translate-y-1/2 w-4 h-4 text-primary/50" />
+                  <div className="hidden md:flex absolute top-14 left-full w-6 items-center justify-center z-10 -ml-3">
+                    <ChevronRight className="w-6 h-6 text-muted-foreground/40" />
                   </div>
                 )}
                 
-                <div className="glass-card rounded-3xl p-6 sm:p-8 h-full relative z-10 card-interactive border border-border/50">
-                  {/* Step Number */}
-                  <div className="absolute -top-4 -left-2 w-12 h-12 rounded-2xl bg-gradient-to-br from-primary to-secondary flex items-center justify-center text-white font-bold text-xl shadow-lg">
+                <div className="bg-card rounded-2xl p-6 sm:p-7 h-full border border-border/60 hover:border-primary/30 transition-all duration-300 hover:shadow-lg relative">
+                  {/* Step Number Badge */}
+                  <div className={`absolute -top-3 -left-1 w-10 h-10 rounded-xl ${step.color} flex items-center justify-center text-white font-bold text-lg shadow-lg`}>
                     {step.number}
                   </div>
                   
                   {/* Icon */}
-                  <div className="w-16 h-16 rounded-2xl bg-muted/50 flex items-center justify-center mb-6 mt-4">
-                    <step.icon className="w-8 h-8 text-primary" />
+                  <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-2xl bg-muted/60 flex items-center justify-center mb-5 mt-3">
+                    <step.icon className="w-7 h-7 sm:w-8 sm:h-8 text-primary" />
                   </div>
                   
                   {/* Content */}
-                  <h3 className="text-xl font-bold text-foreground mb-3">
+                  <h3 className="text-lg sm:text-xl font-bold text-foreground mb-2">
                     {step.title}
                   </h3>
-                  <p className="text-muted-foreground mb-4 leading-relaxed">
+                  <p className="text-sm sm:text-base text-muted-foreground mb-4 leading-relaxed">
                     {step.description}
                   </p>
                   
                   {/* Tip Badge */}
-                  <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-accent/10 text-accent text-sm">
-                    💡 {step.tip}
+                  <div className="inline-flex items-center px-3 py-1.5 rounded-full bg-accent/10 text-accent-foreground text-xs sm:text-sm font-medium">
+                    {step.tip}
                   </div>
                 </div>
               </motion.div>
@@ -102,11 +105,11 @@ const HowItWorksSection = () => {
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
-          transition={{ duration: 0.5, delay: 0.5 }}
-          className="text-center mt-12 sm:mt-16"
+          transition={{ duration: 0.5, delay: 0.4 }}
+          className="text-center mt-10 sm:mt-14"
         >
           <Link to="/disease-detection">
-            <Button size="xl" className="group text-lg px-8 py-6 rounded-2xl">
+            <Button size="lg" className="group rounded-full px-8 py-6 text-base sm:text-lg font-semibold shadow-lg">
               <Camera className="w-5 h-5 mr-2" />
               अहिले प्रयास गर्नुहोस्
               <ArrowRight className="w-5 h-5 ml-2 group-hover:translate-x-1 transition-transform" />

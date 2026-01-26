@@ -9,147 +9,157 @@
 
 @layer base {
   :root {
-    --background: 140 15% 97%;
-    --foreground: 150 30% 12%;
+    /* HUNCHA – किसान साथी Design System 2026 */
+    
+    /* Core Background - Soft cream with warmth */
+    --background: 45 30% 97%;
+    --foreground: 25 25% 15%;
 
+    /* Card surfaces - Pure white with subtle warmth */
     --card: 0 0% 100%;
-    --card-foreground: 150 30% 12%;
+    --card-foreground: 25 25% 15%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 150 30% 12%;
+    --popover-foreground: 25 25% 15%;
 
-    --primary: 152 55% 38%;
+    /* Primary - Warm agricultural green (like fresh paddy fields) */
+    --primary: 142 45% 42%;
     --primary-foreground: 0 0% 100%;
 
-    --secondary: 180 45% 45%;
+    /* Secondary - Terracotta/Earth tone (like Nepali soil) */
+    --secondary: 28 70% 55%;
     --secondary-foreground: 0 0% 100%;
 
-    --muted: 140 10% 92%;
-    --muted-foreground: 150 15% 45%;
+    /* Muted - Soft neutral for backgrounds */
+    --muted: 45 20% 92%;
+    --muted-foreground: 25 15% 45%;
 
-    --accent: 38 90% 55%;
-    --accent-foreground: 150 30% 12%;
+    /* Accent - Warm golden yellow (like ripe wheat/maize) */
+    --accent: 42 95% 55%;
+    --accent-foreground: 25 25% 15%;
 
+    /* Semantic colors */
     --destructive: 0 72% 51%;
     --destructive-foreground: 0 0% 100%;
 
-    --success: 152 60% 42%;
+    --success: 142 50% 45%;
     --success-foreground: 0 0% 100%;
 
     --warning: 38 92% 50%;
-    --warning-foreground: 150 30% 12%;
+    --warning-foreground: 25 25% 15%;
 
-    --border: 140 15% 88%;
-    --input: 140 15% 88%;
-    --ring: 152 55% 38%;
+    /* Borders & Inputs */
+    --border: 45 20% 88%;
+    --input: 45 20% 88%;
+    --ring: 142 45% 42%;
 
-    --radius: 1rem;
+    --radius: 0.75rem;
 
-    --sidebar-background: 152 40% 18%;
+    /* Sidebar - Deep forest green */
+    --sidebar-background: 142 35% 18%;
     --sidebar-foreground: 0 0% 98%;
-    --sidebar-primary: 38 90% 55%;
-    --sidebar-primary-foreground: 150 30% 12%;
-    --sidebar-accent: 152 35% 25%;
+    --sidebar-primary: 42 95% 55%;
+    --sidebar-primary-foreground: 25 25% 15%;
+    --sidebar-accent: 142 30% 25%;
     --sidebar-accent-foreground: 0 0% 98%;
-    --sidebar-border: 152 30% 25%;
-    --sidebar-ring: 38 90% 55%;
+    --sidebar-border: 142 25% 25%;
+    --sidebar-ring: 42 95% 55%;
 
-    /* 2026 Gradients */
-    --gradient-hero: linear-gradient(135deg, hsl(152 55% 38%) 0%, hsl(180 45% 40%) 50%, hsl(152 45% 32%) 100%);
-    --gradient-glass: linear-gradient(135deg, rgba(255,255,255,0.9) 0%, rgba(255,255,255,0.7) 100%);
-    --gradient-vibrant: linear-gradient(135deg, hsl(152 55% 38%) 0%, hsl(180 50% 45%) 100%);
-    --gradient-warm: linear-gradient(135deg, hsl(38 90% 55%) 0%, hsl(25 85% 50%) 100%);
-    --gradient-card: linear-gradient(145deg, hsl(0 0% 100%) 0%, hsl(140 15% 98%) 100%);
-    --gradient-mesh: radial-gradient(at 40% 20%, hsl(152 55% 38% / 0.15) 0px, transparent 50%),
-                     radial-gradient(at 80% 0%, hsl(180 45% 45% / 0.1) 0px, transparent 50%),
-                     radial-gradient(at 0% 50%, hsl(38 90% 55% / 0.08) 0px, transparent 50%);
+    /* Premium Gradients */
+    --gradient-hero: linear-gradient(135deg, hsl(142 45% 42%) 0%, hsl(142 40% 48%) 50%, hsl(162 35% 42%) 100%);
+    --gradient-glass: linear-gradient(135deg, rgba(255,255,255,0.95) 0%, rgba(255,255,255,0.85) 100%);
+    --gradient-vibrant: linear-gradient(135deg, hsl(142 45% 42%) 0%, hsl(162 40% 48%) 100%);
+    --gradient-warm: linear-gradient(135deg, hsl(42 95% 55%) 0%, hsl(28 75% 50%) 100%);
+    --gradient-card: linear-gradient(165deg, hsl(0 0% 100%) 0%, hsl(45 25% 98%) 100%);
+    --gradient-mesh: radial-gradient(ellipse at 20% 0%, hsl(142 45% 42% / 0.08) 0px, transparent 50%),
+                     radial-gradient(ellipse at 80% 20%, hsl(42 95% 55% / 0.06) 0px, transparent 50%),
+                     radial-gradient(ellipse at 40% 80%, hsl(28 70% 55% / 0.04) 0px, transparent 50%);
 
-    /* Krishi Mitra Chat Theme - Farm friendly colors */
-    --chat-bg: 140 20% 96%;
-    --chat-user-bubble: 152 55% 38%;
-    --chat-assistant-bubble: 140 18% 92%;
-    --chat-assistant-border: 140 25% 82%;
-    --gradient-chat: linear-gradient(180deg, hsl(140 25% 97%) 0%, hsl(140 20% 94%) 100%);
-    --gradient-chat-header: linear-gradient(135deg, hsl(152 45% 35%) 0%, hsl(140 40% 42%) 100%);
+    /* Chat Theme */
+    --chat-bg: 45 25% 97%;
+    --chat-user-bubble: 142 45% 42%;
+    --chat-assistant-bubble: 45 20% 94%;
+    --chat-assistant-border: 45 25% 85%;
+    --gradient-chat: linear-gradient(180deg, hsl(45 25% 98%) 0%, hsl(45 20% 95%) 100%);
+    --gradient-chat-header: linear-gradient(135deg, hsl(142 40% 38%) 0%, hsl(142 35% 45%) 100%);
 
     /* Glassmorphism */
-    --glass-bg: rgba(255, 255, 255, 0.85);
-    --glass-border: rgba(255, 255, 255, 0.5);
-    --glass-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
+    --glass-bg: rgba(255, 255, 255, 0.92);
+    --glass-border: rgba(255, 255, 255, 0.6);
+    --glass-shadow: 0 8px 32px rgba(0, 0, 0, 0.06);
 
     /* Enhanced Shadows */
-    --shadow-sm: 0 1px 3px 0 hsl(150 30% 12% / 0.04), 0 1px 2px -1px hsl(150 30% 12% / 0.04);
-    --shadow-md: 0 4px 6px -1px hsl(150 30% 12% / 0.06), 0 2px 4px -2px hsl(150 30% 12% / 0.04);
-    --shadow-lg: 0 10px 25px -5px hsl(150 30% 12% / 0.08), 0 8px 10px -6px hsl(150 30% 12% / 0.04);
-    --shadow-xl: 0 20px 50px -12px hsl(150 30% 12% / 0.15);
-    --shadow-glow: 0 0 30px hsl(152 55% 38% / 0.2);
-    --shadow-glow-accent: 0 0 30px hsl(38 90% 55% / 0.25);
-    --shadow-chat-bubble: 0 2px 8px hsl(150 30% 12% / 0.06);
+    --shadow-sm: 0 1px 3px 0 hsl(25 25% 15% / 0.03), 0 1px 2px -1px hsl(25 25% 15% / 0.03);
+    --shadow-md: 0 4px 8px -2px hsl(25 25% 15% / 0.05), 0 2px 4px -2px hsl(25 25% 15% / 0.03);
+    --shadow-lg: 0 12px 28px -8px hsl(25 25% 15% / 0.08), 0 8px 12px -6px hsl(25 25% 15% / 0.04);
+    --shadow-xl: 0 24px 50px -12px hsl(25 25% 15% / 0.12);
+    --shadow-glow: 0 0 24px hsl(142 45% 42% / 0.15);
+    --shadow-glow-accent: 0 0 24px hsl(42 95% 55% / 0.2);
+    --shadow-chat-bubble: 0 2px 8px hsl(25 25% 15% / 0.04);
   }
 
   .dark {
-    --background: 150 25% 7%;
-    --foreground: 140 15% 95%;
+    --background: 25 20% 8%;
+    --foreground: 45 20% 95%;
 
-    --card: 150 20% 11%;
-    --card-foreground: 140 15% 95%;
+    --card: 25 18% 12%;
+    --card-foreground: 45 20% 95%;
 
-    --popover: 150 20% 11%;
-    --popover-foreground: 140 15% 95%;
+    --popover: 25 18% 12%;
+    --popover-foreground: 45 20% 95%;
 
-    --primary: 152 55% 50%;
-    --primary-foreground: 150 30% 8%;
+    --primary: 142 50% 52%;
+    --primary-foreground: 25 25% 8%;
 
-    --secondary: 180 45% 50%;
-    --secondary-foreground: 150 30% 8%;
+    --secondary: 28 65% 55%;
+    --secondary-foreground: 25 25% 8%;
 
-    --muted: 150 15% 16%;
-    --muted-foreground: 140 10% 60%;
+    --muted: 25 15% 16%;
+    --muted-foreground: 45 15% 60%;
 
-    --accent: 38 85% 55%;
-    --accent-foreground: 150 30% 8%;
+    --accent: 42 90% 55%;
+    --accent-foreground: 25 25% 8%;
 
     --destructive: 0 65% 50%;
     --destructive-foreground: 0 0% 100%;
 
-    --success: 152 55% 45%;
-    --success-foreground: 150 30% 8%;
+    --success: 142 50% 50%;
+    --success-foreground: 25 25% 8%;
 
     --warning: 38 85% 50%;
-    --warning-foreground: 150 30% 8%;
+    --warning-foreground: 25 25% 8%;
 
-    --border: 150 15% 18%;
-    --input: 150 15% 18%;
-    --ring: 152 55% 50%;
+    --border: 25 15% 20%;
+    --input: 25 15% 20%;
+    --ring: 142 50% 52%;
 
-    --sidebar-background: 150 25% 5%;
-    --sidebar-foreground: 140 10% 92%;
-    --sidebar-primary: 38 85% 55%;
-    --sidebar-primary-foreground: 150 30% 8%;
-    --sidebar-accent: 150 15% 12%;
-    --sidebar-accent-foreground: 140 10% 92%;
-    --sidebar-border: 150 15% 15%;
-    --sidebar-ring: 38 85% 55%;
+    --sidebar-background: 25 20% 6%;
+    --sidebar-foreground: 45 15% 92%;
+    --sidebar-primary: 42 90% 55%;
+    --sidebar-primary-foreground: 25 25% 8%;
+    --sidebar-accent: 25 15% 14%;
+    --sidebar-accent-foreground: 45 15% 92%;
+    --sidebar-border: 25 15% 18%;
+    --sidebar-ring: 42 90% 55%;
 
-    --gradient-hero: linear-gradient(135deg, hsl(152 55% 50%) 0%, hsl(180 50% 45%) 50%, hsl(152 45% 40%) 100%);
-    --gradient-glass: linear-gradient(135deg, rgba(30,40,35,0.9) 0%, rgba(30,40,35,0.7) 100%);
-    --gradient-card: linear-gradient(145deg, hsl(150 20% 11%) 0%, hsl(150 18% 9%) 100%);
-    --gradient-mesh: radial-gradient(at 40% 20%, hsl(152 55% 50% / 0.1) 0px, transparent 50%),
-                     radial-gradient(at 80% 0%, hsl(180 45% 50% / 0.08) 0px, transparent 50%),
-                     radial-gradient(at 0% 50%, hsl(38 85% 55% / 0.05) 0px, transparent 50%);
+    --gradient-hero: linear-gradient(135deg, hsl(142 50% 52%) 0%, hsl(142 45% 48%) 50%, hsl(162 40% 45%) 100%);
+    --gradient-glass: linear-gradient(135deg, rgba(35,30,25,0.92) 0%, rgba(35,30,25,0.85) 100%);
+    --gradient-card: linear-gradient(165deg, hsl(25 18% 12%) 0%, hsl(25 16% 10%) 100%);
+    --gradient-mesh: radial-gradient(ellipse at 20% 0%, hsl(142 50% 52% / 0.06) 0px, transparent 50%),
+                     radial-gradient(ellipse at 80% 20%, hsl(42 90% 55% / 0.04) 0px, transparent 50%),
+                     radial-gradient(ellipse at 40% 80%, hsl(28 65% 55% / 0.03) 0px, transparent 50%);
 
-    /* Krishi Mitra Chat Theme - Dark mode */
-    --chat-bg: 150 20% 10%;
-    --chat-user-bubble: 152 55% 45%;
-    --chat-assistant-bubble: 150 18% 16%;
-    --chat-assistant-border: 150 20% 22%;
-    --gradient-chat: linear-gradient(180deg, hsl(150 20% 8%) 0%, hsl(150 18% 10%) 100%);
-    --gradient-chat-header: linear-gradient(135deg, hsl(152 50% 40%) 0%, hsl(140 45% 35%) 100%);
+    --chat-bg: 25 18% 10%;
+    --chat-user-bubble: 142 50% 48%;
+    --chat-assistant-bubble: 25 15% 16%;
+    --chat-assistant-border: 25 18% 22%;
+    --gradient-chat: linear-gradient(180deg, hsl(25 18% 8%) 0%, hsl(25 16% 10%) 100%);
+    --gradient-chat-header: linear-gradient(135deg, hsl(142 45% 42%) 0%, hsl(142 40% 38%) 100%);
     --shadow-chat-bubble: 0 2px 8px hsl(0 0% 0% / 0.2);
 
-    --glass-bg: rgba(30, 40, 35, 0.85);
-    --glass-border: rgba(255, 255, 255, 0.1);
-    --glass-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+    --glass-bg: rgba(35, 30, 25, 0.92);
+    --glass-border: rgba(255, 255, 255, 0.08);
+    --glass-shadow: 0 8px 32px rgba(0, 0, 0, 0.25);
   }
 }
 
@@ -168,8 +178,8 @@
   /* Glassmorphism Card */
   .glass-card {
     background: var(--glass-bg);
-    backdrop-filter: blur(20px);
-    -webkit-backdrop-filter: blur(20px);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
     border: 1px solid var(--glass-border);
     box-shadow: var(--glass-shadow);
   }
@@ -223,7 +233,7 @@
 
   @keyframes float {
     0%, 100% { transform: translateY(0px); }
-    50% { transform: translateY(-20px); }
+    50% { transform: translateY(-16px); }
   }
 
   /* Pulse Glow */
@@ -233,7 +243,7 @@
 
   @keyframes glow-pulse {
     0%, 100% { box-shadow: var(--shadow-glow); }
-    50% { box-shadow: 0 0 40px hsl(152 55% 38% / 0.35); }
+    50% { box-shadow: 0 0 36px hsl(142 45% 42% / 0.25); }
   }
 
   /* Shimmer Effect */
@@ -263,11 +273,29 @@
     box-shadow: var(--shadow-xl);
   }
 
+  /* Premium Feature Card */
+  .feature-card {
+    @apply relative overflow-hidden rounded-2xl p-6 bg-card border border-border/60;
+    @apply transition-all duration-300 ease-out;
+    @apply hover:border-primary/30 hover:shadow-lg;
+  }
+
+  .feature-card::before {
+    content: '';
+    @apply absolute inset-0 opacity-0 transition-opacity duration-300;
+    background: var(--gradient-mesh);
+  }
+
+  .feature-card:hover::before {
+    @apply opacity-100;
+  }
+
   /* Quick Action Button */
   .quick-action-btn {
-    @apply flex flex-col items-center gap-2 p-4 rounded-2xl transition-all duration-200;
-    @apply bg-card border border-border hover:border-primary/30;
-    @apply hover:shadow-lg hover:scale-[1.02] active:scale-[0.98];
+    @apply flex flex-col items-center gap-3 p-5 rounded-2xl transition-all duration-300;
+    @apply bg-card border border-border/60 shadow-sm;
+    @apply hover:border-primary/40 hover:shadow-lg hover:scale-[1.02];
+    @apply active:scale-[0.98];
   }
 
   /* Bottom Nav Style */
@@ -315,13 +343,35 @@
   }
 
   .krishi-welcome-card {
-    background: linear-gradient(135deg, hsl(var(--card)) 0%, hsl(140 20% 98%) 100%);
+    background: var(--gradient-card);
     border: 1px solid hsl(var(--border));
     box-shadow: var(--shadow-md);
   }
 
-  .dark .krishi-welcome-card {
-    background: linear-gradient(135deg, hsl(var(--card)) 0%, hsl(150 18% 12%) 100%);
+  /* Premium Section Divider */
+  .section-divider {
+    @apply w-full h-px;
+    background: linear-gradient(90deg, transparent, hsl(var(--border)), transparent);
+  }
+
+  /* Pill Button Style */
+  .pill-button {
+    @apply px-4 py-2 rounded-full text-sm font-medium;
+    @apply transition-all duration-200;
+    @apply hover:shadow-md active:scale-[0.97];
+  }
+
+  /* Market Price Card */
+  .price-card {
+    @apply bg-card rounded-xl border border-border/60 overflow-hidden;
+    @apply transition-all duration-300;
+    @apply hover:shadow-lg hover:border-primary/30;
+  }
+
+  /* Stats Card */
+  .stats-card {
+    @apply bg-gradient-to-br from-card to-muted/30 rounded-xl p-4;
+    @apply border border-border/60;
   }
 }
 
@@ -333,6 +383,11 @@
   /* Grain texture overlay */
   .bg-grain {
     background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
-    opacity: 0.02;
+    opacity: 0.015;
+  }
+
+  /* Responsive container padding */
+  .container-padding {
+    @apply px-4 sm:px-6 lg:px-8;
   }
 }

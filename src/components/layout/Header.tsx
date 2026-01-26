@@ -1,6 +1,6 @@
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Leaf, Menu, X, LogIn, User, Shield, Camera, Bot, Store, Mountain, Phone, Home } from "lucide-react";
+import { Leaf, Menu, X, LogIn, User, Shield, Camera, Bot, Store, Mountain, Home } from "lucide-react";
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useAuth } from "@/hooks/useAuth";
@@ -13,7 +13,6 @@ const Header = () => {
   const { user, profile } = useAuth();
   const { isAdmin } = useUserRole();
 
-  // Main navigation - 5 items + admin
   const navLinks = [
     { href: "/", label: "गृह", icon: Home },
     { href: "/disease-detection", label: "रोग", icon: Camera },
@@ -26,32 +25,33 @@ const Header = () => {
   const isActive = (path: string) => location.pathname === path;
 
   return (
-    <header className="fixed top-0 left-0 right-0 z-50 bg-background/80 backdrop-blur-lg border-b border-border">
+    <header className="fixed top-0 left-0 right-0 z-50 bg-background/90 backdrop-blur-xl border-b border-border/50">
       <div className="container mx-auto px-4">
         <div className="flex items-center justify-between h-14 sm:h-16">
-          {/* Logo - किसान साथी branding */}
-          <Link to="/" className="flex items-center gap-2 group flex-shrink-0">
-            <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-gradient-to-br from-primary to-secondary flex items-center justify-center shadow-md group-hover:shadow-lg transition-shadow">
+          {/* Logo */}
+          <Link to="/" className="flex items-center gap-2.5 group flex-shrink-0">
+            <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-gradient-to-br from-primary to-primary/80 flex items-center justify-center shadow-md group-hover:shadow-lg transition-all">
               <Leaf className="w-5 h-5 text-primary-foreground" />
             </div>
             <div className="flex flex-col">
-              <span className="font-bold text-lg sm:text-xl text-foreground leading-tight">किसान साथी</span>
+              <span className="font-bold text-base sm:text-lg text-foreground leading-tight">HUNCHA</span>
+              <span className="text-[10px] sm:text-xs text-muted-foreground leading-tight -mt-0.5">किसान साथी</span>
             </div>
           </Link>
 
-          {/* Desktop/Tablet Navigation - horizontal nav pills */}
-          <nav className="hidden md:flex items-center gap-1 bg-muted/50 rounded-full p-1 border border-border/50">
+          {/* Desktop Navigation - Pill style */}
+          <nav className="hidden md:flex items-center gap-1 bg-muted/60 rounded-full p-1 border border-border/40">
             {navLinks.map((link) => (
               <Link
                 key={link.href}
                 to={link.href}
-                className="relative group"
+                className="relative"
               >
                 <motion.div
-                  className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium transition-all duration-300 ${
+                  className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium transition-all duration-200 ${
                     isActive(link.href)
                       ? "bg-primary text-primary-foreground shadow-md"
-                      : "text-muted-foreground hover:text-foreground hover:bg-background"
+                      : "text-muted-foreground hover:text-foreground hover:bg-background/80"
                   }`}
                   whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.98 }}
@@ -63,6 +63,7 @@ const Header = () => {
             ))}
           </nav>
 
+          {/* Desktop Auth Buttons */}
           <div className="hidden md:flex items-center gap-2">
             {user ? (
               <Button
@@ -78,7 +79,7 @@ const Header = () => {
               <Button 
                 size="sm" 
                 onClick={() => navigate('/auth')}
-                className="rounded-full bg-gradient-to-r from-primary to-secondary hover:opacity-90"
+                className="rounded-full px-5"
               >
                 <LogIn className="w-4 h-4 mr-2" />
                 सुरु गर्नुहोस्
@@ -100,11 +101,11 @@ const Header = () => {
       <AnimatePresence>
         {isMenuOpen && (
           <motion.div
-            initial={{ opacity: 0, y: -10 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -10 }}
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: 'auto' }}
+            exit={{ opacity: 0, height: 0 }}
             transition={{ duration: 0.2 }}
-            className="md:hidden bg-background/95 backdrop-blur-lg border-b border-border overflow-hidden"
+            className="md:hidden bg-background/98 backdrop-blur-xl border-b border-border overflow-hidden"
           >
             <nav className="container mx-auto px-4 py-4 space-y-2">
               {navLinks.map((link, index) => (
@@ -154,7 +155,7 @@ const Header = () => {
                 ) : (
                   <Button
                     size="lg"
-                    className="w-full rounded-xl bg-gradient-to-r from-primary to-secondary"
+                    className="w-full rounded-xl"
                     onClick={() => {
                       navigate('/auth');
                       setIsMenuOpen(false);

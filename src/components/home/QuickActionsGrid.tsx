@@ -1,118 +1,117 @@
 import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
-import { Camera, Cloud, Store, Bot, MapPin, Stethoscope, Calendar } from "lucide-react";
+import { Camera, Cloud, Store, Bot, MapPin, Stethoscope, BookOpen } from "lucide-react";
 
 const quickActions = [
   {
     icon: Camera,
     label: "रोग पहिचान",
-    sublabel: "फोटोले रोग पत्ता लगाउने",
+    sublabel: "फोटोबाट पहिचान",
     href: "/disease-detection",
-    gradient: "from-red-500 to-orange-500",
-    bgGradient: "from-red-500/15 to-orange-500/10",
+    color: "bg-red-500",
+    bgColor: "bg-red-50 dark:bg-red-950/30",
+    borderColor: "border-red-200 dark:border-red-900/50",
+    hoverColor: "hover:border-red-300 dark:hover:border-red-800",
+  },
+  {
+    icon: Store,
+    label: "बजार भाउ",
+    sublabel: "आजको मूल्य",
+    href: "/market",
+    color: "bg-primary",
+    bgColor: "bg-primary/5",
+    borderColor: "border-primary/20",
+    hoverColor: "hover:border-primary/40",
   },
   {
     icon: Cloud,
     label: "मौसम",
-    sublabel: "आजको मौसम हेर्ने",
+    sublabel: "मौसम जानकारी",
     href: "/farmer?tab=weather",
-    gradient: "from-blue-500 to-cyan-500",
-    bgGradient: "from-blue-500/15 to-cyan-500/10",
-  },
-  {
-    icon: Store,
-    label: "बजार",
-    sublabel: "भाउ र बिक्री",
-    href: "/market",
-    gradient: "from-purple-500 to-pink-500",
-    bgGradient: "from-purple-500/15 to-pink-500/10",
+    color: "bg-blue-500",
+    bgColor: "bg-blue-50 dark:bg-blue-950/30",
+    borderColor: "border-blue-200 dark:border-blue-900/50",
+    hoverColor: "hover:border-blue-300 dark:hover:border-blue-800",
   },
   {
     icon: Bot,
     label: "AI सहायक",
-    sublabel: "कृषि ज्ञान सोध्ने",
+    sublabel: "कृषि ज्ञान",
     href: "/krishi-mitra",
-    gradient: "from-primary to-secondary",
-    bgGradient: "from-primary/15 to-secondary/10",
+    color: "bg-secondary",
+    bgColor: "bg-secondary/5",
+    borderColor: "border-secondary/20",
+    hoverColor: "hover:border-secondary/40",
   },
   {
     icon: MapPin,
-    label: "Plot",
-    sublabel: "मेरो प्लट हेर्ने",
-    href: "/farmer?tab=plots",
-    gradient: "from-teal-500 to-green-500",
-    bgGradient: "from-teal-500/15 to-green-500/10",
+    label: "मेरो खेत",
+    sublabel: "खेत व्यवस्थापन",
+    href: "/fields",
+    color: "bg-teal-500",
+    bgColor: "bg-teal-50 dark:bg-teal-950/30",
+    borderColor: "border-teal-200 dark:border-teal-900/50",
+    hoverColor: "hover:border-teal-300 dark:hover:border-teal-800",
   },
   {
-    icon: Stethoscope,
-    label: "उपचार",
-    sublabel: "औषधि र उपचार",
-    href: "/farmer?tab=treatments",
-    gradient: "from-pink-500 to-rose-500",
-    bgGradient: "from-pink-500/15 to-rose-500/10",
-  },
-  {
-    icon: Calendar,
-    label: "पात्रो",
-    sublabel: "बाली क्यालेन्डर",
-    href: "/farmer?tab=calendar",
-    gradient: "from-amber-500 to-yellow-500",
-    bgGradient: "from-amber-500/15 to-yellow-500/10",
+    icon: BookOpen,
+    label: "बाली गाइड",
+    sublabel: "खेती ज्ञान",
+    href: "/crop-guides",
+    color: "bg-amber-500",
+    bgColor: "bg-amber-50 dark:bg-amber-950/30",
+    borderColor: "border-amber-200 dark:border-amber-900/50",
+    hoverColor: "hover:border-amber-300 dark:hover:border-amber-800",
   },
 ];
 
 const QuickActionsGrid = () => {
   return (
-    <section className="py-6 sm:py-10">
+    <section className="py-8 sm:py-12">
       <div className="container mx-auto px-4">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5 }}
-          className="text-center mb-6"
+          className="text-center mb-6 sm:mb-8"
         >
           <h2 className="text-xl sm:text-2xl font-bold text-foreground">
             के गर्नुहुन्छ आज?
           </h2>
           <p className="text-sm text-muted-foreground mt-1">
-            तलको कार्ड छान्नुहोस्
+            छिटो पहुँचका लागि तलको कार्ड छान्नुहोस्
           </p>
         </motion.div>
 
-        {/* 2 columns on mobile, 4 on tablet, 4 on desktop */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4 max-w-4xl mx-auto">
+        {/* Grid: 2 cols mobile, 3 cols tablet, 6 cols desktop */}
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 sm:gap-4 max-w-5xl mx-auto">
           {quickActions.map((action, index) => (
             <motion.div
               key={action.label}
-              initial={{ opacity: 0, scale: 0.9 }}
-              animate={{ opacity: 1, scale: 1 }}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.4, delay: index * 0.05 }}
             >
               <Link to={action.href}>
                 <div
-                  className={`relative overflow-hidden rounded-2xl p-4 sm:p-5 bg-gradient-to-br ${action.bgGradient} border border-border/50 hover:border-primary/30 transition-all duration-300 hover:scale-[1.02] hover:shadow-lg active:scale-[0.98] cursor-pointer group`}
+                  className={`relative rounded-2xl p-4 sm:p-5 ${action.bgColor} border ${action.borderColor} ${action.hoverColor} transition-all duration-300 hover:shadow-lg active:scale-[0.98] cursor-pointer group`}
                 >
                   {/* Icon */}
                   <div
-                    className={`w-12 h-12 sm:w-14 sm:h-14 rounded-xl bg-gradient-to-br ${action.gradient} flex items-center justify-center mb-3 shadow-md group-hover:scale-110 transition-transform mx-auto`}
+                    className={`w-12 h-12 sm:w-14 sm:h-14 rounded-xl ${action.color} flex items-center justify-center mb-3 shadow-md group-hover:scale-110 transition-transform mx-auto`}
                   >
                     <action.icon className="w-6 h-6 sm:w-7 sm:h-7 text-white" />
                   </div>
 
                   {/* Labels */}
                   <div className="text-center">
-                    <div className="text-sm sm:text-base font-bold text-foreground">
+                    <div className="text-sm sm:text-base font-semibold text-foreground">
                       {action.label}
                     </div>
                     <div className="text-[10px] sm:text-xs text-muted-foreground mt-0.5 line-clamp-1">
                       {action.sublabel}
                     </div>
                   </div>
-
-                  {/* Decorative glow */}
-                  <div
-                    className={`absolute -bottom-8 -right-8 w-24 h-24 bg-gradient-to-br ${action.gradient} opacity-15 blur-2xl group-hover:opacity-25 transition-opacity`}
-                  />
                 </div>
               </Link>
             </motion.div>

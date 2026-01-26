@@ -75,7 +75,7 @@ export function LocationFilters({ selectedCropId, onCropChange, onFiltersChange 
   return (
     <div className="space-y-4">
       <div className="flex items-center gap-2 text-sm text-muted-foreground">
-        <MapPin className="h-4 w-4" />
+        <MapPin className="h-4 w-4 text-primary" />
         <span>स्थान र बाली छान्नुहोस्</span>
       </div>
 
@@ -86,10 +86,10 @@ export function LocationFilters({ selectedCropId, onCropChange, onFiltersChange 
           onValueChange={handleProvinceSelect}
           disabled={isLoading}
         >
-          <SelectTrigger className="w-full bg-background">
+          <SelectTrigger className="w-full bg-card border-border/60 rounded-lg">
             <SelectValue placeholder="प्रदेश छान्नुहोस्" />
           </SelectTrigger>
-          <SelectContent className="bg-background border shadow-lg z-50">
+          <SelectContent className="bg-card border-border shadow-lg z-50">
             <SelectItem value="all">सबै प्रदेश</SelectItem>
             {provinces.map((province) => (
               <SelectItem key={province.id} value={province.id.toString()}>
