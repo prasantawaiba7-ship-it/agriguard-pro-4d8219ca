@@ -1,7 +1,7 @@
 import { useAuth } from "@/hooks/useAuth";
 import { useNavigate, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { User, LogOut, Settings, Crown, Home } from "lucide-react";
+import { User, LogOut, Settings, Crown, Home, Leaf } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -22,58 +22,78 @@ export function UserBar() {
   const displayEmail = user.email || profile?.phone || "";
 
   return (
-    <div className="fixed bottom-0 left-0 right-0 z-50 bg-card/95 backdrop-blur-md border-t border-border shadow-lg">
-      <div className="container mx-auto px-4 py-2 flex items-center justify-between gap-3">
-        {/* Left: User info */}
-        <div 
-          className="flex items-center gap-2 cursor-pointer hover:opacity-80 transition-opacity"
-          onClick={() => navigate("/farmer/profile")}
-        >
-          <div className="w-7 h-7 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0 overflow-hidden">
-            {profile?.avatar_url ? (
-              <img src={profile.avatar_url} alt="" className="w-full h-full object-cover" />
-            ) : (
-              <User className="w-4 h-4 text-primary" />
-            )}
+    <>
+      {/* Desktop: Fixed bottom bar with better styling */}
+      <div className="fixed bottom-0 left-0 right-0 z-50 bg-card/95 backdrop-blur-md border-t border-border shadow-lg">
+        <div className="container mx-auto px-4 py-2 flex items-center justify-between gap-3">
+          {/* Left: Logo on desktop */}
+          <div className="hidden md:flex items-center gap-2">
+            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-primary to-secondary flex items-center justify-center">
+              <Leaf className="w-4 h-4 text-primary-foreground" />
+            </div>
+            <span className="font-semibold text-sm text-foreground">Kisan Sathi</span>
           </div>
-          <div className="text-xs sm:text-sm truncate">
-            <span className="font-medium text-foreground">{displayName}</span>
-            {displayEmail && (
-              <span className="hidden sm:inline text-muted-foreground"> ({displayEmail})</span>
-            )}
-          </div>
-        </div>
 
-        {/* Right: Actions */}
-        <div className="flex items-center gap-1">
-          <Button variant="ghost" size="sm" className="h-8 px-2" onClick={() => navigate("/farmer")}>
-            <Home className="w-4 h-4" />
-          </Button>
-          
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="sm" className="h-8 px-2">
-                <Settings className="w-4 h-4" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-48 bg-popover">
-              <DropdownMenuItem onClick={() => navigate("/farmer/profile")}>
-                <User className="w-4 h-4 mr-2" />
-                प्रोफाइल
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => navigate("/subscription")}>
-                <Crown className="w-4 h-4 mr-2" />
-                सदस्यता
-              </DropdownMenuItem>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem onClick={signOut} className="text-destructive">
-                <LogOut className="w-4 h-4 mr-2" />
-                लग आउट
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
+          {/* Center: User info */}
+          <div 
+            className="flex items-center gap-2 cursor-pointer hover:opacity-80 transition-opacity flex-1 md:flex-none md:justify-center"
+            onClick={() => navigate("/farmer/profile")}
+          >
+            <div className="w-7 h-7 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0 overflow-hidden">
+              {profile?.avatar_url ? (
+                <img src={profile.avatar_url} alt="" className="w-full h-full object-cover" />
+              ) : (
+                <User className="w-4 h-4 text-primary" />
+              )}
+            </div>
+            <div className="text-xs sm:text-sm truncate">
+              <span className="font-medium text-foreground">{displayName}</span>
+              {displayEmail && (
+                <span className="hidden sm:inline text-muted-foreground ml-1">({displayEmail})</span>
+              )}
+            </div>
+          </div>
+
+          {/* Right: Actions */}
+          <div className="flex items-center gap-1">
+            <Button variant="ghost" size="sm" className="h-8 px-2" onClick={() => navigate("/farmer")}>
+              <Home className="w-4 h-4" />
+              <span className="hidden md:inline ml-1">Dashboard</span>
+            </Button>
+            
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" size="sm" className="h-8 px-2">
+                  <Settings className="w-4 h-4" />
+                  <span className="hidden md:inline ml-1">Settings</span>
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-48 bg-popover">
+                <DropdownMenuItem onClick={() => navigate("/farmer/profile")}>
+                  <User className="w-4 h-4 mr-2" />
+                  Profile
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => navigate("/subscription")}>
+                  <Crown className="w-4 h-4 mr-2" />
+                  Subscription
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={signOut} className="text-destructive">
+                  <LogOut className="w-4 h-4 mr-2" />
+                  Sign Out
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
         </div>
       </div>
-    </div>
+
+      {/* Add padding to prevent content from hiding behind the bar */}
+      <style>{`
+        @media (min-width: 0px) {
+          main { padding-bottom: 60px !important; }
+        }
+      `}</style>
+    </>
   );
 }

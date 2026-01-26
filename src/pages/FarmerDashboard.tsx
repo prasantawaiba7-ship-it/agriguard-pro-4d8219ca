@@ -182,8 +182,9 @@ const FarmerDashboard = () => {
       <div className="min-h-screen bg-background">
         <Header />
 
-        <main className="pt-24 pb-16">
-          <div className="container mx-auto px-4">
+        <main className="pt-20 sm:pt-24 pb-20">
+          {/* Container with max-width for large screens */}
+          <div className="container mx-auto px-4 max-w-7xl">
             {/* Welcome Section */}
             <motion.div
               initial={{ opacity: 0, y: 20 }}
@@ -261,25 +262,25 @@ const FarmerDashboard = () => {
               ))}
             </div>
 
-            {/* Quick Access Cards */}
+            {/* Quick Access Cards - Responsive Grid */}
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.5 }}
               className="mb-8"
             >
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4">
+              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-3 sm:gap-4">
                 {/* Disease Detection */}
                 <Card 
                   className="border-primary/20 bg-gradient-to-br from-primary/5 to-primary/10 cursor-pointer hover:shadow-lg transition-all"
                   onClick={() => navigate('/disease-detection')}
                 >
-                  <CardContent className="p-4 flex flex-col items-center text-center gap-2">
-                    <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center">
-                      <Bug className="w-6 h-6 text-primary" />
+                  <CardContent className="p-3 sm:p-4 flex flex-col items-center text-center gap-2">
+                    <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-primary/10 flex items-center justify-center">
+                      <Bug className="w-5 h-5 sm:w-6 sm:h-6 text-primary" />
                     </div>
-                    <h3 className="font-semibold text-sm text-foreground">🌿 रोग पहिचान</h3>
-                    <p className="text-xs text-muted-foreground hidden sm:block">फोटो सोध्ने</p>
+                    <h3 className="font-semibold text-xs sm:text-sm text-foreground">🌿 रोग पहिचान</h3>
+                    <p className="text-[10px] sm:text-xs text-muted-foreground hidden lg:block">फोटो सोध्ने</p>
                   </CardContent>
                 </Card>
 
@@ -288,12 +289,12 @@ const FarmerDashboard = () => {
                   className="border-success/20 bg-gradient-to-br from-success/5 to-success/10 cursor-pointer hover:shadow-lg transition-all"
                   onClick={() => navigate('/market')}
                 >
-                  <CardContent className="p-4 flex flex-col items-center text-center gap-2">
-                    <div className="w-12 h-12 rounded-xl bg-success/10 flex items-center justify-center">
-                      <Sparkles className="w-6 h-6 text-success" />
+                  <CardContent className="p-3 sm:p-4 flex flex-col items-center text-center gap-2">
+                    <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-success/10 flex items-center justify-center">
+                      <Sparkles className="w-5 h-5 sm:w-6 sm:h-6 text-success" />
                     </div>
-                    <h3 className="font-semibold text-sm text-foreground">🛒 बजार</h3>
-                    <p className="text-xs text-muted-foreground hidden sm:block">बेच्ने / किन्ने</p>
+                    <h3 className="font-semibold text-xs sm:text-sm text-foreground">🛒 बजार</h3>
+                    <p className="text-[10px] sm:text-xs text-muted-foreground hidden lg:block">बेच्ने / किन्ने</p>
                   </CardContent>
                 </Card>
 
@@ -302,12 +303,12 @@ const FarmerDashboard = () => {
                   className="border-secondary/20 bg-gradient-to-br from-secondary/5 to-secondary/10 cursor-pointer hover:shadow-lg transition-all"
                   onClick={() => navigate('/guides')}
                 >
-                  <CardContent className="p-4 flex flex-col items-center text-center gap-2">
-                    <div className="w-12 h-12 rounded-xl bg-secondary/10 flex items-center justify-center">
-                      <Leaf className="w-6 h-6 text-secondary" />
+                  <CardContent className="p-3 sm:p-4 flex flex-col items-center text-center gap-2">
+                    <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-secondary/10 flex items-center justify-center">
+                      <Leaf className="w-5 h-5 sm:w-6 sm:h-6 text-secondary" />
                     </div>
-                    <h3 className="font-semibold text-sm text-foreground">📚 कृषि ज्ञान</h3>
-                    <p className="text-xs text-muted-foreground hidden sm:block">बाली गाइड</p>
+                    <h3 className="font-semibold text-xs sm:text-sm text-foreground">📚 कृषि ज्ञान</h3>
+                    <p className="text-[10px] sm:text-xs text-muted-foreground hidden lg:block">बाली गाइड</p>
                   </CardContent>
                 </Card>
 
@@ -316,37 +317,66 @@ const FarmerDashboard = () => {
                   className="border-warning/20 bg-gradient-to-br from-warning/5 to-warning/10 cursor-pointer hover:shadow-lg transition-all"
                   onClick={() => navigate('/activities')}
                 >
-                  <CardContent className="p-4 flex flex-col items-center text-center gap-2">
-                    <div className="w-12 h-12 rounded-xl bg-warning/10 flex items-center justify-center">
-                      <Calendar className="w-6 h-6 text-warning" />
+                  <CardContent className="p-3 sm:p-4 flex flex-col items-center text-center gap-2">
+                    <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-warning/10 flex items-center justify-center">
+                      <Calendar className="w-5 h-5 sm:w-6 sm:h-6 text-warning" />
                     </div>
-                    <h3 className="font-semibold text-sm text-foreground">📝 कृषि कार्य</h3>
-                    <p className="text-xs text-muted-foreground hidden sm:block">Activities Log</p>
+                    <h3 className="font-semibold text-xs sm:text-sm text-foreground">📝 कृषि कार्य</h3>
+                    <p className="text-[10px] sm:text-xs text-muted-foreground hidden lg:block">Activities Log</p>
+                  </CardContent>
+                </Card>
+
+                {/* Fields */}
+                <Card 
+                  className="border-accent/20 bg-gradient-to-br from-accent/5 to-accent/10 cursor-pointer hover:shadow-lg transition-all hidden sm:block"
+                  onClick={() => navigate('/fields')}
+                >
+                  <CardContent className="p-3 sm:p-4 flex flex-col items-center text-center gap-2">
+                    <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-accent/10 flex items-center justify-center">
+                      <MapPin className="w-5 h-5 sm:w-6 sm:h-6 text-accent" />
+                    </div>
+                    <h3 className="font-semibold text-xs sm:text-sm text-foreground">🗺️ मेरो खेत</h3>
+                    <p className="text-[10px] sm:text-xs text-muted-foreground hidden lg:block">Fields</p>
+                  </CardContent>
+                </Card>
+
+                {/* AI Assistant */}
+                <Card 
+                  className="border-primary/20 bg-gradient-to-br from-primary/5 to-secondary/10 cursor-pointer hover:shadow-lg transition-all hidden sm:block"
+                  onClick={() => navigate('/krishi-mitra')}
+                >
+                  <CardContent className="p-3 sm:p-4 flex flex-col items-center text-center gap-2">
+                    <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-primary/10 flex items-center justify-center">
+                      <Cloud className="w-5 h-5 sm:w-6 sm:h-6 text-primary" />
+                    </div>
+                    <h3 className="font-semibold text-xs sm:text-sm text-foreground">🤖 AI सहायक</h3>
+                    <p className="text-[10px] sm:text-xs text-muted-foreground hidden lg:block">Krishi Mitra</p>
                   </CardContent>
                 </Card>
               </div>
             </motion.div>
 
-            {/* Tab Navigation */}
-            <div className="flex gap-2 mb-6 overflow-x-auto pb-2 scrollbar-hide">
+            {/* Tab Navigation - Responsive */}
+            <div className="flex flex-wrap gap-2 mb-6 pb-2">
               {[
-                { id: "plots", label: t('myPlots'), icon: MapPin },
-                { id: "capture", label: "Capture", icon: Camera },
-                { id: "treatments", label: "उपचार", icon: Stethoscope },
-                { id: "weather", label: "मौसम सुझाव", icon: CloudSun },
-                { id: "calendar", label: "बाली पात्रो", icon: Calendar },
-                { id: "history", label: t('history'), icon: History },
-                { id: "offline", label: "Offline", icon: WifiOff },
+                { id: "plots", label: t('myPlots'), shortLabel: "Plots", icon: MapPin },
+                { id: "capture", label: "Capture", shortLabel: "📷", icon: Camera },
+                { id: "treatments", label: "उपचार", shortLabel: "💊", icon: Stethoscope },
+                { id: "weather", label: "मौसम सुझाव", shortLabel: "🌤️", icon: CloudSun },
+                { id: "calendar", label: "बाली पात्रो", shortLabel: "📅", icon: Calendar },
+                { id: "history", label: t('history'), shortLabel: "📜", icon: History },
+                { id: "offline", label: "Offline", shortLabel: "📴", icon: WifiOff },
               ].map((tab) => (
                 <Button
                   key={tab.id}
                   variant={activeTab === tab.id ? "default" : "outline"}
                   onClick={() => setActiveTab(tab.id as typeof activeTab)}
-                  className="flex-shrink-0 gap-2"
+                  className="flex-shrink-0 gap-1 sm:gap-2"
                   size="sm"
                 >
                   <tab.icon className="w-4 h-4" />
                   <span className="hidden sm:inline">{tab.label}</span>
+                  <span className="sm:hidden">{tab.shortLabel}</span>
                 </Button>
               ))}
             </div>

@@ -1,6 +1,6 @@
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Leaf, Menu, X, LogIn, User, Shield, Camera, Cloud, Store, Mountain, Crown } from "lucide-react";
+import { Leaf, Menu, X, LogIn, User, Shield, Camera, Cloud, Store, Mountain, Crown, Book, Calendar, Phone } from "lucide-react";
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useAuth } from "@/hooks/useAuth";
@@ -13,15 +13,18 @@ const Header = () => {
   const { user, profile } = useAuth();
   const { isAdmin } = useUserRole();
 
-  // Simplified nav links for mobile-first design
+  // Full navigation links for all screen sizes
   const navLinks = [
-    { href: "/disease-detection", label: "रोग पहिचान", icon: Camera },
-    { href: "/fields", label: "मेरो खेत", icon: Mountain },
-    { href: "/market", label: "बजार", icon: Store },
-    { href: "/krishi-mitra", label: "AI सहायक", icon: Cloud },
-    { href: "/subscription", label: "सदस्यता", icon: Crown },
+    { href: "/disease-detection", label: "रोग पहिचान", shortLabel: "रोग", icon: Camera },
+    { href: "/fields", label: "मेरो खेत", shortLabel: "खेत", icon: Mountain },
+    { href: "/market", label: "बजार", shortLabel: "बजार", icon: Store },
+    { href: "/guides", label: "कृषि ज्ञान", shortLabel: "ज्ञान", icon: Book },
+    { href: "/activities", label: "कृषि कार्य", shortLabel: "कार्य", icon: Calendar },
+    { href: "/expert-directory", label: "विशेषज्ञ", shortLabel: "विशेषज्ञ", icon: Phone },
+    { href: "/krishi-mitra", label: "AI सहायक", shortLabel: "AI", icon: Cloud },
+    { href: "/subscription", label: "सदस्यता", shortLabel: "सदस्यता", icon: Crown },
     // Show Admin only to admin users
-    ...(isAdmin() ? [{ href: "/admin", label: "Admin", icon: Shield }] : []),
+    ...(isAdmin() ? [{ href: "/admin", label: "Admin", shortLabel: "Admin", icon: Shield }] : []),
   ];
 
   const isActive = (path: string) => location.pathname === path;
@@ -31,7 +34,7 @@ const Header = () => {
       <div className="container mx-auto px-4">
         <div className="flex items-center justify-between h-14 sm:h-16">
           {/* Logo - HUNCHA branding */}
-          <Link to="/" className="flex items-center gap-2 group">
+          <Link to="/" className="flex items-center gap-2 group flex-shrink-0">
             <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-gradient-to-br from-primary to-secondary flex items-center justify-center shadow-md group-hover:shadow-lg transition-shadow">
               <Leaf className="w-5 h-5 text-primary-foreground" />
             </div>
@@ -40,20 +43,39 @@ const Header = () => {
             </div>
           </Link>
 
-          {/* Desktop Navigation */}
-          <nav className="hidden lg:flex items-center gap-1">
+          {/* Desktop Navigation - Shows on xl screens */}
+          <nav className="hidden xl:flex items-center gap-1">
             {navLinks.map((link) => (
               <Link
                 key={link.href}
                 to={link.href}
-                className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors flex items-center gap-2 ${
+                className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors flex items-center gap-1.5 ${
                   isActive(link.href)
                     ? "bg-primary text-primary-foreground"
                     : "text-muted-foreground hover:text-foreground hover:bg-muted"
                 }`}
               >
                 {link.icon && <link.icon className="w-4 h-4" />}
-                {link.label}
+                <span className="hidden 2xl:inline">{link.label}</span>
+                <span className="2xl:hidden">{link.shortLabel}</span>
+              </Link>
+            ))}
+          </nav>
+
+          {/* Tablet Navigation - Shows on lg screens */}
+          <nav className="hidden lg:flex xl:hidden items-center gap-1">
+            {navLinks.slice(0, 5).map((link) => (
+              <Link
+                key={link.href}
+                to={link.href}
+                className={`px-2 py-2 rounded-lg text-xs font-medium transition-colors flex items-center gap-1 ${
+                  isActive(link.href)
+                    ? "bg-primary text-primary-foreground"
+                    : "text-muted-foreground hover:text-foreground hover:bg-muted"
+                }`}
+              >
+                {link.icon && <link.icon className="w-4 h-4" />}
+                <span>{link.shortLabel}</span>
               </Link>
             ))}
           </nav>
@@ -71,7 +93,8 @@ const Header = () => {
                   className="gap-2"
                 >
                   <User className="w-4 h-4" />
-                  {profile?.full_name || 'Dashboard'}
+                  <span className="hidden xl:inline">{profile?.full_name || 'Dashboard'}</span>
+                  <span className="xl:hidden">Dashboard</span>
                 </Button>
               </div>
             ) : (
@@ -104,23 +127,25 @@ const Header = () => {
             exit={{ opacity: 0, height: 0 }}
             className="lg:hidden bg-background border-b border-border overflow-hidden"
           >
-            <nav className="container mx-auto px-4 py-4 flex flex-col gap-2">
+            <nav className="container mx-auto px-4 py-4 grid grid-cols-2 sm:grid-cols-3 gap-2">
               {navLinks.map((link) => (
                 <Link
                   key={link.href}
                   to={link.href}
                   onClick={() => setIsMenuOpen(false)}
-                  className={`px-4 py-3 rounded-xl text-base font-medium transition-colors flex items-center gap-3 ${
+                  className={`px-3 py-3 rounded-xl text-sm font-medium transition-colors flex items-center gap-2 ${
                     isActive(link.href)
                       ? "bg-primary text-primary-foreground"
                       : "text-muted-foreground hover:text-foreground hover:bg-muted"
                   }`}
                 >
-                  {link.icon && <link.icon className="w-5 h-5" />}
-                  {link.label}
+                  {link.icon && <link.icon className="w-4 h-4" />}
+                  {link.shortLabel}
                 </Link>
               ))}
-              <div className="flex gap-3 mt-4 pt-4 border-t border-border">
+            </nav>
+            <div className="container mx-auto px-4 pb-4">
+              <div className="flex gap-3 pt-4 border-t border-border">
                 {user ? (
                   <Button
                     variant="outline"
@@ -160,7 +185,7 @@ const Header = () => {
                   </>
                 )}
               </div>
-            </nav>
+            </div>
           </motion.div>
         )}
       </AnimatePresence>
