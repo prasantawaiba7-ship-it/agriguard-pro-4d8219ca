@@ -148,13 +148,14 @@ const AdminDashboard = () => {
     notificationsEnabled: true,
   });
 
-  // Fetch real user data
+  // Fetch real user data - use stable boolean instead of function reference
+  const adminStatus = isAdmin();
   useEffect(() => {
-    if (isAdmin()) {
+    if (adminStatus) {
       fetchUsers();
       fetchStats();
     }
-  }, [isAdmin]);
+  }, [adminStatus]);
 
   const fetchUsers = async () => {
     setUsersLoading(true);
