@@ -1498,7 +1498,7 @@ export function OnScreenAssistant({ isFullScreen: isEmbeddedFullScreen = false, 
     "fixed z-50 bg-card border border-border shadow-2xl flex flex-col overflow-hidden transition-all duration-300",
     isFullScreen 
       ? "inset-0 rounded-none" // Full screen on mobile
-      : "bottom-20 right-4 left-4 sm:left-auto sm:right-6 sm:w-96 md:w-[420px] rounded-2xl max-h-[85vh] sm:max-h-[75vh]"
+      : "bottom-32 right-4 left-4 sm:left-auto sm:right-6 sm:w-96 md:w-[420px] rounded-2xl max-h-[85vh] sm:max-h-[75vh]"
   );
 
   return (
@@ -1506,7 +1506,7 @@ export function OnScreenAssistant({ isFullScreen: isEmbeddedFullScreen = false, 
       {/* Floating Button - Hidden on Krishi Mitra page and in embedded full screen mode */}
       {!isKrishiMitraPage && !isEmbeddedFullScreen && (
         <motion.div
-          className="fixed bottom-4 right-4 sm:bottom-6 sm:right-6 z-50"
+          className="fixed bottom-20 right-4 sm:bottom-24 sm:right-6 z-50"
           initial={{ scale: 0 }}
           animate={{ scale: 1 }}
           transition={{ delay: 0.5, type: 'spring' }}

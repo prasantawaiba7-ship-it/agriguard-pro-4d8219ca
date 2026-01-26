@@ -101,7 +101,7 @@ export function FloatingVoiceButton() {
     <>
       {/* Floating Button */}
       <motion.div
-        className="fixed bottom-6 right-6 z-50"
+        className="fixed bottom-24 right-6 z-50"
         initial={{ scale: 0 }}
         animate={{ scale: 1 }}
         transition={{ delay: 0.5, type: 'spring' }}
@@ -151,7 +151,7 @@ export function FloatingVoiceButton() {
             initial={{ opacity: 0, y: 20, scale: 0.9 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 20, scale: 0.9 }}
-            className="fixed bottom-24 right-6 z-50 bg-card border border-border rounded-2xl shadow-2xl w-80 max-h-[70vh] overflow-hidden"
+            className="fixed bottom-36 right-6 z-50 bg-card border border-border rounded-2xl shadow-2xl w-80 max-h-[70vh] overflow-hidden"
           >
             {/* Header */}
             <div className="flex items-center justify-between p-4 border-b border-border bg-muted/50">
