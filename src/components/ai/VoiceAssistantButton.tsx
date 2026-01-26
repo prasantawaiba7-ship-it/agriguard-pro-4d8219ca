@@ -33,7 +33,7 @@ export function VoiceAssistantButton() {
   const recognitionRef = useRef<any>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   
-  const { can_query, queries_used, queries_limit, subscribed, plan, incrementQueryCount, startCheckout, loading: subLoading } = useSubscription();
+  const { can_query, queries_used, queries_limit, subscribed, plan, incrementQueryCount, loading: subLoading } = useSubscription();
 
   const { speak, stop, isSpeaking, isSupported: ttsSupported } = useTextToSpeech({
     language,
@@ -517,7 +517,6 @@ export function VoiceAssistantButton() {
       <SubscriptionModal
         isOpen={showSubscriptionModal}
         onClose={() => setShowSubscriptionModal(false)}
-        onSubscribe={startCheckout}
         queriesUsed={queries_used}
         queriesLimit={queries_limit}
       />

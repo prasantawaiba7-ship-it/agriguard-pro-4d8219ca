@@ -8,7 +8,7 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { supabase } from '@/integrations/supabase/client';
 import { Crown, Users, TrendingUp, DollarSign, RefreshCw, Loader2, RotateCcw, Edit, MoreHorizontal } from 'lucide-react';
 import { format } from 'date-fns';
-import { SUBSCRIPTION_PLANS } from '@/hooks/useSubscription';
+import { useSubscription } from '@/hooks/useSubscription';
 import { toast } from 'sonner';
 import {
   DropdownMenu,
@@ -42,6 +42,7 @@ interface SubscriptionStats {
 }
 
 export const SubscriptionAnalytics = () => {
+  const { plans } = useSubscription();
   const [subscriptions, setSubscriptions] = useState<SubscriptionData[]>([]);
   const [stats, setStats] = useState<SubscriptionStats>({
     totalSubscribers: 0,
@@ -87,13 +88,17 @@ export const SubscriptionAnalytics = () => {
       const yearly = subsWithNames.filter(s => s.plan === 'yearly' && s.status === 'active');
       const free = subsWithNames.filter(s => s.plan === 'free');
 
+      // Get prices from plans array
+      const monthlyPrice = plans.find(p => p.plan_type === 'monthly')?.price || 99;
+      const yearlyPrice = plans.find(p => p.plan_type === 'yearly')?.price || 999;
+
       setStats({
         totalSubscribers: monthly.length + yearly.length,
         monthlySubscribers: monthly.length,
         yearlySubscribers: yearly.length,
         freeUsers: free.length,
-        monthlyRevenue: monthly.length * SUBSCRIPTION_PLANS.monthly.price,
-        yearlyRevenue: yearly.length * SUBSCRIPTION_PLANS.yearly.price
+        monthlyRevenue: monthly.length * monthlyPrice,
+        yearlyRevenue: yearly.length * yearlyPrice
       });
     } catch (err) {
       console.error('Failed to fetch subscriptions:', err);
@@ -336,7 +341,7 @@ export const SubscriptionAnalytics = () => {
               </div>
               <div className="flex justify-between">
                 <span className="text-muted-foreground">Rate</span>
-                <span className="font-medium">रु. {SUBSCRIPTION_PLANS.monthly.price}/month</span>
+                <span className="font-medium">रु. {plans.find(p => p.plan_type === 'monthly')?.price || 99}/month</span>
               </div>
               <div className="border-t pt-2 flex justify-between">
                 <span className="font-medium">Monthly Total</span>
@@ -358,7 +363,7 @@ export const SubscriptionAnalytics = () => {
               </div>
               <div className="flex justify-between">
                 <span className="text-muted-foreground">Rate</span>
-                <span className="font-medium">रु. {SUBSCRIPTION_PLANS.yearly.price}/year</span>
+                <span className="font-medium">रु. {plans.find(p => p.plan_type === 'yearly')?.price || 999}/year</span>
               </div>
               <div className="border-t pt-2 flex justify-between">
                 <span className="font-medium">Yearly Total</span>

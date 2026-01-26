@@ -21,8 +21,7 @@ interface SubscriptionPlan {
   plan_type: string;
   price: number;
   currency: string;
-  stripe_price_id: string | null;
-  stripe_product_id: string | null;
+  esewa_product_code: string | null;
   ai_call_limit: number | null;
   pdf_report_limit: number | null;
   features: string[];
@@ -39,8 +38,7 @@ const defaultPlan: Partial<SubscriptionPlan> = {
   plan_type: '',
   price: 0,
   currency: 'NPR',
-  stripe_price_id: '',
-  stripe_product_id: '',
+  esewa_product_code: '',
   ai_call_limit: null,
   pdf_report_limit: null,
   features: [],
@@ -117,8 +115,7 @@ export const SubscriptionPlansManager = () => {
         plan_type: plan.plan_type,
         price: plan.price || 0,
         currency: plan.currency || 'NPR',
-        stripe_price_id: plan.stripe_price_id || null,
-        stripe_product_id: plan.stripe_product_id || null,
+        esewa_product_code: plan.esewa_product_code || null,
         ai_call_limit: plan.ai_call_limit,
         pdf_report_limit: plan.pdf_report_limit,
         features: featuresText.split('\n').filter(f => f.trim()),
@@ -383,25 +380,14 @@ export const SubscriptionPlansManager = () => {
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <Label>Stripe Price ID</Label>
+                  <Label>eSewa Product Code</Label>
                   <Input
-                    value={editDialog.plan.stripe_price_id || ''}
+                    value={editDialog.plan.esewa_product_code || ''}
                     onChange={(e) => setEditDialog({
                       ...editDialog,
-                      plan: { ...editDialog.plan!, stripe_price_id: e.target.value }
+                      plan: { ...editDialog.plan!, esewa_product_code: e.target.value }
                     })}
-                    placeholder="price_xxx"
-                  />
-                </div>
-                <div>
-                  <Label>Stripe Product ID</Label>
-                  <Input
-                    value={editDialog.plan.stripe_product_id || ''}
-                    onChange={(e) => setEditDialog({
-                      ...editDialog,
-                      plan: { ...editDialog.plan!, stripe_product_id: e.target.value }
-                    })}
-                    placeholder="prod_xxx"
+                    placeholder="EPAYTEST (for testing)"
                   />
                 </div>
               </div>

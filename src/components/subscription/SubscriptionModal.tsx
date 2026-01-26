@@ -1,15 +1,14 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Crown, Check, Loader2 } from 'lucide-react';
+import { X, Crown, Check, Loader2, Smartphone } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useLanguage } from '@/hooks/useLanguage';
-import { SUBSCRIPTION_PLANS } from '@/hooks/useSubscription';
+import { useSubscription, SubscriptionPlan } from '@/hooks/useSubscription';
 import { cn } from '@/lib/utils';
 
 interface SubscriptionModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSubscribe: (plan: 'monthly' | 'yearly') => Promise<void>;
   queriesUsed: number;
   queriesLimit: number;
 }
@@ -17,17 +16,21 @@ interface SubscriptionModalProps {
 export function SubscriptionModal({ 
   isOpen, 
   onClose, 
-  onSubscribe,
   queriesUsed,
   queriesLimit
 }: SubscriptionModalProps) {
   const { language } = useLanguage();
-  const [loading, setLoading] = useState<'monthly' | 'yearly' | null>(null);
+  const { plans, plansLoading, startEsewaPayment } = useSubscription();
+  const [loading, setLoading] = useState<string | null>(null);
 
-  const handleSubscribe = async (plan: 'monthly' | 'yearly') => {
-    setLoading(plan);
+  const handleSubscribe = async (plan: SubscriptionPlan) => {
+    if (plan.plan_type === 'free' || plan.price === 0) return;
+    
+    setLoading(plan.id);
     try {
-      await onSubscribe(plan);
+      await startEsewaPayment(plan.id);
+    } catch (error) {
+      console.error('Payment error:', error);
     } finally {
       setLoading(null);
     }
@@ -40,6 +43,9 @@ export function SubscriptionModal({
     language === 'ne' ? 'भ्वाइस सहायता' : 'Voice assistance',
     language === 'ne' ? 'प्राथमिकता समर्थन' : 'Priority support',
   ];
+
+  // Filter to only show paid plans
+  const paidPlans = plans.filter(p => p.price > 0);
 
   return (
     <AnimatePresence>
@@ -92,84 +98,76 @@ export function SubscriptionModal({
               <div className="space-y-2 mb-6">
                 {features.map((feature, i) => (
                   <div key={i} className="flex items-center gap-2 text-sm">
-                    <Check className="w-4 h-4 text-success" />
+                    <Check className="w-4 h-4 text-green-500" />
                     <span>{feature}</span>
                   </div>
                 ))}
               </div>
 
               {/* Plans */}
-              <div className="space-y-3">
-                {/* Monthly */}
-                <button
-                  onClick={() => handleSubscribe('monthly')}
-                  disabled={!!loading}
-                  className={cn(
-                    "w-full p-4 rounded-xl border-2 text-left transition-all",
-                    "hover:border-primary hover:bg-primary/5",
-                    loading === 'monthly' && "border-primary bg-primary/5"
-                  )}
-                >
-                  <div className="flex justify-between items-center">
-                    <div>
-                      <span className="font-semibold">
-                        {SUBSCRIPTION_PLANS.monthly.nameNe} / {SUBSCRIPTION_PLANS.monthly.name}
-                      </span>
-                      <p className="text-sm text-muted-foreground">
-                        {language === 'ne' ? 'प्रति महिना' : 'per month'}
-                      </p>
-                    </div>
-                    <div className="text-right">
-                      {loading === 'monthly' ? (
-                        <Loader2 className="w-5 h-5 animate-spin" />
-                      ) : (
-                        <span className="font-bold text-lg">
-                          रू {SUBSCRIPTION_PLANS.monthly.price}
-                        </span>
+              {plansLoading ? (
+                <div className="flex justify-center py-4">
+                  <Loader2 className="w-6 h-6 animate-spin" />
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {paidPlans.map((plan, index) => (
+                    <button
+                      key={plan.id}
+                      onClick={() => handleSubscribe(plan)}
+                      disabled={!!loading}
+                      className={cn(
+                        "w-full p-4 rounded-xl border-2 text-left transition-all relative",
+                        "hover:border-primary hover:bg-primary/5",
+                        loading === plan.id && "border-primary bg-primary/5",
+                        index === 1 && "border-accent"
                       )}
-                    </div>
-                  </div>
-                </button>
+                    >
+                      {index === 1 && (
+                        <div className="absolute -top-2 right-4 bg-accent text-accent-foreground text-xs px-2 py-0.5 rounded-full font-medium">
+                          {language === 'ne' ? '२ महिना बचत!' : 'Save 2 months!'}
+                        </div>
+                      )}
+                      <div className="flex justify-between items-center">
+                        <div>
+                          <span className="font-semibold">
+                            {language === 'ne' && plan.name_ne ? plan.name_ne : plan.name}
+                          </span>
+                          <p className="text-sm text-muted-foreground">
+                            {plan.plan_type === 'yearly' 
+                              ? (language === 'ne' ? 'प्रति वर्ष' : 'per year')
+                              : (language === 'ne' ? 'प्रति महिना' : 'per month')}
+                          </p>
+                        </div>
+                        <div className="text-right">
+                          {loading === plan.id ? (
+                            <Loader2 className="w-5 h-5 animate-spin" />
+                          ) : (
+                            <span className="font-bold text-lg">
+                              रू {plan.price}
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              )}
 
-                {/* Yearly */}
-                <button
-                  onClick={() => handleSubscribe('yearly')}
-                  disabled={!!loading}
-                  className={cn(
-                    "w-full p-4 rounded-xl border-2 text-left transition-all relative",
-                    "hover:border-accent hover:bg-accent/5",
-                    loading === 'yearly' && "border-accent bg-accent/5"
-                  )}
-                >
-                  <div className="absolute -top-2 right-4 bg-accent text-accent-foreground text-xs px-2 py-0.5 rounded-full font-medium">
-                    {language === 'ne' ? '२ महिना बचत!' : 'Save 2 months!'}
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <div>
-                      <span className="font-semibold">
-                        {SUBSCRIPTION_PLANS.yearly.nameNe} / {SUBSCRIPTION_PLANS.yearly.name}
-                      </span>
-                      <p className="text-sm text-muted-foreground">
-                        {language === 'ne' ? 'प्रति वर्ष' : 'per year'}
-                      </p>
-                    </div>
-                    <div className="text-right">
-                      {loading === 'yearly' ? (
-                        <Loader2 className="w-5 h-5 animate-spin" />
-                      ) : (
-                        <span className="font-bold text-lg">
-                          रू {SUBSCRIPTION_PLANS.yearly.price}
-                        </span>
-                      )}
-                    </div>
-                  </div>
-                </button>
+              {/* eSewa branding */}
+              <div className="flex items-center justify-center gap-2 mt-6 text-sm text-muted-foreground">
+                <Smartphone className="w-4 h-4" />
+                <span>
+                  {language === 'ne' 
+                    ? 'eSewa मार्फत सुरक्षित भुक्तानी'
+                    : 'Secure payment via eSewa'}
+                </span>
               </div>
 
-              <p className="text-xs text-center text-muted-foreground mt-4">
+              <p className="text-xs text-center text-muted-foreground mt-2">
                 {language === 'ne' 
-                  ? 'जुनसुकै बेला रद्द गर्न सकिन्छ। सुरक्षित Stripe भुक्तानी।'
-                  : 'Cancel anytime. Secure Stripe payment.'}
+                  ? 'जुनसुकै बेला रद्द गर्न सकिन्छ।'
+                  : 'Cancel anytime.'}
               </p>
             </div>
           </motion.div>

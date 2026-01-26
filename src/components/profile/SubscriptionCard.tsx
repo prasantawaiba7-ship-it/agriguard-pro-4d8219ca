@@ -1,13 +1,12 @@
 import { useState } from 'react';
-import { Crown, Calendar, MessageSquare, Loader2, ExternalLink, Settings } from 'lucide-react';
+import { Crown, Calendar, MessageSquare, Loader2, Settings } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
-import { useSubscription, SUBSCRIPTION_PLANS } from '@/hooks/useSubscription';
+import { useSubscription } from '@/hooks/useSubscription';
 import { useLanguage } from '@/hooks/useLanguage';
 import { SubscriptionModal } from '@/components/subscription/SubscriptionModal';
-import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { format } from 'date-fns';
 
@@ -22,11 +21,10 @@ export const SubscriptionCard = () => {
     queries_limit,
     loading,
     checkSubscription,
-    startCheckout
+    plans
   } = useSubscription();
   const [showModal, setShowModal] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
-  const [openingPortal, setOpeningPortal] = useState(false);
 
   const isNepali = language === 'ne';
 
@@ -36,24 +34,10 @@ export const SubscriptionCard = () => {
     setRefreshing(false);
   };
 
-  const handleOpenPortal = async () => {
-    setOpeningPortal(true);
-    try {
-      const { data, error } = await supabase.functions.invoke('customer-portal');
-      if (error) throw error;
-      if (data?.url) {
-        window.open(data.url, '_blank');
-      }
-    } catch (error) {
-      console.error('Error opening customer portal:', error);
-      toast({
-        title: isNepali ? 'त्रुटि' : 'Error',
-        description: isNepali ? 'पोर्टल खोल्न सकिएन' : 'Could not open portal',
-        variant: 'destructive',
-      });
-    } finally {
-      setOpeningPortal(false);
-    }
+  // Get price from plans
+  const getPrice = (planType: string) => {
+    const planData = plans.find(p => p.plan_type === planType);
+    return planData?.price || 0;
   };
 
   const getPlanDisplay = () => {
@@ -61,14 +45,14 @@ export const SubscriptionCard = () => {
       return {
         name: isNepali ? 'मासिक प्रीमियम' : 'Monthly Premium',
         badge: 'bg-gradient-to-r from-amber-500 to-orange-500',
-        price: `रु. ${SUBSCRIPTION_PLANS.monthly.price}/महिना`
+        price: `रु. ${getPrice('monthly')}/महिना`
       };
     }
     if (plan === 'yearly') {
       return {
         name: isNepali ? 'वार्षिक प्रीमियम' : 'Yearly Premium',
         badge: 'bg-gradient-to-r from-purple-500 to-indigo-500',
-        price: `रु. ${SUBSCRIPTION_PLANS.yearly.price}/वर्ष`
+        price: `रु. ${getPrice('yearly')}/वर्ष`
       };
     }
     return {
@@ -189,27 +173,12 @@ export const SubscriptionCard = () => {
             </Button>
           )}
 
-          {/* Manage Subscription for Premium */}
+          {/* Manage Subscription for Premium - simplified for eSewa */}
           {subscribed && (
-            <div className="space-y-2">
-              <Button
-                variant="outline"
-                className="w-full"
-                onClick={handleOpenPortal}
-                disabled={openingPortal}
-              >
-                {openingPortal ? (
-                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                ) : (
-                  <Settings className="w-4 h-4 mr-2" />
-                )}
-                {isNepali ? 'सदस्यता व्यवस्थापन' : 'Manage Subscription'}
-              </Button>
-              <p className="text-xs text-center text-muted-foreground">
-                {isNepali 
-                  ? 'रद्द गर्नुहोस्, भुक्तानी विधि बदल्नुहोस्'
-                  : 'Cancel, change payment method'}
-              </p>
+            <div className="text-center text-sm text-muted-foreground">
+              {isNepali 
+                ? 'तपाईंको सदस्यता सक्रिय छ'
+                : 'Your subscription is active'}
             </div>
           )}
         </CardContent>
@@ -218,7 +187,6 @@ export const SubscriptionCard = () => {
       <SubscriptionModal
         isOpen={showModal}
         onClose={() => setShowModal(false)}
-        onSubscribe={startCheckout}
         queriesUsed={queries_used}
         queriesLimit={queries_limit}
       />

@@ -211,7 +211,7 @@ export function OnScreenAssistant({ isFullScreen: isEmbeddedFullScreen = false, 
     }
   }, [profile, language, saveDiseaseDetection, toast]);
   
-  const { can_query, queries_used, queries_limit, subscribed, plan, incrementQueryCount, startCheckout, loading: subLoading } = useSubscription();
+  const { can_query, queries_used, queries_limit, subscribed, plan, incrementQueryCount, loading: subLoading } = useSubscription();
 
   // Faster TTS rate for quicker responses
   const { speak, stop, isSpeaking, isSupported: ttsSupported } = useTextToSpeech({
@@ -1388,7 +1388,6 @@ export function OnScreenAssistant({ isFullScreen: isEmbeddedFullScreen = false, 
         <SubscriptionModal
           isOpen={showSubscriptionModal}
           onClose={() => setShowSubscriptionModal(false)}
-          onSubscribe={startCheckout}
           queriesUsed={queries_used}
           queriesLimit={queries_limit}
         />
@@ -1973,7 +1972,6 @@ export function OnScreenAssistant({ isFullScreen: isEmbeddedFullScreen = false, 
       <SubscriptionModal
         isOpen={showSubscriptionModal}
         onClose={() => setShowSubscriptionModal(false)}
-        onSubscribe={startCheckout}
         queriesUsed={queries_used}
         queriesLimit={queries_limit}
       />

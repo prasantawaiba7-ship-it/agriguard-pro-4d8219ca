@@ -1,7 +1,7 @@
-import { useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useEffect, useState } from 'react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { CheckCircle, Sparkles, ArrowRight } from 'lucide-react';
+import { CheckCircle, Sparkles, ArrowRight, Loader2, XCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { useLanguage } from '@/hooks/useLanguage';
@@ -9,15 +9,82 @@ import { useSubscription } from '@/hooks/useSubscription';
 
 const PaymentSuccess = () => {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const { language } = useLanguage();
-  const { checkSubscription } = useSubscription();
+  const { verifyPayment, checkSubscription } = useSubscription();
+  const [verifying, setVerifying] = useState(true);
+  const [verified, setVerified] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    // Refresh subscription status after successful payment
-    checkSubscription();
-  }, [checkSubscription]);
+    const verifyEsewaPayment = async () => {
+      const transactionUuid = searchParams.get('transaction_uuid');
+      const data = searchParams.get('data'); // eSewa encoded response
+      
+      if (!transactionUuid) {
+        // No transaction UUID, just refresh subscription (might be Stripe redirect)
+        await checkSubscription();
+        setVerified(true);
+        setVerifying(false);
+        return;
+      }
+
+      try {
+        const result = await verifyPayment(transactionUuid, data || undefined);
+        if (result.success) {
+          setVerified(true);
+        } else {
+          setError(result.message || 'Payment verification failed');
+        }
+      } catch (err) {
+        console.error('Verification error:', err);
+        setError('Failed to verify payment');
+      } finally {
+        setVerifying(false);
+      }
+    };
+
+    verifyEsewaPayment();
+  }, [searchParams, verifyPayment, checkSubscription]);
 
   const isNepali = language === 'ne';
+
+  if (verifying) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-green-50 via-background to-primary/5 flex items-center justify-center p-4">
+        <Card className="w-full max-w-md">
+          <CardContent className="p-8 text-center">
+            <Loader2 className="w-12 h-12 mx-auto mb-4 animate-spin text-primary" />
+            <h2 className="text-xl font-semibold mb-2">
+              {isNepali ? 'भुक्तानी प्रमाणित गर्दै...' : 'Verifying Payment...'}
+            </h2>
+            <p className="text-muted-foreground">
+              {isNepali ? 'कृपया पर्खनुहोस्' : 'Please wait'}
+            </p>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-red-50 via-background to-destructive/5 flex items-center justify-center p-4">
+        <Card className="w-full max-w-md border-red-200">
+          <CardContent className="p-8 text-center">
+            <XCircle className="w-16 h-16 mx-auto mb-4 text-destructive" />
+            <h2 className="text-xl font-semibold mb-2 text-destructive">
+              {isNepali ? 'भुक्तानी असफल' : 'Payment Failed'}
+            </h2>
+            <p className="text-muted-foreground mb-6">{error}</p>
+            <Button onClick={() => navigate('/farmer/profile')} variant="outline">
+              {isNepali ? 'प्रोफाइलमा फर्कनुहोस्' : 'Back to Profile'}
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-green-50 via-background to-primary/5 flex items-center justify-center p-4">
