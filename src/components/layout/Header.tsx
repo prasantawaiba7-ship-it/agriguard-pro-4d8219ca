@@ -25,8 +25,6 @@ const Header = () => {
   // Build nav links based on user role
   const navLinks = [
     ...baseNavLinks,
-    // Show Authority Dashboard only to authority/admin users
-    ...(isAuthority() ? [{ href: "/authority", label: "Authority Dashboard" }] : []),
     // Show Admin only to admin users
     ...(isAdmin() ? [{ href: "/admin", label: "Admin" }] : []),
   ];
