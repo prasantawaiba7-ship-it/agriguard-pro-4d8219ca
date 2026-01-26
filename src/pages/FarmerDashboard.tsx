@@ -71,7 +71,17 @@ const cropStages: { value: CropStage; label: string }[] = [
 ];
 
 const FarmerDashboard = () => {
-  const [activeTab, setActiveTab] = useState<"plots" | "capture" | "history" | "offline" | "calendar" | "weather" | "treatments">("plots");
+  // Get tab from URL params
+  const getInitialTab = () => {
+    const params = new URLSearchParams(window.location.search);
+    const tab = params.get("tab");
+    if (tab && ["plots", "capture", "history", "offline", "calendar", "weather", "treatments"].includes(tab)) {
+      return tab as "plots" | "capture" | "history" | "offline" | "calendar" | "weather" | "treatments";
+    }
+    return "plots";
+  };
+  
+  const [activeTab, setActiveTab] = useState<"plots" | "capture" | "history" | "offline" | "calendar" | "weather" | "treatments">(getInitialTab());
   const [isAddPlotOpen, setIsAddPlotOpen] = useState(false);
   const [selectedPlot, setSelectedPlot] = useState<string>("");
   const [selectedStage, setSelectedStage] = useState<CropStage>("vegetative");

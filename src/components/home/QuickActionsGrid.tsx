@@ -1,6 +1,6 @@
 import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
-import { Camera, Cloud, Mountain, Store, Bot } from "lucide-react";
+import { Camera, Cloud, Mountain, Store, Bot, MapPin, Stethoscope, Calendar } from "lucide-react";
 
 const quickActions = [
   {
@@ -15,7 +15,7 @@ const quickActions = [
     icon: Cloud,
     label: "मौसम",
     sublabel: "आजको मौसम हेर्ने",
-    href: "/farmer",
+    href: "/farmer?tab=weather",
     gradient: "from-blue-500 to-cyan-500",
     bgGradient: "from-blue-500/15 to-cyan-500/10",
   },
@@ -23,7 +23,7 @@ const quickActions = [
     icon: Mountain,
     label: "खेत/बाली",
     sublabel: "मेरो खेत व्यवस्थापन",
-    href: "/fields",
+    href: "/farmer?tab=plots",
     gradient: "from-green-500 to-emerald-500",
     bgGradient: "from-green-500/15 to-emerald-500/10",
   },
@@ -42,6 +42,30 @@ const quickActions = [
     href: "/krishi-mitra",
     gradient: "from-primary to-secondary",
     bgGradient: "from-primary/15 to-secondary/10",
+  },
+  {
+    icon: MapPin,
+    label: "Plot",
+    sublabel: "मेरो प्लट हेर्ने",
+    href: "/farmer?tab=plots",
+    gradient: "from-teal-500 to-green-500",
+    bgGradient: "from-teal-500/15 to-green-500/10",
+  },
+  {
+    icon: Stethoscope,
+    label: "उपचार",
+    sublabel: "औषधि र उपचार",
+    href: "/farmer?tab=treatments",
+    gradient: "from-pink-500 to-rose-500",
+    bgGradient: "from-pink-500/15 to-rose-500/10",
+  },
+  {
+    icon: Calendar,
+    label: "पात्रो",
+    sublabel: "बाली क्यालेन्डर",
+    href: "/farmer?tab=calendar",
+    gradient: "from-amber-500 to-yellow-500",
+    bgGradient: "from-amber-500/15 to-yellow-500/10",
   },
 ];
 
@@ -63,14 +87,14 @@ const QuickActionsGrid = () => {
           </p>
         </motion.div>
 
-        {/* 2 columns on mobile, 3 on tablet, 5 on desktop */}
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 sm:gap-4 max-w-4xl mx-auto">
+        {/* 2 columns on mobile, 4 on tablet, 4 on desktop */}
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4 max-w-4xl mx-auto">
           {quickActions.map((action, index) => (
             <motion.div
               key={action.label}
               initial={{ opacity: 0, scale: 0.9 }}
               animate={{ opacity: 1, scale: 1 }}
-              transition={{ duration: 0.4, delay: index * 0.08 }}
+              transition={{ duration: 0.4, delay: index * 0.05 }}
             >
               <Link to={action.href}>
                 <div

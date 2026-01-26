@@ -1,7 +1,7 @@
 import { useAuth } from "@/hooks/useAuth";
 import { useNavigate, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { User, LogOut, Settings, Crown, Home, Leaf } from "lucide-react";
+import { User, LogOut, Settings, Crown, Home } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -19,7 +19,13 @@ export function UserBar() {
   if (!user || location.pathname === "/" || location.pathname === "/auth") return null;
 
   const displayName = profile?.full_name || user.email?.split("@")[0] || "User";
-  const displayEmail = user.email || profile?.phone || "";
+
+  // Handle user name click - navigate to profile without adding to history stack
+  const handleProfileClick = () => {
+    if (location.pathname !== "/farmer/profile") {
+      navigate("/farmer/profile");
+    }
+  };
 
   return (
     <div className="fixed bottom-0 left-0 right-0 z-50 bg-background/80 backdrop-blur-sm border-t border-border/50">
@@ -27,7 +33,7 @@ export function UserBar() {
         {/* LEFT: User name */}
         <div 
           className="flex items-center gap-2 cursor-pointer hover:opacity-80 transition-opacity"
-          onClick={() => navigate("/farmer/profile")}
+          onClick={handleProfileClick}
         >
           <div className="w-6 h-6 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0 overflow-hidden">
             {profile?.avatar_url ? (
@@ -53,10 +59,6 @@ export function UserBar() {
             <DropdownMenuItem onClick={() => navigate("/farmer")}>
               <Home className="w-4 h-4 mr-2" />
               ड्यासबोर्ड
-            </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => navigate("/farmer/profile")}>
-              <User className="w-4 h-4 mr-2" />
-              प्रोफाइल
             </DropdownMenuItem>
             <DropdownMenuItem onClick={() => navigate("/subscription")}>
               <Crown className="w-4 h-4 mr-2" />
