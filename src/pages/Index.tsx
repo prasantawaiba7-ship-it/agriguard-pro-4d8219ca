@@ -1,6 +1,7 @@
 import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
 import HeroSection from "@/components/home/HeroSection";
+import QuickActionsGrid from "@/components/home/QuickActionsGrid";
 import FeaturesSection from "@/components/home/FeaturesSection";
 import HowItWorksSection from "@/components/home/HowItWorksSection";
 import CTASection from "@/components/home/CTASection";
@@ -10,16 +11,17 @@ const Index = () => {
   return (
     <>
       <Helmet>
-        <title>Farmer Gpt - AI-Powered Farming Assistant</title>
+        <title>HUNCHA – किसान साथी | AI-Powered Farming Assistant</title>
         <meta
           name="description"
-          content="Farmer Gpt helps farmers with AI-powered crop disease detection, weather advisories, and personalized farming recommendations in Nepali and English."
+          content="HUNCHA किसान साथी helps Nepali farmers with AI-powered crop disease detection, weather advisories, market prices, and personalized farming recommendations."
         />
       </Helmet>
       <div className="min-h-screen bg-background">
         <Header />
         <main>
           <HeroSection />
+          <QuickActionsGrid />
           <FeaturesSection />
           <HowItWorksSection />
           <CTASection />
