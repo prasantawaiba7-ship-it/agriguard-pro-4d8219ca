@@ -656,6 +656,60 @@ export type Database = {
         }
         Relationships: []
       }
+      daily_market_products: {
+        Row: {
+          created_at: string
+          crop_name: string
+          crop_name_ne: string | null
+          date: string
+          district: string | null
+          id: string
+          image_url: string | null
+          market_name: string | null
+          market_name_ne: string | null
+          price_avg: number | null
+          price_max: number | null
+          price_min: number | null
+          source: string | null
+          unit: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          crop_name: string
+          crop_name_ne?: string | null
+          date?: string
+          district?: string | null
+          id?: string
+          image_url?: string | null
+          market_name?: string | null
+          market_name_ne?: string | null
+          price_avg?: number | null
+          price_max?: number | null
+          price_min?: number | null
+          source?: string | null
+          unit?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          crop_name?: string
+          crop_name_ne?: string | null
+          date?: string
+          district?: string | null
+          id?: string
+          image_url?: string | null
+          market_name?: string | null
+          market_name_ne?: string | null
+          price_avg?: number | null
+          price_max?: number | null
+          price_min?: number | null
+          source?: string | null
+          unit?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       disease_detections: {
         Row: {
           analyzed_at: string

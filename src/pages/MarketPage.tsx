@@ -4,6 +4,7 @@ import Header from '@/components/layout/Header';
 import Footer from '@/components/layout/Footer';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ProduceListingsManager } from '@/components/market/ProduceListingsManager';
+import { DailyMarketSection } from '@/components/market/DailyMarketSection';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -157,15 +158,17 @@ const MarketPage = () => {
 
               {/* Prices Tab - Market Price Reference */}
               <TabsContent value="prices">
-                <div className="space-y-4">
-                  <Card className="bg-primary/5 border-primary/20">
-                    <CardContent className="p-3 sm:p-4">
-                      <h3 className="font-semibold mb-1 text-sm sm:text-base">आजको बजार मूल्य</h3>
-                      <p className="text-xs sm:text-sm text-muted-foreground">
-                        नजिकको हाट/मण्डीको अनुमानित मूल्य
-                      </p>
-                    </CardContent>
-                  </Card>
+                <div className="space-y-8">
+                  {/* Daily Market Products Section */}
+                  <DailyMarketSection />
+
+                  {/* Divider */}
+                  <div className="border-t pt-8">
+                    <h3 className="font-semibold mb-4 text-lg flex items-center gap-2">
+                      <BarChart3 className="h-5 w-5 text-primary" />
+                      बाली अनुसार मूल्य सूची
+                    </h3>
+                  </div>
 
                   {pricesLoading ? (
                     <div className="flex items-center justify-center p-12">
