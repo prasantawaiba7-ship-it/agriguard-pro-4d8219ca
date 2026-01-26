@@ -34,7 +34,7 @@ const Auth = () => {
 
   useEffect(() => {
     if (user) {
-      navigate('/farmer');
+      navigate('/krishi-mitra');
     }
   }, [user, navigate]);
 
