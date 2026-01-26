@@ -1,6 +1,6 @@
 import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
-import { Camera, Cloud, Leaf, Store } from "lucide-react";
+import { Camera, Cloud, Leaf, Store, Mountain, Crown } from "lucide-react";
 
 const quickActions = [
   {
@@ -20,10 +20,10 @@ const quickActions = [
     bgGradient: "from-blue-500/20 to-cyan-500/10",
   },
   {
-    icon: Leaf,
+    icon: Mountain,
     label: "खेत/बाली",
-    sublabel: "Field & Crops",
-    href: "/activities",
+    sublabel: "My Fields",
+    href: "/fields",
     gradient: "from-green-500 to-emerald-500",
     bgGradient: "from-green-500/20 to-emerald-500/10",
   },

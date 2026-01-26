@@ -1,6 +1,6 @@
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Leaf, Menu, X, LogIn, User, Shield, Camera, Cloud, Store } from "lucide-react";
+import { Leaf, Menu, X, LogIn, User, Shield, Camera, Cloud, Store, Mountain, Crown } from "lucide-react";
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useAuth } from "@/hooks/useAuth";
@@ -16,9 +16,10 @@ const Header = () => {
   // Simplified nav links for mobile-first design
   const navLinks = [
     { href: "/disease-detection", label: "रोग पहिचान", icon: Camera },
-    { href: "/farmer", label: "मेरो खेत", icon: Leaf },
+    { href: "/fields", label: "मेरो खेत", icon: Mountain },
     { href: "/market", label: "बजार", icon: Store },
     { href: "/krishi-mitra", label: "AI सहायक", icon: Cloud },
+    { href: "/subscription", label: "सदस्यता", icon: Crown },
     // Show Admin only to admin users
     ...(isAdmin() ? [{ href: "/admin", label: "Admin", icon: Shield }] : []),
   ];

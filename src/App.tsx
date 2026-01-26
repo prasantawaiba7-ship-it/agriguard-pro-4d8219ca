@@ -25,6 +25,8 @@ import TreatmentLibrary from "./pages/TreatmentLibrary";
 import MarketPage from "./pages/MarketPage";
 import CropGuidesPage from "./pages/CropGuidesPage";
 import CropActivitiesPage from "./pages/CropActivitiesPage";
+import FieldsPage from "./pages/FieldsPage";
+import SubscriptionPage from "./pages/SubscriptionPage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -57,6 +59,8 @@ const App = () => (
                 <Route path="/market" element={<MarketPage />} />
                 <Route path="/guides" element={<CropGuidesPage />} />
                 <Route path="/activities" element={<CropActivitiesPage />} />
+                <Route path="/fields" element={<FieldsPage />} />
+                <Route path="/subscription" element={<SubscriptionPage />} />
                 {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
                 <Route path="*" element={<NotFound />} />
               </Routes>

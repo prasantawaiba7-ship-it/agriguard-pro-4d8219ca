@@ -316,6 +316,7 @@ export type Database = {
           cost_npr: number | null
           created_at: string
           crop_name: string
+          crop_season_id: string | null
           id: string
           notes: string | null
           plot_id: string | null
@@ -327,6 +328,7 @@ export type Database = {
           cost_npr?: number | null
           created_at?: string
           crop_name: string
+          crop_season_id?: string | null
           id?: string
           notes?: string | null
           plot_id?: string | null
@@ -338,12 +340,20 @@ export type Database = {
           cost_npr?: number | null
           created_at?: string
           crop_name?: string
+          crop_season_id?: string | null
           id?: string
           notes?: string | null
           plot_id?: string | null
           user_id?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "crop_activities_crop_season_id_fkey"
+            columns: ["crop_season_id"]
+            isOneToOne: false
+            referencedRelation: "crop_seasons"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "crop_activities_plot_id_fkey"
             columns: ["plot_id"]
@@ -508,6 +518,62 @@ export type Database = {
             columns: ["plot_id"]
             isOneToOne: false
             referencedRelation: "plots"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      crop_seasons: {
+        Row: {
+          actual_yield: number | null
+          created_at: string
+          crop_name: string
+          expected_yield: number | null
+          field_id: string
+          id: string
+          is_active: boolean
+          notes: string | null
+          season_end_date: string | null
+          season_start_date: string
+          updated_at: string
+          user_id: string
+          variety: string | null
+        }
+        Insert: {
+          actual_yield?: number | null
+          created_at?: string
+          crop_name: string
+          expected_yield?: number | null
+          field_id: string
+          id?: string
+          is_active?: boolean
+          notes?: string | null
+          season_end_date?: string | null
+          season_start_date?: string
+          updated_at?: string
+          user_id: string
+          variety?: string | null
+        }
+        Update: {
+          actual_yield?: number | null
+          created_at?: string
+          crop_name?: string
+          expected_yield?: number | null
+          field_id?: string
+          id?: string
+          is_active?: boolean
+          notes?: string | null
+          season_end_date?: string | null
+          season_start_date?: string
+          updated_at?: string
+          user_id?: string
+          variety?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "crop_seasons_field_id_fkey"
+            columns: ["field_id"]
+            isOneToOne: false
+            referencedRelation: "fields"
             referencedColumns: ["id"]
           },
         ]
@@ -1585,6 +1651,42 @@ export type Database = {
           id?: string
           preferred_time?: string | null
           updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      weather_alerts: {
+        Row: {
+          alert_type: string
+          created_at: string
+          date_sent: string
+          id: string
+          is_read: boolean
+          message: string
+          severity: string
+          title: string
+          user_id: string
+        }
+        Insert: {
+          alert_type: string
+          created_at?: string
+          date_sent?: string
+          id?: string
+          is_read?: boolean
+          message: string
+          severity?: string
+          title: string
+          user_id: string
+        }
+        Update: {
+          alert_type?: string
+          created_at?: string
+          date_sent?: string
+          id?: string
+          is_read?: boolean
+          message?: string
+          severity?: string
+          title?: string
           user_id?: string
         }
         Relationships: []
