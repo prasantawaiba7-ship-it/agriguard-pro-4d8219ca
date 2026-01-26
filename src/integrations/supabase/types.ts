@@ -883,6 +883,53 @@ export type Database = {
           },
         ]
       }
+      payments: {
+        Row: {
+          amount_npr: number
+          created_at: string
+          esewa_ref_id: string | null
+          id: string
+          plan_id: string | null
+          raw_payload: Json | null
+          status: string
+          transaction_uuid: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          amount_npr: number
+          created_at?: string
+          esewa_ref_id?: string | null
+          id?: string
+          plan_id?: string | null
+          raw_payload?: Json | null
+          status?: string
+          transaction_uuid: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          amount_npr?: number
+          created_at?: string
+          esewa_ref_id?: string | null
+          id?: string
+          plan_id?: string | null
+          raw_payload?: Json | null
+          status?: string
+          transaction_uuid?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "payments_plan_id_fkey"
+            columns: ["plan_id"]
+            isOneToOne: false
+            referencedRelation: "subscription_plans"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       pdf_reports: {
         Row: {
           created_at: string
@@ -1072,6 +1119,7 @@ export type Database = {
           description: string | null
           description_ne: string | null
           display_order: number
+          esewa_product_code: string | null
           features: Json | null
           id: string
           is_active: boolean
@@ -1081,8 +1129,6 @@ export type Database = {
           pdf_report_limit: number | null
           plan_type: string
           price: number
-          stripe_price_id: string | null
-          stripe_product_id: string | null
           updated_at: string
         }
         Insert: {
@@ -1092,6 +1138,7 @@ export type Database = {
           description?: string | null
           description_ne?: string | null
           display_order?: number
+          esewa_product_code?: string | null
           features?: Json | null
           id?: string
           is_active?: boolean
@@ -1101,8 +1148,6 @@ export type Database = {
           pdf_report_limit?: number | null
           plan_type: string
           price?: number
-          stripe_price_id?: string | null
-          stripe_product_id?: string | null
           updated_at?: string
         }
         Update: {
@@ -1112,6 +1157,7 @@ export type Database = {
           description?: string | null
           description_ne?: string | null
           display_order?: number
+          esewa_product_code?: string | null
           features?: Json | null
           id?: string
           is_active?: boolean
@@ -1121,8 +1167,6 @@ export type Database = {
           pdf_report_limit?: number | null
           plan_type?: string
           price?: number
-          stripe_price_id?: string | null
-          stripe_product_id?: string | null
           updated_at?: string
         }
         Relationships: []
