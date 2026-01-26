@@ -1,7 +1,7 @@
 import { useAuth } from "@/hooks/useAuth";
 import { useNavigate, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { User, LogOut, Settings, Crown } from "lucide-react";
+import { User, LogOut, Settings, Crown, Home } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -15,8 +15,8 @@ export function UserBar() {
   const navigate = useNavigate();
   const location = useLocation();
 
-  // Hide on home page
-  if (!user || location.pathname === "/") return null;
+  // Hide on home page and auth page
+  if (!user || location.pathname === "/" || location.pathname === "/auth") return null;
 
   const displayName = profile?.full_name || user.email?.split("@")[0] || "User";
   const displayEmail = user.email || profile?.phone || "";
@@ -29,44 +29,50 @@ export function UserBar() {
           className="flex items-center gap-2 cursor-pointer hover:opacity-80 transition-opacity"
           onClick={() => navigate("/farmer/profile")}
         >
-          <div className="w-6 h-6 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0 overflow-hidden">
+          <div className="w-7 h-7 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0 overflow-hidden">
             {profile?.avatar_url ? (
               <img src={profile.avatar_url} alt="" className="w-full h-full object-cover" />
             ) : (
-              <User className="w-3.5 h-3.5 text-primary" />
+              <User className="w-4 h-4 text-primary" />
             )}
           </div>
-          <div className="text-xs sm:text-sm text-muted-foreground truncate">
+          <div className="text-xs sm:text-sm truncate">
             <span className="font-medium text-foreground">{displayName}</span>
             {displayEmail && (
-              <span className="hidden sm:inline"> ({displayEmail})</span>
+              <span className="hidden sm:inline text-muted-foreground"> ({displayEmail})</span>
             )}
           </div>
         </div>
 
-        {/* Right: Actions menu */}
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="ghost" size="sm" className="h-8 px-2">
-              <Settings className="w-4 h-4" />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="w-48">
-            <DropdownMenuItem onClick={() => navigate("/farmer/profile")}>
-              <User className="w-4 h-4 mr-2" />
-              प्रोफाइल
-            </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => navigate("/subscription")}>
-              <Crown className="w-4 h-4 mr-2" />
-              सदस्यता
-            </DropdownMenuItem>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem onClick={signOut} className="text-destructive">
-              <LogOut className="w-4 h-4 mr-2" />
-              लग आउट
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
+        {/* Right: Actions */}
+        <div className="flex items-center gap-1">
+          <Button variant="ghost" size="sm" className="h-8 px-2" onClick={() => navigate("/farmer")}>
+            <Home className="w-4 h-4" />
+          </Button>
+          
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" size="sm" className="h-8 px-2">
+                <Settings className="w-4 h-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-48 bg-popover">
+              <DropdownMenuItem onClick={() => navigate("/farmer/profile")}>
+                <User className="w-4 h-4 mr-2" />
+                प्रोफाइल
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => navigate("/subscription")}>
+                <Crown className="w-4 h-4 mr-2" />
+                सदस्यता
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem onClick={signOut} className="text-destructive">
+                <LogOut className="w-4 h-4 mr-2" />
+                लग आउट
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
       </div>
     </div>
   );
