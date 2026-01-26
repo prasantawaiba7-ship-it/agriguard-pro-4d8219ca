@@ -3,14 +3,17 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
 import { useCropGuides, CropGuide, GuideSection, SECTION_LABELS } from '@/hooks/useCropGuides';
 import { useLanguage } from '@/hooks/useLanguage';
 import { useCrops } from '@/hooks/useCrops';
 import { useIsMobile } from '@/hooks/use-mobile';
-import { BookOpen, ChevronLeft, Search, Leaf, Loader2, ChevronDown, ChevronUp } from 'lucide-react';
+import { supabase } from '@/integrations/supabase/client';
+import { BookOpen, ChevronLeft, Search, Leaf, Loader2, ChevronDown, ChevronUp, Sparkles, MessageSquare } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
+import { toast } from 'sonner';
 
 export function CropGuidesViewer() {
   const { language } = useLanguage();
@@ -22,6 +25,12 @@ export function CropGuidesViewer() {
   const [activeSection, setActiveSection] = useState<GuideSection | null>(null);
   const [expandedSections, setExpandedSections] = useState<Set<string>>(new Set());
   const guideContentRef = useRef<HTMLDivElement>(null);
+  
+  // AI Summary state
+  const [farmerQuestion, setFarmerQuestion] = useState('');
+  const [aiSummary, setAiSummary] = useState<string | null>(null);
+  const [isGeneratingSummary, setIsGeneratingSummary] = useState(false);
+  const [showQueryForm, setShowQueryForm] = useState(false);
 
   const filteredGuides = selectedCrop 
     ? guides.filter(g => g.crop_name === selectedCrop)
@@ -79,6 +88,13 @@ export function CropGuidesViewer() {
     }
   }, [selectedCrop]);
 
+  // Auto-generate summary when crop is selected
+  useEffect(() => {
+    if (selectedCrop && filteredGuides.length > 0) {
+      generateAISummary();
+    }
+  }, [selectedCrop]);
+
   // Toggle section expansion for mobile accordion
   const toggleSection = (section: string) => {
     const newExpanded = new Set(expandedSections);
@@ -88,6 +104,44 @@ export function CropGuidesViewer() {
       newExpanded.add(section);
     }
     setExpandedSections(newExpanded);
+  };
+
+  // Generate AI Summary
+  const generateAISummary = async (customQuestion?: string) => {
+    if (!selectedCrop) return;
+    
+    setIsGeneratingSummary(true);
+    setAiSummary(null);
+    
+    try {
+      const { data, error } = await supabase.functions.invoke('guide-query', {
+        body: {
+          crop_name: selectedCrop,
+          question: customQuestion || farmerQuestion || null,
+          language: language
+        }
+      });
+
+      if (error) throw error;
+      
+      if (data?.summary) {
+        setAiSummary(data.summary);
+      } else if (data?.error) {
+        console.warn('Guide query warning:', data.error);
+      }
+    } catch (err) {
+      console.error('Failed to generate summary:', err);
+      toast.error(language === 'ne' ? 'सारांश बनाउन असफल' : 'Failed to generate summary');
+    } finally {
+      setIsGeneratingSummary(false);
+    }
+  };
+
+  const handleAskQuestion = () => {
+    if (farmerQuestion.trim()) {
+      generateAISummary(farmerQuestion.trim());
+      setShowQueryForm(false);
+    }
   };
 
   if (isLoading) {
@@ -180,6 +234,8 @@ export function CropGuidesViewer() {
                       setSelectedCrop(crop);
                       setActiveSection(null);
                       setExpandedSections(new Set());
+                      setAiSummary(null);
+                      setFarmerQuestion('');
                     }}
                   >
                     {/* Image or Emoji Header */}
@@ -237,7 +293,11 @@ export function CropGuidesViewer() {
         <Button 
           variant="ghost" 
           size="sm" 
-          onClick={() => setSelectedCrop(null)}
+          onClick={() => {
+            setSelectedCrop(null);
+            setAiSummary(null);
+            setFarmerQuestion('');
+          }}
           className="self-start -ml-2 h-10 px-3 touch-manipulation"
         >
           <ChevronLeft className="h-4 w-4 mr-1" />
@@ -264,6 +324,80 @@ export function CropGuidesViewer() {
           </div>
         </div>
       </div>
+
+      {/* AI Summary Section */}
+      <Card className="border-primary/20 bg-gradient-to-br from-primary/5 to-background">
+        <CardContent className="p-4 md:p-5">
+          <div className="flex items-center gap-2 mb-3">
+            <div className="w-8 h-8 rounded-lg bg-primary/20 flex items-center justify-center">
+              <Sparkles className="h-4 w-4 text-primary" />
+            </div>
+            <h3 className="font-semibold text-sm md:text-base">
+              {language === 'ne' ? 'AI सारांश' : 'AI Summary'}
+            </h3>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setShowQueryForm(!showQueryForm)}
+              className="ml-auto h-8 px-2"
+            >
+              <MessageSquare className="h-4 w-4 mr-1" />
+              <span className="text-xs">{language === 'ne' ? 'प्रश्न सोध्नुहोस्' : 'Ask'}</span>
+            </Button>
+          </div>
+
+          {/* Query Form */}
+          <AnimatePresence>
+            {showQueryForm && (
+              <motion.div
+                initial={{ height: 0, opacity: 0 }}
+                animate={{ height: 'auto', opacity: 1 }}
+                exit={{ height: 0, opacity: 0 }}
+                className="overflow-hidden mb-3"
+              >
+                <div className="flex gap-2">
+                  <Textarea
+                    placeholder={language === 'ne' ? 'तपाईंको प्रश्न लेख्नुहोस्... (जस्तै: पात पहेंलो भयो के गर्ने?)' : 'Type your question...'}
+                    value={farmerQuestion}
+                    onChange={(e) => setFarmerQuestion(e.target.value)}
+                    className="min-h-[60px] text-sm resize-none"
+                  />
+                  <Button 
+                    onClick={handleAskQuestion} 
+                    disabled={!farmerQuestion.trim() || isGeneratingSummary}
+                    className="self-end"
+                    size="sm"
+                  >
+                    {isGeneratingSummary ? <Loader2 className="h-4 w-4 animate-spin" /> : language === 'ne' ? 'पठाउनुहोस्' : 'Send'}
+                  </Button>
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+
+          {/* Summary Content */}
+          {isGeneratingSummary ? (
+            <div className="flex items-center gap-3 py-4">
+              <Loader2 className="h-5 w-5 animate-spin text-primary" />
+              <span className="text-sm text-muted-foreground">
+                {language === 'ne' ? 'सारांश तयार पार्दै...' : 'Generating summary...'}
+              </span>
+            </div>
+          ) : aiSummary ? (
+            <div className="prose prose-sm max-w-none text-foreground">
+              <div className="whitespace-pre-line text-sm md:text-base leading-relaxed">
+                {aiSummary}
+              </div>
+            </div>
+          ) : (
+            <p className="text-sm text-muted-foreground py-2">
+              {language === 'ne' 
+                ? 'तलको गाइड हेर्नुहोस् वा माथिको प्रश्न बटन थिचेर आफ्नो प्रश्न सोध्नुहोस्।' 
+                : 'View the guide below or ask a specific question above.'}
+            </p>
+          )}
+        </CardContent>
+      </Card>
 
       {filteredGuides.length === 0 ? (
         <Card>
@@ -413,7 +547,7 @@ export function CropGuidesViewer() {
                       </div>
                     </div>
 
-                    {/* Guide Steps - Grid on larger screens */}
+                    {/* Guide Steps */}
                     <div className="space-y-5 md:space-y-6">
                       {sectionGuides.map((guide, idx) => {
                         const { title, content } = getLocalizedContent(guide);

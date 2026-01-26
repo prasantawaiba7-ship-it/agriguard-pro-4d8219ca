@@ -32,3 +32,6 @@ verify_jwt = false
 
 [functions.update-daily-market]
 verify_jwt = false
+
+[functions.guide-query]
+verify_jwt = false
