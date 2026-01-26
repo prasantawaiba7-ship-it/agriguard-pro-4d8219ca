@@ -36,8 +36,7 @@ const Header = () => {
               <Leaf className="w-5 h-5 text-primary-foreground" />
             </div>
             <div className="flex flex-col">
-              <span className="font-bold text-lg sm:text-xl text-foreground leading-tight">HUNCHA</span>
-              <span className="text-[10px] sm:text-xs text-muted-foreground leading-none">किसान साथी</span>
+              <span className="font-bold text-lg sm:text-xl text-foreground leading-tight">Kisan Sathi</span>
             </div>
           </Link>
 

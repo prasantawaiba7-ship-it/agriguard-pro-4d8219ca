@@ -22,16 +22,11 @@ export function UserBar() {
   return (
     <div className="fixed bottom-0 left-0 right-0 z-50 bg-card/95 backdrop-blur-md border-t border-border shadow-lg">
       <div className="container mx-auto px-4 py-2 flex items-center justify-between gap-3">
-        {/* Left: App branding */}
+        {/* Left: User info */}
         <div 
           className="flex items-center gap-2 cursor-pointer hover:opacity-80 transition-opacity"
-          onClick={() => navigate("/")}
+          onClick={() => navigate("/farmer/profile")}
         >
-          <span className="text-sm font-semibold text-foreground">Kisan Sathi</span>
-        </div>
-
-        {/* Center: User info */}
-        <div className="flex-1 flex items-center justify-center gap-2 min-w-0">
           <div className="w-6 h-6 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0 overflow-hidden">
             {profile?.avatar_url ? (
               <img src={profile.avatar_url} alt="" className="w-full h-full object-cover" />

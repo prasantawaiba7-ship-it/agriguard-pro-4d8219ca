@@ -123,7 +123,7 @@ const FieldsPage = () => {
   return (
     <>
       <Helmet>
-        <title>मेरो खेत - HUNCHA</title>
+        <title>मेरो खेत - Kisan Sathi</title>
         <meta name="description" content="Manage your fields, crops, and soil tests" />
       </Helmet>
 

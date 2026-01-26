@@ -34,7 +34,7 @@ const HeroSection = () => {
             className="inline-flex items-center gap-2 px-4 py-2 rounded-full glass-card mb-6"
           >
             <Sparkles className="w-4 h-4 text-accent" />
-            <span className="text-sm font-medium text-foreground">HUNCHA – किसान साथी</span>
+            <span className="text-sm font-medium text-foreground">Kisan Sathi</span>
           </motion.div>
 
           {/* Main Heading */}

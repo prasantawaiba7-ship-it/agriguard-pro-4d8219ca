@@ -59,8 +59,8 @@ const SubscriptionPage = () => {
   return (
     <>
       <Helmet>
-        <title>सदस्यता - HUNCHA</title>
-        <meta name="description" content="Upgrade to HUNCHA Pro for unlimited features" />
+        <title>सदस्यता - Kisan Sathi</title>
+        <meta name="description" content="Upgrade to Kisan Sathi Pro for unlimited features" />
       </Helmet>
 
       <div className="min-h-screen bg-background">
@@ -72,7 +72,7 @@ const SubscriptionPage = () => {
             <div className="text-center mb-12">
               <h1 className="text-3xl font-bold mb-4 flex items-center justify-center gap-2">
                 <Crown className="h-8 w-8 text-primary" />
-                HUNCHA सदस्यता
+                Kisan Sathi सदस्यता
               </h1>
               <p className="text-muted-foreground max-w-2xl mx-auto">
                 Pro सदस्यता लिनुहोस् र सबै सुविधाहरूको पूर्ण पहुँच पाउनुहोस्।
