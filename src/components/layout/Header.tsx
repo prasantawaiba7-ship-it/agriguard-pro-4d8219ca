@@ -13,14 +13,13 @@ const Header = () => {
   const { user, profile } = useAuth();
   const { isAdmin } = useUserRole();
 
-  // Main navigation - clean 5 items + admin
+  // Main navigation - clean 4 items + admin (no home)
   const navLinks = [
-    { href: "/", label: "गृह", icon: Home, gradient: "from-emerald-500 to-green-600" },
-    { href: "/disease-detection", label: "रोग", icon: Camera, gradient: "from-red-500 to-orange-500" },
-    { href: "/fields", label: "खेत", icon: Mountain, gradient: "from-teal-500 to-cyan-500" },
-    { href: "/market", label: "बजार", icon: Store, gradient: "from-purple-500 to-pink-500" },
-    { href: "/krishi-mitra", label: "AI", icon: Bot, gradient: "from-blue-500 to-indigo-500" },
-    ...(isAdmin() ? [{ href: "/admin", label: "Admin", icon: Shield, gradient: "from-gray-600 to-gray-800" }] : []),
+    { href: "/disease-detection", label: "रोग", icon: Camera },
+    { href: "/fields", label: "खेत", icon: Mountain },
+    { href: "/market", label: "बजार", icon: Store },
+    { href: "/krishi-mitra", label: "AI", icon: Bot },
+    ...(isAdmin() ? [{ href: "/admin", label: "Admin", icon: Shield }] : []),
   ];
 
   const isActive = (path: string) => location.pathname === path;
@@ -50,7 +49,7 @@ const Header = () => {
                 <motion.div
                   className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium transition-all duration-300 ${
                     isActive(link.href)
-                      ? `bg-gradient-to-r ${link.gradient} text-white shadow-lg`
+                      ? "bg-primary text-primary-foreground shadow-md"
                       : "text-muted-foreground hover:text-foreground hover:bg-background"
                   }`}
                   whileHover={{ scale: 1.02 }}
@@ -119,14 +118,14 @@ const Header = () => {
                     onClick={() => setIsMenuOpen(false)}
                     className={`flex items-center gap-3 px-4 py-3 rounded-xl text-base font-medium transition-all ${
                       isActive(link.href)
-                        ? `bg-gradient-to-r ${link.gradient} text-white shadow-lg`
+                        ? "bg-primary text-primary-foreground shadow-md"
                         : "text-foreground hover:bg-muted"
                     }`}
                   >
                     <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${
                       isActive(link.href) 
-                        ? "bg-white/20" 
-                        : `bg-gradient-to-br ${link.gradient} text-white`
+                        ? "bg-primary-foreground/20" 
+                        : "bg-primary/10 text-primary"
                     }`}>
                       <link.icon className="w-5 h-5" />
                     </div>
