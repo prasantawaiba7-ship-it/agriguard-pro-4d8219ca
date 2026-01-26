@@ -1,6 +1,6 @@
 import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
-import { Camera, Cloud, Mountain, Store, Bot, MapPin, Stethoscope, Calendar } from "lucide-react";
+import { Camera, Cloud, Store, Bot, MapPin, Stethoscope, Calendar } from "lucide-react";
 
 const quickActions = [
   {
@@ -18,14 +18,6 @@ const quickActions = [
     href: "/farmer?tab=weather",
     gradient: "from-blue-500 to-cyan-500",
     bgGradient: "from-blue-500/15 to-cyan-500/10",
-  },
-  {
-    icon: Mountain,
-    label: "खेत/बाली",
-    sublabel: "मेरो खेत व्यवस्थापन",
-    href: "/farmer?tab=plots",
-    gradient: "from-green-500 to-emerald-500",
-    bgGradient: "from-green-500/15 to-emerald-500/10",
   },
   {
     icon: Store,
