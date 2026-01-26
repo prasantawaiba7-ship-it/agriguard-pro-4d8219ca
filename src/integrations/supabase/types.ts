@@ -870,6 +870,70 @@ export type Database = {
         }
         Relationships: []
       }
+      listing_contacts: {
+        Row: {
+          contact_type: string
+          contacted_at: string
+          contactor_id: string | null
+          id: string
+          listing_id: string
+        }
+        Insert: {
+          contact_type?: string
+          contacted_at?: string
+          contactor_id?: string | null
+          id?: string
+          listing_id: string
+        }
+        Update: {
+          contact_type?: string
+          contacted_at?: string
+          contactor_id?: string | null
+          id?: string
+          listing_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "listing_contacts_listing_id_fkey"
+            columns: ["listing_id"]
+            isOneToOne: false
+            referencedRelation: "produce_listings"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      listing_views: {
+        Row: {
+          id: string
+          listing_id: string
+          session_id: string | null
+          viewed_at: string
+          viewer_id: string | null
+        }
+        Insert: {
+          id?: string
+          listing_id: string
+          session_id?: string | null
+          viewed_at?: string
+          viewer_id?: string | null
+        }
+        Update: {
+          id?: string
+          listing_id?: string
+          session_id?: string | null
+          viewed_at?: string
+          viewer_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "listing_views_listing_id_fkey"
+            columns: ["listing_id"]
+            isOneToOne: false
+            referencedRelation: "produce_listings"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       market_prices: {
         Row: {
           created_at: string
@@ -1153,6 +1217,7 @@ export type Database = {
           expected_price: number | null
           farmer_id: string | null
           id: string
+          image_urls: string[] | null
           is_active: boolean
           municipality: string | null
           notes: string | null
@@ -1170,6 +1235,7 @@ export type Database = {
           expected_price?: number | null
           farmer_id?: string | null
           id?: string
+          image_urls?: string[] | null
           is_active?: boolean
           municipality?: string | null
           notes?: string | null
@@ -1187,6 +1253,7 @@ export type Database = {
           expected_price?: number | null
           farmer_id?: string | null
           id?: string
+          image_urls?: string[] | null
           is_active?: boolean
           municipality?: string | null
           notes?: string | null

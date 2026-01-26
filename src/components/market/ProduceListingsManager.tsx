@@ -10,6 +10,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import { useProduceListings, ProduceListing, CreateListingInput } from '@/hooks/useProduceListings';
 import { useAuth } from '@/hooks/useAuth';
+import { supabase } from '@/integrations/supabase/client';
 import { 
   Plus, Phone, MapPin, Trash2, Edit, Package, Search, 
   Clock, AlertTriangle, ChevronRight, X, User, MessageCircle
@@ -117,9 +118,34 @@ export function ProduceListingsManager() {
     await updateListing(listing.id, { is_active: !listing.is_active });
   };
 
-  const openDetail = (listing: ProduceListing) => {
+  const openDetail = async (listing: ProduceListing) => {
     setSelectedListing(listing);
     setIsDetailOpen(true);
+    
+    // Track view (don't track own listings)
+    if (!isOwner(listing)) {
+      try {
+        await supabase.from('listing_views').insert({
+          listing_id: listing.id,
+          viewer_id: user?.id || null,
+          session_id: sessionStorage.getItem('session_id') || crypto.randomUUID(),
+        });
+      } catch (e) {
+        console.log('Failed to track view');
+      }
+    }
+  };
+
+  const trackContact = async (listingId: string, contactType: string = 'call') => {
+    try {
+      await supabase.from('listing_contacts').insert({
+        listing_id: listingId,
+        contactor_id: user?.id || null,
+        contact_type: contactType,
+      });
+    } catch (e) {
+      console.log('Failed to track contact');
+    }
   };
 
   const isOwner = (listing: ProduceListing) => user && listing.user_id === user.id;
@@ -199,7 +225,10 @@ export function ProduceListingsManager() {
             <Button 
               size="sm" 
               className="flex-1"
-              onClick={() => window.location.href = `tel:${listing.contact_phone}`}
+              onClick={() => {
+                trackContact(listing.id, 'call');
+                window.location.href = `tel:${listing.contact_phone}`;
+              }}
             >
               <Phone className="h-4 w-4 mr-1" />
               फोन गर्नुस्
@@ -545,7 +574,10 @@ export function ProduceListingsManager() {
                     {selectedListing.contact_phone && (
                       <Button 
                         className="flex-1"
-                        onClick={() => window.location.href = `tel:${selectedListing.contact_phone}`}
+                        onClick={() => {
+                          trackContact(selectedListing.id, 'call');
+                          window.location.href = `tel:${selectedListing.contact_phone}`;
+                        }}
                       >
                         <Phone className="h-4 w-4 mr-2" />
                         फोन गर्नुस्

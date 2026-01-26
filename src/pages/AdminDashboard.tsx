@@ -36,6 +36,7 @@ import {
   Crown,
   Bug,
   Leaf,
+  TrendingUp,
 } from "lucide-react";
 import { toast } from "sonner";
 import { SubscriptionAnalytics } from "@/components/admin/SubscriptionAnalytics";
@@ -51,7 +52,7 @@ import CropManager from "@/components/admin/CropManager";
 import { CropGuidesManager } from "@/components/admin/CropGuidesManager";
 import CropTreatmentManager from "@/components/admin/CropTreatmentManager";
 import { OfficerManager } from "@/components/admin/OfficerManager";
-
+import { MarketPricesManager } from "@/components/admin/MarketPricesManager";
 interface FarmerProfile {
   id: string;
   user_id: string;
@@ -414,6 +415,10 @@ const AdminDashboard = () => {
                   <Leaf className="h-4 w-4" />
                   <span className="hidden sm:inline">Guides</span>
                 </TabsTrigger>
+                <TabsTrigger value="market" className="flex items-center gap-2">
+                  <TrendingUp className="h-4 w-4" />
+                  <span className="hidden sm:inline">बजार</span>
+                </TabsTrigger>
               </TabsList>
 
               {/* Overview Tab */}
@@ -694,6 +699,11 @@ const AdminDashboard = () => {
               {/* Crop Guides Tab */}
               <TabsContent value="guides">
                 <CropGuidesManager />
+              </TabsContent>
+
+              {/* Market Prices Tab */}
+              <TabsContent value="market">
+                <MarketPricesManager />
               </TabsContent>
             </Tabs>
           </div>
