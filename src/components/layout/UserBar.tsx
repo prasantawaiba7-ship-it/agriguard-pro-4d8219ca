@@ -1,5 +1,5 @@
 import { useAuth } from "@/hooks/useAuth";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { User, LogOut, Settings, Crown } from "lucide-react";
 import {
@@ -13,8 +13,10 @@ import {
 export function UserBar() {
   const { user, profile, signOut } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
 
-  if (!user) return null;
+  // Hide on home page
+  if (!user || location.pathname === "/") return null;
 
   const displayName = profile?.full_name || user.email?.split("@")[0] || "User";
   const displayEmail = user.email || profile?.phone || "";
