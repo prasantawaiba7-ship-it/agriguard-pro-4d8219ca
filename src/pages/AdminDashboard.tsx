@@ -409,6 +409,10 @@ const AdminDashboard = () => {
                   <PlayCircle className="h-4 w-4" />
                   <span className="hidden sm:inline">उपचार</span>
                 </TabsTrigger>
+                <TabsTrigger value="guides" className="flex items-center gap-2">
+                  <Leaf className="h-4 w-4" />
+                  <span className="hidden sm:inline">Guides</span>
+                </TabsTrigger>
               </TabsList>
 
               {/* Overview Tab */}
@@ -684,6 +688,11 @@ const AdminDashboard = () => {
               {/* Treatments Tab */}
               <TabsContent value="treatments">
                 <CropTreatmentManager />
+              </TabsContent>
+
+              {/* Crop Guides Tab */}
+              <TabsContent value="guides">
+                <CropGuidesManager />
               </TabsContent>
             </Tabs>
           </div>
