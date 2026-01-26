@@ -11,13 +11,23 @@ const PaymentCancelled = () => {
 
   const isNepali = language === 'ne';
 
+  // Check if we're in sandbox mode
+  const isSandbox = true; // TODO: Make this configurable via env
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-orange-50 via-background to-muted/20 flex items-center justify-center p-4">
+      {/* Sandbox Mode Indicator */}
+      {isSandbox && (
+        <div className="fixed top-0 left-0 right-0 bg-amber-500 text-amber-950 text-center py-1 text-xs font-medium z-50">
+          🧪 {isNepali ? 'परीक्षण मोड - वास्तविक भुक्तानी होइन' : 'SANDBOX MODE - No real payment processed'}
+        </div>
+      )}
+      
       <motion.div
         initial={{ opacity: 0, scale: 0.9 }}
         animate={{ opacity: 1, scale: 1 }}
         transition={{ duration: 0.5 }}
-        className="w-full max-w-md"
+        className={`w-full max-w-md ${isSandbox ? 'mt-8' : ''}`}
       >
         <Card className="border-orange-200 shadow-xl overflow-hidden">
           <div className="bg-gradient-to-r from-orange-400 to-amber-500 p-6 text-white text-center">

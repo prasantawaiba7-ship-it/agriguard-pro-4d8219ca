@@ -164,6 +164,15 @@ export function SubscriptionModal({
                 </span>
               </div>
 
+              {/* Sandbox Mode Indicator */}
+              <div className="bg-amber-100 border border-amber-300 rounded-lg p-2 mt-4">
+                <p className="text-xs text-center text-amber-800 font-medium">
+                  🧪 {language === 'ne' 
+                    ? 'परीक्षण मोड: eSewa (9806800001 / Nepal@123)'
+                    : 'SANDBOX: Use eSewa test (9806800001 / Nepal@123)'}
+                </p>
+              </div>
+
               <p className="text-xs text-center text-muted-foreground mt-2">
                 {language === 'ne' 
                   ? 'जुनसुकै बेला रद्द गर्न सकिन्छ।'
