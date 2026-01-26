@@ -15,9 +15,11 @@ import CropCalendar from "@/components/farmer/CropCalendar";
 import { TreatmentCalendar } from "@/components/farmer/TreatmentCalendar";
 import WeatherPlantingAlerts from "@/components/farmer/WeatherPlantingAlerts";
 import { LanguageSelector } from "@/components/farmer/LanguageSelector";
+import { SoilAdvisoryCard } from "@/components/soil/SoilAdvisoryCard";
 import { useAuth } from "@/hooks/useAuth";
 import { useLanguage } from "@/hooks/useLanguage";
 import { usePlots, useCropPhotos, useCreatePlot, useUploadPhoto, useDashboardStats } from "@/hooks/useFarmerData";
+import { useFields } from "@/hooks/useFields";
 import { Helmet } from "react-helmet-async";
 import {
   Camera,
@@ -83,6 +85,7 @@ const FarmerDashboard = () => {
   const { data: plots, isLoading: plotsLoading } = usePlots();
   const { data: photos, isLoading: photosLoading } = useCropPhotos();
   const { data: stats } = useDashboardStats();
+  const { fields } = useFields();
   const createPlot = useCreatePlot();
   const uploadPhoto = useUploadPhoto();
 
@@ -508,6 +511,13 @@ const FarmerDashboard = () => {
                           </Button>
                         </CardContent>
                       </Card>
+                    )}
+
+                    {/* Soil & Fertilizer Advisory */}
+                    {fields.length > 0 && (
+                      <div className="mt-6">
+                        <SoilAdvisoryCard fields={fields} />
+                      </div>
                     )}
                   </div>
                 )}
