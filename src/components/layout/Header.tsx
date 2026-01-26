@@ -1,6 +1,6 @@
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Leaf, Menu, X, LogIn, User, Shield, Camera, Cloud, Store, Mountain, Crown, Book, Calendar, Phone, Home } from "lucide-react";
+import { Leaf, Menu, X, LogIn, User, Shield, Camera, Bot, Store, Mountain, Phone, Home } from "lucide-react";
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useAuth } from "@/hooks/useAuth";
@@ -13,16 +13,14 @@ const Header = () => {
   const { user, profile } = useAuth();
   const { isAdmin } = useUserRole();
 
-  // Full navigation links for all screen sizes
+  // Main navigation - clean 5 items + admin
   const navLinks = [
-    { href: "/", label: "गृह पृष्ठ", shortLabel: "Home", icon: Home },
-    { href: "/disease-detection", label: "रोग पहिचान", shortLabel: "रोग", icon: Camera },
-    { href: "/fields", label: "मेरो खेत", shortLabel: "खेत", icon: Mountain },
-    { href: "/market", label: "बजार", shortLabel: "बजार", icon: Store },
-    { href: "/expert-directory", label: "विशेषज्ञ", shortLabel: "विशेषज्ञ", icon: Phone },
-    { href: "/krishi-mitra", label: "AI सहायक", shortLabel: "AI", icon: Cloud },
-    // Show Admin only to admin users
-    ...(isAdmin() ? [{ href: "/admin", label: "Admin", shortLabel: "Admin", icon: Shield }] : []),
+    { href: "/", label: "गृह", icon: Home, gradient: "from-emerald-500 to-green-600" },
+    { href: "/disease-detection", label: "रोग", icon: Camera, gradient: "from-red-500 to-orange-500" },
+    { href: "/fields", label: "खेत", icon: Mountain, gradient: "from-teal-500 to-cyan-500" },
+    { href: "/market", label: "बजार", icon: Store, gradient: "from-purple-500 to-pink-500" },
+    { href: "/krishi-mitra", label: "AI", icon: Bot, gradient: "from-blue-500 to-indigo-500" },
+    ...(isAdmin() ? [{ href: "/admin", label: "Admin", icon: Shield, gradient: "from-gray-600 to-gray-800" }] : []),
   ];
 
   const isActive = (path: string) => location.pathname === path;
@@ -41,74 +39,56 @@ const Header = () => {
             </div>
           </Link>
 
-          {/* Desktop Navigation - Shows on xl screens */}
-          <nav className="hidden xl:flex items-center gap-1">
+          {/* Desktop/Tablet Navigation - horizontal nav pills */}
+          <nav className="hidden md:flex items-center gap-1 bg-muted/50 rounded-full p-1 border border-border/50">
             {navLinks.map((link) => (
               <Link
                 key={link.href}
                 to={link.href}
-                className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors flex items-center gap-1.5 ${
-                  isActive(link.href)
-                    ? "bg-primary text-primary-foreground"
-                    : "text-muted-foreground hover:text-foreground hover:bg-muted"
-                }`}
+                className="relative group"
               >
-                {link.icon && <link.icon className="w-4 h-4" />}
-                <span className="hidden 2xl:inline">{link.label}</span>
-                <span className="2xl:hidden">{link.shortLabel}</span>
-              </Link>
-            ))}
-          </nav>
-
-          {/* Tablet Navigation - Shows on lg screens */}
-          <nav className="hidden lg:flex xl:hidden items-center gap-1">
-            {navLinks.slice(0, 5).map((link) => (
-              <Link
-                key={link.href}
-                to={link.href}
-                className={`px-2 py-2 rounded-lg text-xs font-medium transition-colors flex items-center gap-1 ${
-                  isActive(link.href)
-                    ? "bg-primary text-primary-foreground"
-                    : "text-muted-foreground hover:text-foreground hover:bg-muted"
-                }`}
-              >
-                {link.icon && <link.icon className="w-4 h-4" />}
-                <span>{link.shortLabel}</span>
-              </Link>
-            ))}
-          </nav>
-
-          <div className="hidden lg:flex items-center gap-3">
-            {user ? (
-              <div className="flex items-center gap-2">
-                {isAdmin() && (
-                  <Shield className="w-4 h-4 text-primary" aria-label="Admin" />
-                )}
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => navigate('/farmer')}
-                  className="gap-2"
+                <motion.div
+                  className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium transition-all duration-300 ${
+                    isActive(link.href)
+                      ? `bg-gradient-to-r ${link.gradient} text-white shadow-lg`
+                      : "text-muted-foreground hover:text-foreground hover:bg-background"
+                  }`}
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
                 >
-                  <User className="w-4 h-4" />
-                  <span className="hidden xl:inline">{profile?.full_name || 'Dashboard'}</span>
-                  <span className="xl:hidden">Dashboard</span>
-                </Button>
-              </div>
+                  <link.icon className="w-4 h-4" />
+                  <span className="hidden lg:inline">{link.label}</span>
+                </motion.div>
+              </Link>
+            ))}
+          </nav>
+
+          <div className="hidden md:flex items-center gap-2">
+            {user ? (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => navigate('/farmer')}
+                className="gap-2 rounded-full border-primary/30 hover:border-primary hover:bg-primary/5"
+              >
+                <User className="w-4 h-4" />
+                <span className="hidden lg:inline">{profile?.full_name || 'Dashboard'}</span>
+              </Button>
             ) : (
-              <>
-                <Button variant="outline" size="sm" onClick={() => navigate('/auth')}>
-                  <LogIn className="w-4 h-4 mr-2" />
-                  Login
-                </Button>
-                <Button size="sm" onClick={() => navigate('/auth')}>सुरु गर्नुहोस्</Button>
-              </>
+              <Button 
+                size="sm" 
+                onClick={() => navigate('/auth')}
+                className="rounded-full bg-gradient-to-r from-primary to-secondary hover:opacity-90"
+              >
+                <LogIn className="w-4 h-4 mr-2" />
+                सुरु गर्नुहोस्
+              </Button>
             )}
           </div>
 
           {/* Mobile Menu Button */}
           <button
-            className="lg:hidden p-2 rounded-lg hover:bg-muted"
+            className="md:hidden p-2 rounded-full hover:bg-muted border border-border/50"
             onClick={() => setIsMenuOpen(!isMenuOpen)}
           >
             {isMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
@@ -120,35 +100,49 @@ const Header = () => {
       <AnimatePresence>
         {isMenuOpen && (
           <motion.div
-            initial={{ opacity: 0, height: 0 }}
-            animate={{ opacity: 1, height: "auto" }}
-            exit={{ opacity: 0, height: 0 }}
-            className="lg:hidden bg-background border-b border-border overflow-hidden"
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -10 }}
+            transition={{ duration: 0.2 }}
+            className="md:hidden bg-background/95 backdrop-blur-lg border-b border-border overflow-hidden"
           >
-            <nav className="container mx-auto px-4 py-4 grid grid-cols-2 sm:grid-cols-3 gap-2">
-              {navLinks.map((link) => (
-                <Link
+            <nav className="container mx-auto px-4 py-4 space-y-2">
+              {navLinks.map((link, index) => (
+                <motion.div
                   key={link.href}
-                  to={link.href}
-                  onClick={() => setIsMenuOpen(false)}
-                  className={`px-3 py-3 rounded-xl text-sm font-medium transition-colors flex items-center gap-2 ${
-                    isActive(link.href)
-                      ? "bg-primary text-primary-foreground"
-                      : "text-muted-foreground hover:text-foreground hover:bg-muted"
-                  }`}
+                  initial={{ opacity: 0, x: -20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: index * 0.05 }}
                 >
-                  {link.icon && <link.icon className="w-4 h-4" />}
-                  {link.shortLabel}
-                </Link>
+                  <Link
+                    to={link.href}
+                    onClick={() => setIsMenuOpen(false)}
+                    className={`flex items-center gap-3 px-4 py-3 rounded-xl text-base font-medium transition-all ${
+                      isActive(link.href)
+                        ? `bg-gradient-to-r ${link.gradient} text-white shadow-lg`
+                        : "text-foreground hover:bg-muted"
+                    }`}
+                  >
+                    <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${
+                      isActive(link.href) 
+                        ? "bg-white/20" 
+                        : `bg-gradient-to-br ${link.gradient} text-white`
+                    }`}>
+                      <link.icon className="w-5 h-5" />
+                    </div>
+                    <span>{link.label}</span>
+                  </Link>
+                </motion.div>
               ))}
             </nav>
+            
             <div className="container mx-auto px-4 pb-4">
-              <div className="flex gap-3 pt-4 border-t border-border">
+              <div className="pt-4 border-t border-border">
                 {user ? (
                   <Button
                     variant="outline"
                     size="lg"
-                    className="flex-1 rounded-xl"
+                    className="w-full rounded-xl"
                     onClick={() => {
                       navigate('/farmer');
                       setIsMenuOpen(false);
@@ -158,29 +152,17 @@ const Header = () => {
                     {profile?.full_name || 'Dashboard'}
                   </Button>
                 ) : (
-                  <>
-                    <Button
-                      variant="outline"
-                      size="lg"
-                      className="flex-1 rounded-xl"
-                      onClick={() => {
-                        navigate('/auth');
-                        setIsMenuOpen(false);
-                      }}
-                    >
-                      Login
-                    </Button>
-                    <Button
-                      size="lg"
-                      className="flex-1 rounded-xl"
-                      onClick={() => {
-                        navigate('/auth');
-                        setIsMenuOpen(false);
-                      }}
-                    >
-                      सुरु गर्नुहोस्
-                    </Button>
-                  </>
+                  <Button
+                    size="lg"
+                    className="w-full rounded-xl bg-gradient-to-r from-primary to-secondary"
+                    onClick={() => {
+                      navigate('/auth');
+                      setIsMenuOpen(false);
+                    }}
+                  >
+                    <LogIn className="w-4 h-4 mr-2" />
+                    सुरु गर्नुहोस्
+                  </Button>
                 )}
               </div>
             </div>
