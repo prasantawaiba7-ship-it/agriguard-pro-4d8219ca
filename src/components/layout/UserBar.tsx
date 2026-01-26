@@ -15,8 +15,8 @@ export function UserBar() {
   const navigate = useNavigate();
   const location = useLocation();
 
-  // Hide on home page and auth page
-  if (!user || location.pathname === "/" || location.pathname === "/auth") return null;
+  // Only show on home page - hide on all other pages
+  if (!user || location.pathname !== "/") return null;
 
   const displayName = profile?.full_name || user.email?.split("@")[0] || "User";
 
