@@ -18,7 +18,7 @@ import { SoilTestForm } from '@/components/soil/SoilTestForm';
 import { SoilAdvisoryCard } from '@/components/soil/SoilAdvisoryCard';
 import { 
   MapPin, Plus, Edit, Trash2, Leaf, Calendar, ChevronRight,
-  Sprout, TestTube, Loader2, Mountain
+  Sprout, TestTube, Loader2, Mountain, BookOpen
 } from 'lucide-react';
 import { format } from 'date-fns';
 
@@ -141,15 +141,26 @@ const FieldsPage = () => {
                 <p className="text-sm text-muted-foreground">खेत र बाली व्यवस्थापन</p>
               </div>
               
-              <Dialog open={isAddFieldOpen} onOpenChange={setIsAddFieldOpen}>
-                <DialogTrigger asChild>
-                  <Button className="gap-1 sm:gap-2" size="sm">
-                    <Plus className="h-4 w-4" />
-                    <span className="hidden sm:inline">नयाँ खेत</span>
-                    <span className="sm:hidden">थप्ने</span>
-                  </Button>
-                </DialogTrigger>
-                <DialogContent>
+              <div className="flex gap-2">
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  className="gap-1 sm:gap-2"
+                  onClick={() => navigate('/crop-guides')}
+                >
+                  <BookOpen className="h-4 w-4" />
+                  <span className="hidden sm:inline">खेती गाइड</span>
+                  <span className="sm:hidden">गाइड</span>
+                </Button>
+                <Dialog open={isAddFieldOpen} onOpenChange={setIsAddFieldOpen}>
+                  <DialogTrigger asChild>
+                    <Button className="gap-1 sm:gap-2" size="sm">
+                      <Plus className="h-4 w-4" />
+                      <span className="hidden sm:inline">नयाँ खेत</span>
+                      <span className="sm:hidden">थप्ने</span>
+                    </Button>
+                  </DialogTrigger>
+                  <DialogContent>
                   <DialogHeader>
                     <DialogTitle>नयाँ खेत थप्नुहोस्</DialogTitle>
                   </DialogHeader>
@@ -213,6 +224,7 @@ const FieldsPage = () => {
                   </div>
                 </DialogContent>
               </Dialog>
+              </div>
             </div>
 
             <div className="grid md:grid-cols-3 gap-6">
