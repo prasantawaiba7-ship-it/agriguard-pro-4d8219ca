@@ -45,7 +45,7 @@ const quickActions = [
   },
   {
     icon: MapPin,
-    label: "मेरो खेत",
+    label: "खेत",
     sublabel: "खेत व्यवस्थापन",
     href: "/fields",
     color: "bg-teal-500",
