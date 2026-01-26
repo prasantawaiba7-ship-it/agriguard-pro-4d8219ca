@@ -10,7 +10,7 @@ import { OnScreenAssistant } from "@/components/ai/OnScreenAssistant";
 import Index from "./pages/Index";
 import Auth from "./pages/Auth";
 import FarmerDashboard from "./pages/FarmerDashboard";
-import AuthorityDashboard from "./pages/AuthorityDashboard";
+
 import AdminDashboard from "./pages/AdminDashboard";
 import ProfileSettings from "./pages/ProfileSettings";
 import KrishiMitra from "./pages/KrishiMitra";
@@ -49,7 +49,7 @@ const App = () => (
                 <Route path="/install" element={<InstallPage />} />
                 <Route path="/payment/success" element={<PaymentSuccess />} />
                 <Route path="/payment/cancelled" element={<PaymentCancelled />} />
-                <Route path="/authority" element={<AuthorityDashboard />} />
+                
                 <Route path="/admin" element={<AdminDashboard />} />
                 <Route path="/disease-detection" element={<DiseaseDetection />} />
                 <Route path="/expert-directory" element={<ExpertDirectory />} />
