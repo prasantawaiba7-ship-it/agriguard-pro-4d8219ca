@@ -39,6 +39,7 @@ import {
   TrendingUp,
   MapPin,
   LeafyGreen,
+  Store,
 } from "lucide-react";
 import { toast } from "sonner";
 import { SubscriptionAnalytics } from "@/components/admin/SubscriptionAnalytics";
@@ -57,6 +58,7 @@ import { OfficerManager } from "@/components/admin/OfficerManager";
 import { MarketPricesManager } from "@/components/admin/MarketPricesManager";
 import { CropsManager } from "@/components/admin/CropsManager";
 import { LocationsManager } from "@/components/admin/LocationsManager";
+import { DailyMarketPricesManager } from "@/components/admin/DailyMarketPricesManager";
 interface FarmerProfile {
   id: string;
   user_id: string;
@@ -421,7 +423,11 @@ const AdminDashboard = () => {
                 </TabsTrigger>
                 <TabsTrigger value="market" className="flex items-center gap-2">
                   <TrendingUp className="h-4 w-4" />
-                  <span className="hidden sm:inline">बजार</span>
+                  <span className="hidden sm:inline">बजार भाउ</span>
+                </TabsTrigger>
+                <TabsTrigger value="daily-market" className="flex items-center gap-2">
+                  <Store className="h-4 w-4" />
+                  <span className="hidden sm:inline">दैनिक मूल्य</span>
                 </TabsTrigger>
                 <TabsTrigger value="crops-master" className="flex items-center gap-2">
                   <LeafyGreen className="h-4 w-4" />
@@ -716,6 +722,11 @@ const AdminDashboard = () => {
               {/* Market Prices Tab */}
               <TabsContent value="market">
                 <MarketPricesManager />
+              </TabsContent>
+
+              {/* Daily Market Prices Tab */}
+              <TabsContent value="daily-market">
+                <DailyMarketPricesManager />
               </TabsContent>
 
               {/* Crops Master Tab */}

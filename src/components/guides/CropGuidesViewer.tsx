@@ -14,6 +14,7 @@ import { BookOpen, ChevronLeft, Search, Leaf, Loader2, ChevronDown, ChevronUp, S
 import { motion, AnimatePresence } from 'framer-motion';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { toast } from 'sonner';
+import { MarketPriceSummaryCard } from './MarketPriceSummaryCard';
 
 export function CropGuidesViewer() {
   const { language } = useLanguage();
@@ -398,6 +399,12 @@ export function CropGuidesViewer() {
           )}
         </CardContent>
       </Card>
+
+      {/* Market Price Summary Card */}
+      <MarketPriceSummaryCard 
+        cropName={selectedCrop} 
+        language={language}
+      />
 
       {filteredGuides.length === 0 ? (
         <Card>
