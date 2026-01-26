@@ -33,13 +33,13 @@ const Header = () => {
     <header className="fixed top-0 left-0 right-0 z-50 bg-background/80 backdrop-blur-lg border-b border-border">
       <div className="container mx-auto px-4">
         <div className="flex items-center justify-between h-14 sm:h-16">
-          {/* Logo - HUNCHA branding */}
+          {/* Logo - किसान साथी branding */}
           <Link to="/" className="flex items-center gap-2 group flex-shrink-0">
             <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-gradient-to-br from-primary to-secondary flex items-center justify-center shadow-md group-hover:shadow-lg transition-shadow">
               <Leaf className="w-5 h-5 text-primary-foreground" />
             </div>
             <div className="flex flex-col">
-              <span className="font-bold text-lg sm:text-xl text-foreground leading-tight">Kisan Sathi</span>
+              <span className="font-bold text-lg sm:text-xl text-foreground leading-tight">किसान साथी</span>
             </div>
           </Link>
 
