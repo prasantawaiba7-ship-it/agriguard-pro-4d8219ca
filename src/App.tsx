@@ -7,6 +7,7 @@ import { HelmetProvider } from "react-helmet-async";
 import { AuthProvider } from "@/hooks/useAuth";
 import { LanguageProvider } from "@/hooks/useLanguage";
 import { OnScreenAssistant } from "@/components/ai/OnScreenAssistant";
+import { UserBar } from "@/components/layout/UserBar";
 import Index from "./pages/Index";
 import Auth from "./pages/Auth";
 import FarmerDashboard from "./pages/FarmerDashboard";
@@ -65,6 +66,7 @@ const App = () => (
                 <Route path="*" element={<NotFound />} />
               </Routes>
               <OnScreenAssistant />
+              <UserBar />
             </BrowserRouter>
           </TooltipProvider>
         </LanguageProvider>
