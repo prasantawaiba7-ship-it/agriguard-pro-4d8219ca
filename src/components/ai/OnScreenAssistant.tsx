@@ -79,6 +79,7 @@ const languageOptions = [
 ];
 
 export function OnScreenAssistant({ isFullScreen: isEmbeddedFullScreen = false, inputRef: externalInputRef }: OnScreenAssistantProps) {
+  // ===== ALL HOOKS MUST BE AT TOP LEVEL AND IN CONSISTENT ORDER =====
   const { toast } = useToast();
   const { language: globalLanguage, setLanguage: setGlobalLanguage } = useLanguage();
   const { isOnline } = useNetworkStatus();
@@ -98,8 +99,8 @@ export function OnScreenAssistant({ isFullScreen: isEmbeddedFullScreen = false, 
     clearMessages: clearStoreMessages,
     sessionId: storeSessionId
   } = useAIChatStore();
-  
-  // Hide floating button on Krishi Mitra page (only show embedded full screen version there)
+
+  // ===== STATE HOOKS (keep together) =====
   const isKrishiMitraPage = location.pathname === '/krishi-mitra';
   const [showPanel, setShowPanel] = useState(false);
   const [isFullScreen, setIsFullScreen] = useState(false);
@@ -121,11 +122,27 @@ export function OnScreenAssistant({ isFullScreen: isEmbeddedFullScreen = false, 
   const [showVoiceCall, setShowVoiceCall] = useState(false);
   const [showOfflinePremiumPrompt, setShowOfflinePremiumPrompt] = useState(false);
   const [hasInitialized, setHasInitialized] = useState(false);
+
+  // ===== REF HOOKS (keep together) =====
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const recognitionRef = useRef<any>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const internalInputRef = useRef<HTMLInputElement>(null);
   const imageInputRef = useRef<HTMLInputElement>(null);
+  
+  // ===== SUBSCRIPTION HOOK (must be called unconditionally before TTS) =====
+  const { can_query, queries_used, queries_limit, subscribed, plan, incrementQueryCount, loading: subLoading } = useSubscription();
+  
+  // ===== TTS HOOK (called unconditionally with stable language) =====
+  const ttsHook = useTextToSpeech({
+    language: assistantLang,
+    rate: 1.15,
+    pitch: 1,
+    onError: (error) => {
+      console.error('TTS Error:', error);
+    }
+  });
+  const { speak, stop, isSpeaking, isSupported: ttsSupported } = ttsHook;
   
   // Use external ref if provided, otherwise use internal
   const inputRefToUse = externalInputRef || internalInputRef;
@@ -258,19 +275,6 @@ export function OnScreenAssistant({ isFullScreen: isEmbeddedFullScreen = false, 
       console.error('Save failed:', error);
     }
   }, [profile, language, saveDiseaseDetection, toast]);
-  
-  const { can_query, queries_used, queries_limit, subscribed, plan, incrementQueryCount, loading: subLoading } = useSubscription();
-
-  // Faster TTS rate for quicker responses
-  const { speak, stop, isSpeaking, isSupported: ttsSupported } = useTextToSpeech({
-    language,
-    rate: 1.15, // Faster speaking rate
-    pitch: 1,
-    onError: (error) => {
-      console.error('TTS Error:', error);
-      // Silent fail - don't show error to user
-    }
-  });
 
   // Scroll to bottom when messages change
   useEffect(() => {
