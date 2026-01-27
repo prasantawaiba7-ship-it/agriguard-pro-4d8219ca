@@ -158,13 +158,33 @@ export function useSubscription() {
     return data;
   }, [checkSubscription]);
 
+  // Only check subscription when user is available
   useEffect(() => {
-    checkSubscription();
-    fetchPlans();
-  }, [checkSubscription, fetchPlans]);
+    // Don't call the edge function if user is still loading or not logged in
+    if (user) {
+      checkSubscription();
+    } else {
+      // Reset to default free status when no user
+      setStatus({
+        subscribed: false,
+        plan: 'free',
+        queries_used: 0,
+        queries_limit: 3,
+        can_query: true,
+        is_admin: false,
+        loading: false
+      });
+    }
+  }, [user]); // Only depend on user, not checkSubscription to avoid loops
 
-  // Auto-refresh every minute
+  // Fetch plans independently (doesn't require auth)
   useEffect(() => {
+    fetchPlans();
+  }, [fetchPlans]);
+
+  // Auto-refresh every minute only when user is logged in
+  useEffect(() => {
+    if (!user) return;
     const interval = setInterval(checkSubscription, 60000);
     return () => clearInterval(interval);
   }, [checkSubscription]);
