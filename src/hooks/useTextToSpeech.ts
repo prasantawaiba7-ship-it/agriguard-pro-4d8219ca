@@ -35,7 +35,7 @@ function cleanTextForSpeech(text: string, language: string = 'en'): string {
   const isNepali = language === 'ne' || language === 'hi' || containsDevanagari(text);
   
   let cleaned = text
-    // markdown
+    // Remove markdown formatting
     .replace(/\*\*([^*]+)\*\*/g, "$1")
     .replace(/\*([^*]+)\*/g, "$1")
     .replace(/__([^_]+)__/g, "$1")
@@ -43,36 +43,59 @@ function cleanTextForSpeech(text: string, language: string = 'en'): string {
     .replace(/#{1,6}\s/g, "")
     .replace(/^\s*[-•]\s*/gm, "")
     .replace(/^\d+\.\s/gm, "")
-    // punctuation normalization
-    .replace(/\?{2,}/g, "?")
-    .replace(/!{2,}/g, "!")
-    .replace(/\.{3,}/g, ".")
-    .replace(/^\s*[\?\!\.]+\s*$/gm, "")
-    .replace(/\s+[\?\!]+\s+/g, " ");
+    
+    // CRITICAL: Remove punctuation that TTS might read aloud
+    // Replace multiple punctuation with single pause
+    .replace(/[!]{2,}/g, "!")
+    .replace(/[?]{2,}/g, "?")
+    .replace(/[.]{3,}/g, ".")
+    .replace(/[,]{2,}/g, ",")
+    .replace(/[:]{2,}/g, ":")
+    .replace(/[;]{2,}/g, ";")
+    
+    // Remove standalone punctuation on lines
+    .replace(/^\s*[!?.,;:]+\s*$/gm, "")
+    
+    // Replace punctuation with natural pauses (spaces) when surrounded by spaces
+    .replace(/\s+[!?]+\s+/g, " ")
+    .replace(/\s+[,;:]+\s+/g, " ")
+    
+    // Clean up parentheses, brackets, and special chars that might be read
+    .replace(/[()[\]{}]/g, " ")
+    .replace(/["'"'""]/g, " ")
+    .replace(/[|\\/<>@#$%^&*+=~`]/g, " ")
+    
+    // Remove dash/hyphen patterns that might be spoken
+    .replace(/\s*[-–—]+\s*/g, " ")
+    
+    // Clean Nepali-specific punctuation (purna viram, etc.)
+    .replace(/।+/g, ". ")
+    .replace(/॥+/g, ". ");
   
   // Language-specific emoji replacements
   if (isNepali) {
     cleaned = cleaned
-      .replace(/✅/g, "राम्रो खबर: ")
-      .replace(/⚠️/g, "चेतावनी: ")
-      .replace(/💡/g, "सुझाव: ")
-      .replace(/📴/g, "अफलाइन: ")
+      .replace(/✅/g, "राम्रो ")
+      .replace(/⚠️/g, "सावधान ")
+      .replace(/💡/g, "सुझाव ")
+      .replace(/📴/g, "अफलाइन ")
       .replace(/🔍/g, "")
       .replace(/🌾/g, "")
       .replace(/🍂/g, "")
       .replace(/🐛/g, "")
       .replace(/🥀/g, "")
       .replace(/⚪/g, "")
-      .replace(/🌿/g, "जैविक: ")
-      .replace(/💊/g, "रासायनिक: ")
-      .replace(/🥇|🥈|🥉/g, "");
+      .replace(/🌿/g, "जैविक ")
+      .replace(/💊/g, "रासायनिक ")
+      .replace(/🥇|🥈|🥉/g, "")
+      .replace(/➡️|→|←|↑|↓/g, "");
   } else {
     cleaned = cleaned
-      .replace(/✅/g, "Good news: ")
-      .replace(/⚠️/g, "Warning: ")
-      .replace(/💡/g, "Tip: ")
-      .replace(/📴/g, "Offline mode: ")
-      .replace(/🔍|🌾|🍂|🐛|🥀|⚪|🌿|💊|🥇|🥈|🥉/g, "");
+      .replace(/✅/g, "Good ")
+      .replace(/⚠️/g, "Warning ")
+      .replace(/💡/g, "Tip ")
+      .replace(/📴/g, "Offline ")
+      .replace(/🔍|🌾|🍂|🐛|🥀|⚪|🌿|💊|🥇|🥈|🥉|➡️|→|←|↑|↓/g, "");
   }
   
   // Remove remaining emojis/symbols but PRESERVE Devanagari script (U+0900-U+097F)
@@ -84,12 +107,13 @@ function cleanTextForSpeech(text: string, language: string = 'en'): string {
     .replace(/[\u{2600}-\u{26FF}]/gu, "")
     .replace(/[\u{2700}-\u{27BF}]/gu, "")
     .replace(/[\u200B-\u200D\uFEFF]/g, "")
-    // code blocks
+    // Remove code blocks
     .replace(/```[\s\S]*?```/g, "")
     .replace(/`[^`]+`/g, "")
-    // whitespace
+    // Clean up excessive whitespace
     .replace(/\n{3,}/g, "\n\n")
     .replace(/[ ]{2,}/g, " ")
+    .replace(/\s+([.,!?;:])/g, "$1") // Remove space before punctuation
     .trim();
     
   return cleaned;
