@@ -33,7 +33,7 @@ interface MarketPrice {
 const MarketPage = () => {
   const { user } = useAuth();
   const { myListings, updateListing, deleteListing } = useProduceListings();
-  const [activeTab, setActiveTab] = useState<'browse' | 'nearest' | 'prices' | 'my'>('browse');
+  const [activeTab, setActiveTab] = useState<'browse' | 'nearest' | 'prices' | 'my'>('prices');
 
   const { data: prices, isLoading: pricesLoading } = useQuery({
     queryKey: ['market-prices'],
