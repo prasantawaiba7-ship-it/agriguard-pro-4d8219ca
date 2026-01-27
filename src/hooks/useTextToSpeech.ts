@@ -272,7 +272,10 @@ export function useTextToSpeech(options: UseTextToSpeechOptions = {}) {
 
   const speakWithBrowser = useCallback(
     (cleanedText: string, messageId?: string, isOfflineFallback: boolean = false) => {
+      console.log('[Browser TTS] Starting with text length:', cleanedText.length, 'isOfflineFallback:', isOfflineFallback);
+      
       if (!isBrowserTTSSupported) {
+        console.error('[Browser TTS] Not supported on this device');
         setIsLoading(false);
         setIsSpeaking(false);
         setCurrentMessageId(null);
@@ -280,17 +283,17 @@ export function useTextToSpeech(options: UseTextToSpeechOptions = {}) {
         return;
       }
 
-      // Check offline TTS limit when using as fallback (offline mode)
+      // Check offline TTS limit ONLY when truly offline
       if (isOfflineFallback && !navigator.onLine) {
         const currentCount = getOfflineTTSCount();
         if (currentCount >= OFFLINE_TTS_LIMIT) {
+          console.warn('[Browser TTS] Offline limit reached');
           setIsLoading(false);
           setIsSpeaking(false);
           setCurrentMessageId(null);
           onOfflineLimitReached?.();
           return;
         }
-        // Increment and track usage
         const newCount = incrementOfflineTTSCount();
         setOfflineTTSUsed(newCount);
       }
@@ -306,16 +309,27 @@ export function useTextToSpeech(options: UseTextToSpeechOptions = {}) {
         utterance.rate = rate;
         utterance.pitch = pitch;
 
-        const voices = voicesRef.current.length > 0 ? voicesRef.current : window.speechSynthesis.getVoices();
+        // Get voices - wait a bit if not loaded yet
+        let voices = voicesRef.current.length > 0 ? voicesRef.current : window.speechSynthesis.getVoices();
+        
+        // Chrome sometimes needs a moment to load voices
+        if (voices.length === 0) {
+          console.log('[Browser TTS] Voices not loaded, using default');
+        }
+        
         const preferred = findBestVoice(voices, speechLang);
         if (preferred) {
           utterance.voice = preferred;
+          console.log('[Browser TTS] Using voice:', preferred.name, preferred.lang);
           if (language !== "en" && preferred.lang.startsWith("hi")) {
             utterance.lang = preferred.lang;
           }
+        } else {
+          console.log('[Browser TTS] No preferred voice found, using system default');
         }
 
         utterance.onstart = () => {
+          console.log('[Browser TTS] Started speaking');
           setIsLoading(false);
           setIsSpeaking(true);
           setCurrentMessageId(messageId || null);
@@ -323,6 +337,7 @@ export function useTextToSpeech(options: UseTextToSpeechOptions = {}) {
         };
 
         utterance.onend = () => {
+          console.log('[Browser TTS] Finished speaking');
           setIsSpeaking(false);
           setCurrentMessageId(null);
           utteranceRef.current = null;
@@ -330,6 +345,7 @@ export function useTextToSpeech(options: UseTextToSpeechOptions = {}) {
         };
 
         utterance.onerror = (event) => {
+          console.error('[Browser TTS] Error:', event.error);
           setIsLoading(false);
           setIsSpeaking(false);
           setCurrentMessageId(null);
@@ -337,8 +353,16 @@ export function useTextToSpeech(options: UseTextToSpeechOptions = {}) {
           if (event.error !== "canceled") onError?.(`Speech error: ${event.error}`);
         };
 
+        // Actually start speaking
         window.speechSynthesis.speak(utterance);
+        console.log('[Browser TTS] speak() called');
+        
+        // Chrome bug workaround: resume if paused
+        if (window.speechSynthesis.paused) {
+          window.speechSynthesis.resume();
+        }
       } catch (e) {
+        console.error('[Browser TTS] Exception:', e);
         setIsLoading(false);
         setIsSpeaking(false);
         setCurrentMessageId(null);
