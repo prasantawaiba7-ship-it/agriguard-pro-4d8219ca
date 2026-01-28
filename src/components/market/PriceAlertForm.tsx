@@ -121,12 +121,12 @@ export function PriceAlertForm({ onClose, preselectedCropId, preselectedMarketCo
           {/* Market Selection (Optional) */}
           <div className="space-y-2">
             <Label htmlFor="market">बजार (ऐच्छिक)</Label>
-            <Select value={marketCode} onValueChange={setMarketCode}>
+            <Select value={marketCode || '_all'} onValueChange={(v) => setMarketCode(v === '_all' ? '' : v)}>
               <SelectTrigger id="market">
                 <SelectValue placeholder="सबै बजार" />
               </SelectTrigger>
-              <SelectContent className="max-h-60">
-                <SelectItem value="">सबै बजार</SelectItem>
+          <SelectContent className="max-h-60">
+                <SelectItem value="_all">सबै बजार</SelectItem>
                 {markets.map((market: any) => (
                   <SelectItem key={market.market_code} value={market.market_code}>
                     {market.name_ne}
