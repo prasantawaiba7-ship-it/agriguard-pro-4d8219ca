@@ -475,6 +475,38 @@ export type Database = {
           },
         ]
       }
+      crop_local_names: {
+        Row: {
+          created_at: string
+          crop_id: number
+          id: string
+          local_name: string
+          region_group: string | null
+        }
+        Insert: {
+          created_at?: string
+          crop_id: number
+          id?: string
+          local_name: string
+          region_group?: string | null
+        }
+        Update: {
+          created_at?: string
+          crop_id?: number
+          id?: string
+          local_name?: string
+          region_group?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "crop_local_names_crop_id_fkey"
+            columns: ["crop_id"]
+            isOneToOne: false
+            referencedRelation: "crops"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       crop_photos: {
         Row: {
           capture_stage: Database["public"]["Enums"]["crop_stage"]
@@ -740,6 +772,7 @@ export type Database = {
           name_en: string
           name_ne: string
           needs_image_review: boolean | null
+          region_group: string | null
           unit: string | null
           updated_at: string
         }
@@ -756,6 +789,7 @@ export type Database = {
           name_en: string
           name_ne: string
           needs_image_review?: boolean | null
+          region_group?: string | null
           unit?: string | null
           updated_at?: string
         }
@@ -772,6 +806,7 @@ export type Database = {
           name_en?: string
           name_ne?: string
           needs_image_review?: boolean | null
+          region_group?: string | null
           unit?: string | null
           updated_at?: string
         }

@@ -6,6 +6,7 @@ export interface Crop {
   name_en: string;
   name_ne: string;
   category: string;
+  region_group: string | null;
   image_url: string | null;
   image_url_ai_suggested: string | null;
   image_url_uploaded: string | null;

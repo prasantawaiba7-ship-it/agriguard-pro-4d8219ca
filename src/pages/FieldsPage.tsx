@@ -9,16 +9,18 @@ import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useAuth } from '@/hooks/useAuth';
 import { useFields, Field } from '@/hooks/useFields';
 import { useCropSeasons, CropSeason } from '@/hooks/useCropSeasons';
 import { SoilTestForm } from '@/components/soil/SoilTestForm';
 import { SoilAdvisoryCard } from '@/components/soil/SoilAdvisoryCard';
+import { AddCropSeasonModal } from '@/components/fields/AddCropSeasonModal';
+import { CropGuideCard } from '@/components/fields/CropGuideCard';
+import { useCrops } from '@/hooks/useCrops';
 import { 
-  MapPin, Plus, Edit, Trash2, Leaf, Calendar, ChevronRight,
-  Sprout, TestTube, Loader2, Mountain, BookOpen
+  MapPin, Plus, Trash2, Leaf, Calendar, ChevronRight,
+  Sprout, TestTube, Loader2, Mountain, BookOpen, Eye
 } from 'lucide-react';
 import { format } from 'date-fns';
 
@@ -34,11 +36,13 @@ const FieldsPage = () => {
   const { user, isLoading: authLoading } = useAuth();
   const { fields, isLoading: fieldsLoading, addField, updateField, deleteField } = useFields();
   const { seasons, createSeason, updateSeason } = useCropSeasons();
+  const { activeCrops } = useCrops();
   
   const [selectedField, setSelectedField] = useState<Field | null>(null);
   const [isAddFieldOpen, setIsAddFieldOpen] = useState(false);
   const [isAddSeasonOpen, setIsAddSeasonOpen] = useState(false);
   const [isSoilTestOpen, setIsSoilTestOpen] = useState(false);
+  const [viewingGuideForSeason, setViewingGuideForSeason] = useState<CropSeason | null>(null);
   
   const [newField, setNewField] = useState({
     name: '',
@@ -46,14 +50,6 @@ const FieldsPage = () => {
     area_unit: 'ropani',
     district: '',
     municipality: '',
-  });
-  
-  const [newSeason, setNewSeason] = useState({
-    crop_name: '',
-    variety: '',
-    season_start_date: format(new Date(), 'yyyy-MM-dd'),
-    expected_yield: '',
-    notes: '',
   });
 
   if (authLoading || fieldsLoading) {
@@ -93,29 +89,34 @@ const FieldsPage = () => {
     }
   };
 
-  const handleCreateSeason = async () => {
-    if (!selectedField || !newSeason.crop_name) return;
+  const handleCreateSeason = async (data: {
+    crop_name: string;
+    crop_id?: number;
+    variety: string | null;
+    season_start_date: string;
+    expected_yield: number | null;
+    notes: string | null;
+  }) => {
+    if (!selectedField) return;
 
     await createSeason({
       field_id: selectedField.id,
-      crop_name: newSeason.crop_name,
-      variety: newSeason.variety || null,
-      season_start_date: newSeason.season_start_date,
+      crop_name: data.crop_name,
+      variety: data.variety,
+      season_start_date: data.season_start_date,
       season_end_date: null,
-      expected_yield: newSeason.expected_yield ? parseFloat(newSeason.expected_yield) : null,
+      expected_yield: data.expected_yield,
       actual_yield: null,
-      notes: newSeason.notes || null,
+      notes: data.notes,
       is_active: true,
     });
+  };
 
-    setNewSeason({
-      crop_name: '',
-      variety: '',
-      season_start_date: format(new Date(), 'yyyy-MM-dd'),
-      expected_yield: '',
-      notes: '',
-    });
-    setIsAddSeasonOpen(false);
+  // Get crop info for a season
+  const getCropForSeason = (season: CropSeason) => {
+    return activeCrops.find(c => 
+      c.name_ne === season.crop_name || c.name_en.toLowerCase() === season.crop_name.toLowerCase()
+    );
   };
 
   const fieldSeasons = seasons.filter(s => s.field_id === selectedField?.id);
@@ -322,65 +323,10 @@ const FieldsPage = () => {
                               <TestTube className="h-4 w-4 mr-1" />
                               माटो परीक्षण
                             </Button>
-                            <Dialog open={isAddSeasonOpen} onOpenChange={setIsAddSeasonOpen}>
-                              <DialogTrigger asChild>
-                                <Button size="sm">
-                                  <Sprout className="h-4 w-4 mr-1" />
-                                  बाली थप्ने
-                                </Button>
-                              </DialogTrigger>
-                              <DialogContent>
-                                <DialogHeader>
-                                  <DialogTitle>नयाँ बाली सिजन</DialogTitle>
-                                </DialogHeader>
-                                <div className="space-y-4 pt-4">
-                                  <div>
-                                    <Label>बालीको नाम *</Label>
-                                    <Input
-                                      placeholder="धान, गहुँ, मकै..."
-                                      value={newSeason.crop_name}
-                                      onChange={(e) => setNewSeason({ ...newSeason, crop_name: e.target.value })}
-                                    />
-                                  </div>
-                                  <div>
-                                    <Label>जात (variety)</Label>
-                                    <Input
-                                      placeholder="hybrid, local..."
-                                      value={newSeason.variety}
-                                      onChange={(e) => setNewSeason({ ...newSeason, variety: e.target.value })}
-                                    />
-                                  </div>
-                                  <div>
-                                    <Label>सुरु मिति</Label>
-                                    <Input
-                                      type="date"
-                                      value={newSeason.season_start_date}
-                                      onChange={(e) => setNewSeason({ ...newSeason, season_start_date: e.target.value })}
-                                    />
-                                  </div>
-                                  <div>
-                                    <Label>अपेक्षित उत्पादन (क्विन्टल)</Label>
-                                    <Input
-                                      type="number"
-                                      placeholder="10"
-                                      value={newSeason.expected_yield}
-                                      onChange={(e) => setNewSeason({ ...newSeason, expected_yield: e.target.value })}
-                                    />
-                                  </div>
-                                  <div>
-                                    <Label>नोट</Label>
-                                    <Textarea
-                                      placeholder="थप जानकारी..."
-                                      value={newSeason.notes}
-                                      onChange={(e) => setNewSeason({ ...newSeason, notes: e.target.value })}
-                                    />
-                                  </div>
-                                  <Button onClick={handleCreateSeason} className="w-full">
-                                    बाली थप्नुहोस्
-                                  </Button>
-                                </div>
-                              </DialogContent>
-                            </Dialog>
+                            <Button size="sm" onClick={() => setIsAddSeasonOpen(true)}>
+                              <Sprout className="h-4 w-4 mr-1" />
+                              बाली थप्ने
+                            </Button>
                           </div>
                         </CardTitle>
                       </CardHeader>
@@ -427,46 +373,72 @@ const FieldsPage = () => {
                           </div>
                         ) : (
                           <div className="space-y-3">
-                            {fieldSeasons.map((season) => (
-                              <div 
-                                key={season.id}
-                                className="flex justify-between items-center p-4 rounded-lg bg-muted/50"
-                              >
-                                <div>
-                                  <div className="flex items-center gap-2">
-                                    <h4 className="font-semibold">{season.crop_name}</h4>
-                                    {season.variety && (
-                                      <span className="text-sm text-muted-foreground">({season.variety})</span>
+                            {fieldSeasons.map((season) => {
+                              const cropInfo = getCropForSeason(season);
+                              return (
+                                <div 
+                                  key={season.id}
+                                  className="flex flex-col sm:flex-row justify-between sm:items-center gap-3 p-4 rounded-lg bg-muted/50"
+                                >
+                                  <div className="flex items-center gap-3">
+                                    {cropInfo?.image_url ? (
+                                      <img 
+                                        src={cropInfo.image_url} 
+                                        alt={season.crop_name}
+                                        className="w-10 h-10 rounded-lg object-cover"
+                                      />
+                                    ) : (
+                                      <div className="w-10 h-10 rounded-lg bg-primary/20 flex items-center justify-center">
+                                        <Leaf className="h-5 w-5 text-primary" />
+                                      </div>
                                     )}
-                                    <Badge variant={season.is_active ? 'default' : 'secondary'}>
-                                      {season.is_active ? 'सक्रिय' : 'समाप्त'}
-                                    </Badge>
+                                    <div>
+                                      <div className="flex items-center gap-2 flex-wrap">
+                                        <h4 className="font-semibold">{season.crop_name}</h4>
+                                        {season.variety && (
+                                          <span className="text-sm text-muted-foreground">({season.variety})</span>
+                                        )}
+                                        <Badge variant={season.is_active ? 'default' : 'secondary'}>
+                                          {season.is_active ? 'सक्रिय' : 'समाप्त'}
+                                        </Badge>
+                                      </div>
+                                      <div className="flex items-center gap-4 mt-1 text-sm text-muted-foreground">
+                                        <span className="flex items-center gap-1">
+                                          <Calendar className="h-3 w-3" />
+                                          {format(new Date(season.season_start_date), 'yyyy-MM-dd')}
+                                        </span>
+                                        {season.expected_yield && (
+                                          <span>अपेक्षित: {season.expected_yield} क्विन्टल</span>
+                                        )}
+                                      </div>
+                                    </div>
                                   </div>
-                                  <div className="flex items-center gap-4 mt-1 text-sm text-muted-foreground">
-                                    <span className="flex items-center gap-1">
-                                      <Calendar className="h-3 w-3" />
-                                      {format(new Date(season.season_start_date), 'yyyy-MM-dd')}
-                                      {season.season_end_date && ` → ${format(new Date(season.season_end_date), 'yyyy-MM-dd')}`}
-                                    </span>
-                                    {season.expected_yield && (
-                                      <span>अपेक्षित: {season.expected_yield} क्विन्टल</span>
+                                  <div className="flex gap-2 ml-auto">
+                                    <Button 
+                                      size="sm" 
+                                      variant="outline"
+                                      onClick={() => setViewingGuideForSeason(season)}
+                                      className="gap-1"
+                                    >
+                                      <Eye className="h-3 w-3" />
+                                      गाइड
+                                    </Button>
+                                    {season.is_active && (
+                                      <Button 
+                                        size="sm" 
+                                        variant="outline"
+                                        onClick={() => updateSeason(season.id, { 
+                                          is_active: false, 
+                                          season_end_date: format(new Date(), 'yyyy-MM-dd')
+                                        })}
+                                      >
+                                        समाप्त
+                                      </Button>
                                     )}
                                   </div>
                                 </div>
-                                {season.is_active && (
-                                  <Button 
-                                    size="sm" 
-                                    variant="outline"
-                                    onClick={() => updateSeason(season.id, { 
-                                      is_active: false, 
-                                      season_end_date: format(new Date(), 'yyyy-MM-dd')
-                                    })}
-                                  >
-                                    सिजन समाप्त
-                                  </Button>
-                                )}
-                              </div>
-                            ))}
+                              );
+                            })}
                           </div>
                         )}
                       </CardContent>
@@ -488,6 +460,38 @@ const FieldsPage = () => {
                     onSuccess={() => setIsSoilTestOpen(false)}
                   />
                 )}
+              </DialogContent>
+            </Dialog>
+
+            {/* Add Crop Season Modal */}
+            <AddCropSeasonModal
+              isOpen={isAddSeasonOpen}
+              onClose={() => setIsAddSeasonOpen(false)}
+              onSubmit={handleCreateSeason}
+              fieldName={selectedField?.name}
+            />
+
+            {/* Guide Dialog for Season */}
+            <Dialog open={!!viewingGuideForSeason} onOpenChange={() => setViewingGuideForSeason(null)}>
+              <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
+                {viewingGuideForSeason && (() => {
+                  const cropInfo = getCropForSeason(viewingGuideForSeason);
+                  return cropInfo ? (
+                    <CropGuideCard
+                      cropId={cropInfo.id}
+                      cropName={cropInfo.name_ne}
+                      cropNameEn={cropInfo.name_en}
+                      cropImage={cropInfo.image_url}
+                    />
+                  ) : (
+                    <div className="text-center py-8">
+                      <BookOpen className="h-12 w-12 mx-auto mb-4 text-muted-foreground/30" />
+                      <p className="text-muted-foreground">
+                        यो बालीको गाइड उपलब्ध छैन। कृपया admin बाट बाली थप्नुहोस्।
+                      </p>
+                    </div>
+                  );
+                })()}
               </DialogContent>
             </Dialog>
           </div>

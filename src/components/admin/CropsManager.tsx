@@ -85,6 +85,7 @@ export function CropsManager() {
       image_url_uploaded: null,
       image_source: 'none' as const,
       needs_image_review: true,
+      region_group: null,
     };
 
     if (editingCrop) {
