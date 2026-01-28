@@ -823,6 +823,7 @@ export type Database = {
           district_id_fk: number | null
           id: string
           image_url: string | null
+          last_synced_at: string | null
           local_level_id: number | null
           market_name: string | null
           market_name_ne: string | null
@@ -831,6 +832,7 @@ export type Database = {
           price_min: number | null
           province_id: number | null
           source: string | null
+          source_ref: string | null
           unit: string
           updated_at: string
           ward_number: number | null
@@ -845,6 +847,7 @@ export type Database = {
           district_id_fk?: number | null
           id?: string
           image_url?: string | null
+          last_synced_at?: string | null
           local_level_id?: number | null
           market_name?: string | null
           market_name_ne?: string | null
@@ -853,6 +856,7 @@ export type Database = {
           price_min?: number | null
           province_id?: number | null
           source?: string | null
+          source_ref?: string | null
           unit?: string
           updated_at?: string
           ward_number?: number | null
@@ -867,6 +871,7 @@ export type Database = {
           district_id_fk?: number | null
           id?: string
           image_url?: string | null
+          last_synced_at?: string | null
           local_level_id?: number | null
           market_name?: string | null
           market_name_ne?: string | null
@@ -875,6 +880,7 @@ export type Database = {
           price_min?: number | null
           province_id?: number | null
           source?: string | null
+          source_ref?: string | null
           unit?: string
           updated_at?: string
           ward_number?: number | null
@@ -1117,6 +1123,7 @@ export type Database = {
           created_at: string
           display_order: number | null
           id: number
+          is_major: boolean | null
           name_en: string
           name_ne: string
           province_id: number
@@ -1125,6 +1132,7 @@ export type Database = {
           created_at?: string
           display_order?: number | null
           id?: number
+          is_major?: boolean | null
           name_en: string
           name_ne: string
           province_id: number
@@ -1133,6 +1141,7 @@ export type Database = {
           created_at?: string
           display_order?: number | null
           id?: number
+          is_major?: boolean | null
           name_en?: string
           name_ne?: string
           province_id?: number
@@ -1568,6 +1577,7 @@ export type Database = {
           district_id: number | null
           id: string
           is_active: boolean
+          is_major: boolean | null
           latitude: number | null
           local_level_id: number | null
           longitude: number | null
@@ -1589,6 +1599,7 @@ export type Database = {
           district_id?: number | null
           id?: string
           is_active?: boolean
+          is_major?: boolean | null
           latitude?: number | null
           local_level_id?: number | null
           longitude?: number | null
@@ -1610,6 +1621,7 @@ export type Database = {
           district_id?: number | null
           id?: string
           is_active?: boolean
+          is_major?: boolean | null
           latitude?: number | null
           local_level_id?: number | null
           longitude?: number | null
