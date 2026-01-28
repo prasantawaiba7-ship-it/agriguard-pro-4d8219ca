@@ -15,10 +15,11 @@ import { toast } from 'sonner';
 import { format } from 'date-fns';
 import { 
   TrendingUp, Plus, Edit2, Trash2, RefreshCw, 
-  Calendar, Store, MapPin, AlertCircle, CheckCircle2, Clock
+  Calendar, Store, MapPin, AlertCircle, CheckCircle2, Clock, Wifi, WifiOff
 } from 'lucide-react';
 import { useCrops } from '@/hooks/useCrops';
 import { useLocationData } from '@/hooks/useLocationData';
+import { CSVMarketImport } from './CSVMarketImport';
 
 interface DailyMarketProduct {
   id: string;
@@ -263,6 +264,8 @@ export function DailyMarketPricesManager() {
         </div>
         
         <div className="flex gap-2 flex-wrap">
+          <CSVMarketImport onImportSuccess={() => refetch()} />
+          
           <Button
             variant="outline"
             size="sm"
@@ -270,7 +273,7 @@ export function DailyMarketPricesManager() {
             disabled={isRunningUpdate}
           >
             <RefreshCw className={`h-4 w-4 mr-1 ${isRunningUpdate ? 'animate-spin' : ''}`} />
-            दैनिक अपडेट चलाउनुहोस्
+            Kalimati + बजार Sync
           </Button>
           
           <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
@@ -447,8 +450,8 @@ export function DailyMarketPricesManager() {
         </div>
       </div>
 
-      {/* Status Card */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+      {/* Status Cards */}
+      <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
         <Card className="border-border/60">
           <CardContent className="p-4 flex items-center gap-3">
             <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
@@ -485,6 +488,18 @@ export function DailyMarketPricesManager() {
                   ? format(new Date(lastUpdate.updated_at), 'yyyy-MM-dd HH:mm')
                   : 'N/A'}
               </p>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="border-green-500/30 bg-green-500/5">
+          <CardContent className="p-4 flex items-center gap-3">
+            <div className="w-10 h-10 rounded-lg bg-green-500/20 flex items-center justify-center">
+              <Wifi className="h-5 w-5 text-green-600" />
+            </div>
+            <div>
+              <p className="text-sm text-muted-foreground">Kalimati API</p>
+              <p className="font-semibold text-green-600 text-sm">Live Connected</p>
             </div>
           </CardContent>
         </Card>

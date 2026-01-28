@@ -38,3 +38,6 @@ verify_jwt = false
 
 [functions.generate-crop-image]
 verify_jwt = false
+
+[functions.import-market-csv]
+verify_jwt = false
