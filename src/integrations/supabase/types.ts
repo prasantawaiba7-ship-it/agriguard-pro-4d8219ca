@@ -1395,6 +1395,7 @@ export type Database = {
           latitude: number | null
           local_level_id: number | null
           longitude: number | null
+          market_code: string | null
           market_type: string
           name_en: string
           name_ne: string
@@ -1415,6 +1416,7 @@ export type Database = {
           latitude?: number | null
           local_level_id?: number | null
           longitude?: number | null
+          market_code?: string | null
           market_type?: string
           name_en: string
           name_ne: string
@@ -1435,6 +1437,7 @@ export type Database = {
           latitude?: number | null
           local_level_id?: number | null
           longitude?: number | null
+          market_code?: string | null
           market_type?: string
           name_en?: string
           name_ne?: string
@@ -1695,6 +1698,89 @@ export type Database = {
             columns: ["farmer_id"]
             isOneToOne: false
             referencedRelation: "farmer_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      price_alerts: {
+        Row: {
+          condition_type: Database["public"]["Enums"]["price_alert_condition"]
+          created_at: string
+          crop_id: number | null
+          district_id: number | null
+          id: string
+          is_active: boolean
+          is_recurring: boolean
+          last_triggered_at: string | null
+          local_level_id: number | null
+          market_code: string | null
+          percent_reference_days: number | null
+          province_id: number | null
+          threshold_value: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          condition_type: Database["public"]["Enums"]["price_alert_condition"]
+          created_at?: string
+          crop_id?: number | null
+          district_id?: number | null
+          id?: string
+          is_active?: boolean
+          is_recurring?: boolean
+          last_triggered_at?: string | null
+          local_level_id?: number | null
+          market_code?: string | null
+          percent_reference_days?: number | null
+          province_id?: number | null
+          threshold_value: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          condition_type?: Database["public"]["Enums"]["price_alert_condition"]
+          created_at?: string
+          crop_id?: number | null
+          district_id?: number | null
+          id?: string
+          is_active?: boolean
+          is_recurring?: boolean
+          last_triggered_at?: string | null
+          local_level_id?: number | null
+          market_code?: string | null
+          percent_reference_days?: number | null
+          province_id?: number | null
+          threshold_value?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "price_alerts_crop_id_fkey"
+            columns: ["crop_id"]
+            isOneToOne: false
+            referencedRelation: "crops"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "price_alerts_district_id_fkey"
+            columns: ["district_id"]
+            isOneToOne: false
+            referencedRelation: "districts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "price_alerts_local_level_id_fkey"
+            columns: ["local_level_id"]
+            isOneToOne: false
+            referencedRelation: "local_levels"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "price_alerts_province_id_fkey"
+            columns: ["province_id"]
+            isOneToOne: false
+            referencedRelation: "provinces"
             referencedColumns: ["id"]
           },
         ]
@@ -2237,6 +2323,11 @@ export type Database = {
         | "sub_metropolitan"
         | "municipality"
         | "rural_municipality"
+      price_alert_condition:
+        | "greater_equal"
+        | "less_equal"
+        | "percent_increase"
+        | "percent_decrease"
       subscription_plan: "free" | "monthly" | "yearly"
       subscription_status: "active" | "expired" | "cancelled"
     }
@@ -2411,6 +2502,12 @@ export const Constants = {
         "sub_metropolitan",
         "municipality",
         "rural_municipality",
+      ],
+      price_alert_condition: [
+        "greater_equal",
+        "less_equal",
+        "percent_increase",
+        "percent_decrease",
       ],
       subscription_plan: ["free", "monthly", "yearly"],
       subscription_status: ["active", "expired", "cancelled"],

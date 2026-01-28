@@ -58,14 +58,6 @@ const MARKET_SOURCES: MarketSourceConfig[] = [
     district: 'Kaski',
     fetchFn: fetchMockPokharaData,
   },
-  // Add real API sources here when ready:
-  // {
-  //   id: 'kalimati_api',
-  //   name: 'Kalimati Official API',
-  //   enabled: false,
-  //   marketCode: 'KALIMATI',
-  //   fetchFn: fetchKalimatiApiData,
-  // },
 ];
 
 // =============================================================================
@@ -168,7 +160,6 @@ async function fetchMockKalimatiData(date: string, _config: MarketSourceConfig):
 
 async function fetchMockBiratnagarData(date: string, _config: MarketSourceConfig): Promise<RawMarketItem[]> {
   console.log(`[Biratnagar Mock] Generating data for ${date}`);
-  // Biratnagar prices ~5-10% lower than Kalimati
   return generatePricesWithVariation(date, 100).map(item => ({
     ...item,
     min_price: Math.round(item.min_price * 0.92),
@@ -179,7 +170,6 @@ async function fetchMockBiratnagarData(date: string, _config: MarketSourceConfig
 
 async function fetchMockPokharaData(date: string, _config: MarketSourceConfig): Promise<RawMarketItem[]> {
   console.log(`[Pokhara Mock] Generating data for ${date}`);
-  // Pokhara retail prices ~8-15% higher than wholesale
   return generatePricesWithVariation(date, 200).map(item => ({
     ...item,
     min_price: Math.round(item.min_price * 1.08),
@@ -187,27 +177,6 @@ async function fetchMockPokharaData(date: string, _config: MarketSourceConfig): 
     avg_price: Math.round(item.avg_price * 1.10),
   }));
 }
-
-// =============================================================================
-// REAL API FETCHER TEMPLATE (for future use)
-// =============================================================================
-// async function fetchKalimatiApiData(date: string, config: MarketSourceConfig): Promise<RawMarketItem[]> {
-//   const apiKey = Deno.env.get('KALIMATI_API_KEY');
-//   const response = await fetch(`https://kalimatimarket.gov.np/api/daily-prices?date=${date}`, {
-//     headers: { 'Authorization': `Bearer ${apiKey}` }
-//   });
-//   const data = await response.json();
-//   return data.items.map((item: any) => ({
-//     commodity_id: item.id,
-//     commodity_name_en: item.name_en,
-//     commodity_name_ne: item.name_np,
-//     unit: item.unit,
-//     min_price: item.price_min,
-//     max_price: item.price_max,
-//     avg_price: item.price_avg,
-//     category: item.category || 'vegetable',
-//   }));
-// }
 
 // =============================================================================
 // DATA MAPPER
@@ -237,6 +206,168 @@ function normalizeMarketData(
 }
 
 // =============================================================================
+// PRICE ALERT EVALUATION
+// =============================================================================
+interface PriceAlert {
+  id: string;
+  user_id: string;
+  crop_id: number | null;
+  market_code: string | null;
+  condition_type: 'greater_equal' | 'less_equal' | 'percent_increase' | 'percent_decrease';
+  threshold_value: number;
+  percent_reference_days: number | null;
+  is_recurring: boolean;
+  is_active: boolean;
+}
+
+async function evaluatePriceAlerts(
+  supabase: any,
+  updatedProducts: NormalizedProduct[],
+  today: string
+): Promise<number> {
+  console.log('[Alert Evaluation] Starting...');
+  
+  // Fetch all active alerts
+  const { data: alerts, error: alertsError } = await supabase
+    .from('price_alerts')
+    .select('*')
+    .eq('is_active', true);
+
+  if (alertsError) {
+    console.error('[Alert Evaluation] Error fetching alerts:', alertsError);
+    return 0;
+  }
+
+  if (!alerts || alerts.length === 0) {
+    console.log('[Alert Evaluation] No active alerts found');
+    return 0;
+  }
+
+  console.log(`[Alert Evaluation] Found ${alerts.length} active alerts`);
+
+  let triggeredCount = 0;
+
+  for (const alert of alerts as PriceAlert[]) {
+    try {
+      // Find matching price data
+      let matchingProducts = updatedProducts;
+      
+      // Filter by crop_id if specified
+      if (alert.crop_id) {
+        matchingProducts = matchingProducts.filter(p => p.crop_id === alert.crop_id);
+      }
+      
+      // Filter by market_code if specified
+      if (alert.market_code) {
+        // Need to match market_name to market_code
+        const { data: market } = await supabase
+          .from('markets')
+          .select('name_en')
+          .eq('market_code', alert.market_code)
+          .maybeSingle();
+        
+        if (market) {
+          matchingProducts = matchingProducts.filter(p => p.market_name === market.name_en);
+        }
+      }
+
+      if (matchingProducts.length === 0) continue;
+
+      const currentPrice = matchingProducts[0].price_avg;
+      if (!currentPrice) continue;
+
+      let shouldTrigger = false;
+
+      switch (alert.condition_type) {
+        case 'greater_equal':
+          shouldTrigger = currentPrice >= alert.threshold_value;
+          break;
+        case 'less_equal':
+          shouldTrigger = currentPrice <= alert.threshold_value;
+          break;
+        case 'percent_increase':
+        case 'percent_decrease': {
+          const refDays = alert.percent_reference_days || 7;
+          const refDate = new Date(today);
+          refDate.setDate(refDate.getDate() - refDays);
+          const refDateStr = refDate.toISOString().split('T')[0];
+
+          // Fetch historical price
+          const { data: histData } = await supabase
+            .from('daily_market_products')
+            .select('price_avg')
+            .eq('date', refDateStr)
+            .eq('crop_name', matchingProducts[0].crop_name)
+            .eq('market_name', matchingProducts[0].market_name)
+            .maybeSingle();
+
+          if (histData?.price_avg) {
+            const percentChange = ((currentPrice - histData.price_avg) / histData.price_avg) * 100;
+            if (alert.condition_type === 'percent_increase') {
+              shouldTrigger = percentChange >= alert.threshold_value;
+            } else {
+              shouldTrigger = percentChange <= -alert.threshold_value;
+            }
+          }
+          break;
+        }
+      }
+
+      if (shouldTrigger) {
+        console.log(`[Alert Evaluation] Triggering alert ${alert.id}`);
+
+        // Get crop name
+        const { data: cropData } = await supabase
+          .from('crops')
+          .select('name_ne')
+          .eq('id', alert.crop_id)
+          .maybeSingle();
+
+        const cropName = cropData?.name_ne || matchingProducts[0].crop_name_ne || 'Unknown';
+
+        // Create notification
+        const { error: notifError } = await supabase
+          .from('farmer_notifications')
+          .insert({
+            farmer_id: alert.user_id, // Note: This assumes user_id matches farmer_id
+            type: 'price_alert',
+            title: `${cropName} मूल्य अलर्ट!`,
+            message: `आज ${cropName} को मूल्य रु. ${currentPrice} भयो।`,
+            data: {
+              alert_id: alert.id,
+              crop_name: cropName,
+              current_price: currentPrice,
+              market: matchingProducts[0].market_name_ne,
+            },
+          });
+
+        if (notifError) {
+          console.error(`[Alert Evaluation] Error creating notification:`, notifError);
+        }
+
+        // Update alert: mark as triggered
+        const updates: any = { last_triggered_at: new Date().toISOString() };
+        if (!alert.is_recurring) {
+          updates.is_active = false;
+        }
+
+        await supabase
+          .from('price_alerts')
+          .update(updates)
+          .eq('id', alert.id);
+
+        triggeredCount++;
+      }
+    } catch (err) {
+      console.error(`[Alert Evaluation] Error processing alert ${alert.id}:`, err);
+    }
+  }
+
+  console.log(`[Alert Evaluation] Triggered ${triggeredCount} alerts`);
+  return triggeredCount;
+}
+
+// =============================================================================
 // MAIN HANDLER
 // =============================================================================
 Deno.serve(async (req) => {
@@ -256,6 +387,7 @@ Deno.serve(async (req) => {
     console.log(`[update-daily-market] Enabled sources: ${enabledSources.map(s => s.id).join(', ')}`);
 
     let totalProducts = 0;
+    let allNormalizedProducts: NormalizedProduct[] = [];
     const results: { source: string; count: number; success: boolean; error?: string }[] = [];
 
     // Fetch from each enabled source
@@ -272,6 +404,7 @@ Deno.serve(async (req) => {
         }
 
         const normalizedProducts = normalizeMarketData(rawData, today, source);
+        allNormalizedProducts = [...allNormalizedProducts, ...normalizedProducts];
 
         // Upsert products (idempotent - safe to run multiple times)
         const { error: upsertError } = await supabase
@@ -295,7 +428,13 @@ Deno.serve(async (req) => {
       }
     }
 
-    console.log(`[update-daily-market] Completed. Total products: ${totalProducts}`);
+    // Evaluate price alerts after all products are updated
+    let alertsTriggered = 0;
+    if (allNormalizedProducts.length > 0) {
+      alertsTriggered = await evaluatePriceAlerts(supabase, allNormalizedProducts, today);
+    }
+
+    console.log(`[update-daily-market] Completed. Total products: ${totalProducts}, Alerts triggered: ${alertsTriggered}`);
 
     return new Response(
       JSON.stringify({
@@ -303,6 +442,7 @@ Deno.serve(async (req) => {
         message: `Updated ${totalProducts} products from ${enabledSources.length} sources`,
         date: today,
         productsCount: totalProducts,
+        alertsTriggered,
         sources: results,
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }

@@ -5,11 +5,12 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Skeleton } from '@/components/ui/skeleton';
 import { AspectRatio } from '@/components/ui/aspect-ratio';
 import { Badge } from '@/components/ui/badge';
-import { RefreshCw, Calendar, MapPin, TrendingUp, Store, Leaf } from 'lucide-react';
+import { RefreshCw, Calendar, MapPin, Store, Leaf } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { format } from 'date-fns';
 import { motion } from 'framer-motion';
 import { LocationFilters } from './LocationFilters';
+import { RealTimePriceUpdates } from './RealTimePriceUpdates';
 
 function ProductCard({ product }: { product: DailyMarketProduct }) {
   const displayName = product.crop_name_ne || product.crop_name;
@@ -158,16 +159,7 @@ export function DailyMarketSection() {
             </p>
           )}
         </div>
-        <Button 
-          variant="outline" 
-          size="sm" 
-          onClick={refresh}
-          disabled={isLoading}
-          className="rounded-full"
-        >
-          <RefreshCw className={`h-4 w-4 mr-1.5 ${isLoading ? 'animate-spin' : ''}`} />
-          ताजा गर्नुहोस्
-        </Button>
+        <RealTimePriceUpdates onNewPrices={refresh} pollingInterval={120000} />
       </div>
 
       {/* Location Filters */}
