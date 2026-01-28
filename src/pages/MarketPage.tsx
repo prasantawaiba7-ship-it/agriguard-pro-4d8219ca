@@ -7,6 +7,7 @@ import { ProduceListingsManager } from '@/components/market/ProduceListingsManag
 import { DailyMarketSection } from '@/components/market/DailyMarketSection';
 import { NearestMarketsSection } from '@/components/market/NearestMarketsSection';
 import { PriceAlertsList } from '@/components/market/PriceAlertsList';
+import { UserMarketCardsSection } from '@/components/market/UserMarketCardsSection';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -31,7 +32,7 @@ interface MarketPrice {
   demand_level: string | null;
 }
 
-type TabValue = 'browse' | 'nearest' | 'prices' | 'alerts' | 'my';
+type TabValue = 'browse' | 'nearest' | 'prices' | 'alerts' | 'cards' | 'my';
 
 const MarketPage = () => {
   const { user } = useAuth();
@@ -141,31 +142,38 @@ const MarketPage = () => {
             </div>
 
             <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as TabValue)}>
-              <TabsList className="grid w-full grid-cols-5 mb-6 bg-muted/60 p-1 rounded-xl">
+              <TabsList className="grid w-full grid-cols-6 mb-6 bg-muted/60 p-1 rounded-xl">
                 <TabsTrigger 
                   value="browse" 
-                  className="gap-1 sm:gap-2 text-xs sm:text-sm rounded-lg data-[state=active]:bg-card data-[state=active]:shadow-sm px-2"
+                  className="gap-1 sm:gap-2 text-xs sm:text-sm rounded-lg data-[state=active]:bg-card data-[state=active]:shadow-sm px-1"
                 >
                   <ShoppingCart className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
                   <span className="hidden sm:inline">उत्पादन</span>
                 </TabsTrigger>
                 <TabsTrigger 
+                  value="cards" 
+                  className="gap-1 sm:gap-2 text-xs sm:text-sm rounded-lg data-[state=active]:bg-card data-[state=active]:shadow-sm px-1"
+                >
+                  <Store className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+                  <span className="hidden sm:inline">कार्ड</span>
+                </TabsTrigger>
+                <TabsTrigger 
                   value="nearest" 
-                  className="gap-1 sm:gap-2 text-xs sm:text-sm rounded-lg data-[state=active]:bg-card data-[state=active]:shadow-sm px-2"
+                  className="gap-1 sm:gap-2 text-xs sm:text-sm rounded-lg data-[state=active]:bg-card data-[state=active]:shadow-sm px-1"
                 >
                   <Navigation className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
                   <span className="hidden sm:inline">नजिक</span>
                 </TabsTrigger>
                 <TabsTrigger 
                   value="prices" 
-                  className="gap-1 sm:gap-2 text-xs sm:text-sm rounded-lg data-[state=active]:bg-card data-[state=active]:shadow-sm px-2"
+                  className="gap-1 sm:gap-2 text-xs sm:text-sm rounded-lg data-[state=active]:bg-card data-[state=active]:shadow-sm px-1"
                 >
                   <TrendingUp className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
                   <span className="hidden sm:inline">मूल्य</span>
                 </TabsTrigger>
                 <TabsTrigger 
                   value="alerts" 
-                  className="gap-1 sm:gap-2 text-xs sm:text-sm rounded-lg data-[state=active]:bg-card data-[state=active]:shadow-sm px-2"
+                  className="gap-1 sm:gap-2 text-xs sm:text-sm rounded-lg data-[state=active]:bg-card data-[state=active]:shadow-sm px-1"
                 >
                   <Bell className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
                   <span className="hidden sm:inline">अलर्ट</span>
@@ -173,7 +181,7 @@ const MarketPage = () => {
                 {user && (
                   <TabsTrigger 
                     value="my" 
-                    className="gap-1 sm:gap-2 text-xs sm:text-sm rounded-lg data-[state=active]:bg-card data-[state=active]:shadow-sm px-2"
+                    className="gap-1 sm:gap-2 text-xs sm:text-sm rounded-lg data-[state=active]:bg-card data-[state=active]:shadow-sm px-1"
                   >
                     <Package className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
                     <span className="hidden sm:inline">{myListings.length}</span>
@@ -189,6 +197,11 @@ const MarketPage = () => {
               {/* Nearest Markets Tab */}
               <TabsContent value="nearest">
                 <NearestMarketsSection />
+              </TabsContent>
+
+              {/* User Market Cards Tab */}
+              <TabsContent value="cards">
+                <UserMarketCardsSection />
               </TabsContent>
 
               {/* Alerts Tab */}

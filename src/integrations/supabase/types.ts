@@ -270,6 +270,50 @@ export type Database = {
         }
         Relationships: []
       }
+      card_reports: {
+        Row: {
+          admin_notes: string | null
+          card_id: string
+          created_at: string
+          description: string | null
+          id: string
+          reason: string
+          reporter_id: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          admin_notes?: string | null
+          card_id: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          reason: string
+          reporter_id: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          admin_notes?: string | null
+          card_id?: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          reason?: string
+          reporter_id?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "card_reports_card_id_fkey"
+            columns: ["card_id"]
+            isOneToOne: false
+            referencedRelation: "user_market_cards"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       content_blocks: {
         Row: {
           active: boolean
@@ -827,6 +871,103 @@ export type Database = {
             columns: ["province_id"]
             isOneToOne: false
             referencedRelation: "provinces"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      delivery_requests: {
+        Row: {
+          buyer_id: string
+          buyer_notes: string | null
+          card_id: string
+          created_at: string
+          delivery_address_text: string
+          id: string
+          requested_price: number | null
+          requested_quantity: number
+          seller_notes: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          buyer_id: string
+          buyer_notes?: string | null
+          card_id: string
+          created_at?: string
+          delivery_address_text: string
+          id?: string
+          requested_price?: number | null
+          requested_quantity: number
+          seller_notes?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          buyer_id?: string
+          buyer_notes?: string | null
+          card_id?: string
+          created_at?: string
+          delivery_address_text?: string
+          id?: string
+          requested_price?: number | null
+          requested_quantity?: number
+          seller_notes?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "delivery_requests_card_id_fkey"
+            columns: ["card_id"]
+            isOneToOne: false
+            referencedRelation: "user_market_cards"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      delivery_shipments: {
+        Row: {
+          carrier_code: string | null
+          created_at: string
+          delivery_request_id: string
+          id: string
+          last_event_time: string | null
+          last_location_text: string | null
+          raw_payload: Json | null
+          status: string
+          tracking_number: string | null
+          updated_at: string
+        }
+        Insert: {
+          carrier_code?: string | null
+          created_at?: string
+          delivery_request_id: string
+          id?: string
+          last_event_time?: string | null
+          last_location_text?: string | null
+          raw_payload?: Json | null
+          status?: string
+          tracking_number?: string | null
+          updated_at?: string
+        }
+        Update: {
+          carrier_code?: string | null
+          created_at?: string
+          delivery_request_id?: string
+          id?: string
+          last_event_time?: string | null
+          last_location_text?: string | null
+          raw_payload?: Json | null
+          status?: string
+          tracking_number?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "delivery_shipments_delivery_request_id_fkey"
+            columns: ["delivery_request_id"]
+            isOneToOne: false
+            referencedRelation: "delivery_requests"
             referencedColumns: ["id"]
           },
         ]
@@ -2042,6 +2183,119 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      user_market_cards: {
+        Row: {
+          available_quantity: number | null
+          card_type: string
+          contact_phone: string | null
+          created_at: string
+          crop_id: number | null
+          description: string | null
+          district_id: number | null
+          expires_at: string | null
+          id: string
+          images: string[] | null
+          is_active: boolean
+          lat: number | null
+          lng: number | null
+          local_level_id: number | null
+          price: number | null
+          price_max: number | null
+          price_min: number | null
+          price_type: string
+          province_id: number | null
+          title: string
+          unit: string
+          updated_at: string
+          user_id: string
+          ward_number: number | null
+          whatsapp: string | null
+        }
+        Insert: {
+          available_quantity?: number | null
+          card_type?: string
+          contact_phone?: string | null
+          created_at?: string
+          crop_id?: number | null
+          description?: string | null
+          district_id?: number | null
+          expires_at?: string | null
+          id?: string
+          images?: string[] | null
+          is_active?: boolean
+          lat?: number | null
+          lng?: number | null
+          local_level_id?: number | null
+          price?: number | null
+          price_max?: number | null
+          price_min?: number | null
+          price_type?: string
+          province_id?: number | null
+          title: string
+          unit?: string
+          updated_at?: string
+          user_id: string
+          ward_number?: number | null
+          whatsapp?: string | null
+        }
+        Update: {
+          available_quantity?: number | null
+          card_type?: string
+          contact_phone?: string | null
+          created_at?: string
+          crop_id?: number | null
+          description?: string | null
+          district_id?: number | null
+          expires_at?: string | null
+          id?: string
+          images?: string[] | null
+          is_active?: boolean
+          lat?: number | null
+          lng?: number | null
+          local_level_id?: number | null
+          price?: number | null
+          price_max?: number | null
+          price_min?: number | null
+          price_type?: string
+          province_id?: number | null
+          title?: string
+          unit?: string
+          updated_at?: string
+          user_id?: string
+          ward_number?: number | null
+          whatsapp?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_market_cards_crop_id_fkey"
+            columns: ["crop_id"]
+            isOneToOne: false
+            referencedRelation: "crops"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "user_market_cards_district_id_fkey"
+            columns: ["district_id"]
+            isOneToOne: false
+            referencedRelation: "districts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "user_market_cards_local_level_id_fkey"
+            columns: ["local_level_id"]
+            isOneToOne: false
+            referencedRelation: "local_levels"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "user_market_cards_province_id_fkey"
+            columns: ["province_id"]
+            isOneToOne: false
+            referencedRelation: "provinces"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       user_roles: {
         Row: {
