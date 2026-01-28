@@ -8,6 +8,9 @@ const corsHeaders = {
 // =============================================================================
 // CONFIGURATION - Multi-market source configuration
 // =============================================================================
+// This architecture supports plugging in real APIs (AMPIS, Kalimati, etc.)
+// Each source has its own fetcher function that can be swapped out.
+// =============================================================================
 interface MarketSourceConfig {
   id: string;
   name: string;
@@ -18,13 +21,67 @@ interface MarketSourceConfig {
   provinceId: number;
   districtIdFk: number | null;
   district: string;
+  sourceType: 'mock' | 'api' | 'scraper';
+  apiConfig?: {
+    baseUrl: string;
+    authType: 'none' | 'bearer' | 'apikey';
+    authHeader?: string;
+  };
   fetchFn: (date: string, config: MarketSourceConfig) => Promise<RawMarketItem[]>;
 }
 
+// =============================================================================
+// EXTERNAL API CONNECTORS (Future-ready)
+// These can be replaced with real implementations when API access is available
+// =============================================================================
+
+// AMPIS API Connector (placeholder - replace with real implementation)
+class AmpisClient {
+  private baseUrl: string;
+  private apiKey?: string;
+
+  constructor(config?: { baseUrl?: string; apiKey?: string }) {
+    this.baseUrl = config?.baseUrl || 'https://ampis.moald.gov.np/api'; // Placeholder
+    this.apiKey = config?.apiKey;
+  }
+
+  async fetchMarkets(): Promise<{ code: string; name: string; district: string }[]> {
+    // TODO: Implement when AMPIS API access is available
+    console.log('[AmpisClient] fetchMarkets - Not implemented yet');
+    return [];
+  }
+
+  async fetchDailyPrices(date: string): Promise<RawMarketItem[]> {
+    // TODO: Implement when AMPIS API access is available
+    console.log(`[AmpisClient] fetchDailyPrices for ${date} - Not implemented yet`);
+    return [];
+  }
+}
+
+// Kalimati API Connector (placeholder - replace with real implementation)
+class KalimatiClient {
+  private baseUrl: string;
+
+  constructor(config?: { baseUrl?: string }) {
+    this.baseUrl = config?.baseUrl || 'https://kalimatimarket.gov.np/api'; // Placeholder
+  }
+
+  async fetchDailyPrices(date: string): Promise<RawMarketItem[]> {
+    // TODO: Implement when Kalimati API access is available
+    // Could use web scraping as fallback if no official API
+    console.log(`[KalimatiClient] fetchDailyPrices for ${date} - Not implemented yet`);
+    return [];
+  }
+}
+
+// =============================================================================
+// MARKET SOURCES CONFIGURATION
+// =============================================================================
 const MARKET_SOURCES: MarketSourceConfig[] = [
+  // Kalimati - Main wholesale market in Kathmandu
   {
-    id: 'kalimati_mock',
-    name: 'Kalimati Wholesale (Mock)',
+    id: 'kalimati',
+    name: 'Kalimati Wholesale Market',
     enabled: true,
     marketCode: 'KALIMATI',
     marketNameEn: 'Kalimati',
@@ -32,11 +89,17 @@ const MARKET_SOURCES: MarketSourceConfig[] = [
     provinceId: 3,
     districtIdFk: null,
     district: 'Kathmandu',
+    sourceType: 'mock', // Change to 'api' when real API is available
+    apiConfig: {
+      baseUrl: 'https://kalimatimarket.gov.np/api',
+      authType: 'none',
+    },
     fetchFn: fetchMockKalimatiData,
   },
+  // Biratnagar - Eastern Nepal wholesale
   {
-    id: 'biratnagar_mock',
-    name: 'Biratnagar Wholesale (Mock)',
+    id: 'biratnagar',
+    name: 'Biratnagar Wholesale',
     enabled: true,
     marketCode: 'BIRATNAGAR_WH',
     marketNameEn: 'Biratnagar Wholesale',
@@ -44,11 +107,13 @@ const MARKET_SOURCES: MarketSourceConfig[] = [
     provinceId: 1,
     districtIdFk: null,
     district: 'Morang',
+    sourceType: 'mock',
     fetchFn: fetchMockBiratnagarData,
   },
+  // Pokhara - Gandaki Province
   {
-    id: 'pokhara_mock',
-    name: 'Pokhara Retail (Mock)',
+    id: 'pokhara',
+    name: 'Pokhara Retail Market',
     enabled: true,
     marketCode: 'POKHARA_RT',
     marketNameEn: 'Pokhara Retail',
@@ -56,7 +121,78 @@ const MARKET_SOURCES: MarketSourceConfig[] = [
     provinceId: 4,
     districtIdFk: null,
     district: 'Kaski',
+    sourceType: 'mock',
     fetchFn: fetchMockPokharaData,
+  },
+  // Butwal - Lumbini Province
+  {
+    id: 'butwal',
+    name: 'Butwal Market',
+    enabled: true,
+    marketCode: 'BUTWAL',
+    marketNameEn: 'Butwal',
+    marketNameNe: 'बुटवल',
+    provinceId: 5,
+    districtIdFk: null,
+    district: 'Rupandehi',
+    sourceType: 'mock',
+    fetchFn: fetchMockButwalData,
+  },
+  // Nepalgunj - Lumbini Province (Western)
+  {
+    id: 'nepalgunj',
+    name: 'Nepalgunj Market',
+    enabled: true,
+    marketCode: 'NEPALGUNJ',
+    marketNameEn: 'Nepalgunj',
+    marketNameNe: 'नेपालगञ्ज',
+    provinceId: 5,
+    districtIdFk: null,
+    district: 'Banke',
+    sourceType: 'mock',
+    fetchFn: fetchMockNepalgunjData,
+  },
+  // Dhangadhi - Sudurpashchim Province
+  {
+    id: 'dhangadhi',
+    name: 'Dhangadhi Market',
+    enabled: true,
+    marketCode: 'DHANGADHI',
+    marketNameEn: 'Dhangadhi',
+    marketNameNe: 'धनगढी',
+    provinceId: 7,
+    districtIdFk: null,
+    district: 'Kailali',
+    sourceType: 'mock',
+    fetchFn: fetchMockDhangadhiData,
+  },
+  // Birgunj - Madhesh Province
+  {
+    id: 'birgunj',
+    name: 'Birgunj Market',
+    enabled: true,
+    marketCode: 'BIRGUNJ',
+    marketNameEn: 'Birgunj',
+    marketNameNe: 'वीरगञ्ज',
+    provinceId: 2,
+    districtIdFk: null,
+    district: 'Parsa',
+    sourceType: 'mock',
+    fetchFn: fetchMockBirgunjData,
+  },
+  // Itahari - Koshi Province
+  {
+    id: 'itahari',
+    name: 'Itahari Market',
+    enabled: true,
+    marketCode: 'ITAHARI',
+    marketNameEn: 'Itahari',
+    marketNameNe: 'इटहरी',
+    provinceId: 1,
+    districtIdFk: null,
+    district: 'Sunsari',
+    sourceType: 'mock',
+    fetchFn: fetchMockItahariData,
   },
 ];
 
@@ -175,6 +311,56 @@ async function fetchMockPokharaData(date: string, _config: MarketSourceConfig): 
     min_price: Math.round(item.min_price * 1.08),
     max_price: Math.round(item.max_price * 1.15),
     avg_price: Math.round(item.avg_price * 1.10),
+  }));
+}
+
+async function fetchMockButwalData(date: string, _config: MarketSourceConfig): Promise<RawMarketItem[]> {
+  console.log(`[Butwal Mock] Generating data for ${date}`);
+  return generatePricesWithVariation(date, 300).map(item => ({
+    ...item,
+    min_price: Math.round(item.min_price * 0.95),
+    max_price: Math.round(item.max_price * 1.02),
+    avg_price: Math.round(item.avg_price * 0.98),
+  }));
+}
+
+async function fetchMockNepalgunjData(date: string, _config: MarketSourceConfig): Promise<RawMarketItem[]> {
+  console.log(`[Nepalgunj Mock] Generating data for ${date}`);
+  return generatePricesWithVariation(date, 400).map(item => ({
+    ...item,
+    min_price: Math.round(item.min_price * 0.88),
+    max_price: Math.round(item.max_price * 0.95),
+    avg_price: Math.round(item.avg_price * 0.90),
+  }));
+}
+
+async function fetchMockDhangadhiData(date: string, _config: MarketSourceConfig): Promise<RawMarketItem[]> {
+  console.log(`[Dhangadhi Mock] Generating data for ${date}`);
+  return generatePricesWithVariation(date, 500).map(item => ({
+    ...item,
+    min_price: Math.round(item.min_price * 1.05),
+    max_price: Math.round(item.max_price * 1.12),
+    avg_price: Math.round(item.avg_price * 1.08),
+  }));
+}
+
+async function fetchMockBirgunjData(date: string, _config: MarketSourceConfig): Promise<RawMarketItem[]> {
+  console.log(`[Birgunj Mock] Generating data for ${date}`);
+  return generatePricesWithVariation(date, 600).map(item => ({
+    ...item,
+    min_price: Math.round(item.min_price * 0.90),
+    max_price: Math.round(item.max_price * 0.98),
+    avg_price: Math.round(item.avg_price * 0.94),
+  }));
+}
+
+async function fetchMockItahariData(date: string, _config: MarketSourceConfig): Promise<RawMarketItem[]> {
+  console.log(`[Itahari Mock] Generating data for ${date}`);
+  return generatePricesWithVariation(date, 700).map(item => ({
+    ...item,
+    min_price: Math.round(item.min_price * 0.93),
+    max_price: Math.round(item.max_price * 1.00),
+    avg_price: Math.round(item.avg_price * 0.96),
   }));
 }
 

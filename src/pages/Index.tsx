@@ -5,6 +5,7 @@ import QuickActionsGrid from "@/components/home/QuickActionsGrid";
 import FeaturesSection from "@/components/home/FeaturesSection";
 import HowItWorksSection from "@/components/home/HowItWorksSection";
 import CTASection from "@/components/home/CTASection";
+import { MyMarketShortcut } from "@/components/home/MyMarketShortcut";
 import { Helmet } from "react-helmet-async";
 
 const Index = () => {
@@ -22,6 +23,14 @@ const Index = () => {
         <main>
           <HeroSection />
           <QuickActionsGrid />
+          
+          {/* My Market Shortcut - placed after quick actions */}
+          <section className="py-4 sm:py-6">
+            <div className="container mx-auto px-4 max-w-xl">
+              <MyMarketShortcut />
+            </div>
+          </section>
+          
           <FeaturesSection />
           <HowItWorksSection />
           <CTASection />
