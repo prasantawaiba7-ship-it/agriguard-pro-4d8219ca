@@ -3,8 +3,18 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
-import { AspectRatio } from '@/components/ui/aspect-ratio';
-import { Globe, TrendingUp, TrendingDown, MapPin, Store, ArrowUpDown } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { 
+  Globe, 
+  TrendingUp, 
+  TrendingDown, 
+  MapPin, 
+  Store, 
+  ArrowUpDown,
+  AlertCircle,
+  RefreshCw,
+  Filter
+} from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useLanguage } from '@/hooks/useLanguage';
 import { useCrops } from '@/hooks/useCrops';
@@ -26,12 +36,21 @@ interface MarketPriceRow {
   market_name_ne: string | null;
   district: string | null;
   province_id: number | null;
+  source: string | null;
 }
 
 interface ProvinceName {
   id: number;
   name_ne: string;
   name_en: string;
+}
+
+interface DistrictInfo {
+  id: number;
+  name_ne: string;
+  name_en: string;
+  province_id: number;
+  is_major: boolean;
 }
 
 export function AllNepalPriceComparison() {
@@ -42,25 +61,30 @@ export function AllNepalPriceComparison() {
   const [selectedCropId, setSelectedCropId] = useState<string>('');
   const [prices, setPrices] = useState<MarketPriceRow[]>([]);
   const [provinces, setProvinces] = useState<ProvinceName[]>([]);
+  const [districts, setDistricts] = useState<DistrictInfo[]>([]);
+  const [selectedProvinceFilter, setSelectedProvinceFilter] = useState<string>('all');
+  const [showMajorOnly, setShowMajorOnly] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [sortBy, setSortBy] = useState<'price-low' | 'price-high' | 'market'>('price-low');
   const [latestDate, setLatestDate] = useState<string>('');
+  const [districtsWithoutData, setDistrictsWithoutData] = useState<DistrictInfo[]>([]);
 
-  // Fetch provinces
+  // Fetch provinces and districts
   useEffect(() => {
-    supabase
-      .from('provinces')
-      .select('id, name_ne, name_en')
-      .order('display_order')
-      .then(({ data }) => {
-        if (data) setProvinces(data);
-      });
+    Promise.all([
+      supabase.from('provinces').select('id, name_ne, name_en').order('display_order'),
+      supabase.from('districts').select('id, name_ne, name_en, province_id, is_major').order('name_en'),
+    ]).then(([provRes, distRes]) => {
+      if (provRes.data) setProvinces(provRes.data);
+      if (distRes.data) setDistricts(distRes.data);
+    });
   }, []);
 
   // Fetch prices when crop changes
   useEffect(() => {
     if (!selectedCropId) {
       setPrices([]);
+      setDistrictsWithoutData([]);
       return;
     }
 
@@ -91,6 +115,12 @@ export function AllNepalPriceComparison() {
 
         if (error) throw error;
         setPrices(data || []);
+
+        // Find districts without data for this crop
+        const districtsWithData = new Set((data || []).map(p => p.district));
+        const missing = districts.filter(d => !districtsWithData.has(d.name_en) && !districtsWithData.has(d.name_ne));
+        setDistrictsWithoutData(missing);
+
       } catch (e) {
         console.error('Error fetching comparison data:', e);
         setPrices([]);
@@ -100,10 +130,22 @@ export function AllNepalPriceComparison() {
     };
 
     fetchPrices();
-  }, [selectedCropId]);
+  }, [selectedCropId, districts]);
+
+  // Filter prices
+  const filteredPrices = prices.filter(price => {
+    if (selectedProvinceFilter !== 'all' && price.province_id !== Number(selectedProvinceFilter)) {
+      return false;
+    }
+    if (showMajorOnly) {
+      const district = districts.find(d => d.name_en === price.district || d.name_ne === price.district);
+      if (!district?.is_major) return false;
+    }
+    return true;
+  });
 
   // Sort prices
-  const sortedPrices = [...prices].sort((a, b) => {
+  const sortedPrices = [...filteredPrices].sort((a, b) => {
     if (sortBy === 'price-low') {
       return (a.price_avg || 0) - (b.price_avg || 0);
     } else if (sortBy === 'price-high') {
@@ -113,12 +155,12 @@ export function AllNepalPriceComparison() {
     }
   });
 
-  // Find min and max prices
-  const minPrice = prices.length > 0 
-    ? Math.min(...prices.filter(p => p.price_avg).map(p => p.price_avg!))
+  // Find min and max prices from filtered data
+  const minPrice = filteredPrices.length > 0 
+    ? Math.min(...filteredPrices.filter(p => p.price_avg).map(p => p.price_avg!))
     : 0;
-  const maxPrice = prices.length > 0 
-    ? Math.max(...prices.filter(p => p.price_avg).map(p => p.price_avg!))
+  const maxPrice = filteredPrices.length > 0 
+    ? Math.max(...filteredPrices.filter(p => p.price_avg).map(p => p.price_avg!))
     : 0;
 
   const getProvinceName = (provinceId: number | null) => {
@@ -128,6 +170,15 @@ export function AllNepalPriceComparison() {
   };
 
   const selectedCrop = crops.find(c => c.id === Number(selectedCropId));
+
+  // Filter missing districts by province
+  const filteredMissingDistricts = districtsWithoutData.filter(d => {
+    if (selectedProvinceFilter !== 'all' && d.province_id !== Number(selectedProvinceFilter)) {
+      return false;
+    }
+    if (showMajorOnly && !d.is_major) return false;
+    return true;
+  });
 
   return (
     <div className="space-y-6">
@@ -172,7 +223,7 @@ export function AllNepalPriceComparison() {
                   onError={handleCropImageError}
                 />
               </div>
-              <div>
+              <div className="flex-1">
                 <h3 className="font-semibold">
                   {isNepali ? selectedCrop.name_ne : selectedCrop.name_en}
                 </h3>
@@ -182,6 +233,47 @@ export function AllNepalPriceComparison() {
                   </p>
                 )}
               </div>
+              <Button 
+                variant="ghost" 
+                size="icon"
+                onClick={() => {
+                  setIsLoading(true);
+                  // Re-trigger fetch
+                  const cropId = selectedCropId;
+                  setSelectedCropId('');
+                  setTimeout(() => setSelectedCropId(cropId), 100);
+                }}
+              >
+                <RefreshCw className="h-4 w-4" />
+              </Button>
+            </div>
+          )}
+
+          {/* Filters */}
+          {selectedCropId && (
+            <div className="flex flex-wrap items-center gap-2 pt-2 border-t">
+              <Filter className="h-4 w-4 text-muted-foreground" />
+              <Select value={selectedProvinceFilter} onValueChange={setSelectedProvinceFilter}>
+                <SelectTrigger className="w-32 h-8 text-xs bg-card">
+                  <SelectValue placeholder="प्रदेश" />
+                </SelectTrigger>
+                <SelectContent className="bg-card border z-50">
+                  <SelectItem value="all">{isNepali ? 'सबै प्रदेश' : 'All Provinces'}</SelectItem>
+                  {provinces.map(p => (
+                    <SelectItem key={p.id} value={String(p.id)}>
+                      {isNepali ? p.name_ne : p.name_en}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <Button
+                variant={showMajorOnly ? 'secondary' : 'outline'}
+                size="sm"
+                className="h-8 text-xs"
+                onClick={() => setShowMajorOnly(!showMajorOnly)}
+              >
+                {isNepali ? 'प्रमुख जिल्ला मात्र' : 'Major Districts Only'}
+              </Button>
             </div>
           )}
         </CardContent>
@@ -200,11 +292,18 @@ export function AllNepalPriceComparison() {
                 </Card>
               ))}
             </div>
-          ) : prices.length === 0 ? (
+          ) : filteredPrices.length === 0 ? (
             <Card>
               <CardContent className="p-8 text-center text-muted-foreground">
                 <Globe className="h-12 w-12 mx-auto mb-3 opacity-50" />
-                <p>{isNepali ? 'यस बालीको मूल्य डाटा उपलब्ध छैन।' : 'No price data available for this crop.'}</p>
+                <p className="font-medium mb-2">
+                  {isNepali ? 'यस बालीको मूल्य डाटा उपलब्ध छैन।' : 'No price data available for this crop.'}
+                </p>
+                <p className="text-sm">
+                  {isNepali 
+                    ? 'AMPIS/कालीमाटी API जडान भएपछि स्वचालित अपडेट हुनेछ।'
+                    : 'Data will update automatically when AMPIS/Kalimati API is connected.'}
+                </p>
               </CardContent>
             </Card>
           ) : (
@@ -245,7 +344,7 @@ export function AllNepalPriceComparison() {
                   </SelectContent>
                 </Select>
                 <span className="text-sm text-muted-foreground ml-auto">
-                  {prices.length} {isNepali ? 'बजार' : 'markets'}
+                  {filteredPrices.length} {isNepali ? 'बजार' : 'markets'}
                 </span>
               </div>
 
@@ -270,7 +369,7 @@ export function AllNepalPriceComparison() {
                               {index + 1}
                             </div>
                             <div>
-                              <div className="flex items-center gap-2">
+                              <div className="flex items-center gap-2 flex-wrap">
                                 <Store className="h-4 w-4 text-primary" />
                                 <span className="font-medium">
                                   {isNepali ? price.market_name_ne : price.market_name}
@@ -283,6 +382,11 @@ export function AllNepalPriceComparison() {
                                 {isHighest && (
                                   <Badge variant="outline" className="text-destructive border-destructive/50 text-xs">
                                     {isNepali ? 'महँगो' : 'Highest'}
+                                  </Badge>
+                                )}
+                                {price.source && price.source !== 'manual' && (
+                                  <Badge variant="outline" className="text-xs text-muted-foreground">
+                                    {price.source.toUpperCase()}
                                   </Badge>
                                 )}
                               </div>
@@ -309,6 +413,36 @@ export function AllNepalPriceComparison() {
                   );
                 })}
               </div>
+
+              {/* Districts Without Data */}
+              {filteredMissingDistricts.length > 0 && (
+                <Card className="border-warning/30 bg-warning/5">
+                  <CardContent className="p-4">
+                    <div className="flex items-start gap-3">
+                      <AlertCircle className="h-5 w-5 text-warning flex-shrink-0 mt-0.5" />
+                      <div>
+                        <h3 className="font-medium text-warning mb-2">
+                          {isNepali 
+                            ? `${filteredMissingDistricts.length} जिल्लाको लागि आजको मूल्य उपलब्ध छैन`
+                            : `No data available for ${filteredMissingDistricts.length} districts`}
+                        </h3>
+                        <div className="flex flex-wrap gap-1.5">
+                          {filteredMissingDistricts.slice(0, 10).map(d => (
+                            <Badge key={d.id} variant="outline" className="text-xs">
+                              {isNepali ? d.name_ne : d.name_en}
+                            </Badge>
+                          ))}
+                          {filteredMissingDistricts.length > 10 && (
+                            <Badge variant="outline" className="text-xs">
+                              +{filteredMissingDistricts.length - 10} {isNepali ? 'थप' : 'more'}
+                            </Badge>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
             </>
           )}
         </>

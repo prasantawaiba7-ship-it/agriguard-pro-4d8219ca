@@ -226,8 +226,10 @@ interface NormalizedProduct {
   market_name_ne: string;
   district: string;
   source: string;
+  source_ref: string | null;
   province_id: number | null;
   district_id_fk: number | null;
+  last_synced_at: string;
 }
 
 // =============================================================================
@@ -372,6 +374,8 @@ function normalizeMarketData(
   date: string,
   source: MarketSourceConfig
 ): NormalizedProduct[] {
+  const now = new Date().toISOString();
+  
   return rawData.map(item => ({
     date,
     crop_name: item.commodity_name_en,
@@ -386,8 +390,10 @@ function normalizeMarketData(
     market_name_ne: source.marketNameNe,
     district: source.district,
     source: source.id,
+    source_ref: item.commodity_id || null,
     province_id: source.provinceId,
     district_id_fk: source.districtIdFk,
+    last_synced_at: now,
   }));
 }
 
