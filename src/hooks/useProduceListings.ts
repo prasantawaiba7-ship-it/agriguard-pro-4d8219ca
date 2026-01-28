@@ -29,6 +29,7 @@ export interface CreateListingInput {
   expected_price?: number;
   district?: string;
   municipality?: string;
+  image_urls?: string[];
   contact_phone?: string;
   notes?: string;
 }
@@ -93,6 +94,7 @@ export function useProduceListings() {
           municipality: input.municipality || null,
           contact_phone: input.contact_phone || profile?.phone || null,
           notes: input.notes || null,
+          image_urls: input.image_urls || [],
         })
         .select()
         .single();

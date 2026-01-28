@@ -16,6 +16,7 @@ import {
   Clock, AlertTriangle, ChevronRight, X, User, MessageCircle
 } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
+import { ProduceImageUpload } from './ProduceImageUpload';
 
 const UNITS = ['kg', 'quintal', 'ton', 'piece', 'bundle', 'खद्रो', 'रोपनी'];
 const CROP_FILTERS = ['सबै', 'धान', 'मकै', 'गहुँ', 'आलु', 'गोलभेंडा', 'अन्य'];
@@ -45,6 +46,7 @@ export function ProduceListingsManager() {
     municipality: '',
     contact_phone: profile?.phone || '',
     notes: '',
+    image_urls: [],
   });
 
   // Filter listings
@@ -73,6 +75,7 @@ export function ProduceListingsManager() {
       municipality: '',
       contact_phone: profile?.phone || '',
       notes: '',
+      image_urls: [],
     });
     setEditingListing(null);
   };
@@ -103,6 +106,7 @@ export function ProduceListingsManager() {
       municipality: listing.municipality || '',
       contact_phone: listing.contact_phone || '',
       notes: listing.notes || '',
+      image_urls: (listing as any).image_urls || [],
     });
     setIsDialogOpen(true);
   };
@@ -180,10 +184,28 @@ export function ProduceListingsManager() {
           )}
         </div>
 
-        {/* Image placeholder */}
-        <div className="w-full h-32 rounded-lg bg-muted flex items-center justify-center mb-3">
-          <Package className="h-12 w-12 text-muted-foreground/50" />
-        </div>
+        {/* Product Image */}
+        {(listing as any).image_urls && (listing as any).image_urls.length > 0 ? (
+          <div className="w-full h-32 rounded-lg overflow-hidden mb-3">
+            <img
+              src={(listing as any).image_urls[0]}
+              alt={listing.crop_name}
+              className="w-full h-full object-cover"
+              onError={(e) => {
+                (e.target as HTMLImageElement).src = '/placeholder.svg';
+              }}
+            />
+            {(listing as any).image_urls.length > 1 && (
+              <div className="absolute bottom-2 right-2 bg-black/60 text-white text-xs px-2 py-1 rounded">
+                +{(listing as any).image_urls.length - 1} फोटो
+              </div>
+            )}
+          </div>
+        ) : (
+          <div className="w-full h-32 rounded-lg bg-muted flex items-center justify-center mb-3">
+            <Package className="h-12 w-12 text-muted-foreground/50" />
+          </div>
+        )}
 
         {/* Details */}
         <div className="space-y-2">
@@ -463,6 +485,13 @@ export function ProduceListingsManager() {
                   />
                 </div>
 
+                {/* Photo Upload Section */}
+                <ProduceImageUpload
+                  images={formData.image_urls || []}
+                  onImagesChange={(urls) => setFormData({ ...formData, image_urls: urls })}
+                  maxImages={4}
+                />
+
                 <Button type="submit" className="w-full" size="lg">
                   <Plus className="h-5 w-5 mr-2" />
                   {editingListing ? 'अपडेट गर्नुहोस्' : 'List गर्नुहोस्'}
@@ -512,10 +541,41 @@ export function ProduceListingsManager() {
                 )}
               </SheetHeader>
 
-              {/* Image carousel placeholder */}
-              <div className="w-full h-48 rounded-xl bg-muted flex items-center justify-center">
-                <Package className="h-16 w-16 text-muted-foreground/30" />
-              </div>
+              {/* Image carousel */}
+              {(selectedListing as any).image_urls && (selectedListing as any).image_urls.length > 0 ? (
+                <div className="space-y-2">
+                  <div className="w-full h-48 rounded-xl overflow-hidden">
+                    <img
+                      src={(selectedListing as any).image_urls[0]}
+                      alt={selectedListing.crop_name}
+                      className="w-full h-full object-cover"
+                      onError={(e) => {
+                        (e.target as HTMLImageElement).src = '/placeholder.svg';
+                      }}
+                    />
+                  </div>
+                  {(selectedListing as any).image_urls.length > 1 && (
+                    <div className="flex gap-2 overflow-x-auto pb-2">
+                      {(selectedListing as any).image_urls.map((url: string, idx: number) => (
+                        <div key={idx} className="w-16 h-16 flex-shrink-0 rounded-lg overflow-hidden border-2 border-transparent hover:border-primary transition-colors cursor-pointer">
+                          <img
+                            src={url}
+                            alt={`${selectedListing.crop_name} ${idx + 1}`}
+                            className="w-full h-full object-cover"
+                            onError={(e) => {
+                              (e.target as HTMLImageElement).src = '/placeholder.svg';
+                            }}
+                          />
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <div className="w-full h-48 rounded-xl bg-muted flex items-center justify-center">
+                  <Package className="h-16 w-16 text-muted-foreground/30" />
+                </div>
+              )}
 
               {/* Main info */}
               <div className="space-y-4">
