@@ -5,7 +5,10 @@ import { NepaliDiseaseDetector } from '@/components/ai/NepaliDiseaseDetector';
 import { FloatingVoiceButton } from '@/components/ai/FloatingVoiceButton';
 import { OutbreakAlertsBanner } from '@/components/disease/OutbreakAlertsBanner';
 import { DiseasePrediction } from '@/components/disease/DiseasePrediction';
+import { DiagnosisCaseSubmit } from '@/components/diagnosis/DiagnosisCaseSubmit';
+import { MyDiagnosisCases } from '@/components/diagnosis/MyDiagnosisCases';
 import { useAuth } from '@/hooks/useAuth';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 export default function DiseaseDetection() {
   const { user } = useAuth();
@@ -37,14 +40,36 @@ export default function DiseaseDetection() {
           {/* Outbreak Alerts Banner */}
           <OutbreakAlertsBanner />
 
-          <NepaliDiseaseDetector />
+          {/* Main Tabs: AI Detection vs Expert Review */}
+          <Tabs defaultValue="ai" className="space-y-6">
+            <TabsList className="grid w-full grid-cols-2">
+              <TabsTrigger value="ai">🤖 AI तुरुन्त जाँच</TabsTrigger>
+              <TabsTrigger value="expert">👨‍🌾 विज्ञलाई सोध्नुहोस्</TabsTrigger>
+            </TabsList>
 
-          {/* Disease Prediction Section (for logged in users) */}
-          {user && (
-            <div className="mt-12">
-              <DiseasePrediction />
-            </div>
-          )}
+            {/* AI Detection Tab */}
+            <TabsContent value="ai" className="space-y-6">
+              <NepaliDiseaseDetector />
+              
+              {/* Disease Prediction Section (for logged in users) */}
+              {user && (
+                <div className="mt-6">
+                  <DiseasePrediction />
+                </div>
+              )}
+            </TabsContent>
+
+            {/* Expert Review Tab */}
+            <TabsContent value="expert" className="space-y-6">
+              <DiagnosisCaseSubmit />
+              
+              {user && (
+                <div className="mt-6">
+                  <MyDiagnosisCases />
+                </div>
+              )}
+            </TabsContent>
+          </Tabs>
 
           {/* How to Use Section - Simplified Steps */}
           <div className="mt-12 p-4 sm:p-6 bg-muted/50 rounded-2xl">
