@@ -1013,6 +1013,147 @@ export type Database = {
           },
         ]
       }
+      diagnosis_case_images: {
+        Row: {
+          angle_type: Database["public"]["Enums"]["diagnosis_angle_type"] | null
+          case_id: string
+          created_at: string
+          id: string
+          image_url: string
+        }
+        Insert: {
+          angle_type?:
+            | Database["public"]["Enums"]["diagnosis_angle_type"]
+            | null
+          case_id: string
+          created_at?: string
+          id?: string
+          image_url: string
+        }
+        Update: {
+          angle_type?:
+            | Database["public"]["Enums"]["diagnosis_angle_type"]
+            | null
+          case_id?: string
+          created_at?: string
+          id?: string
+          image_url?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "diagnosis_case_images_case_id_fkey"
+            columns: ["case_id"]
+            isOneToOne: false
+            referencedRelation: "diagnosis_cases"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      diagnosis_cases: {
+        Row: {
+          case_status: Database["public"]["Enums"]["diagnosis_case_status"]
+          created_at: string
+          crop_id: number | null
+          farmer_question: string | null
+          id: string
+          location_district_id: number | null
+          location_province_id: number | null
+          updated_at: string
+          user_id: string | null
+        }
+        Insert: {
+          case_status?: Database["public"]["Enums"]["diagnosis_case_status"]
+          created_at?: string
+          crop_id?: number | null
+          farmer_question?: string | null
+          id?: string
+          location_district_id?: number | null
+          location_province_id?: number | null
+          updated_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          case_status?: Database["public"]["Enums"]["diagnosis_case_status"]
+          created_at?: string
+          crop_id?: number | null
+          farmer_question?: string | null
+          id?: string
+          location_district_id?: number | null
+          location_province_id?: number | null
+          updated_at?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "diagnosis_cases_crop_id_fkey"
+            columns: ["crop_id"]
+            isOneToOne: false
+            referencedRelation: "crops"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "diagnosis_cases_location_district_id_fkey"
+            columns: ["location_district_id"]
+            isOneToOne: false
+            referencedRelation: "districts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "diagnosis_cases_location_province_id_fkey"
+            columns: ["location_province_id"]
+            isOneToOne: false
+            referencedRelation: "provinces"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      diagnosis_suggestions: {
+        Row: {
+          advice_text: string | null
+          case_id: string
+          confidence_level: number | null
+          created_at: string
+          created_by_expert_id: string | null
+          id: string
+          is_final: boolean
+          language_code: string | null
+          source_type: Database["public"]["Enums"]["diagnosis_source_type"]
+          suspected_problem: string | null
+        }
+        Insert: {
+          advice_text?: string | null
+          case_id: string
+          confidence_level?: number | null
+          created_at?: string
+          created_by_expert_id?: string | null
+          id?: string
+          is_final?: boolean
+          language_code?: string | null
+          source_type: Database["public"]["Enums"]["diagnosis_source_type"]
+          suspected_problem?: string | null
+        }
+        Update: {
+          advice_text?: string | null
+          case_id?: string
+          confidence_level?: number | null
+          created_at?: string
+          created_by_expert_id?: string | null
+          id?: string
+          is_final?: boolean
+          language_code?: string | null
+          source_type?: Database["public"]["Enums"]["diagnosis_source_type"]
+          suspected_problem?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "diagnosis_suggestions_case_id_fkey"
+            columns: ["case_id"]
+            isOneToOne: false
+            referencedRelation: "diagnosis_cases"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       disease_detections: {
         Row: {
           analyzed_at: string
@@ -2658,6 +2799,19 @@ export type Database = {
         | "frost"
         | "other"
         | "none"
+      diagnosis_angle_type:
+        | "leaf_closeup"
+        | "plant_full"
+        | "fruit"
+        | "stem"
+        | "other"
+      diagnosis_case_status:
+        | "new"
+        | "ai_suggested"
+        | "expert_pending"
+        | "expert_answered"
+        | "closed"
+      diagnosis_source_type: "rule_engine" | "ai_model" | "human_expert"
       feedback_status:
         | "pending"
         | "seen"
@@ -2855,6 +3009,21 @@ export const Constants = {
         "other",
         "none",
       ],
+      diagnosis_angle_type: [
+        "leaf_closeup",
+        "plant_full",
+        "fruit",
+        "stem",
+        "other",
+      ],
+      diagnosis_case_status: [
+        "new",
+        "ai_suggested",
+        "expert_pending",
+        "expert_answered",
+        "closed",
+      ],
+      diagnosis_source_type: ["rule_engine", "ai_model", "human_expert"],
       feedback_status: [
         "pending",
         "seen",

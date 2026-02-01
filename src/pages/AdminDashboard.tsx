@@ -64,6 +64,7 @@ import { MarketsManager } from "@/components/admin/MarketsManager";
 import { CropPhotosManager } from "@/components/admin/CropPhotosManager";
 import { MarketCoverageReport } from "@/components/admin/MarketCoverageReport";
 import { FeedbackManager } from "@/components/admin/FeedbackManager";
+import { DiagnosisCasesManager } from "@/components/admin/DiagnosisCasesManager";
 interface FarmerProfile {
   id: string;
   user_id: string;
@@ -458,6 +459,10 @@ const AdminDashboard = () => {
                   <MessageSquare className="h-4 w-4" />
                   <span className="hidden sm:inline">Feedback</span>
                 </TabsTrigger>
+                <TabsTrigger value="diagnosis-cases" className="flex items-center gap-2">
+                  <Bug className="h-4 w-4" />
+                  <span className="hidden sm:inline">रोग केस</span>
+                </TabsTrigger>
               </TabsList>
 
               {/* Overview Tab */}
@@ -569,6 +574,11 @@ const AdminDashboard = () => {
               {/* Disease Analytics Tab */}
               <TabsContent value="disease">
                 <DiseaseAnalyticsDashboard />
+              </TabsContent>
+
+              {/* Disease Cases Management Tab */}
+              <TabsContent value="diagnosis-cases">
+                <DiagnosisCasesManager />
               </TabsContent>
 
               {/* Users Tab */}
