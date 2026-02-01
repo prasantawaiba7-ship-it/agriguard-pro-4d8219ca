@@ -11,11 +11,12 @@ import { useLanguage } from '@/hooks/useLanguage';
 import { useCrops } from '@/hooks/useCrops';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { supabase } from '@/integrations/supabase/client';
-import { BookOpen, ChevronLeft, Search, Leaf, Loader2, ChevronDown, ChevronUp, Sparkles, MessageSquare, ArrowRight, ImageOff } from 'lucide-react';
+import { BookOpen, ChevronLeft, Search, Leaf, Loader2, ChevronDown, ChevronUp, Sparkles, MessageSquare, ArrowRight, ImageOff, Star } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { toast } from 'sonner';
 import { MarketPriceSummaryCard } from './MarketPriceSummaryCard';
+import { QuickRatingButton } from '@/components/feedback/QuickRatingButton';
 
 export function CropGuidesViewer() {
   const navigate = useNavigate();
@@ -656,6 +657,31 @@ export function CropGuidesViewer() {
           })}
         </div>
       )}
+
+      {/* Feedback Section for Guides - always shown when crop selected */}
+      <Card className="border-dashed border-primary/30 bg-primary/5 mt-6">
+        <CardContent className="p-4 flex flex-col sm:flex-row items-center justify-between gap-4">
+          <div className="flex items-center gap-3">
+            <div className="p-2 rounded-full bg-primary/10">
+              <Star className="h-5 w-5 text-primary" />
+            </div>
+            <div>
+              <h4 className="font-medium text-sm">
+                {language === 'ne' ? 'यो गाइड कस्तो लाग्यो?' : 'How was this guide?'}
+              </h4>
+              <p className="text-xs text-muted-foreground">
+                {language === 'ne' ? 'तपाईंको प्रतिक्रियाले हामीलाई सुधार गर्न मद्दत गर्छ' : 'Your feedback helps us improve'}
+              </p>
+            </div>
+          </div>
+          <QuickRatingButton
+            feedbackType="guide_usefulness"
+            targetType="guide"
+            targetId={selectedCrop || undefined}
+            variant="stars"
+          />
+        </CardContent>
+      </Card>
     </motion.div>
   );
 }
