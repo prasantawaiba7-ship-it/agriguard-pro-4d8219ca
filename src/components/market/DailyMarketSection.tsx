@@ -13,6 +13,7 @@ import { LocationFilters } from './LocationFilters';
 import { RealTimePriceUpdates } from './RealTimePriceUpdates';
 import { getCropImageUrl, handleCropImageError } from '@/lib/cropPlaceholder';
 import { NoDataMessage } from './NoDataMessage';
+import { QuickRatingButton } from '@/components/feedback/QuickRatingButton';
 
 function ProductCard({ product }: { product: DailyMarketProduct }) {
   const displayName = product.crop_name_ne || product.crop_name;
@@ -71,6 +72,18 @@ function ProductCard({ product }: { product: DailyMarketProduct }) {
                 {product.district}
               </Badge>
             )}
+          </div>
+
+          {/* Quick Feedback */}
+          <div className="pt-1 border-t border-border/50">
+            <QuickRatingButton
+              feedbackType="price_accuracy"
+              targetType="market_price"
+              targetId={product.id}
+              variant="thumbs"
+              label="मूल्य मिल्छ?"
+              className="justify-center"
+            />
           </div>
         </CardContent>
       </Card>

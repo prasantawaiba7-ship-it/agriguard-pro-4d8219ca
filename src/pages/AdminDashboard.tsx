@@ -63,6 +63,7 @@ import { DailyMarketPricesManager } from "@/components/admin/DailyMarketPricesMa
 import { MarketsManager } from "@/components/admin/MarketsManager";
 import { CropPhotosManager } from "@/components/admin/CropPhotosManager";
 import { MarketCoverageReport } from "@/components/admin/MarketCoverageReport";
+import { FeedbackManager } from "@/components/admin/FeedbackManager";
 interface FarmerProfile {
   id: string;
   user_id: string;
@@ -453,6 +454,10 @@ const AdminDashboard = () => {
                   <BarChart3 className="h-4 w-4" />
                   <span className="hidden sm:inline">कभरेज</span>
                 </TabsTrigger>
+                <TabsTrigger value="feedback" className="flex items-center gap-2">
+                  <MessageSquare className="h-4 w-4" />
+                  <span className="hidden sm:inline">Feedback</span>
+                </TabsTrigger>
               </TabsList>
 
               {/* Overview Tab */}
@@ -768,6 +773,11 @@ const AdminDashboard = () => {
               {/* Coverage Report Tab */}
               <TabsContent value="coverage">
                 <MarketCoverageReport />
+              </TabsContent>
+
+              {/* Feedback Tab */}
+              <TabsContent value="feedback">
+                <FeedbackManager />
               </TabsContent>
             </Tabs>
           </div>

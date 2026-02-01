@@ -23,6 +23,7 @@ import { SubscriptionCard } from '@/components/profile/SubscriptionCard';
 import { QueryHistoryCard } from '@/components/profile/QueryHistoryCard';
 import { NotificationPreferencesCard } from '@/components/profile/NotificationPreferencesCard';
 import { WeatherAlertSettingsCard } from '@/components/farmer/WeatherAlertSettingsCard';
+import { GeneralFeedbackForm } from '@/components/feedback/GeneralFeedbackForm';
 
 const profileSchema = z.object({
   full_name: z.string().min(2, 'Name must be at least 2 characters').max(100),
@@ -741,6 +742,14 @@ const ProfileSettings = () => {
                 transition={{ delay: 0.2 }}
               >
                 <QueryHistoryCard />
+              </motion.div>
+
+              <motion.div
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: 0.22 }}
+              >
+                <GeneralFeedbackForm />
               </motion.div>
             </div>
           </div>

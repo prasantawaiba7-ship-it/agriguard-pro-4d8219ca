@@ -2231,6 +2231,51 @@ export type Database = {
         }
         Relationships: []
       }
+      user_feedback: {
+        Row: {
+          admin_notes: string | null
+          comment_text: string | null
+          created_at: string
+          feedback_type: Database["public"]["Enums"]["feedback_type"]
+          id: string
+          metadata_json: Json | null
+          rating: number | null
+          status: Database["public"]["Enums"]["feedback_status"]
+          target_id: string | null
+          target_type: Database["public"]["Enums"]["feedback_target_type"]
+          updated_at: string
+          user_id: string | null
+        }
+        Insert: {
+          admin_notes?: string | null
+          comment_text?: string | null
+          created_at?: string
+          feedback_type: Database["public"]["Enums"]["feedback_type"]
+          id?: string
+          metadata_json?: Json | null
+          rating?: number | null
+          status?: Database["public"]["Enums"]["feedback_status"]
+          target_id?: string | null
+          target_type: Database["public"]["Enums"]["feedback_target_type"]
+          updated_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          admin_notes?: string | null
+          comment_text?: string | null
+          created_at?: string
+          feedback_type?: Database["public"]["Enums"]["feedback_type"]
+          id?: string
+          metadata_json?: Json | null
+          rating?: number | null
+          status?: Database["public"]["Enums"]["feedback_status"]
+          target_id?: string | null
+          target_type?: Database["public"]["Enums"]["feedback_target_type"]
+          updated_at?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       user_market_cards: {
         Row: {
           available_quantity: number | null
@@ -2613,6 +2658,25 @@ export type Database = {
         | "frost"
         | "other"
         | "none"
+      feedback_status:
+        | "pending"
+        | "seen"
+        | "in_progress"
+        | "resolved"
+        | "dismissed"
+      feedback_target_type:
+        | "market_price"
+        | "guide"
+        | "screen"
+        | "feature"
+        | "app"
+        | "other"
+      feedback_type:
+        | "price_accuracy"
+        | "guide_usefulness"
+        | "app_experience"
+        | "bug_report"
+        | "feature_request"
       health_status:
         | "healthy"
         | "mild_stress"
@@ -2790,6 +2854,28 @@ export const Constants = {
         "frost",
         "other",
         "none",
+      ],
+      feedback_status: [
+        "pending",
+        "seen",
+        "in_progress",
+        "resolved",
+        "dismissed",
+      ],
+      feedback_target_type: [
+        "market_price",
+        "guide",
+        "screen",
+        "feature",
+        "app",
+        "other",
+      ],
+      feedback_type: [
+        "price_accuracy",
+        "guide_usefulness",
+        "app_experience",
+        "bug_report",
+        "feature_request",
       ],
       health_status: [
         "healthy",
