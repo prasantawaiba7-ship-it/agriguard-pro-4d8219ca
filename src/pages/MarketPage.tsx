@@ -6,20 +6,15 @@ import Footer from '@/components/layout/Footer';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { DailyMarketSection } from '@/components/market/DailyMarketSection';
 import { NearestMarketsSection } from '@/components/market/NearestMarketsSection';
-import { UserMarketCardsSection } from '@/components/market/UserMarketCardsSection';
 import { MarketSelectionFlow } from '@/components/market/MarketSelectionFlow';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
 import { supabase } from '@/integrations/supabase/client';
 import { useQuery } from '@tanstack/react-query';
-import { useAuth } from '@/hooks/useAuth';
-import { useProduceListings } from '@/hooks/useProduceListings';
 import { 
-  TrendingUp, TrendingDown, ShoppingCart, Store, Package, 
-  BarChart3, Eye, Phone, MapPin, Clock, Trash2, Navigation, Bell, Globe
+  TrendingUp, TrendingDown, BarChart3, Clock, Navigation, Store
 } from 'lucide-react';
-import { format, formatDistanceToNow } from 'date-fns';
+import { format } from 'date-fns';
 
 interface MarketPrice {
   id: string;
@@ -32,11 +27,9 @@ interface MarketPrice {
   demand_level: string | null;
 }
 
-type TabValue = 'nearest' | 'prices' | 'cards' | 'my';
+type TabValue = 'nearest' | 'prices';
 
 const MarketPage = () => {
-  const { user } = useAuth();
-  const { myListings, updateListing, deleteListing } = useProduceListings();
   const [searchParams] = useSearchParams();
   const initialTab = (searchParams.get('tab') as TabValue) || 'prices';
   const [activeTab, setActiveTab] = useState<TabValue>(initialTab);
@@ -44,7 +37,7 @@ const MarketPage = () => {
   // Sync tab from URL
   useEffect(() => {
     const tabParam = searchParams.get('tab') as TabValue;
-    if (tabParam && ['nearest', 'prices', 'cards', 'my'].includes(tabParam)) {
+    if (tabParam && ['nearest', 'prices'].includes(tabParam)) {
       setActiveTab(tabParam);
     }
   }, [searchParams]);
@@ -61,33 +54,6 @@ const MarketPage = () => {
       if (error) throw error;
       return data as MarketPrice[];
     },
-  });
-
-  const { data: listingStats } = useQuery({
-    queryKey: ['my-listing-stats', user?.id],
-    queryFn: async () => {
-      if (!myListings.length) return {};
-      
-      const listingIds = myListings.map(l => l.id);
-      
-      const [viewsResult, contactsResult] = await Promise.all([
-        supabase.from('listing_views').select('listing_id').in('listing_id', listingIds),
-        supabase.from('listing_contacts').select('listing_id').in('listing_id', listingIds),
-      ]);
-
-      const viewCounts: Record<string, number> = {};
-      const contactCounts: Record<string, number> = {};
-
-      viewsResult.data?.forEach(v => {
-        viewCounts[v.listing_id] = (viewCounts[v.listing_id] || 0) + 1;
-      });
-      contactsResult.data?.forEach(c => {
-        contactCounts[c.listing_id] = (contactCounts[c.listing_id] || 0) + 1;
-      });
-
-      return { views: viewCounts, contacts: contactCounts };
-    },
-    enabled: !!user && myListings.length > 0,
   });
 
   const getDemandBadge = (level: string | null) => {
@@ -114,15 +80,6 @@ const MarketPage = () => {
     }, {} as Record<string, MarketPrice[]>) || {};
   }, [prices]);
 
-  const handleToggleActive = async (id: string, currentStatus: boolean) => {
-    await updateListing(id, { is_active: !currentStatus });
-  };
-
-  const handleDelete = async (id: string) => {
-    if (confirm('के तपाईं यो listing हटाउन चाहनुहुन्छ?')) {
-      await deleteListing(id);
-    }
-  };
 
   return (
     <>
@@ -152,7 +109,7 @@ const MarketPage = () => {
             </div>
 
             <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as TabValue)}>
-              <TabsList className="grid w-full grid-cols-4 mb-6 bg-muted/60 p-1 rounded-xl">
+              <TabsList className="grid w-full grid-cols-2 mb-6 bg-muted/60 p-1 rounded-xl">
                 <TabsTrigger 
                   value="prices" 
                   className="gap-1 sm:gap-2 text-xs sm:text-sm rounded-lg data-[state=active]:bg-card data-[state=active]:shadow-sm px-1"
@@ -167,22 +124,6 @@ const MarketPage = () => {
                   <Navigation className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
                   <span className="hidden sm:inline">नजिक</span>
                 </TabsTrigger>
-                <TabsTrigger 
-                  value="cards" 
-                  className="gap-1 sm:gap-2 text-xs sm:text-sm rounded-lg data-[state=active]:bg-card data-[state=active]:shadow-sm px-1"
-                >
-                  <Store className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
-                  <span className="hidden sm:inline">कार्ड</span>
-                </TabsTrigger>
-                {user && (
-                  <TabsTrigger 
-                    value="my" 
-                    className="gap-1 sm:gap-2 text-xs sm:text-sm rounded-lg data-[state=active]:bg-card data-[state=active]:shadow-sm px-1"
-                  >
-                    <Package className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
-                    <span className="hidden sm:inline">{myListings.length}</span>
-                  </TabsTrigger>
-                )}
               </TabsList>
 
               {/* Prices Tab */}
@@ -266,144 +207,6 @@ const MarketPage = () => {
               {/* Nearest Markets Tab */}
               <TabsContent value="nearest">
                 <NearestMarketsSection />
-              </TabsContent>
-
-              {/* User Market Cards Tab */}
-              <TabsContent value="cards">
-                <UserMarketCardsSection />
-              </TabsContent>
-
-              {/* My Listings Tab */}
-              <TabsContent value="my">
-                {!user ? (
-                  <Card className="border-border/60">
-                    <CardContent className="p-8 text-center text-muted-foreground">
-                      कृपया login गर्नुहोस्।
-                    </CardContent>
-                  </Card>
-                ) : myListings.length === 0 ? (
-                  <Card className="border-border/60">
-                    <CardContent className="p-8 text-center">
-                      <div className="w-14 h-14 rounded-2xl bg-muted flex items-center justify-center mx-auto mb-4">
-                        <Package className="h-7 w-7 text-muted-foreground/50" />
-                      </div>
-                      <h3 className="font-semibold mb-2">कुनै listing छैन</h3>
-                      <p className="text-sm text-muted-foreground">उब्जनी बेच्न list गर्नुहोस्</p>
-                    </CardContent>
-                  </Card>
-                ) : (
-                  <div className="space-y-4">
-                    {/* Stats summary */}
-                    <div className="grid grid-cols-3 gap-3 sm:gap-4">
-                      <Card className="border-border/60">
-                        <CardContent className="p-4 text-center">
-                          <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center mx-auto mb-2">
-                            <Package className="h-5 w-5 text-primary" />
-                          </div>
-                          <div className="text-2xl font-bold text-foreground">{myListings.length}</div>
-                          <div className="text-xs text-muted-foreground">कुल Listings</div>
-                        </CardContent>
-                      </Card>
-                      <Card className="border-border/60">
-                        <CardContent className="p-4 text-center">
-                          <div className="w-10 h-10 rounded-xl bg-blue-100 dark:bg-blue-950/30 flex items-center justify-center mx-auto mb-2">
-                            <Eye className="h-5 w-5 text-blue-600 dark:text-blue-400" />
-                          </div>
-                          <div className="text-2xl font-bold text-foreground">
-                            {Object.values(listingStats?.views || {}).reduce((a, b) => a + b, 0)}
-                          </div>
-                          <div className="text-xs text-muted-foreground">Views</div>
-                        </CardContent>
-                      </Card>
-                      <Card className="border-border/60">
-                        <CardContent className="p-4 text-center">
-                          <div className="w-10 h-10 rounded-xl bg-success/10 flex items-center justify-center mx-auto mb-2">
-                            <Phone className="h-5 w-5 text-success" />
-                          </div>
-                          <div className="text-2xl font-bold text-foreground">
-                            {Object.values(listingStats?.contacts || {}).reduce((a, b) => a + b, 0)}
-                          </div>
-                          <div className="text-xs text-muted-foreground">Inquiries</div>
-                        </CardContent>
-                      </Card>
-                    </div>
-
-                    {/* My listings */}
-                    <div className="space-y-3">
-                      {myListings.map((listing) => (
-                        <Card key={listing.id} className="border-border/60 hover:border-primary/30 transition-all">
-                          <CardContent className="p-4">
-                            <div className="flex justify-between items-start gap-3">
-                              <div className="flex-1 min-w-0">
-                                <div className="flex items-center gap-2 mb-1.5 flex-wrap">
-                                  <h3 className="font-semibold text-foreground">{listing.crop_name}</h3>
-                                  {listing.variety && (
-                                    <span className="text-sm text-muted-foreground">({listing.variety})</span>
-                                  )}
-                                  <Badge variant={listing.is_active ? 'default' : 'secondary'} className="text-xs">
-                                    {listing.is_active ? 'सक्रिय' : 'निष्क्रिय'}
-                                  </Badge>
-                                </div>
-
-                                <div className="flex flex-wrap gap-3 text-sm text-muted-foreground mb-2">
-                                  <span className="flex items-center gap-1">
-                                    <Package className="h-4 w-4" />
-                                    {listing.quantity} {listing.unit}
-                                  </span>
-                                  {listing.expected_price && (
-                                    <span className="font-medium text-primary">
-                                      रु. {listing.expected_price}/{listing.unit}
-                                    </span>
-                                  )}
-                                  {listing.district && (
-                                    <span className="flex items-center gap-1">
-                                      <MapPin className="h-4 w-4" />
-                                      {listing.district}
-                                    </span>
-                                  )}
-                                </div>
-
-                                <div className="flex gap-3 text-xs text-muted-foreground">
-                                  <span className="flex items-center gap-1">
-                                    <Eye className="h-3 w-3" />
-                                    {listingStats?.views?.[listing.id] || 0} views
-                                  </span>
-                                  <span className="flex items-center gap-1">
-                                    <Phone className="h-3 w-3" />
-                                    {listingStats?.contacts?.[listing.id] || 0} inquiries
-                                  </span>
-                                  <span className="flex items-center gap-1">
-                                    <Clock className="h-3 w-3" />
-                                    {formatDistanceToNow(new Date(listing.created_at), { addSuffix: true })}
-                                  </span>
-                                </div>
-                              </div>
-
-                              <div className="flex flex-col gap-1.5">
-                                <Button 
-                                  size="sm" 
-                                  variant="outline"
-                                  className="text-xs rounded-full"
-                                  onClick={() => handleToggleActive(listing.id, listing.is_active)}
-                                >
-                                  {listing.is_active ? 'निष्क्रिय' : 'सक्रिय'}
-                                </Button>
-                                <Button 
-                                  size="sm" 
-                                  variant="ghost"
-                                  className="text-destructive hover:text-destructive hover:bg-destructive/10"
-                                  onClick={() => handleDelete(listing.id)}
-                                >
-                                  <Trash2 className="h-4 w-4" />
-                                </Button>
-                              </div>
-                            </div>
-                          </CardContent>
-                        </Card>
-                      ))}
-                    </div>
-                  </div>
-                )}
               </TabsContent>
             </Tabs>
           </div>
