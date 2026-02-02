@@ -4,13 +4,10 @@ import { Helmet } from 'react-helmet-async';
 import Header from '@/components/layout/Header';
 import Footer from '@/components/layout/Footer';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { ProduceListingsManager } from '@/components/market/ProduceListingsManager';
 import { DailyMarketSection } from '@/components/market/DailyMarketSection';
 import { NearestMarketsSection } from '@/components/market/NearestMarketsSection';
-import { PriceAlertsList } from '@/components/market/PriceAlertsList';
 import { UserMarketCardsSection } from '@/components/market/UserMarketCardsSection';
 import { MarketSelectionFlow } from '@/components/market/MarketSelectionFlow';
-import { AllNepalPriceComparison } from '@/components/market/AllNepalPriceComparison';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -35,7 +32,7 @@ interface MarketPrice {
   demand_level: string | null;
 }
 
-type TabValue = 'browse' | 'nearest' | 'prices' | 'alerts' | 'cards' | 'compare' | 'my';
+type TabValue = 'nearest' | 'prices' | 'cards' | 'my';
 
 const MarketPage = () => {
   const { user } = useAuth();
@@ -47,7 +44,7 @@ const MarketPage = () => {
   // Sync tab from URL
   useEffect(() => {
     const tabParam = searchParams.get('tab') as TabValue;
-    if (tabParam && ['browse', 'nearest', 'prices', 'alerts', 'cards', 'compare', 'my'].includes(tabParam)) {
+    if (tabParam && ['nearest', 'prices', 'cards', 'my'].includes(tabParam)) {
       setActiveTab(tabParam);
     }
   }, [searchParams]);
@@ -155,20 +152,13 @@ const MarketPage = () => {
             </div>
 
             <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as TabValue)}>
-              <TabsList className="grid w-full grid-cols-7 mb-6 bg-muted/60 p-1 rounded-xl">
+              <TabsList className="grid w-full grid-cols-4 mb-6 bg-muted/60 p-1 rounded-xl">
                 <TabsTrigger 
                   value="prices" 
                   className="gap-1 sm:gap-2 text-xs sm:text-sm rounded-lg data-[state=active]:bg-card data-[state=active]:shadow-sm px-1"
                 >
                   <TrendingUp className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
                   <span className="hidden sm:inline">मूल्य</span>
-                </TabsTrigger>
-                <TabsTrigger 
-                  value="compare" 
-                  className="gap-1 sm:gap-2 text-xs sm:text-sm rounded-lg data-[state=active]:bg-card data-[state=active]:shadow-sm px-1"
-                >
-                  <Globe className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
-                  <span className="hidden sm:inline">तुलना</span>
                 </TabsTrigger>
                 <TabsTrigger 
                   value="nearest" 
@@ -183,20 +173,6 @@ const MarketPage = () => {
                 >
                   <Store className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
                   <span className="hidden sm:inline">कार्ड</span>
-                </TabsTrigger>
-                <TabsTrigger 
-                  value="browse" 
-                  className="gap-1 sm:gap-2 text-xs sm:text-sm rounded-lg data-[state=active]:bg-card data-[state=active]:shadow-sm px-1"
-                >
-                  <ShoppingCart className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
-                  <span className="hidden sm:inline">उत्पादन</span>
-                </TabsTrigger>
-                <TabsTrigger 
-                  value="alerts" 
-                  className="gap-1 sm:gap-2 text-xs sm:text-sm rounded-lg data-[state=active]:bg-card data-[state=active]:shadow-sm px-1"
-                >
-                  <Bell className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
-                  <span className="hidden sm:inline">अलर्ट</span>
                 </TabsTrigger>
                 {user && (
                   <TabsTrigger 
@@ -287,11 +263,6 @@ const MarketPage = () => {
                 </div>
               </TabsContent>
 
-              {/* Compare Tab - All Nepal */}
-              <TabsContent value="compare">
-                <AllNepalPriceComparison />
-              </TabsContent>
-
               {/* Nearest Markets Tab */}
               <TabsContent value="nearest">
                 <NearestMarketsSection />
@@ -300,16 +271,6 @@ const MarketPage = () => {
               {/* User Market Cards Tab */}
               <TabsContent value="cards">
                 <UserMarketCardsSection />
-              </TabsContent>
-
-              {/* Browse Tab */}
-              <TabsContent value="browse">
-                <ProduceListingsManager />
-              </TabsContent>
-
-              {/* Alerts Tab */}
-              <TabsContent value="alerts">
-                <PriceAlertsList />
               </TabsContent>
 
               {/* My Listings Tab */}
@@ -327,10 +288,7 @@ const MarketPage = () => {
                         <Package className="h-7 w-7 text-muted-foreground/50" />
                       </div>
                       <h3 className="font-semibold mb-2">कुनै listing छैन</h3>
-                      <p className="text-sm text-muted-foreground mb-4">उब्जनी बेच्न list गर्नुहोस्</p>
-                      <Button onClick={() => setActiveTab('browse')} size="sm" className="rounded-full">
-                        नयाँ उत्पादन राख्ने
-                      </Button>
+                      <p className="text-sm text-muted-foreground">उब्जनी बेच्न list गर्नुहोस्</p>
                     </CardContent>
                   </Card>
                 ) : (
