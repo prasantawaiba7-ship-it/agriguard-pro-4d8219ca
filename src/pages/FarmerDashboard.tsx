@@ -195,176 +195,182 @@ const FarmerDashboard = () => {
         <main className="pt-20 sm:pt-24 pb-28">
           {/* Container with max-width for large screens */}
           <div className="container mx-auto px-4 max-w-7xl">
-            {/* Welcome Section */}
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="mb-6 sm:mb-8"
-            >
-              <div className="flex flex-col gap-4">
-              <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 sm:gap-4">
-                  <div 
-                    className="flex items-center gap-3 cursor-pointer hover:opacity-80 transition-opacity"
-                    onClick={() => navigate('/farmer/profile')}
-                  >
-                    <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-primary flex items-center justify-center flex-shrink-0 overflow-hidden">
-                      {profile?.avatar_url ? (
-                        <img src={profile.avatar_url} alt="Profile" className="w-full h-full object-cover" />
-                      ) : (
-                        <User className="w-5 h-5 sm:w-6 sm:h-6 text-primary-foreground" />
-                      )}
+            {/* Welcome Section - Hidden on weather tab */}
+            {activeTab !== "weather" && (
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="mb-6 sm:mb-8"
+              >
+                <div className="flex flex-col gap-4">
+                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 sm:gap-4">
+                    <div 
+                      className="flex items-center gap-3 cursor-pointer hover:opacity-80 transition-opacity"
+                      onClick={() => navigate('/farmer/profile')}
+                    >
+                      <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-primary flex items-center justify-center flex-shrink-0 overflow-hidden">
+                        {profile?.avatar_url ? (
+                          <img src={profile.avatar_url} alt="Profile" className="w-full h-full object-cover" />
+                        ) : (
+                          <User className="w-5 h-5 sm:w-6 sm:h-6 text-primary-foreground" />
+                        )}
+                      </div>
+                      <div className="min-w-0">
+                        <h1 className="text-lg sm:text-2xl font-bold text-foreground truncate">
+                          🙏 {t('home')}, {profile?.full_name || 'Farmer'}
+                        </h1>
+                        <p className="text-muted-foreground text-xs sm:text-sm truncate">
+                          {user?.email}
+                        </p>
+                      </div>
                     </div>
-                    <div className="min-w-0">
-                      <h1 className="text-lg sm:text-2xl font-bold text-foreground truncate">
-                        🙏 {t('home')}, {profile?.full_name || 'Farmer'}
-                      </h1>
-                      <p className="text-muted-foreground text-xs sm:text-sm truncate">
-                        {user?.email}
-                      </p>
+                    <div className="flex items-center gap-2 w-full sm:w-auto">
+                      <LanguageSelector />
+                      <Button variant="outline" size="sm" onClick={() => navigate('/farmer/profile')} className="flex-1 sm:flex-initial">
+                        <User className="w-4 h-4" />
+                        <span className="ml-2 hidden md:inline">Profile</span>
+                      </Button>
+                      <Button variant="outline" size="sm" onClick={signOut} className="flex-1 sm:flex-initial">
+                        <LogOut className="w-4 h-4" />
+                        <span className="ml-2 sm:hidden md:inline">Sign Out</span>
+                      </Button>
                     </div>
                   </div>
-                  <div className="flex items-center gap-2 w-full sm:w-auto">
-                    <LanguageSelector />
-                    <Button variant="outline" size="sm" onClick={() => navigate('/farmer/profile')} className="flex-1 sm:flex-initial">
-                      <User className="w-4 h-4" />
-                      <span className="ml-2 hidden md:inline">Profile</span>
-                    </Button>
-                    <Button variant="outline" size="sm" onClick={signOut} className="flex-1 sm:flex-initial">
-                      <LogOut className="w-4 h-4" />
-                      <span className="ml-2 sm:hidden md:inline">Sign Out</span>
-                    </Button>
-                  </div>
+                  <p className="text-muted-foreground text-xs sm:text-sm">
+                    {profile?.village && `${profile.village}, `}
+                    {profile?.district && `${profile.district}, `}
+                    {profile?.state || 'Nepal'}
+                  </p>
                 </div>
-                <p className="text-muted-foreground text-xs sm:text-sm">
-                  {profile?.village && `${profile.village}, `}
-                  {profile?.district && `${profile.district}, `}
-                  {profile?.state || 'Nepal'}
-                </p>
-              </div>
-            </motion.div>
+              </motion.div>
+            )}
 
-            {/* Quick Stats */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4 mb-8">
-              {[
-                { icon: Leaf, label: t('myPlots'), value: stats?.plots || 0, color: "bg-primary" },
-                { icon: Camera, label: "Photos", value: stats?.photos || 0, color: "bg-secondary" },
-                { icon: CheckCircle2, label: "Healthy", value: stats?.healthyCrops || 0, color: "bg-success" },
-                { icon: AlertTriangle, label: "Alerts", value: stats?.alerts || 0, color: "bg-warning" },
-              ].map((stat, i) => (
-                <motion.div
-                  key={stat.label}
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: i * 0.1 }}
-                >
-                  <Card className="border-border/50">
-                    <CardContent className="p-3 sm:p-4 flex items-center gap-3 sm:gap-4">
-                      <div className={`w-10 h-10 sm:w-12 sm:h-12 rounded-xl ${stat.color} flex items-center justify-center`}>
-                        <stat.icon className="w-5 h-5 sm:w-6 sm:h-6 text-primary-foreground" />
+            {/* Quick Stats - Hidden on weather tab */}
+            {activeTab !== "weather" && (
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4 mb-8">
+                {[
+                  { icon: Leaf, label: t('myPlots'), value: stats?.plots || 0, color: "bg-primary" },
+                  { icon: Camera, label: "Photos", value: stats?.photos || 0, color: "bg-secondary" },
+                  { icon: CheckCircle2, label: "Healthy", value: stats?.healthyCrops || 0, color: "bg-success" },
+                  { icon: AlertTriangle, label: "Alerts", value: stats?.alerts || 0, color: "bg-warning" },
+                ].map((stat, i) => (
+                  <motion.div
+                    key={stat.label}
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: i * 0.1 }}
+                  >
+                    <Card className="border-border/50">
+                      <CardContent className="p-3 sm:p-4 flex items-center gap-3 sm:gap-4">
+                        <div className={`w-10 h-10 sm:w-12 sm:h-12 rounded-xl ${stat.color} flex items-center justify-center`}>
+                          <stat.icon className="w-5 h-5 sm:w-6 sm:h-6 text-primary-foreground" />
+                        </div>
+                        <div>
+                          <div className="text-xl sm:text-2xl font-bold text-foreground">{stat.value}</div>
+                          <div className="text-xs sm:text-sm text-muted-foreground">{stat.label}</div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  </motion.div>
+                ))}
+              </div>
+            )}
+
+            {/* Quick Access Cards - Hidden on weather tab */}
+            {activeTab !== "weather" && (
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.5 }}
+                className="mb-8"
+              >
+                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-3 sm:gap-4">
+                  {/* Disease Detection */}
+                  <Card 
+                    className="border-primary/20 bg-gradient-to-br from-primary/5 to-primary/10 cursor-pointer hover:shadow-lg transition-all"
+                    onClick={() => navigate('/disease-detection')}
+                  >
+                    <CardContent className="p-3 sm:p-4 flex flex-col items-center text-center gap-2">
+                      <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-primary/10 flex items-center justify-center">
+                        <Bug className="w-5 h-5 sm:w-6 sm:h-6 text-primary" />
                       </div>
-                      <div>
-                        <div className="text-xl sm:text-2xl font-bold text-foreground">{stat.value}</div>
-                        <div className="text-xs sm:text-sm text-muted-foreground">{stat.label}</div>
-                      </div>
+                      <h3 className="font-semibold text-xs sm:text-sm text-foreground">🌿 रोग पहिचान</h3>
+                      <p className="text-[10px] sm:text-xs text-muted-foreground hidden lg:block">फोटो सोध्ने</p>
                     </CardContent>
                   </Card>
-                </motion.div>
-              ))}
-            </div>
 
-            {/* Quick Access Cards - Responsive Grid */}
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.5 }}
-              className="mb-8"
-            >
-              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-3 sm:gap-4">
-                {/* Disease Detection */}
-                <Card 
-                  className="border-primary/20 bg-gradient-to-br from-primary/5 to-primary/10 cursor-pointer hover:shadow-lg transition-all"
-                  onClick={() => navigate('/disease-detection')}
-                >
-                  <CardContent className="p-3 sm:p-4 flex flex-col items-center text-center gap-2">
-                    <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-primary/10 flex items-center justify-center">
-                      <Bug className="w-5 h-5 sm:w-6 sm:h-6 text-primary" />
-                    </div>
-                    <h3 className="font-semibold text-xs sm:text-sm text-foreground">🌿 रोग पहिचान</h3>
-                    <p className="text-[10px] sm:text-xs text-muted-foreground hidden lg:block">फोटो सोध्ने</p>
-                  </CardContent>
-                </Card>
+                  {/* Market */}
+                  <Card 
+                    className="border-success/20 bg-gradient-to-br from-success/5 to-success/10 cursor-pointer hover:shadow-lg transition-all"
+                    onClick={() => navigate('/market')}
+                  >
+                    <CardContent className="p-3 sm:p-4 flex flex-col items-center text-center gap-2">
+                      <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-success/10 flex items-center justify-center">
+                        <Sparkles className="w-5 h-5 sm:w-6 sm:h-6 text-success" />
+                      </div>
+                      <h3 className="font-semibold text-xs sm:text-sm text-foreground">🛒 बजार</h3>
+                      <p className="text-[10px] sm:text-xs text-muted-foreground hidden lg:block">बेच्ने / किन्ने</p>
+                    </CardContent>
+                  </Card>
 
-                {/* Market */}
-                <Card 
-                  className="border-success/20 bg-gradient-to-br from-success/5 to-success/10 cursor-pointer hover:shadow-lg transition-all"
-                  onClick={() => navigate('/market')}
-                >
-                  <CardContent className="p-3 sm:p-4 flex flex-col items-center text-center gap-2">
-                    <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-success/10 flex items-center justify-center">
-                      <Sparkles className="w-5 h-5 sm:w-6 sm:h-6 text-success" />
-                    </div>
-                    <h3 className="font-semibold text-xs sm:text-sm text-foreground">🛒 बजार</h3>
-                    <p className="text-[10px] sm:text-xs text-muted-foreground hidden lg:block">बेच्ने / किन्ने</p>
-                  </CardContent>
-                </Card>
+                  {/* Crop Guides */}
+                  <Card 
+                    className="border-secondary/20 bg-gradient-to-br from-secondary/5 to-secondary/10 cursor-pointer hover:shadow-lg transition-all"
+                    onClick={() => navigate('/guides')}
+                  >
+                    <CardContent className="p-3 sm:p-4 flex flex-col items-center text-center gap-2">
+                      <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-secondary/10 flex items-center justify-center">
+                        <Leaf className="w-5 h-5 sm:w-6 sm:h-6 text-secondary" />
+                      </div>
+                      <h3 className="font-semibold text-xs sm:text-sm text-foreground">📚 कृषि ज्ञान</h3>
+                      <p className="text-[10px] sm:text-xs text-muted-foreground hidden lg:block">बाली गाइड</p>
+                    </CardContent>
+                  </Card>
 
-                {/* Crop Guides */}
-                <Card 
-                  className="border-secondary/20 bg-gradient-to-br from-secondary/5 to-secondary/10 cursor-pointer hover:shadow-lg transition-all"
-                  onClick={() => navigate('/guides')}
-                >
-                  <CardContent className="p-3 sm:p-4 flex flex-col items-center text-center gap-2">
-                    <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-secondary/10 flex items-center justify-center">
-                      <Leaf className="w-5 h-5 sm:w-6 sm:h-6 text-secondary" />
-                    </div>
-                    <h3 className="font-semibold text-xs sm:text-sm text-foreground">📚 कृषि ज्ञान</h3>
-                    <p className="text-[10px] sm:text-xs text-muted-foreground hidden lg:block">बाली गाइड</p>
-                  </CardContent>
-                </Card>
+                  {/* Activities */}
+                  <Card 
+                    className="border-warning/20 bg-gradient-to-br from-warning/5 to-warning/10 cursor-pointer hover:shadow-lg transition-all"
+                    onClick={() => navigate('/activities')}
+                  >
+                    <CardContent className="p-3 sm:p-4 flex flex-col items-center text-center gap-2">
+                      <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-warning/10 flex items-center justify-center">
+                        <Calendar className="w-5 h-5 sm:w-6 sm:h-6 text-warning" />
+                      </div>
+                      <h3 className="font-semibold text-xs sm:text-sm text-foreground">📝 कृषि कार्य</h3>
+                      <p className="text-[10px] sm:text-xs text-muted-foreground hidden lg:block">Activities Log</p>
+                    </CardContent>
+                  </Card>
 
-                {/* Activities */}
-                <Card 
-                  className="border-warning/20 bg-gradient-to-br from-warning/5 to-warning/10 cursor-pointer hover:shadow-lg transition-all"
-                  onClick={() => navigate('/activities')}
-                >
-                  <CardContent className="p-3 sm:p-4 flex flex-col items-center text-center gap-2">
-                    <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-warning/10 flex items-center justify-center">
-                      <Calendar className="w-5 h-5 sm:w-6 sm:h-6 text-warning" />
-                    </div>
-                    <h3 className="font-semibold text-xs sm:text-sm text-foreground">📝 कृषि कार्य</h3>
-                    <p className="text-[10px] sm:text-xs text-muted-foreground hidden lg:block">Activities Log</p>
-                  </CardContent>
-                </Card>
+                  {/* Fields */}
+                  <Card 
+                    className="border-accent/20 bg-gradient-to-br from-accent/5 to-accent/10 cursor-pointer hover:shadow-lg transition-all hidden sm:block"
+                    onClick={() => navigate('/fields')}
+                  >
+                    <CardContent className="p-3 sm:p-4 flex flex-col items-center text-center gap-2">
+                      <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-accent/10 flex items-center justify-center">
+                        <MapPin className="w-5 h-5 sm:w-6 sm:h-6 text-accent" />
+                      </div>
+                      <h3 className="font-semibold text-xs sm:text-sm text-foreground">🗺️ मेरो खेत</h3>
+                      <p className="text-[10px] sm:text-xs text-muted-foreground hidden lg:block">Fields</p>
+                    </CardContent>
+                  </Card>
 
-                {/* Fields */}
-                <Card 
-                  className="border-accent/20 bg-gradient-to-br from-accent/5 to-accent/10 cursor-pointer hover:shadow-lg transition-all hidden sm:block"
-                  onClick={() => navigate('/fields')}
-                >
-                  <CardContent className="p-3 sm:p-4 flex flex-col items-center text-center gap-2">
-                    <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-accent/10 flex items-center justify-center">
-                      <MapPin className="w-5 h-5 sm:w-6 sm:h-6 text-accent" />
-                    </div>
-                    <h3 className="font-semibold text-xs sm:text-sm text-foreground">🗺️ मेरो खेत</h3>
-                    <p className="text-[10px] sm:text-xs text-muted-foreground hidden lg:block">Fields</p>
-                  </CardContent>
-                </Card>
-
-                {/* AI Assistant */}
-                <Card 
-                  className="border-primary/20 bg-gradient-to-br from-primary/5 to-secondary/10 cursor-pointer hover:shadow-lg transition-all hidden sm:block"
-                  onClick={() => navigate('/krishi-mitra')}
-                >
-                  <CardContent className="p-3 sm:p-4 flex flex-col items-center text-center gap-2">
-                    <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-primary/10 flex items-center justify-center">
-                      <Cloud className="w-5 h-5 sm:w-6 sm:h-6 text-primary" />
-                    </div>
-                    <h3 className="font-semibold text-xs sm:text-sm text-foreground">🤖 AI सहायक</h3>
-                    <p className="text-[10px] sm:text-xs text-muted-foreground hidden lg:block">Krishi Mitra</p>
-                  </CardContent>
-                </Card>
-              </div>
-            </motion.div>
+                  {/* AI Assistant */}
+                  <Card 
+                    className="border-primary/20 bg-gradient-to-br from-primary/5 to-secondary/10 cursor-pointer hover:shadow-lg transition-all hidden sm:block"
+                    onClick={() => navigate('/krishi-mitra')}
+                  >
+                    <CardContent className="p-3 sm:p-4 flex flex-col items-center text-center gap-2">
+                      <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-primary/10 flex items-center justify-center">
+                        <Cloud className="w-5 h-5 sm:w-6 sm:h-6 text-primary" />
+                      </div>
+                      <h3 className="font-semibold text-xs sm:text-sm text-foreground">🤖 AI सहायक</h3>
+                      <p className="text-[10px] sm:text-xs text-muted-foreground hidden lg:block">Krishi Mitra</p>
+                    </CardContent>
+                  </Card>
+                </div>
+              </motion.div>
+            )}
 
             {/* Tab Navigation - Responsive */}
             <div className="flex flex-wrap gap-2 mb-6 pb-2">
