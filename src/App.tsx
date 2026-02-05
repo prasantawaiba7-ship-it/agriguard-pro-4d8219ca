@@ -30,6 +30,10 @@ import CropActivitiesPage from "./pages/CropActivitiesPage";
 import FieldsPage from "./pages/FieldsPage";
 import SubscriptionPage from "./pages/SubscriptionPage";
 import NotFound from "./pages/NotFound";
+ import LearningPage from "./pages/LearningPage";
+ import CoursePage from "./pages/CoursePage";
+ import LessonPage from "./pages/LessonPage";
+ import CertificatePage from "./pages/CertificatePage";
 
 const queryClient = new QueryClient();
 
@@ -63,6 +67,10 @@ const App = () => (
                 <Route path="/activities" element={<CropActivitiesPage />} />
                 <Route path="/fields" element={<FieldsPage />} />
                 <Route path="/subscription" element={<SubscriptionPage />} />
+                 <Route path="/learning" element={<LearningPage />} />
+                 <Route path="/learning/course/:courseId" element={<CoursePage />} />
+                 <Route path="/learning/lesson/:lessonId" element={<LessonPage />} />
+                 <Route path="/learning/certificate/:certificateId" element={<CertificatePage />} />
                 {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
                 <Route path="*" element={<NotFound />} />
               </Routes>

@@ -41,6 +41,8 @@ import {
   LeafyGreen,
   Store,
   Image as ImageIcon,
+   GraduationCap,
+   Award,
 } from "lucide-react";
 import { toast } from "sonner";
 import { SubscriptionAnalytics } from "@/components/admin/SubscriptionAnalytics";
@@ -65,6 +67,9 @@ import { CropPhotosManager } from "@/components/admin/CropPhotosManager";
 import { MarketCoverageReport } from "@/components/admin/MarketCoverageReport";
 import { FeedbackManager } from "@/components/admin/FeedbackManager";
 import { DiagnosisCasesManager } from "@/components/admin/DiagnosisCasesManager";
+ import { CoursesManager } from "@/components/admin/CoursesManager";
+ import { QuizManager } from "@/components/admin/QuizManager";
+ import { CertificateTemplatesManager } from "@/components/admin/CertificateTemplatesManager";
 interface FarmerProfile {
   id: string;
   user_id: string;
