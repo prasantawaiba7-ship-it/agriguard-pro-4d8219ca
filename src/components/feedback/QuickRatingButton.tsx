@@ -3,7 +3,8 @@ import { Star, ThumbsUp, ThumbsDown, MessageSquare } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { FeedbackDialog } from './FeedbackDialog';
-import { FeedbackType, FeedbackTargetType } from '@/hooks/useFeedback';
+import { FeedbackType, FeedbackTargetType, useFeedback } from '@/hooks/useFeedback';
+import { toast } from 'sonner';
 
 interface QuickRatingButtonProps {
   feedbackType: FeedbackType;
@@ -12,6 +13,7 @@ interface QuickRatingButtonProps {
   variant?: 'stars' | 'thumbs' | 'minimal';
   label?: string;
   className?: string;
+  directSubmit?: boolean; // If true, submit rating directly without dialog
 }
 
 export function QuickRatingButton({
@@ -21,13 +23,30 @@ export function QuickRatingButton({
   variant = 'thumbs',
   label,
   className,
+  directSubmit = false,
 }: QuickRatingButtonProps) {
   const [showDialog, setShowDialog] = useState(false);
   const [preselectedRating, setPreselectedRating] = useState<number | null>(null);
+  const [submittedRating, setSubmittedRating] = useState<number | null>(null);
+  const [hoveredStar, setHoveredStar] = useState<number | null>(null);
+  const { submitFeedback, isSubmitting } = useFeedback();
 
-  const handleQuickRating = (rating: number) => {
-    setPreselectedRating(rating);
-    setShowDialog(true);
+  const handleQuickRating = (rating: number, openDialog = true) => {
+    if (directSubmit && variant === 'stars') {
+      // Direct submit without dialog
+      setSubmittedRating(rating);
+      submitFeedback({
+        feedback_type: feedbackType,
+        target_type: targetType,
+        target_id: targetId,
+        rating,
+        comment_text: null,
+      });
+      toast.success('धन्यवाद!', { description: 'तपाईंको प्रतिक्रिया सेभ भयो।' });
+    } else if (openDialog) {
+      setPreselectedRating(rating);
+      setShowDialog(true);
+    }
   };
 
   if (variant === 'thumbs') {
@@ -100,28 +119,43 @@ export function QuickRatingButton({
               key={star}
               variant="ghost"
               size="sm"
-              className="h-7 w-7 p-0 hover:bg-yellow-50"
-              onClick={() => handleQuickRating(star)}
+              className={cn(
+                'h-8 w-8 p-0 hover:bg-yellow-50 transition-transform hover:scale-110',
+                isSubmitting && 'opacity-50 pointer-events-none'
+              )}
+              onClick={() => handleQuickRating(star, !directSubmit)}
+              onMouseEnter={() => setHoveredStar(star)}
+              onMouseLeave={() => setHoveredStar(null)}
+              disabled={isSubmitting}
             >
               <Star
                 className={cn(
-                  'h-4 w-4 transition-colors',
-                  'text-muted-foreground/40 hover:text-yellow-500 hover:fill-yellow-500'
+                  'h-5 w-5 transition-colors',
+                  (submittedRating && star <= submittedRating) || (hoveredStar && star <= hoveredStar)
+                    ? 'text-yellow-500 fill-yellow-500'
+                    : 'text-muted-foreground/40'
                 )}
               />
             </Button>
           ))}
         </div>
+        {submittedRating && directSubmit && (
+          <span className="text-xs text-green-600 font-medium">
+            ✓ {submittedRating} तारा दिनुभयो
+          </span>
+        )}
       </div>
 
-      <FeedbackDialog
-        open={showDialog}
-        onOpenChange={setShowDialog}
-        feedbackType={feedbackType}
-        targetType={targetType}
-        targetId={targetId}
-        preselectedRating={preselectedRating}
-      />
+      {!directSubmit && (
+        <FeedbackDialog
+          open={showDialog}
+          onOpenChange={setShowDialog}
+          feedbackType={feedbackType}
+          targetType={targetType}
+          targetId={targetId}
+          preselectedRating={preselectedRating}
+        />
+      )}
     </>
   );
 }
