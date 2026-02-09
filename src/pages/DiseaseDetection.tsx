@@ -8,50 +8,51 @@ import { DiseasePrediction } from '@/components/disease/DiseasePrediction';
 import { DiagnosisCaseSubmit } from '@/components/diagnosis/DiagnosisCaseSubmit';
 import { MyDiagnosisCases } from '@/components/diagnosis/MyDiagnosisCases';
 import { useAuth } from '@/hooks/useAuth';
+import { useLanguage } from '@/hooks/useLanguage';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 export default function DiseaseDetection() {
   const { user } = useAuth();
+  const { t } = useLanguage();
   
+  const steps = [
+    { step: '१', title: t('stepSelectCrop'), desc: t('stepCropType') },
+    { step: '२', title: t('stepTakePhoto'), desc: t('stepDiseased') },
+    { step: '३', title: t('stepUpload'), desc: t('stepUploadPhoto') },
+    { step: '४', title: t('stepAnalysis'), desc: t('stepAICheck') },
+    { step: '५', title: t('stepTreatment'), desc: t('stepGetAdvice') },
+  ];
+
   return (
     <>
       <Helmet>
-        <title>बाली रोग र कीरा पहिचान | KrishiMitra Nepal</title>
-        <meta 
-          name="description" 
-          content="AI-powered crop disease and pest identification system in Nepali. Upload plant photos for instant diagnosis of diseases, pests, insects, treatment recommendations, and prevention tips." 
-        />
+        <title>{t('diseasePageTitle')} | Kisan Sathi</title>
+        <meta name="description" content={t('diseasePageSubtitle')} />
       </Helmet>
 
       <div className="min-h-screen bg-background overflow-y-auto">
         <Header />
         
-        {/* pt-20 for header, pb-20 for UserBar */}
         <main className="container mx-auto px-4 pt-20 pb-32 max-w-4xl">
           <div className="text-center mb-8">
             <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold mb-3">
-              🌿 रोग र कीरा पहिचान
+              🌿 {t('diseasePageTitle')}
             </h1>
             <p className="text-sm sm:text-base text-muted-foreground max-w-xl mx-auto">
-              फोटो अपलोड गर्नुहोस्, AI ले रोग/कीरा पत्ता लगाई उपचार सुझाव दिनेछ।
+              {t('diseasePageSubtitle')}
             </p>
           </div>
 
-          {/* Outbreak Alerts Banner */}
           <OutbreakAlertsBanner />
 
-          {/* Main Tabs: AI Detection vs Expert Review */}
           <Tabs defaultValue="ai" className="space-y-6">
             <TabsList className="grid w-full grid-cols-2">
-              <TabsTrigger value="ai">🤖 AI तुरुन्त जाँच</TabsTrigger>
-              <TabsTrigger value="expert">👨‍🌾 विज्ञलाई सोध्नुहोस्</TabsTrigger>
+              <TabsTrigger value="ai">{t('aiInstantCheck')}</TabsTrigger>
+              <TabsTrigger value="expert">{t('askExpert')}</TabsTrigger>
             </TabsList>
 
-            {/* AI Detection Tab */}
             <TabsContent value="ai" className="space-y-6">
               <NepaliDiseaseDetector />
-              
-              {/* Disease Prediction Section (for logged in users) */}
               {user && (
                 <div className="mt-6">
                   <DiseasePrediction />
@@ -59,10 +60,8 @@ export default function DiseaseDetection() {
               )}
             </TabsContent>
 
-            {/* Expert Review Tab */}
             <TabsContent value="expert" className="space-y-6">
               <DiagnosisCaseSubmit />
-              
               {user && (
                 <div className="mt-6">
                   <MyDiagnosisCases />
@@ -71,19 +70,12 @@ export default function DiseaseDetection() {
             </TabsContent>
           </Tabs>
 
-          {/* How to Use Section - Simplified Steps */}
           <div className="mt-12 p-4 sm:p-6 bg-muted/50 rounded-2xl">
             <h2 className="text-lg sm:text-xl font-semibold mb-4 text-center">
-              📖 कसरी प्रयोग गर्ने?
+              {t('howToUse')}
             </h2>
             <div className="grid grid-cols-3 sm:grid-cols-5 gap-3 sm:gap-4">
-              {[
-                { step: '१', title: 'बाली छान्ने', desc: 'बाली प्रकार' },
-                { step: '२', title: 'फोटो खिच्ने', desc: 'रोगी पात/फल' },
-                { step: '३', title: 'अपलोड गर्ने', desc: 'फोटो हाल्ने' },
-                { step: '४', title: 'विश्लेषण', desc: 'AI जाँच' },
-                { step: '५', title: 'उपचार', desc: 'सुझाव पाउने' }
-              ].map((item, i) => (
+              {steps.map((item, i) => (
                 <div key={i} className="text-center">
                   <div className="w-8 h-8 sm:w-10 sm:h-10 mx-auto mb-2 rounded-full bg-primary text-primary-foreground flex items-center justify-center font-bold text-sm sm:text-base">
                     {item.step}
@@ -94,14 +86,13 @@ export default function DiseaseDetection() {
               ))}
             </div>
 
-            {/* Pest identification tips - Simplified */}
             <div className="mt-4 sm:mt-6 p-3 sm:p-4 bg-warning/10 rounded-xl border border-warning/20">
               <h3 className="font-medium mb-2 flex items-center gap-2 text-sm sm:text-base">
-                🐛 राम्रो फोटोको लागि:
+                {t('photoTipsTitle')}
               </h3>
               <ul className="text-xs sm:text-sm text-muted-foreground space-y-1">
-                <li>• नजिकबाट स्पष्ट फोटो खिच्नुहोस्</li>
-                <li>• दिनको उज्यालोमा खिच्नुहोस्</li>
+                <li>{t('photoTip1')}</li>
+                <li>{t('photoTip2')}</li>
               </ul>
             </div>
           </div>

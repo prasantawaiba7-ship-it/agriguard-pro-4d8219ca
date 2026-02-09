@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { useAuth } from '@/hooks/useAuth';
+import { useLanguage } from '@/hooks/useLanguage';
 import { useFields, Field } from '@/hooks/useFields';
 import { useCropSeasons, CropSeason } from '@/hooks/useCropSeasons';
 import { SoilTestForm } from '@/components/soil/SoilTestForm';
@@ -32,6 +33,7 @@ const areaUnits = [
 const FieldsPage = () => {
   const navigate = useNavigate();
   const { user, isLoading: authLoading } = useAuth();
+  const { t, language } = useLanguage();
   const { fields, isLoading: fieldsLoading, addField, updateField, deleteField } = useFields();
   const { seasons, createSeason, updateSeason } = useCropSeasons();
   const { activeCrops } = useCrops();
@@ -57,7 +59,7 @@ const FieldsPage = () => {
   }
 
   const handleDeleteField = async (id: string) => {
-    if (confirm('के तपाईं यो खेत हटाउन चाहनुहुन्छ?')) {
+    if (confirm(t('confirmDeleteField'))) {
       await deleteField(id);
       if (selectedField?.id === id) setSelectedField(null);
     }
@@ -98,8 +100,8 @@ const FieldsPage = () => {
   return (
     <>
       <Helmet>
-        <title>मेरो खेत - Kisan Sathi</title>
-        <meta name="description" content="Manage your fields, crops, and soil tests" />
+        <title>{t('fieldsPageTitle')} - Kisan Sathi</title>
+        <meta name="description" content={t('fieldsPageSubtitle')} />
       </Helmet>
 
       <div className="min-h-screen bg-background">
@@ -111,9 +113,9 @@ const FieldsPage = () => {
               <div>
                 <h1 className="text-xl sm:text-2xl font-bold flex items-center gap-2">
                   <Mountain className="h-5 w-5 sm:h-6 sm:w-6 text-primary" />
-                  मेरो खेत
+                  {t('fieldsPageTitle')}
                 </h1>
-                <p className="text-sm text-muted-foreground">खेत र बाली व्यवस्थापन</p>
+                <p className="text-sm text-muted-foreground">{t('fieldsPageSubtitle')}</p>
               </div>
               
               <div className="flex gap-2">
@@ -124,13 +126,13 @@ const FieldsPage = () => {
                   onClick={() => navigate('/guides', { state: { from: '/fields' } })}
                 >
                   <BookOpen className="h-4 w-4" />
-                  <span className="hidden sm:inline">खेती गाइड</span>
-                  <span className="sm:hidden">गाइड</span>
+                  <span className="hidden sm:inline">{t('farmingGuideBtn')}</span>
+                  <span className="sm:hidden">{t('guideShort')}</span>
                 </Button>
                 <Button className="gap-1 sm:gap-2" size="sm" onClick={() => setIsAddFieldOpen(true)}>
                   <Plus className="h-4 w-4" />
-                  <span className="hidden sm:inline">नयाँ खेत</span>
-                  <span className="sm:hidden">थप्ने</span>
+                  <span className="hidden sm:inline">{t('newField')}</span>
+                  <span className="sm:hidden">{t('addShort')}</span>
                 </Button>
                 <AddFieldDialog
                   open={isAddFieldOpen}
@@ -143,19 +145,19 @@ const FieldsPage = () => {
             <div className="grid md:grid-cols-3 gap-6">
               {/* Fields List */}
               <div className="space-y-4">
-                <h2 className="font-semibold text-base sm:text-lg">खेतहरू ({fields.length})</h2>
+                <h2 className="font-semibold text-base sm:text-lg">{t('fieldsCount')} ({fields.length})</h2>
                 
                 {fields.length === 0 ? (
                   <Card className="border-dashed">
                     <CardContent className="p-8 text-center">
                       <Mountain className="h-12 w-12 text-muted-foreground/30 mx-auto mb-4" />
-                      <p className="text-muted-foreground">कुनै खेत छैन</p>
+                      <p className="text-muted-foreground">{t('noFieldsYet')}</p>
                       <Button 
                         variant="outline" 
                         className="mt-4"
                         onClick={() => setIsAddFieldOpen(true)}
                       >
-                        पहिलो खेत थप्नुहोस्
+                        {t('addFirstField')}
                       </Button>
                     </CardContent>
                   </Card>
@@ -210,9 +212,9 @@ const FieldsPage = () => {
                   <Card className="border-dashed">
                     <CardContent className="p-8 sm:p-12 text-center">
                       <Leaf className="h-12 w-12 sm:h-16 sm:w-16 text-muted-foreground/30 mx-auto mb-4" />
-                      <h3 className="font-semibold mb-2 text-sm sm:text-base">खेत छान्नुहोस्</h3>
+                      <h3 className="font-semibold mb-2 text-sm sm:text-base">{t('selectField')}</h3>
                       <p className="text-xs sm:text-sm text-muted-foreground">
-                        बायाँबाट खेत छान्नुहोस्
+                        {t('selectFieldHint')}
                       </p>
                     </CardContent>
                   </Card>
@@ -233,11 +235,11 @@ const FieldsPage = () => {
                               onClick={() => setIsSoilTestOpen(true)}
                             >
                               <TestTube className="h-4 w-4 mr-1" />
-                              माटो परीक्षण
+                              {t('soilTest')}
                             </Button>
                             <Button size="sm" onClick={() => setIsAddSeasonOpen(true)}>
                               <Sprout className="h-4 w-4 mr-1" />
-                              बाली थप्ने
+                              {t('addCrop')}
                             </Button>
                           </div>
                         </CardTitle>
@@ -246,7 +248,7 @@ const FieldsPage = () => {
                         <div className="flex flex-wrap gap-4 text-sm">
                           {selectedField.area && (
                             <span>
-                              <strong>क्षेत्रफल:</strong> {selectedField.area} {areaUnits.find(u => u.value === selectedField.area_unit)?.label}
+                              <strong>{t('area')}:</strong> {selectedField.area} {areaUnits.find(u => u.value === selectedField.area_unit)?.label}
                             </span>
                           )}
                           {selectedField.district && (
@@ -267,20 +269,20 @@ const FieldsPage = () => {
                       <CardHeader>
                         <CardTitle className="flex items-center gap-2">
                           <Leaf className="h-5 w-5 text-success" />
-                          बाली सिजनहरू
+                          {t('cropSeasons')}
                         </CardTitle>
                       </CardHeader>
                       <CardContent>
                         {fieldSeasons.length === 0 ? (
                           <div className="text-center py-8 text-muted-foreground">
                             <Sprout className="h-12 w-12 mx-auto mb-4 opacity-30" />
-                            <p>यस खेतमा कुनै बाली छैन</p>
+                            <p>{t('noCropsInField')}</p>
                             <Button 
                               variant="outline" 
                               className="mt-4"
                               onClick={() => setIsAddSeasonOpen(true)}
                             >
-                              बाली थप्नुहोस्
+                              {t('addCropBtn')}
                             </Button>
                           </div>
                         ) : (
@@ -314,7 +316,7 @@ const FieldsPage = () => {
                                           <span className="text-sm text-muted-foreground">({season.variety})</span>
                                         )}
                                         <Badge variant={season.is_active ? 'default' : 'secondary'}>
-                                          {season.is_active ? 'सक्रिय' : 'समाप्त'}
+                                          {season.is_active ? t('active') : t('completed')}
                                         </Badge>
                                       </div>
                                       <div className="flex items-center gap-4 mt-1 text-sm text-muted-foreground">
@@ -323,7 +325,7 @@ const FieldsPage = () => {
                                           {format(new Date(season.season_start_date), 'yyyy-MM-dd')}
                                         </span>
                                         {season.expected_yield && (
-                                          <span>अपेक्षित: {season.expected_yield} क्विन्टल</span>
+                                          <span>{t('expected')}: {season.expected_yield} {t('quintal')}</span>
                                         )}
                                       </div>
                                     </div>
@@ -336,7 +338,7 @@ const FieldsPage = () => {
                                       className="gap-1"
                                     >
                                       <Eye className="h-3 w-3" />
-                                      गाइड
+                                       {t('guide')}
                                     </Button>
                                     {season.is_active && (
                                       <Button 
@@ -347,7 +349,7 @@ const FieldsPage = () => {
                                           season_end_date: format(new Date(), 'yyyy-MM-dd')
                                         })}
                                       >
-                                        समाप्त
+                                        {t('end')}
                                       </Button>
                                     )}
                                   </div>
@@ -367,7 +369,7 @@ const FieldsPage = () => {
             <Dialog open={isSoilTestOpen} onOpenChange={setIsSoilTestOpen}>
               <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
                 <DialogHeader>
-                  <DialogTitle>माटो परीक्षण थप्नुहोस्</DialogTitle>
+                  <DialogTitle>{t('addSoilTest')}</DialogTitle>
                 </DialogHeader>
                 {selectedField && (
                   <SoilTestForm 
@@ -402,9 +404,9 @@ const FieldsPage = () => {
                   ) : (
                     <div className="text-center py-8">
                       <BookOpen className="h-12 w-12 mx-auto mb-4 text-muted-foreground/30" />
-                      <p className="text-muted-foreground">
-                        यो बालीको गाइड उपलब्ध छैन। कृपया admin बाट बाली थप्नुहोस्।
-                      </p>
+                       <p className="text-muted-foreground">
+                         {t('guideNotAvailable')}
+                       </p>
                     </div>
                   );
                 })()}

@@ -10,6 +10,7 @@ import { UserMarketCardsSection } from '@/components/market/UserMarketCardsSecti
 import { MarketSelectionFlow } from '@/components/market/MarketSelectionFlow';
 import { NearestMarketsSection } from '@/components/market/NearestMarketsSection';
 import { RealTimePriceUpdates } from '@/components/market/RealTimePriceUpdates';
+import { useLanguage } from '@/hooks/useLanguage';
 import { 
   TrendingUp, Navigation, Users, Store
 } from 'lucide-react';
@@ -20,6 +21,7 @@ const MarketPage = () => {
   const [searchParams] = useSearchParams();
   const initialTab = (searchParams.get('tab') as TabValue) || 'daily';
   const [activeTab, setActiveTab] = useState<TabValue>(initialTab);
+  const { t } = useLanguage();
 
   useEffect(() => {
     const tabParam = searchParams.get('tab') as TabValue;
@@ -31,8 +33,8 @@ const MarketPage = () => {
   return (
     <>
       <Helmet>
-        <title>कृषि बजार - Market | किसान साथी</title>
-        <meta name="description" content="आजको कृषि बजार भाउ हेर्नुहोस्, आफ्नो उपज बेच्नुहोस्, र किनमेलकर्तासँग जोडिनुहोस्।" />
+        <title>{t('marketPageTitle')} | {t('kisanSathi')}</title>
+        <meta name="description" content={t('marketPageSubtitle')} />
       </Helmet>
 
       <div className="min-h-screen bg-background">
@@ -47,9 +49,9 @@ const MarketPage = () => {
                 </div>
                 <div>
                   <h1 className="text-xl sm:text-2xl font-bold text-foreground">
-                    कृषि बजार
+                    {t('marketPageTitle')}
                   </h1>
-                  <p className="text-sm text-muted-foreground">आजको भाउ हेर्नुहोस्, उपज बेच्नुहोस्</p>
+                  <p className="text-sm text-muted-foreground">{t('marketPageSubtitle')}</p>
                 </div>
               </div>
             </div>
@@ -63,21 +65,21 @@ const MarketPage = () => {
                   className="gap-1 sm:gap-2 text-xs sm:text-sm rounded-lg data-[state=active]:bg-card data-[state=active]:shadow-sm px-1"
                 >
                   <TrendingUp className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
-                  <span>दैनिक भाउ</span>
+                  <span>{t('dailyPrices')}</span>
                 </TabsTrigger>
                 <TabsTrigger 
                   value="compare" 
                   className="gap-1 sm:gap-2 text-xs sm:text-sm rounded-lg data-[state=active]:bg-card data-[state=active]:shadow-sm px-1"
                 >
                   <Navigation className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
-                  <span>तुलना</span>
+                  <span>{t('compare')}</span>
                 </TabsTrigger>
                 <TabsTrigger 
                   value="community" 
                   className="gap-1 sm:gap-2 text-xs sm:text-sm rounded-lg data-[state=active]:bg-card data-[state=active]:shadow-sm px-1"
                 >
                   <Users className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
-                  <span>किसान बजार</span>
+                  <span>{t('farmerMarket')}</span>
                 </TabsTrigger>
               </TabsList>
 

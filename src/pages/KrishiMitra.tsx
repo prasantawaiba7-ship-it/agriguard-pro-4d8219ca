@@ -2,24 +2,22 @@ import { Helmet } from "react-helmet-async";
 import { useRef } from "react";
 import Header from "@/components/layout/Header";
 import { OnScreenAssistant } from "@/components/ai/OnScreenAssistant";
+import { useLanguage } from "@/hooks/useLanguage";
 
 const KrishiMitra = () => {
   const inputRef = useRef<HTMLInputElement>(null);
+  const { t } = useLanguage();
 
   return (
     <>
       <Helmet>
-        <title>Krishi Mitra - AI Farming Assistant | Farmer Gpt</title>
-        <meta
-          name="description"
-          content="Krishi Mitra is your AI-powered farming assistant. Get instant help with crop diseases, weather advisories, pest management, and personalized farming recommendations in Nepali, Hindi, and English."
-        />
+        <title>{t('krishiMitraTitle')} | Kisan Sathi</title>
+        <meta name="description" content={t('krishiMitraDesc')} />
       </Helmet>
 
       <div className="min-h-screen bg-background flex flex-col">
         <Header />
 
-        {/* Full-screen AI Assistant Chat - pt for header */}
         <main className="flex-1 flex flex-col pt-16 sm:pt-20">
           <OnScreenAssistant 
             isFullScreen={true} 
