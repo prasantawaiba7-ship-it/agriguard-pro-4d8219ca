@@ -13,10 +13,10 @@ const LanguageContext = createContext<LanguageContextType | undefined>(undefined
 export function LanguageProvider({ children }: { children: ReactNode }) {
   const [language, setLanguageState] = useState<Language>(() => {
     const saved = localStorage.getItem('cropic-language');
-    if (saved && (saved === 'en' || saved === 'hi')) {
+    if (saved && (saved === 'en' || saved === 'ne')) {
       return saved as Language;
     }
-    return 'hi'; // Default to Hindi for India
+    return 'ne'; // Default to Nepali for Nepal
   });
 
   const setLanguage = (lang: Language) => {

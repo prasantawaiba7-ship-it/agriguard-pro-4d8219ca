@@ -10,40 +10,23 @@ const HeroSection = () => {
 
   return (
     <section className="relative pt-20 sm:pt-24 pb-12 sm:pb-16 overflow-hidden">
-      {/* Warm mesh background */}
       <div className="absolute inset-0 bg-mesh pointer-events-none" />
       
-      {/* Animated gradient orbs */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         <motion.div
-          animate={{ 
-            scale: [1, 1.15, 1],
-            opacity: [0.15, 0.25, 0.15]
-          }}
+          animate={{ scale: [1, 1.15, 1], opacity: [0.15, 0.25, 0.15] }}
           transition={{ duration: 10, repeat: Infinity, ease: "easeInOut" }}
           className="absolute -top-20 -right-20 w-[400px] h-[400px] bg-primary/20 rounded-full blur-3xl"
         />
         <motion.div
-          animate={{ 
-            scale: [1.1, 1, 1.1],
-            opacity: [0.1, 0.2, 0.1]
-          }}
+          animate={{ scale: [1.1, 1, 1.1], opacity: [0.1, 0.2, 0.1] }}
           transition={{ duration: 12, repeat: Infinity, ease: "easeInOut" }}
           className="absolute -bottom-32 -left-32 w-[350px] h-[350px] bg-secondary/15 rounded-full blur-3xl"
-        />
-        <motion.div
-          animate={{ 
-            scale: [1, 1.2, 1],
-            opacity: [0.08, 0.15, 0.08]
-          }}
-          transition={{ duration: 8, repeat: Infinity, ease: "easeInOut", delay: 2 }}
-          className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[300px] h-[300px] bg-accent/10 rounded-full blur-3xl"
         />
       </div>
 
       <div className="container mx-auto px-4 relative">
         <div className="max-w-3xl mx-auto text-center">
-          {/* App badge */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -51,10 +34,9 @@ const HeroSection = () => {
             className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 border border-primary/20 mb-6"
           >
             <Leaf className="w-4 h-4 text-primary" />
-            <span className="text-sm font-semibold text-primary">किसान साथी – आपका खेती का साथी</span>
+            <span className="text-sm font-semibold text-primary">किसान साथी – तपाईँको खेतीको साथी</span>
           </motion.div>
 
-          {/* Welcome message */}
           {displayName && (
             <motion.p
               initial={{ opacity: 0, y: 10 }}
@@ -66,28 +48,25 @@ const HeroSection = () => {
             </motion.p>
           )}
 
-          {/* Main heading */}
           <motion.h1
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, delay: 0.1 }}
             className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold text-foreground leading-tight mb-5"
           >
-            आपकी खेती का{" "}
-            <span className="text-gradient">भरोसेमंद साथी</span>
+            तपाईँको खेतीको{" "}
+            <span className="text-gradient">भरपर्दो साथी</span>
           </motion.h1>
 
-          {/* Subtitle */}
           <motion.p
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5, delay: 0.2 }}
             className="text-base sm:text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto leading-relaxed mb-8"
           >
-            रोग पहचान, मौसम जानकारी, मंडी भाव और AI खेती सलाह — सब एक जगह, आसान और तेज़।
+            रोग पहिचान, मौसम जानकारी, कृषि बजार भाउ र AI खेती सल्लाह — सबै एकै ठाउँमा, सजिलो र छिटो।
           </motion.p>
 
-          {/* CTA Buttons */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -97,7 +76,7 @@ const HeroSection = () => {
             <Link to="/disease-detection">
               <Button size="lg" className="group rounded-full px-6 sm:px-8 py-6 text-base sm:text-lg font-semibold shadow-lg hover:shadow-xl transition-all">
                 <Camera className="w-5 h-5 mr-2" />
-                रोग पहचानें
+                रोग पहिचान गर्नुहोस्
                 <ArrowRight className="w-5 h-5 ml-2 group-hover:translate-x-1 transition-transform" />
               </Button>
             </Link>
@@ -108,12 +87,11 @@ const HeroSection = () => {
                 className="rounded-full px-6 sm:px-8 py-6 text-base sm:text-lg font-medium border-2 hover:bg-primary/5"
               >
                 <Store className="w-5 h-5 mr-2 text-primary" />
-                मंडी भाव देखें
+                बजार भाउ हेर्नुहोस्
               </Button>
             </Link>
           </motion.div>
 
-          {/* Quick stats */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -122,7 +100,7 @@ const HeroSection = () => {
           >
             {[
               { value: "10,000+", label: "किसान" },
-              { value: "800+", label: "ज़िले" },
+              { value: "77", label: "जिल्ला" },
               { value: "24/7", label: "AI सहायता" },
             ].map((stat) => (
               <div key={stat.label} className="text-center">

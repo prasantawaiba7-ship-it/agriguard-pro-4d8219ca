@@ -14,10 +14,10 @@ const Header = () => {
   const { isAdmin } = useUserRole();
 
   const navLinks = [
-    { href: "/", label: "होम", icon: Home },
+    { href: "/", label: "गृह", icon: Home },
     { href: "/disease-detection", label: "रोग", icon: Camera },
-    { href: "/fields", label: "खेत", icon: Mountain },
-    { href: "/market", label: "मंडी", icon: Store },
+    { href: "/fields", label: "मेरो खेत", icon: Mountain },
+    { href: "/market", label: "कृषि बजार", icon: Store },
     { href: "/krishi-mitra", label: "AI", icon: Bot },
     ...(isAdmin() ? [{ href: "/admin", label: "Admin", icon: Shield }] : []),
   ];
@@ -79,7 +79,7 @@ const Header = () => {
                 className="rounded-full px-5"
               >
                 <LogIn className="w-4 h-4 mr-2" />
-                शुरू करें
+                सुरु गर्नुहोस्
               </Button>
             )}
           </div>
@@ -159,7 +159,7 @@ const Header = () => {
                     }}
                   >
                     <LogIn className="w-4 h-4 mr-2" />
-                    शुरू करें
+                    सुरु गर्नुहोस्
                   </Button>
                 )}
               </div>

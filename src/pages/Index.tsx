@@ -12,10 +12,10 @@ const Index = () => {
   return (
     <>
       <Helmet>
-        <title>Kisan Sathi | AI-Powered Farming Assistant for Indian Farmers</title>
+        <title>किसान साथी | नेपाली किसानहरूको लागि AI-संचालित खेती सहायक</title>
         <meta
           name="description"
-          content="Kisan Sathi helps Indian farmers with AI-powered crop disease detection, weather advisories, mandi prices, and personalized farming recommendations in Hindi."
+          content="किसान साथीले नेपाली किसानहरूलाई AI रोग पहिचान, मौसम सल्लाह, कृषि बजार भाउ, र व्यक्तिगत खेती सिफारिसहरू प्रदान गर्दछ।"
         />
       </Helmet>
       <div className="min-h-screen bg-background">
@@ -24,7 +24,6 @@ const Index = () => {
           <HeroSection />
           <QuickActionsGrid />
           
-          {/* My Market Shortcut - placed after quick actions */}
           <section className="py-4 sm:py-6">
             <div className="container mx-auto px-4 max-w-xl">
               <MyMarketShortcut />

@@ -5,8 +5,8 @@ import { Camera, Cloud, Store, Bot, MapPin, BookOpen } from "lucide-react";
 const quickActions = [
   {
     icon: Camera,
-    label: "रोग पहचान",
-    sublabel: "फोटो से पहचानें",
+    label: "रोग पहिचान",
+    sublabel: "फोटोबाट पहिचान",
     href: "/disease-detection",
     color: "bg-red-500",
     bgColor: "bg-red-50 dark:bg-red-950/30",
@@ -15,8 +15,8 @@ const quickActions = [
   },
   {
     icon: Store,
-    label: "मंडी भाव",
-    sublabel: "आज का भाव",
+    label: "कृषि बजार",
+    sublabel: "आजको भाउ",
     href: "/market",
     color: "bg-primary",
     bgColor: "bg-primary/5",
@@ -45,8 +45,8 @@ const quickActions = [
   },
   {
     icon: MapPin,
-    label: "खेत",
-    sublabel: "खेत प्रबंधन",
+    label: "मेरो खेत",
+    sublabel: "खेत व्यवस्थापन",
     href: "/fields",
     color: "bg-teal-500",
     bgColor: "bg-teal-50 dark:bg-teal-950/30",
@@ -55,7 +55,7 @@ const quickActions = [
   },
   {
     icon: BookOpen,
-    label: "फसल गाइड",
+    label: "खेती गाइड",
     sublabel: "खेती ज्ञान",
     href: "/crop-guides",
     color: "bg-amber-500",
@@ -76,10 +76,10 @@ const QuickActionsGrid = () => {
           className="text-center mb-6 sm:mb-8"
         >
           <h2 className="text-xl sm:text-2xl font-bold text-foreground">
-            आज क्या करना है?
+            आज के गर्ने?
           </h2>
           <p className="text-sm text-muted-foreground mt-1">
-            जल्दी पहुँच के लिए नीचे का कार्ड चुनें
+            छिटो पहुँचको लागि तलको कार्ड छान्नुहोस्
           </p>
         </motion.div>
 
