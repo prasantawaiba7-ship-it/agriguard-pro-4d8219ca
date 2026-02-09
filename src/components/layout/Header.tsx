@@ -1,10 +1,11 @@
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Leaf, Menu, X, LogIn, User, Shield, Camera, Bot, Store, Mountain, Home } from "lucide-react";
+import { Leaf, Menu, X, LogIn, User, Shield, Camera, Bot, Store, Mountain, Home, Globe } from "lucide-react";
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useAuth } from "@/hooks/useAuth";
 import { useUserRole } from "@/hooks/useUserRole";
+import { useLanguage } from "@/hooks/useLanguage";
 
 const Header = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -12,13 +13,18 @@ const Header = () => {
   const navigate = useNavigate();
   const { user, profile } = useAuth();
   const { isAdmin } = useUserRole();
+  const { language, setLanguage, t } = useLanguage();
+
+  const toggleLanguage = () => {
+    setLanguage(language === 'ne' ? 'en' : 'ne');
+  };
 
   const navLinks = [
-    { href: "/", label: "गृह", icon: Home },
-    { href: "/disease-detection", label: "रोग", icon: Camera },
-    { href: "/fields", label: "मेरो खेत", icon: Mountain },
-    { href: "/market", label: "कृषि बजार", icon: Store },
-    { href: "/krishi-mitra", label: "AI", icon: Bot },
+    { href: "/", label: t('homeNav'), icon: Home },
+    { href: "/disease-detection", label: t('diseaseNav'), icon: Camera },
+    { href: "/fields", label: t('myField'), icon: Mountain },
+    { href: "/market", label: t('krishiBazar'), icon: Store },
+    { href: "/krishi-mitra", label: t('aiNav'), icon: Bot },
     ...(isAdmin() ? [{ href: "/admin", label: "Admin", icon: Shield }] : []),
   ];
 
@@ -33,7 +39,7 @@ const Header = () => {
             <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-gradient-to-br from-primary to-primary/80 flex items-center justify-center shadow-md group-hover:shadow-lg transition-all">
               <Leaf className="w-5 h-5 text-primary-foreground" />
             </div>
-            <span className="font-bold text-base sm:text-lg text-foreground">किसान साथी</span>
+            <span className="font-bold text-base sm:text-lg text-foreground">{t('kisanSathi')}</span>
           </Link>
 
           {/* Desktop Navigation - Pill style */}
@@ -60,8 +66,17 @@ const Header = () => {
             ))}
           </nav>
 
-          {/* Desktop Auth Buttons */}
+          {/* Desktop Auth + Language */}
           <div className="hidden md:flex items-center gap-2">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={toggleLanguage}
+              className="rounded-full px-3 gap-1.5 text-xs font-semibold border border-border/50"
+            >
+              <Globe className="w-3.5 h-3.5" />
+              {language === 'ne' ? 'EN' : 'ने'}
+            </Button>
             {user ? (
               <Button
                 variant="outline"
@@ -79,18 +94,28 @@ const Header = () => {
                 className="rounded-full px-5"
               >
                 <LogIn className="w-4 h-4 mr-2" />
-                सुरु गर्नुहोस्
+                {t('getStarted')}
               </Button>
             )}
           </div>
 
-          {/* Mobile Menu Button */}
-          <button
-            className="md:hidden p-2 rounded-full hover:bg-muted border border-border/50"
-            onClick={() => setIsMenuOpen(!isMenuOpen)}
-          >
-            {isMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
-          </button>
+          {/* Mobile: Language toggle + Menu */}
+          <div className="flex md:hidden items-center gap-1.5">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={toggleLanguage}
+              className="rounded-full h-9 w-9 p-0 text-xs font-bold border border-border/50"
+            >
+              {language === 'ne' ? 'EN' : 'ने'}
+            </Button>
+            <button
+              className="p-2 rounded-full hover:bg-muted border border-border/50"
+              onClick={() => setIsMenuOpen(!isMenuOpen)}
+            >
+              {isMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+            </button>
+          </div>
         </div>
       </div>
 
@@ -159,7 +184,7 @@ const Header = () => {
                     }}
                   >
                     <LogIn className="w-4 h-4 mr-2" />
-                    सुरु गर्नुहोस्
+                    {t('getStarted')}
                   </Button>
                 )}
               </div>

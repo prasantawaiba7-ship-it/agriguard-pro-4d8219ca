@@ -1,7 +1,10 @@
 import { Leaf, Heart } from "lucide-react";
 import { Link } from "react-router-dom";
+import { useLanguage } from "@/hooks/useLanguage";
 
 const Footer = () => {
+  const { t } = useLanguage();
+
   return (
     <footer className="bg-foreground text-background py-16">
       <div className="container mx-auto px-4">
@@ -11,69 +14,50 @@ const Footer = () => {
             <div className="w-10 h-10 rounded-xl bg-primary flex items-center justify-center">
               <Leaf className="w-5 h-5 text-primary-foreground" />
             </div>
-            <span className="font-bold text-xl text-background">किसान साथी</span>
+            <span className="font-bold text-xl text-background">{t('kisanSathi')}</span>
             </Link>
             <p className="text-background/70 max-w-sm leading-relaxed">
-              नेपाली किसानहरूको लागि AI-संचालित बाली निगरानी र रोग पहिचान प्रणाली।
-              तपाईँको खेतीमा स्मार्ट साथी।
+              {t('footerDescription')}
             </p>
           </div>
 
           <div>
-            <h4 className="font-semibold mb-4 text-background">प्लेटफर्म</h4>
+            <h4 className="font-semibold mb-4 text-background">{t('platform')}</h4>
             <ul className="space-y-2">
               <li>
-                <Link
-                  to="/farmer"
-                  className="text-background/70 hover:text-background transition-colors"
-                >
-                  किसान पोर्टल
+                <Link to="/farmer" className="text-background/70 hover:text-background transition-colors">
+                  {t('farmerPortal')}
                 </Link>
               </li>
               <li>
-                <Link
-                  to="/market"
-                  className="text-background/70 hover:text-background transition-colors"
-                >
-                  कृषि बजार
+                <Link to="/market" className="text-background/70 hover:text-background transition-colors">
+                  {t('krishiBazar')}
                 </Link>
               </li>
               <li>
-                <Link
-                  to="/krishi-mitra"
-                  className="text-background/70 hover:text-background transition-colors"
-                >
-                  किसान साथी AI
+                <Link to="/krishi-mitra" className="text-background/70 hover:text-background transition-colors">
+                  {t('kisanSathiAI')}
                 </Link>
               </li>
             </ul>
           </div>
 
           <div>
-            <h4 className="font-semibold mb-4 text-background">स्रोतहरू</h4>
+            <h4 className="font-semibold mb-4 text-background">{t('resources')}</h4>
             <ul className="space-y-2">
               <li>
-                <Link
-                  to="/disease-detection"
-                  className="text-background/70 hover:text-background transition-colors"
-                >
-                  रोग पहिचान
+                <Link to="/disease-detection" className="text-background/70 hover:text-background transition-colors">
+                  {t('diseaseDetection')}
                 </Link>
               </li>
               <li>
-                <a
-                  href="#"
-                  className="text-background/70 hover:text-background transition-colors"
-                >
-                  प्रयोगकर्ता गाइड
+                <a href="#" className="text-background/70 hover:text-background transition-colors">
+                  {t('userGuide')}
                 </a>
               </li>
               <li>
-                <a
-                  href="#"
-                  className="text-background/70 hover:text-background transition-colors"
-                >
-                  सम्पर्क सहायता
+                <a href="#" className="text-background/70 hover:text-background transition-colors">
+                  {t('contactSupport')}
                 </a>
               </li>
             </ul>
@@ -83,14 +67,14 @@ const Footer = () => {
         <div className="border-t border-background/10 pt-8">
           <div className="flex flex-col md:flex-row justify-between items-center gap-4 mb-4">
             <p className="text-sm text-background/60">
-              © 2024 किसान साथी। नेपाली किसानहरूको लागि बनाइएको।
+              {t('copyright')}
             </p>
             <div className="flex gap-6">
               <a href="#" className="text-sm text-background/60 hover:text-background">
-                गोपनीयता नीति
+                {t('privacyPolicy')}
               </a>
               <a href="#" className="text-sm text-background/60 hover:text-background">
-                सेवाका सर्तहरू
+                {t('termsOfService')}
               </a>
             </div>
           </div>

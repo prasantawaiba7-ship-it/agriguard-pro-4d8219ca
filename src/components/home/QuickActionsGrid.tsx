@@ -1,71 +1,74 @@
 import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
 import { Camera, Cloud, Store, Bot, MapPin, BookOpen } from "lucide-react";
-
-const quickActions = [
-  {
-    icon: Camera,
-    label: "रोग पहिचान",
-    sublabel: "फोटोबाट पहिचान",
-    href: "/disease-detection",
-    color: "bg-red-500",
-    bgColor: "bg-red-50 dark:bg-red-950/30",
-    borderColor: "border-red-200 dark:border-red-900/50",
-    hoverColor: "hover:border-red-300 dark:hover:border-red-800",
-  },
-  {
-    icon: Store,
-    label: "कृषि बजार",
-    sublabel: "आजको भाउ",
-    href: "/market",
-    color: "bg-primary",
-    bgColor: "bg-primary/5",
-    borderColor: "border-primary/20",
-    hoverColor: "hover:border-primary/40",
-  },
-  {
-    icon: Cloud,
-    label: "मौसम",
-    sublabel: "मौसम जानकारी",
-    href: "/farmer?tab=weather",
-    color: "bg-blue-500",
-    bgColor: "bg-blue-50 dark:bg-blue-950/30",
-    borderColor: "border-blue-200 dark:border-blue-900/50",
-    hoverColor: "hover:border-blue-300 dark:hover:border-blue-800",
-  },
-  {
-    icon: Bot,
-    label: "AI सहायक",
-    sublabel: "कृषि ज्ञान",
-    href: "/krishi-mitra",
-    color: "bg-secondary",
-    bgColor: "bg-secondary/5",
-    borderColor: "border-secondary/20",
-    hoverColor: "hover:border-secondary/40",
-  },
-  {
-    icon: MapPin,
-    label: "मेरो खेत",
-    sublabel: "खेत व्यवस्थापन",
-    href: "/fields",
-    color: "bg-teal-500",
-    bgColor: "bg-teal-50 dark:bg-teal-950/30",
-    borderColor: "border-teal-200 dark:border-teal-900/50",
-    hoverColor: "hover:border-teal-300 dark:hover:border-teal-800",
-  },
-  {
-    icon: BookOpen,
-    label: "खेती गाइड",
-    sublabel: "खेती ज्ञान",
-    href: "/crop-guides",
-    color: "bg-amber-500",
-    bgColor: "bg-amber-50 dark:bg-amber-950/30",
-    borderColor: "border-amber-200 dark:border-amber-900/50",
-    hoverColor: "hover:border-amber-300 dark:hover:border-amber-800",
-  },
-];
+import { useLanguage } from "@/hooks/useLanguage";
 
 const QuickActionsGrid = () => {
+  const { t } = useLanguage();
+
+  const quickActions = [
+    {
+      icon: Camera,
+      label: t('diseaseDetection'),
+      sublabel: t('detectFromPhoto'),
+      href: "/disease-detection",
+      color: "bg-red-500",
+      bgColor: "bg-red-50 dark:bg-red-950/30",
+      borderColor: "border-red-200 dark:border-red-900/50",
+      hoverColor: "hover:border-red-300 dark:hover:border-red-800",
+    },
+    {
+      icon: Store,
+      label: t('krishiBazar'),
+      sublabel: t('todayPrice'),
+      href: "/market",
+      color: "bg-primary",
+      bgColor: "bg-primary/5",
+      borderColor: "border-primary/20",
+      hoverColor: "hover:border-primary/40",
+    },
+    {
+      icon: Cloud,
+      label: t('weather'),
+      sublabel: t('weatherInfo'),
+      href: "/farmer?tab=weather",
+      color: "bg-blue-500",
+      bgColor: "bg-blue-50 dark:bg-blue-950/30",
+      borderColor: "border-blue-200 dark:border-blue-900/50",
+      hoverColor: "hover:border-blue-300 dark:hover:border-blue-800",
+    },
+    {
+      icon: Bot,
+      label: t('aiHelper'),
+      sublabel: t('agriKnowledge'),
+      href: "/krishi-mitra",
+      color: "bg-secondary",
+      bgColor: "bg-secondary/5",
+      borderColor: "border-secondary/20",
+      hoverColor: "hover:border-secondary/40",
+    },
+    {
+      icon: MapPin,
+      label: t('myFieldLabel'),
+      sublabel: t('fieldManagement'),
+      href: "/fields",
+      color: "bg-teal-500",
+      bgColor: "bg-teal-50 dark:bg-teal-950/30",
+      borderColor: "border-teal-200 dark:border-teal-900/50",
+      hoverColor: "hover:border-teal-300 dark:hover:border-teal-800",
+    },
+    {
+      icon: BookOpen,
+      label: t('farmingGuide'),
+      sublabel: t('farmingKnowledge'),
+      href: "/crop-guides",
+      color: "bg-amber-500",
+      bgColor: "bg-amber-50 dark:bg-amber-950/30",
+      borderColor: "border-amber-200 dark:border-amber-900/50",
+      hoverColor: "hover:border-amber-300 dark:hover:border-amber-800",
+    },
+  ];
+
   return (
     <section className="py-8 sm:py-12">
       <div className="container mx-auto px-4">
@@ -76,17 +79,17 @@ const QuickActionsGrid = () => {
           className="text-center mb-6 sm:mb-8"
         >
           <h2 className="text-xl sm:text-2xl font-bold text-foreground">
-            आज के गर्ने?
+            {t('whatToDoToday')}
           </h2>
           <p className="text-sm text-muted-foreground mt-1">
-            छिटो पहुँचको लागि तलको कार्ड छान्नुहोस्
+            {t('quickAccessInfo')}
           </p>
         </motion.div>
 
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 sm:gap-4 max-w-5xl mx-auto">
           {quickActions.map((action, index) => (
             <motion.div
-              key={action.label}
+              key={action.href}
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.4, delay: index * 0.05 }}

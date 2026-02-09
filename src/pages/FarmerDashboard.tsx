@@ -250,9 +250,9 @@ const FarmerDashboard = () => {
               <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4 mb-8">
                 {[
                   { icon: Leaf, label: t('myPlots'), value: stats?.plots || 0, color: "bg-primary" },
-                  { icon: Camera, label: "Photos", value: stats?.photos || 0, color: "bg-secondary" },
-                  { icon: CheckCircle2, label: "Healthy", value: stats?.healthyCrops || 0, color: "bg-success" },
-                  { icon: AlertTriangle, label: "Alerts", value: stats?.alerts || 0, color: "bg-warning" },
+                  { icon: Camera, label: t('photos'), value: stats?.photos || 0, color: "bg-secondary" },
+                  { icon: CheckCircle2, label: t('healthy'), value: stats?.healthyCrops || 0, color: "bg-success" },
+                  { icon: AlertTriangle, label: t('alerts'), value: stats?.alerts || 0, color: "bg-warning" },
                 ].map((stat, i) => (
                   <motion.div
                     key={stat.label}
@@ -294,8 +294,8 @@ const FarmerDashboard = () => {
                       <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-primary/10 flex items-center justify-center">
                         <Bug className="w-5 h-5 sm:w-6 sm:h-6 text-primary" />
                       </div>
-                      <h3 className="font-semibold text-xs sm:text-sm text-foreground">🌿 रोग पहिचान</h3>
-                      <p className="text-[10px] sm:text-xs text-muted-foreground hidden lg:block">फोटो सोध्ने</p>
+                      <h3 className="font-semibold text-xs sm:text-sm text-foreground">🌿 {t('cropDiagnosis')}</h3>
+                      <p className="text-[10px] sm:text-xs text-muted-foreground hidden lg:block">{t('askPhoto')}</p>
                     </CardContent>
                   </Card>
 
@@ -308,8 +308,8 @@ const FarmerDashboard = () => {
                       <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-success/10 flex items-center justify-center">
                         <Sparkles className="w-5 h-5 sm:w-6 sm:h-6 text-success" />
                       </div>
-                      <h3 className="font-semibold text-xs sm:text-sm text-foreground">🛒 बजार</h3>
-                      <p className="text-[10px] sm:text-xs text-muted-foreground hidden lg:block">बेच्ने / किन्ने</p>
+                      <h3 className="font-semibold text-xs sm:text-sm text-foreground">🛒 {t('market')}</h3>
+                      <p className="text-[10px] sm:text-xs text-muted-foreground hidden lg:block">{t('buySell')}</p>
                     </CardContent>
                   </Card>
 
@@ -322,8 +322,8 @@ const FarmerDashboard = () => {
                       <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-secondary/10 flex items-center justify-center">
                         <Leaf className="w-5 h-5 sm:w-6 sm:h-6 text-secondary" />
                       </div>
-                      <h3 className="font-semibold text-xs sm:text-sm text-foreground">📚 कृषि ज्ञान</h3>
-                      <p className="text-[10px] sm:text-xs text-muted-foreground hidden lg:block">बाली गाइड</p>
+                      <h3 className="font-semibold text-xs sm:text-sm text-foreground">📚 {t('agriKnowledgeGuide')}</h3>
+                      <p className="text-[10px] sm:text-xs text-muted-foreground hidden lg:block">{t('cropGuide')}</p>
                     </CardContent>
                   </Card>
 
@@ -336,8 +336,8 @@ const FarmerDashboard = () => {
                       <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-warning/10 flex items-center justify-center">
                         <Calendar className="w-5 h-5 sm:w-6 sm:h-6 text-warning" />
                       </div>
-                      <h3 className="font-semibold text-xs sm:text-sm text-foreground">📝 कृषि कार्य</h3>
-                      <p className="text-[10px] sm:text-xs text-muted-foreground hidden lg:block">Activities Log</p>
+                      <h3 className="font-semibold text-xs sm:text-sm text-foreground">📝 {t('farmWork')}</h3>
+                      <p className="text-[10px] sm:text-xs text-muted-foreground hidden lg:block">{t('activitiesLog')}</p>
                     </CardContent>
                   </Card>
 
@@ -350,8 +350,8 @@ const FarmerDashboard = () => {
                       <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-accent/10 flex items-center justify-center">
                         <MapPin className="w-5 h-5 sm:w-6 sm:h-6 text-accent" />
                       </div>
-                      <h3 className="font-semibold text-xs sm:text-sm text-foreground">🗺️ मेरो खेत</h3>
-                      <p className="text-[10px] sm:text-xs text-muted-foreground hidden lg:block">Fields</p>
+                      <h3 className="font-semibold text-xs sm:text-sm text-foreground">🗺️ {t('myFieldLabel')}</h3>
+                      <p className="text-[10px] sm:text-xs text-muted-foreground hidden lg:block">{t('fields')}</p>
                     </CardContent>
                   </Card>
 
@@ -364,8 +364,8 @@ const FarmerDashboard = () => {
                       <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-primary/10 flex items-center justify-center">
                         <Cloud className="w-5 h-5 sm:w-6 sm:h-6 text-primary" />
                       </div>
-                      <h3 className="font-semibold text-xs sm:text-sm text-foreground">🤖 AI सहायक</h3>
-                      <p className="text-[10px] sm:text-xs text-muted-foreground hidden lg:block">Krishi Mitra</p>
+                      <h3 className="font-semibold text-xs sm:text-sm text-foreground">🤖 {t('aiHelper')}</h3>
+                      <p className="text-[10px] sm:text-xs text-muted-foreground hidden lg:block">{t('kisanSathi')}</p>
                     </CardContent>
                   </Card>
                 </div>
@@ -375,13 +375,13 @@ const FarmerDashboard = () => {
             {/* Tab Navigation - Responsive */}
             <div className="flex flex-wrap gap-2 mb-6 pb-2">
               {[
-                { id: "plots", label: t('myPlots'), shortLabel: "Plots", icon: MapPin },
-                { id: "capture", label: "Capture", shortLabel: "📷", icon: Camera },
-                { id: "treatments", label: "उपचार", shortLabel: "💊", icon: Stethoscope },
-                { id: "weather", label: "मौसम सुझाव", shortLabel: "🌤️", icon: CloudSun },
-                { id: "calendar", label: "बाली पात्रो", shortLabel: "📅", icon: Calendar },
+                { id: "plots", label: t('myPlots'), shortLabel: "🌾", icon: MapPin },
+                { id: "capture", label: t('capture'), shortLabel: "📷", icon: Camera },
+                { id: "treatments", label: t('treatments'), shortLabel: "💊", icon: Stethoscope },
+                { id: "weather", label: t('weatherForecast'), shortLabel: "🌤️", icon: CloudSun },
+                { id: "calendar", label: t('calendar'), shortLabel: "📅", icon: Calendar },
                 { id: "history", label: t('history'), shortLabel: "📜", icon: History },
-                { id: "offline", label: "Offline", shortLabel: "📴", icon: WifiOff },
+                { id: "offline", label: t('offlineData'), shortLabel: "📴", icon: WifiOff },
               ].map((tab) => (
                 <Button
                   key={tab.id}

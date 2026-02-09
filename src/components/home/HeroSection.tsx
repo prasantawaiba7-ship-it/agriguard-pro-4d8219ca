@@ -1,11 +1,13 @@
-import { Leaf, ArrowRight, Store, Camera, Bot } from "lucide-react";
+import { Leaf, ArrowRight, Store, Camera } from "lucide-react";
 import { motion } from "framer-motion";
 import { useAuth } from "@/hooks/useAuth";
+import { useLanguage } from "@/hooks/useLanguage";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
 
 const HeroSection = () => {
   const { profile, user } = useAuth();
+  const { t } = useLanguage();
   const displayName = profile?.full_name || user?.email?.split("@")[0] || "";
 
   return (
@@ -34,7 +36,7 @@ const HeroSection = () => {
             className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 border border-primary/20 mb-6"
           >
             <Leaf className="w-4 h-4 text-primary" />
-            <span className="text-sm font-semibold text-primary">किसान साथी – तपाईँको खेतीको साथी</span>
+            <span className="text-sm font-semibold text-primary">{t('heroTagline')}</span>
           </motion.div>
 
           {displayName && (
@@ -44,7 +46,7 @@ const HeroSection = () => {
               transition={{ duration: 0.4 }}
               className="text-base text-secondary font-medium mb-3"
             >
-              🙏 नमस्ते, {displayName} जी!
+              🙏 {t('heroGreeting')}, {displayName}!
             </motion.p>
           )}
 
@@ -54,8 +56,8 @@ const HeroSection = () => {
             transition={{ duration: 0.6, delay: 0.1 }}
             className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold text-foreground leading-tight mb-5"
           >
-            तपाईँको खेतीको{" "}
-            <span className="text-gradient">भरपर्दो साथी</span>
+            {t('heroTitle1')}{" "}
+            <span className="text-gradient">{t('heroTitle2')}</span>
           </motion.h1>
 
           <motion.p
@@ -64,7 +66,7 @@ const HeroSection = () => {
             transition={{ duration: 0.5, delay: 0.2 }}
             className="text-base sm:text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto leading-relaxed mb-8"
           >
-            रोग पहिचान, मौसम जानकारी, कृषि बजार भाउ र AI खेती सल्लाह — सबै एकै ठाउँमा, सजिलो र छिटो।
+            {t('heroDescription')}
           </motion.p>
 
           <motion.div
@@ -76,7 +78,7 @@ const HeroSection = () => {
             <Link to="/disease-detection">
               <Button size="lg" className="group rounded-full px-6 sm:px-8 py-6 text-base sm:text-lg font-semibold shadow-lg hover:shadow-xl transition-all">
                 <Camera className="w-5 h-5 mr-2" />
-                रोग पहिचान गर्नुहोस्
+                {t('detectDisease')}
                 <ArrowRight className="w-5 h-5 ml-2 group-hover:translate-x-1 transition-transform" />
               </Button>
             </Link>
@@ -87,7 +89,7 @@ const HeroSection = () => {
                 className="rounded-full px-6 sm:px-8 py-6 text-base sm:text-lg font-medium border-2 hover:bg-primary/5"
               >
                 <Store className="w-5 h-5 mr-2 text-primary" />
-                बजार भाउ हेर्नुहोस्
+                {t('viewMarketPrices')}
               </Button>
             </Link>
           </motion.div>
@@ -99,9 +101,9 @@ const HeroSection = () => {
             className="mt-10 sm:mt-12 flex flex-wrap justify-center gap-6 sm:gap-10"
           >
             {[
-              { value: "10,000+", label: "किसान" },
-              { value: "77", label: "जिल्ला" },
-              { value: "24/7", label: "AI सहायता" },
+              { value: "10,000+", label: t('farmers') },
+              { value: "77", label: t('districts') },
+              { value: "24/7", label: t('aiSupport') },
             ].map((stat) => (
               <div key={stat.label} className="text-center">
                 <div className="text-2xl sm:text-3xl font-bold text-primary">{stat.value}</div>
