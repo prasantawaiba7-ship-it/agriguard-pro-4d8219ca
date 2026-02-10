@@ -5,8 +5,46 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-// Step 1: Image analysis prompt - gets structured JSON from vision model
-const IMAGE_ANALYSIS_PROMPT = `You are an expert plant pathologist and entomologist specializing in Nepali/South Asian crops. 
+function getImageAnalysisPrompt(language: string) {
+  if (language === 'en') {
+    return `You are an expert plant pathologist and entomologist specializing in South Asian crops.
+Analyze the provided crop image to identify any diseases, pests, insects, or nutrient deficiencies.
+
+Return ONLY a JSON object with this exact structure:
+{
+  "disease_id": "unique_id_like_rice_blast",
+  "isHealthy": boolean,
+  "issueType": "disease" | "pest" | "deficiency" | "healthy",
+  "detectedIssue": "Disease/Issue Name in English",
+  "detectedIssueEnglish": "English name",
+  "confidence": 0.0-1.0,
+  "severity": "low" | "medium" | "high" | null,
+  "affectedPart": "leaves/stem/fruit/roots/whole plant",
+  "symptoms_keypoints": ["Symptom 1 in English", "Symptom 2 in English"],
+  "causes": ["cause1", "cause2"],
+  "recommended_chemicals": [
+    {
+      "name": "Chemical name (available in Nepal/South Asia)",
+      "dose": "Dosage and application method",
+      "usage_note": "Usage notes"
+    }
+  ],
+  "organic_treatment": {
+    "name": "Organic treatment name",
+    "preparation": "Preparation method",
+    "application": "Application method"
+  },
+  "management_practices": ["Management practice 1", "Management practice 2"],
+  "preventive_measures": ["Prevention 1", "Prevention 2"],
+  "possible_alternatives": ["Other possible disease/pest"],
+  "when_to_seek_help": "When to consult an expert",
+  "estimated_recovery_time": "Time duration"
+}
+
+Be practical and specific to Nepali/South Asian farming conditions. Suggest locally available treatments. Respond entirely in English.`;
+  }
+
+  return `You are an expert plant pathologist and entomologist specializing in Nepali/South Asian crops. 
 Analyze the provided crop image to identify any diseases, pests, insects, or nutrient deficiencies.
 
 Return ONLY a JSON object with this exact structure:
@@ -41,9 +79,75 @@ Return ONLY a JSON object with this exact structure:
 }
 
 Be practical and specific to Nepali farming conditions. Suggest locally available treatments.`;
+}
 
-// Step 2: Nepali report generation prompt
-const NEPALI_REPORT_PROMPT = `You are an agricultural assistant for Nepali farmers. 
+function getReportPrompt(language: string) {
+  if (language === 'en') {
+    return `You are an agricultural assistant for farmers in Nepal/South Asia.
+
+Your job is to generate a clear, accurate disease report in English, based on structured data from an image disease classifier.
+
+### ROLE & STYLE
+- Write only in English.
+- Use simple, farmer-friendly words, not very technical academic language.
+- Be concise but complete.
+- Organize output with short headings and bullet points.
+- Do NOT invent any chemical names or doses that are not present in the input data.
+- If some information is missing in the input, simply skip it instead of guessing.
+
+### OUTPUT STRUCTURE
+
+Follow this exact structure:
+
+1) Title
+- One line: "<Crop Name>: <Disease Name> Report"
+
+2) Brief Introduction
+- 2–3 sentences:
+  - Which crop disease is this,
+  - Context of the farmer's field (location and severity),
+  - If confidence is low, clearly mention this is an estimate.
+
+3) Key Symptoms
+- Heading: "Key Symptoms:"
+- Bullet list using only symptoms_keypoints from the input, 4–8 points.
+- Do not invent new symptoms.
+
+4) Treatment (Chemical)
+- Heading: "Treatment:"
+- If recommended_chemicals is not empty:
+  - Each chemical in a separate bullet:
+    - Chemical name,
+    - Dose and application method,
+    - Spray timing/interval if given.
+- If recommended_chemicals is empty or very limited:
+  - Write: "Detailed chemical recommendation not available, please consult your nearest agricultural technician."
+
+5) Organic Treatment
+- Heading: "Organic Treatment:"
+- Present the organic_treatment data in simple language.
+
+6) Management & Prevention
+- Heading: "Management & Prevention:"
+- Bullet list from management_practices and preventive_measures arrays.
+
+7) Caution & Disclaimer
+- Heading: "Caution:"
+- 2–3 bullets:
+  - This is a digital estimate only,
+  - Consult your nearest agricultural technician or local agriculture knowledge center,
+  - Use chemicals only as per label instructions.
+
+### CONFIDENCE HANDLING
+
+- If confidence >= 0.8: Write the report normally.
+- If 0.5 <= confidence < 0.8: Mention in the introduction that "this result is an estimate only."
+- If confidence < 0.5: Write a strong warning at the start and do not recommend chemicals.
+
+Use only the facts from the JSON input. Do not invent new information.`;
+  }
+
+  return `You are an agricultural assistant for Nepali farmers. 
 
 Your job is to generate a clear, accurate disease report in Nepali language, based on structured data from an image disease classifier.
 
@@ -105,6 +209,7 @@ Follow this exact structure:
 - If confidence < 0.5: सुरूवातमै बलियो चेतावनी लेख्नुहोस् र औषधि सिफारिस नगर्नुहोस्।
 
 Use only the facts from the JSON input. Do not invent new information.`;
+}
 
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
@@ -123,10 +228,19 @@ serve(async (req) => {
       throw new Error("Image URL is required");
     }
 
-    console.log("Step 1: Analyzing image for disease/pest detection...");
+    const lang = language === 'en' ? 'en' : 'ne';
+
+    console.log(`Step 1: Analyzing image for disease/pest detection (language: ${lang})...`);
 
     // Step 1: Get structured data from image
-    const imageAnalysisPrompt = `Analyze this crop image for diseases, pests, or nutrient deficiencies.
+    const imageAnalysisUserPrompt = lang === 'en'
+      ? `Analyze this crop image for diseases, pests, or nutrient deficiencies.
+${cropType ? `Crop Type: ${cropType}` : ''}
+${description ? `Farmer's Description: ${description}` : ''}
+${farmerLocation ? `Location: ${farmerLocation}` : ''}
+
+Provide detailed diagnosis in English with locally available treatments.`
+      : `Analyze this crop image for diseases, pests, or nutrient deficiencies.
 ${cropType ? `Crop Type: ${cropType}` : ''}
 ${description ? `Farmer's Description: ${description}` : ''}
 ${farmerLocation ? `Location: ${farmerLocation}` : ''}
@@ -142,11 +256,11 @@ Provide detailed diagnosis in Nepali with locally available treatments.`;
       body: JSON.stringify({
         model: "google/gemini-2.5-pro",
         messages: [
-          { role: "system", content: IMAGE_ANALYSIS_PROMPT },
+          { role: "system", content: getImageAnalysisPrompt(lang) },
           { 
             role: "user", 
             content: [
-              { type: "text", text: imageAnalysisPrompt },
+              { type: "text", text: imageAnalysisUserPrompt },
               { type: "image_url", image_url: { url: imageUrl } }
             ]
           }
@@ -183,7 +297,7 @@ Provide detailed diagnosis in Nepali with locally available treatments.`;
       console.error("Failed to parse image analysis JSON:", analysisText);
       structuredData = { 
         isHealthy: true,
-        detectedIssue: "पहिचान गर्न सकिएन",
+        detectedIssue: lang === 'en' ? "Could not identify" : "पहिचान गर्न सकिएन",
         confidence: 0.3,
         severity: null
       };
@@ -192,16 +306,18 @@ Provide detailed diagnosis in Nepali with locally available treatments.`;
     console.log("Step 1 complete. Detected:", structuredData.detectedIssue);
 
     // Enrich structured data with crop and location info
+    const severityLabel = lang === 'en'
+      ? (structuredData.severity === "low" ? "Low" : structuredData.severity === "medium" ? "Medium" : structuredData.severity === "high" ? "Severe" : "Unknown")
+      : (structuredData.severity === "low" ? "सामान्य" : structuredData.severity === "medium" ? "मध्यम" : structuredData.severity === "high" ? "गम्भीर" : "अज्ञात");
+
     const enrichedData = {
-      language: "Nepali",
-      crop_name: cropType || "बाली",
+      language: lang === 'en' ? "English" : "Nepali",
+      crop_name: cropType || (lang === 'en' ? "Crop" : "बाली"),
       crop_scientific_name: "",
       disease_name: structuredData.detectedIssue || structuredData.detectedIssueEnglish || "Unknown",
       disease_id: structuredData.disease_id || "unknown",
       confidence: structuredData.confidence || 0.5,
-      severity: structuredData.severity === "low" ? "सामान्य" : 
-                structuredData.severity === "medium" ? "मध्यम" : 
-                structuredData.severity === "high" ? "गम्भीर" : "अज्ञात",
+      severity: severityLabel,
       farmer_location: farmerLocation || "",
       symptoms_keypoints: structuredData.symptoms_keypoints || structuredData.symptoms || [],
       recommended_chemicals: structuredData.recommended_chemicals || [],
@@ -216,9 +332,9 @@ Provide detailed diagnosis in Nepali with locally available treatments.`;
       ...structuredData
     };
 
-    console.log("Step 2: Generating Nepali report...");
+    console.log(`Step 2: Generating ${lang === 'en' ? 'English' : 'Nepali'} report...`);
 
-    // Step 2: Generate Nepali report
+    // Step 2: Generate report in the correct language
     const reportResponse = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
       headers: {
@@ -228,10 +344,10 @@ Provide detailed diagnosis in Nepali with locally available treatments.`;
       body: JSON.stringify({
         model: "google/gemini-2.5-flash",
         messages: [
-          { role: "system", content: NEPALI_REPORT_PROMPT },
+          { role: "system", content: getReportPrompt(lang) },
           { 
             role: "user", 
-            content: `Generate a Nepali disease report using this data:\n\n${JSON.stringify(enrichedData, null, 2)}`
+            content: `Generate a ${lang === 'en' ? 'English' : 'Nepali'} disease report using this data:\n\n${JSON.stringify(enrichedData, null, 2)}`
           }
         ],
       }),
@@ -247,6 +363,8 @@ Provide detailed diagnosis in Nepali with locally available treatments.`;
     }
 
     // Return both structured data and formatted report
+    const defaultTreatmentFallback = lang === 'en' ? "Consult an agricultural technician" : "कृषि प्राविधिकसँग सल्लाह लिनुहोस्";
+
     const finalResponse = {
       ...enrichedData,
       nepaliReport,
@@ -265,7 +383,7 @@ Provide detailed diagnosis in Nepali with locally available treatments.`;
       chemicalTreatment: enrichedData.recommended_chemicals?.[0] ? 
         `${enrichedData.recommended_chemicals[0].name} - ${enrichedData.recommended_chemicals[0].dose}` : "",
       treatment: enrichedData.recommended_chemicals?.map((c: { name: string; dose: string }) => `${c.name}: ${c.dose}`).join('\n') || 
-                 enrichedData.organic_treatment?.application || "कृषि प्राविधिकसँग सल्लाह लिनुहोस्",
+                 enrichedData.organic_treatment?.application || defaultTreatmentFallback,
       prevention: enrichedData.management_practices,
       preventiveMeasures: enrichedData.management_practices,
       whenToSeekHelp: enrichedData.when_to_seek_help,
