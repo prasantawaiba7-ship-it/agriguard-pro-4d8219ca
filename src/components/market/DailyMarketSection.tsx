@@ -14,10 +14,11 @@ import { RealTimePriceUpdates } from './RealTimePriceUpdates';
 import { getCropImageUrl, handleCropImageError } from '@/lib/cropPlaceholder';
 import { NoDataMessage } from './NoDataMessage';
 import { QuickRatingButton } from '@/components/feedback/QuickRatingButton';
+import { useLanguage } from '@/hooks/useLanguage';
 
-function ProductCard({ product }: { product: DailyMarketProduct }) {
-  const displayName = product.crop_name_ne || product.crop_name;
-  const marketName = product.market_name_ne || product.market_name;
+function ProductCard({ product, isNepali, t }: { product: DailyMarketProduct; isNepali: boolean; t: (key: string) => string }) {
+  const displayName = isNepali ? (product.crop_name_ne || product.crop_name) : product.crop_name;
+  const marketName = isNepali ? (product.market_name_ne || product.market_name) : product.market_name;
   const imageUrl = getCropImageUrl(product.image_url);
 
   return (
@@ -36,29 +37,26 @@ function ProductCard({ product }: { product: DailyMarketProduct }) {
           />
         </AspectRatio>
         <CardContent className="p-4 space-y-3">
-          {/* Crop Name */}
           <h3 className="font-bold text-base sm:text-lg text-foreground line-clamp-1">
             {displayName}
           </h3>
 
-          {/* Price Section */}
           <div className="space-y-1">
             {product.price_avg && (
               <div className="flex items-center gap-2">
                 <span className="text-xl sm:text-2xl font-bold text-primary">
-                  रु. {product.price_avg.toLocaleString()}
+                  {isNepali ? 'रु.' : 'Rs.'} {product.price_avg.toLocaleString()}
                 </span>
                 <span className="text-xs sm:text-sm text-muted-foreground">/ {product.unit}</span>
               </div>
             )}
             {(product.price_min || product.price_max) && (
               <p className="text-xs text-muted-foreground">
-                रु. {product.price_min?.toLocaleString() || '?'} – {product.price_max?.toLocaleString() || '?'}
+                {isNepali ? 'रु.' : 'Rs.'} {product.price_min?.toLocaleString() || '?'} – {product.price_max?.toLocaleString() || '?'}
               </p>
             )}
           </div>
 
-          {/* Market & Location Tags */}
           <div className="flex flex-wrap gap-1.5">
             {marketName && (
               <Badge variant="secondary" className="text-xs font-medium">
@@ -74,14 +72,13 @@ function ProductCard({ product }: { product: DailyMarketProduct }) {
             )}
           </div>
 
-          {/* Quick Feedback */}
           <div className="pt-1 border-t border-border/50">
             <QuickRatingButton
               feedbackType="price_accuracy"
               targetType="market_price"
               targetId={product.id}
               variant="thumbs"
-              label="मूल्य मिल्छ?"
+              label={t('priceAccuracyQ')}
               className="justify-center"
             />
           </div>
@@ -110,6 +107,9 @@ function ProductSkeleton() {
 }
 
 export function DailyMarketSection() {
+  const { t, language } = useLanguage();
+  const isNepali = language === 'ne';
+
   const {
     products,
     isLoading,
@@ -131,37 +131,31 @@ export function DailyMarketSection() {
     localLevelId: number | null;
     wardNumber: number | null;
   }) => {
-    updateFilters({
-      ...filters,
-      cropId: selectedCropId,
-    });
+    updateFilters({ ...filters, cropId: selectedCropId });
   };
 
   const handleCropChange = (cropId: number | null) => {
     setSelectedCropId(cropId);
-    updateFilters({
-      cropId,
-    });
+    updateFilters({ cropId });
   };
 
   return (
     <div className="space-y-6">
-      {/* Section Header */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
           <h2 className="text-xl sm:text-2xl font-bold text-foreground flex items-center gap-2">
             <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-lg bg-primary flex items-center justify-center">
               <Store className="h-4 w-4 sm:h-5 sm:w-5 text-primary-foreground" />
             </div>
-            आजको कृषि बजार
+            {t('todayAgriMarket')}
           </h2>
           {latestDate && (
             <p className="text-sm text-muted-foreground flex items-center gap-1.5 mt-1.5 ml-11">
               <Calendar className="h-3.5 w-3.5" />
-              मिति: {format(new Date(latestDate), 'yyyy-MM-dd')}
+              {t('dateLabel')}: {format(new Date(latestDate), 'yyyy-MM-dd')}
               {!isToday && (
                 <Badge variant="secondary" className="ml-1 text-xs">
-                  अन्तिम उपलब्ध
+                  {t('lastAvailable')}
                 </Badge>
               )}
             </p>
@@ -170,29 +164,26 @@ export function DailyMarketSection() {
         <RealTimePriceUpdates onNewPrices={refresh} pollingInterval={120000} />
       </div>
 
-      {/* Location Filters */}
       <LocationFilters 
         selectedCropId={selectedCropId}
         onCropChange={handleCropChange}
         onFiltersChange={handleFiltersChange}
       />
 
-      {/* Sort Filter */}
       <div className="flex items-center gap-3">
-        <span className="text-sm text-muted-foreground">क्रमबद्ध:</span>
+        <span className="text-sm text-muted-foreground">{t('sortBy')}</span>
         <Select value={sortBy} onValueChange={(v) => setSortBy(v as 'name' | 'price-low' | 'price-high')}>
           <SelectTrigger className="w-[180px] bg-card border-border/60 rounded-lg">
-            <SelectValue placeholder="क्रमबद्ध गर्नुहोस्" />
+            <SelectValue placeholder={t('sortLabel')} />
           </SelectTrigger>
           <SelectContent className="bg-card border-border shadow-lg z-50">
-            <SelectItem value="name">नाम (A-Z)</SelectItem>
-            <SelectItem value="price-low">मूल्य (कम → धेरै)</SelectItem>
-            <SelectItem value="price-high">मूल्य (धेरै → कम)</SelectItem>
+            <SelectItem value="name">{t('nameAZ')}</SelectItem>
+            <SelectItem value="price-low">{t('priceLowHigh')}</SelectItem>
+            <SelectItem value="price-high">{t('priceHighLow')}</SelectItem>
           </SelectContent>
         </Select>
       </div>
 
-      {/* Error State */}
       {error && (
         <Card className="bg-destructive/10 border-destructive/30">
           <CardContent className="p-6 text-center text-destructive">
@@ -201,7 +192,6 @@ export function DailyMarketSection() {
         </Card>
       )}
 
-      {/* Loading State */}
       {isLoading && (
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
           {Array.from({ length: 8 }).map((_, i) => (
@@ -210,7 +200,6 @@ export function DailyMarketSection() {
         </div>
       )}
 
-      {/* Empty State */}
       {!isLoading && !error && products.length === 0 && (
         <Card className="bg-muted/30 border-dashed border-muted-foreground/20">
           <CardContent className="p-10">
@@ -219,12 +208,11 @@ export function DailyMarketSection() {
         </Card>
       )}
 
-      {/* Products Grid - Show ALL crops */}
       {!isLoading && !error && products.length > 0 && (
         <>
           <div className="flex items-center justify-between">
             <p className="text-sm text-muted-foreground">
-              {products.length} वटा उत्पादन फेला परे
+              {products.length} {t('productsFound')}
             </p>
             <Button 
               variant="ghost" 
@@ -233,12 +221,12 @@ export function DailyMarketSection() {
               className="text-xs gap-1"
             >
               <RefreshCw className="h-3 w-3" />
-              रिफ्रेस
+              {t('refreshBtn')}
             </Button>
           </div>
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
             {products.map((product) => (
-              <ProductCard key={product.id} product={product} />
+              <ProductCard key={product.id} product={product} isNepali={isNepali} t={t} />
             ))}
           </div>
         </>

@@ -3,6 +3,7 @@ import { Button } from '@/components/ui/button';
 import { X, MapPin } from 'lucide-react';
 import { useLocationData } from '@/hooks/useLocationData';
 import { useCrops } from '@/hooks/useCrops';
+import { useLanguage } from '@/hooks/useLanguage';
 
 interface LocationFiltersProps {
   selectedCropId: number | null;
@@ -16,6 +17,9 @@ interface LocationFiltersProps {
 }
 
 export function LocationFilters({ selectedCropId, onCropChange, onFiltersChange }: LocationFiltersProps) {
+  const { t, language } = useLanguage();
+  const isNepali = language === 'ne';
+
   const {
     provinces,
     districts,
@@ -35,7 +39,6 @@ export function LocationFilters({ selectedCropId, onCropChange, onFiltersChange 
 
   const { activeCrops, isLoading: cropsLoading } = useCrops();
 
-  // Notify parent when filters change
   const handleProvinceSelect = (value: string) => {
     const id = value === 'all' ? null : parseInt(value);
     handleProvinceChange(id);
@@ -76,106 +79,100 @@ export function LocationFilters({ selectedCropId, onCropChange, onFiltersChange 
     <div className="space-y-4">
       <div className="flex items-center gap-2 text-sm text-muted-foreground">
         <MapPin className="h-4 w-4 text-primary" />
-        <span>स्थान र बाली छान्नुहोस्</span>
+        <span>{t('selectLocationAndCrop')}</span>
       </div>
 
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
-        {/* Province Filter */}
         <Select 
           value={selectedProvinceId?.toString() || 'all'} 
           onValueChange={handleProvinceSelect}
           disabled={isLoading}
         >
           <SelectTrigger className="w-full bg-card border-border/60 rounded-lg">
-            <SelectValue placeholder="प्रदेश छान्नुहोस्" />
+            <SelectValue placeholder={t('selectProvince')} />
           </SelectTrigger>
           <SelectContent className="bg-card border-border shadow-lg z-50">
-            <SelectItem value="all">सबै प्रदेश</SelectItem>
+            <SelectItem value="all">{t('allProvinces')}</SelectItem>
             {provinces.map((province) => (
               <SelectItem key={province.id} value={province.id.toString()}>
-                {province.name_ne}
+                {isNepali ? province.name_ne : province.name_en}
               </SelectItem>
             ))}
           </SelectContent>
         </Select>
 
-        {/* District Filter */}
         <Select 
           value={selectedDistrictId?.toString() || 'all'} 
           onValueChange={handleDistrictSelect}
           disabled={!selectedProvinceId || districts.length === 0}
         >
           <SelectTrigger className="w-full bg-background">
-            <SelectValue placeholder="जिल्ला छान्नुहोस्" />
+            <SelectValue placeholder={t('selectDistrict')} />
           </SelectTrigger>
           <SelectContent className="bg-background border shadow-lg z-50">
-            <SelectItem value="all">सबै जिल्ला</SelectItem>
+            <SelectItem value="all">{t('allDistricts')}</SelectItem>
             {districts.map((district) => (
               <SelectItem key={district.id} value={district.id.toString()}>
-                {district.name_ne}
+                {isNepali ? district.name_ne : district.name_en}
               </SelectItem>
             ))}
           </SelectContent>
         </Select>
 
-        {/* Local Level Filter */}
         <Select 
           value={selectedLocalLevelId?.toString() || 'all'} 
           onValueChange={handleLocalLevelSelect}
           disabled={!selectedDistrictId || localLevels.length === 0}
         >
           <SelectTrigger className="w-full bg-background">
-            <SelectValue placeholder="पालिका छान्नुहोस्" />
+            <SelectValue placeholder={t('selectLocalLevel')} />
           </SelectTrigger>
           <SelectContent className="bg-background border shadow-lg z-50">
-            <SelectItem value="all">सबै पालिका</SelectItem>
+            <SelectItem value="all">{t('allLocalLevels')}</SelectItem>
             {localLevels.map((ll) => (
               <SelectItem key={ll.id} value={ll.id.toString()}>
-                {ll.name_ne}
+                {isNepali ? ll.name_ne : ll.name_en}
               </SelectItem>
             ))}
           </SelectContent>
         </Select>
 
-        {/* Ward Filter */}
         <Select 
           value={selectedWardNumber?.toString() || 'all'} 
           onValueChange={handleWardSelect}
           disabled={!selectedLocalLevelId || availableWards.length === 0}
         >
           <SelectTrigger className="w-full bg-background">
-            <SelectValue placeholder="वडा छान्नुहोस्" />
+            <SelectValue placeholder={t('selectWard')} />
           </SelectTrigger>
           <SelectContent className="bg-background border shadow-lg z-50">
-            <SelectItem value="all">सबै वडा</SelectItem>
+            <SelectItem value="all">{t('allWards')}</SelectItem>
             {availableWards.map((ward) => (
               <SelectItem key={ward} value={ward.toString()}>
-                वडा नं. {ward}
+                {t('wardNo')} {ward}
               </SelectItem>
             ))}
           </SelectContent>
         </Select>
 
-        {/* Crop Filter */}
         <Select 
           value={selectedCropId?.toString() || 'all'} 
           onValueChange={handleCropSelect}
           disabled={cropsLoading}
         >
           <SelectTrigger className="w-full bg-background">
-            <SelectValue placeholder="बाली छान्नुहोस्" />
+            <SelectValue placeholder={t('selectCrop')} />
           </SelectTrigger>
           <SelectContent className="bg-background border shadow-lg z-50 max-h-64">
-            <SelectItem value="all">सबै बाली</SelectItem>
+            <SelectItem value="all">{t('allCrops')}</SelectItem>
             {activeCrops.map((crop) => (
               <SelectItem key={crop.id} value={crop.id.toString()}>
-                {crop.name_ne}
+                {isNepali ? crop.name_ne : crop.name_en}
               </SelectItem>
             ))}
           </SelectContent>
         </Select>
 
-        {/* Reset Button */}
         {hasActiveFilters && (
           <Button 
             variant="outline" 
@@ -184,7 +181,7 @@ export function LocationFilters({ selectedCropId, onCropChange, onFiltersChange 
             className="flex items-center gap-1"
           >
             <X className="h-4 w-4" />
-            हटाउनुहोस्
+            {t('clearFilters')}
           </Button>
         )}
       </div>

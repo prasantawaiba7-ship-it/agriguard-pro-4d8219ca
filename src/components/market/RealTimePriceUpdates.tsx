@@ -6,16 +6,18 @@ import { supabase } from '@/integrations/supabase/client';
 import { formatDistanceToNow } from 'date-fns';
 import { toast } from 'sonner';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useLanguage } from '@/hooks/useLanguage';
 
 interface RealTimePriceUpdatesProps {
   onNewPrices?: () => void;
-  pollingInterval?: number; // in milliseconds
+  pollingInterval?: number;
 }
 
 export function RealTimePriceUpdates({ 
   onNewPrices, 
-  pollingInterval = 120000 // 2 minutes default
+  pollingInterval = 120000
 }: RealTimePriceUpdatesProps) {
+  const { t } = useLanguage();
   const [lastSyncedAt, setLastSyncedAt] = useState<Date | null>(null);
   const [isChecking, setIsChecking] = useState(false);
   const [hasNewData, setHasNewData] = useState(false);
@@ -60,9 +62,9 @@ export function RealTimePriceUpdates({
           // New data available!
           setHasNewData(true);
           if (showToast) {
-            toast.info('नयाँ मूल्य अपडेट उपलब्ध छ!', {
+            toast.info(t('newPriceAvailable'), {
               action: {
-                label: 'रिफ्रेस',
+                label: t('refreshBtn'),
                 onClick: handleRefresh,
               },
             });
@@ -77,13 +79,13 @@ export function RealTimePriceUpdates({
     } finally {
       setIsChecking(false);
     }
-  }, [isOnline]);
+  }, [isOnline, t]);
 
   const handleRefresh = useCallback(() => {
     setHasNewData(false);
     onNewPrices?.();
     checkForUpdates();
-  }, [onNewPrices, checkForUpdates]);
+  }, [onNewPrices, checkForUpdates, t]);
 
   // Initial check
   useEffect(() => {
@@ -113,7 +115,7 @@ export function RealTimePriceUpdates({
         className={`gap-1 text-xs ${isOnline ? 'border-success/30 text-success' : 'border-destructive/30 text-destructive'}`}
       >
         {isOnline ? <Wifi className="h-3 w-3" /> : <WifiOff className="h-3 w-3" />}
-        {isOnline ? 'अनलाइन' : 'अफलाइन'}
+        {isOnline ? t('online') : t('offline')}
       </Badge>
 
       {/* Last synced time */}
@@ -121,7 +123,7 @@ export function RealTimePriceUpdates({
         <div className="flex items-center gap-1 text-muted-foreground text-xs">
           <Clock className="h-3 w-3" />
           <span>
-            अपडेट: {formatDistanceToNow(lastSyncedAt, { addSuffix: true })}
+            {t('updated')}: {formatDistanceToNow(lastSyncedAt, { addSuffix: true })}
           </span>
         </div>
       )}
@@ -141,7 +143,7 @@ export function RealTimePriceUpdates({
               className="h-7 gap-1.5 text-xs border-primary/30 text-primary hover:bg-primary/10"
             >
               <RefreshCw className="h-3 w-3" />
-              नयाँ मूल्य!
+              {t('newPrices')}
             </Button>
           </motion.div>
         )}
