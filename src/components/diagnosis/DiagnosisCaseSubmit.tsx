@@ -12,6 +12,7 @@ import { useSubmitDiagnosisCase } from '@/hooks/useDiagnosisCases';
 import { uploadDiseaseImage } from '@/lib/uploadDiseaseImage';
 import { useAuth } from '@/hooks/useAuth';
 import type { Database } from '@/integrations/supabase/types';
+import { useLanguage } from '@/hooks/useLanguage';
 
 type DiagnosisAngleType = Database['public']['Enums']['diagnosis_angle_type'];
 
@@ -21,19 +22,12 @@ interface UploadedImage {
   angleType: DiagnosisAngleType;
 }
 
-const angleTypeLabels: Record<DiagnosisAngleType, string> = {
-  leaf_closeup: 'पातको नजिकको फोटो',
-  plant_full: 'पूरा बिरुवा',
-  fruit: 'फल/फूल',
-  stem: 'डाँठ/गाँठ',
-  other: 'अन्य'
-};
-
 export function DiagnosisCaseSubmit() {
   const { user } = useAuth();
   const { toast } = useToast();
   const { activeCrops: crops } = useCrops();
   const submitCase = useSubmitDiagnosisCase();
+  const { t, language } = useLanguage();
 
   const [selectedCropId, setSelectedCropId] = useState<string>('');
   const [farmerQuestion, setFarmerQuestion] = useState('');
@@ -44,14 +38,22 @@ export function DiagnosisCaseSubmit() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const cameraInputRef = useRef<HTMLInputElement>(null);
 
+  const angleTypeLabels: Record<DiagnosisAngleType, string> = {
+    leaf_closeup: t('leafCloseup'),
+    plant_full: t('plantFull'),
+    fruit: t('fruitFlower'),
+    stem: t('stemRoot'),
+    other: t('other')
+  };
+
   const handleFileSelect = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const files = event.target.files;
     if (!files) return;
 
     if (images.length + files.length > 3) {
       toast({
-        title: 'अधिकतम ३ फोटो मात्र',
-        description: 'कृपया ३ वटा भन्दा बढी फोटो नराख्नुहोस्।',
+        title: t('max3Photos'),
+        description: t('max3Photos'),
         variant: 'destructive'
       });
       return;
@@ -83,8 +85,8 @@ export function DiagnosisCaseSubmit() {
   const handleSubmit = async () => {
     if (!selectedCropId) {
       toast({
-        title: 'बाली छान्नुहोस्',
-        description: 'कृपया पहिले बाली छान्नुहोस्।',
+        title: t('selectCropLabel'),
+        description: t('selectCropLabel'),
         variant: 'destructive'
       });
       return;
@@ -92,8 +94,8 @@ export function DiagnosisCaseSubmit() {
 
     if (images.length === 0) {
       toast({
-        title: 'फोटो आवश्यक छ',
-        description: 'कम्तीमा १ वटा फोटो अपलोड गर्नुहोस्।',
+        title: t('photoRequired'),
+        description: t('upload1Photo'),
         variant: 'destructive'
       });
       return;
@@ -136,10 +138,10 @@ export function DiagnosisCaseSubmit() {
       <CardHeader className="pb-3">
         <CardTitle className="flex items-center gap-2 text-lg">
           <Bug className="w-5 h-5 text-primary" />
-          🌿 रोग/किरा जाँच पठाउनुहोस्
+          🌿 {t('submitDiagnosis')}
         </CardTitle>
         <p className="text-sm text-muted-foreground">
-          फोटो खिचेर पठाउनुहोस्, कृषि विज्ञले उत्तर दिनुहुनेछ।
+          {t('submitSubtitle')}
         </p>
       </CardHeader>
 
@@ -153,13 +155,13 @@ export function DiagnosisCaseSubmit() {
               exit={{ opacity: 0, y: -10 }}
               className="p-4 bg-success/10 border border-success/30 rounded-xl text-center"
             >
-              <p className="font-medium text-success">✅ केस सफलतापूर्वक पठाइयो!</p>
+              <p className="font-medium text-success">✅ {t('caseSubmitted')}</p>
               <p className="text-sm text-muted-foreground mt-1">
-                कृषि विज्ञको उत्तर आएपछि तपाईंलाई सूचना दिइनेछ।
+                {t('expertWillNotify')}
               </p>
               <p className="text-xs text-warning mt-2 flex items-center justify-center gap-1">
                 <HelpCircle className="w-3 h-3" />
-                यो केवल प्रारम्भिक अनुमान हो, अन्तिम सल्लाह विज्ञले हेरेपछि आउनेछ।
+                {t('preliminaryNote')}
               </p>
             </motion.div>
           )}
@@ -168,16 +170,16 @@ export function DiagnosisCaseSubmit() {
         {/* Step 1: Select Crop */}
         <div>
           <label className="text-sm font-medium mb-2 block">
-            १. बाली छान्नुहोस् *
+            {t('selectCropLabel')}
           </label>
           <Select value={selectedCropId} onValueChange={setSelectedCropId}>
             <SelectTrigger>
-              <SelectValue placeholder="बाली छान्नुहोस्..." />
+              <SelectValue placeholder={t('selectCropPlaceholder2')} />
             </SelectTrigger>
             <SelectContent>
               {crops?.map(crop => (
                 <SelectItem key={crop.id} value={crop.id.toString()}>
-                  {crop.name_ne} ({crop.name_en})
+                  {language === 'ne' ? crop.name_ne : crop.name_en}
                 </SelectItem>
               ))}
             </SelectContent>
@@ -187,7 +189,7 @@ export function DiagnosisCaseSubmit() {
         {/* Step 2: Photo Upload */}
         <div>
           <label className="text-sm font-medium mb-2 block">
-            २. फोटो खिच्नुहोस् / अपलोड गर्नुहोस् * (१-३ वटा)
+            {t('uploadPhotoLabel')}
           </label>
           
           {/* Upload Buttons */}
@@ -199,7 +201,7 @@ export function DiagnosisCaseSubmit() {
               disabled={images.length >= 3}
             >
               <Camera className="w-4 h-4 mr-1" />
-              क्यामेरा
+              {t('camera')}
             </Button>
             <Button 
               variant="outline" 
@@ -208,7 +210,7 @@ export function DiagnosisCaseSubmit() {
               disabled={images.length >= 3}
             >
               <Upload className="w-4 h-4 mr-1" />
-              गेलेरी
+              {t('gallery')}
             </Button>
           </div>
 
@@ -271,7 +273,7 @@ export function DiagnosisCaseSubmit() {
             <div className="border-2 border-dashed border-muted-foreground/30 rounded-xl p-6 text-center">
               <Leaf className="w-8 h-8 mx-auto text-muted-foreground mb-2" />
               <p className="text-sm text-muted-foreground">
-                पात, फल, वा बिरुवाको फोटो अपलोड गर्नुहोस्
+                {t('uploadPhotoSubtext')}
               </p>
             </div>
           )}
@@ -280,10 +282,10 @@ export function DiagnosisCaseSubmit() {
         {/* Step 3: Optional Description */}
         <div>
           <label className="text-sm font-medium mb-2 block">
-            ३. समस्या छोटकरीमा लेख्नुहोस् (ऐच्छिक)
+            {t('describeIssueLabel')}
           </label>
           <Textarea
-            placeholder="जस्तै: पात पहेंलो भयो, काला दाग परेको छ, कीरा देखियो..."
+            placeholder={t('describePlaceholder')}
             value={farmerQuestion}
             onChange={(e) => setFarmerQuestion(e.target.value)}
             rows={2}
@@ -294,9 +296,7 @@ export function DiagnosisCaseSubmit() {
         {/* Disclaimer */}
         <div className="p-3 bg-warning/10 border border-warning/30 rounded-lg">
           <p className="text-xs text-muted-foreground">
-            ⚠️ <strong>नोट:</strong> यो प्रणालीले प्रारम्भिक अनुमान मात्र दिन्छ। 
-            अन्तिम निदान र उपचार कृषि विज्ञको जाँचपछि मात्र निश्चित हुन्छ।
-            रसायन प्रयोग विज्ञको सल्लाहपछि मात्र गर्नुहोस्।
+            ⚠️ <strong>{t('importantTipsTitle')}</strong> {t('submitDisclaimer')}
           </p>
         </div>
 
@@ -310,12 +310,12 @@ export function DiagnosisCaseSubmit() {
           {isUploading || submitCase.isPending ? (
             <>
               <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-              पठाउँदै...
+              {t('submitting')}
             </>
           ) : (
             <>
               <Send className="w-4 h-4 mr-2" />
-              केस पठाउनुहोस्
+              {t('submitCase')}
             </>
           )}
         </Button>

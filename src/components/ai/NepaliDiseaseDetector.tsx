@@ -8,7 +8,7 @@ import {
   Download, Leaf, Bug, Shield, Pill, BookOpen, ChevronDown,
   Droplets, ThermometerSun, Wind, Mic, MicOff, Share2, 
   MessageCircle, Phone, History, Calendar, Bell, Image, Grid3X3,
-  MapPin, Navigation, ImageDown, FileText
+  MapPin, ImageDown, FileText
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -31,6 +31,7 @@ import { uploadDiseaseImage } from '@/lib/uploadDiseaseImage';
 import { useNotifications, useOutbreakAlertChecker } from '@/hooks/useNotifications';
 import { useGeolocation } from '@/hooks/useGeolocation';
 import { TreatmentGuideCard } from './TreatmentGuideCard';
+import { useLanguage } from '@/hooks/useLanguage';
 
 // Default Nepali crop types (fallback if admin hasn't configured)
 const DEFAULT_CROP_TYPES = [
@@ -318,12 +319,12 @@ const DISEASE_DATABASE: Record<string, DiseaseInfo[]> = {
 
 // Prevention tips in Nepali
 const PREVENTION_TIPS = [
-  { icon: Leaf, tip: 'रोग प्रतिरोधी बिउ प्रयोग गर्नुहोस्' },
-  { icon: Droplets, tip: 'पानी व्यवस्थापन राम्रो गर्नुहोस्' },
-  { icon: ThermometerSun, tip: 'मौसम अनुसार बाली लगाउनुहोस्' },
-  { icon: Wind, tip: 'हावा चल्ने ठाउँमा रोप्नुहोस्' },
-  { icon: Shield, tip: 'नियमित निरीक्षण गर्नुहोस्' },
-  { icon: Bug, tip: 'कीरा नियन्त्रणमा ध्यान दिनुहोस्' },
+  { icon: Leaf, tipKey: 'prevTip1' },
+  { icon: Droplets, tipKey: 'prevTip2' },
+  { icon: ThermometerSun, tipKey: 'prevTip3' },
+  { icon: Wind, tipKey: 'prevTip4' },
+  { icon: Shield, tipKey: 'prevTip5' },
+  { icon: Bug, tipKey: 'prevTip6' },
 ];
 
 interface DiseaseInfo {
@@ -388,7 +389,8 @@ export function NepaliDiseaseDetector() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const cameraInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
-  const { speak } = useTextToSpeech({ language: 'ne' });
+  const { language, t } = useLanguage();
+  const { speak } = useTextToSpeech({ language });
   const { user } = useAuth();
   
   // Database hooks
@@ -434,7 +436,7 @@ export function NepaliDiseaseDetector() {
             .filter(crop => crop.is_active)
             .map(crop => ({
               value: crop.name.toLowerCase().replace(/\s+/g, '_'),
-              label: crop.name_ne || crop.name,
+              label: language === 'ne' ? (crop.name_ne || crop.name) : crop.name,
               emoji: CROP_EMOJI_MAP[crop.name.toLowerCase()] || CROP_EMOJI_MAP.default
             }));
           
@@ -451,7 +453,7 @@ export function NepaliDiseaseDetector() {
     };
 
     fetchCrops();
-  }, []);
+  }, [language]);
 
   // Voice input for symptom description
   const { 
@@ -463,14 +465,14 @@ export function NepaliDiseaseDetector() {
     stopListening,
     resetTranscript 
   } = useVoiceInput({
-    language: 'ne',
+    language: language === 'en' ? 'en-US' : 'ne-NP',
     continuous: true,
     onResult: (text) => {
       setSymptomDescription(prev => prev ? `${prev} ${text}` : text);
     },
     onError: (error) => {
       toast({
-        title: '🎤 आवाज इनपुट त्रुटि',
+        title: t('voiceInputError'),
         description: error,
         variant: 'destructive'
       });
@@ -481,19 +483,19 @@ export function NepaliDiseaseDetector() {
     if (isListening) {
       stopListening();
       toast({
-        title: '✅ रेकर्डिङ रोकियो',
-        description: 'तपाईंको आवाज सुरक्षित भयो'
+        title: t('recordingStopped'),
+        description: t('voiceSaved')
       });
     } else {
       resetTranscript();
       setSymptomDescription(''); // Clear previous text when starting new recording
       startListening();
       toast({
-        title: '🎤 बोल्न सुरु गर्नुहोस्',
-        description: 'नेपालीमा लक्षणहरू बोल्नुहोस्... (माइक्रोफोन सक्रिय छ)'
+        title: t('startSpeaking'),
+        description: t('speakSymptomsNepali')
       });
     }
-  }, [isListening, stopListening, startListening, resetTranscript, toast]);
+  }, [isListening, stopListening, startListening, resetTranscript, toast, t]);
 
   const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -505,8 +507,8 @@ export function NepaliDiseaseDetector() {
   const processFile = (file: File) => {
     if (file.size > 10 * 1024 * 1024) {
       toast({
-        title: 'फाइल ठूलो भयो',
-        description: '१० MB भन्दा सानो फाइल छान्नुहोस्',
+        title: t('fileTooLarge'),
+        description: t('fileSizeLimit'),
         variant: 'destructive'
       });
       return;
@@ -541,8 +543,8 @@ export function NepaliDiseaseDetector() {
   const analyzeImage = async () => {
     if (!image) {
       toast({
-        title: 'फोटो छान्नुहोस्',
-        description: 'पहिले बालीको फोटो अपलोड गर्नुहोस्',
+        title: t('selectPhotoFirst'),
+        description: t('uploadPhotoFirst'),
         variant: 'destructive'
       });
       return;
@@ -576,16 +578,16 @@ export function NepaliDiseaseDetector() {
             imageUrl: imageForAnalysis,
             cropType: selectedCrop,
             description: symptomDescription || undefined,
-            language: 'ne'
+            language
           }),
         }
       );
 
       if (!response.ok) {
         if (response.status === 429) {
-          throw new Error('सेवा व्यस्त छ। कृपया केही समय पछि प्रयास गर्नुहोस्।');
+          throw new Error(t('serviceBusy'));
         }
-        throw new Error('विश्लेषण असफल भयो');
+        throw new Error(t('analysisFailed'));
       }
 
       const data = await response.json();
@@ -593,14 +595,14 @@ export function NepaliDiseaseDetector() {
       const analysisResult: AnalysisResult = {
         isHealthy: data.isHealthy ?? false,
         issueType: data.issueType || (data.isHealthy ? 'healthy' : 'disease'),
-        detectedIssue: data.detectedIssue || 'समस्या पहिचान गरियो',
+        detectedIssue: data.detectedIssue || t('diseaseDetected'),
         detectedIssueEnglish: data.detectedIssueEnglish,
         confidence: data.confidence || 0.85,
         severity: data.severity === 'mild' ? 'low' : data.severity === 'moderate' ? 'medium' : data.severity === 'severe' ? 'high' : data.severity || 'medium',
         symptoms: data.symptoms || [],
         treatment: data.chemicalTreatment?.name 
           ? `${data.chemicalTreatment.name} - ${data.chemicalTreatment.dosage}`
-          : data.immediateActions?.[0]?.action || 'विशेषज्ञसँग सल्लाह लिनुहोस्',
+          : data.immediateActions?.[0]?.action || t('expertAdviceLabel'),
         organicTreatment: data.organicTreatment 
           ? `${data.organicTreatment.name}: ${data.organicTreatment.preparation}`
           : undefined,
@@ -628,20 +630,20 @@ export function NepaliDiseaseDetector() {
 
       // Speak the result
       const speechText = analysisResult.isHealthy 
-        ? 'तपाईंको बाली स्वस्थ देखिन्छ।'
-        : `रोग पहिचान: ${analysisResult.detectedIssue}। उपचार: ${analysisResult.treatment}`;
+        ? t('cropHealthySpeech')
+        : `${t('diseaseDetectedSpeech')} ${analysisResult.detectedIssue}। ${t('treatmentSpeech')} ${analysisResult.treatment}`;
       speak(speechText);
 
       toast({
-        title: analysisResult.isHealthy ? '✅ बाली स्वस्थ छ!' : '⚠️ रोग पहिचान भयो',
+        title: analysisResult.isHealthy ? t('cropHealthyToast') : t('diseaseDetectedToast'),
         description: analysisResult.detectedIssue,
         variant: analysisResult.isHealthy ? 'default' : 'destructive'
       });
     } catch (error) {
       console.error('Analysis error:', error);
       toast({
-        title: 'विश्लेषण असफल',
-        description: error instanceof Error ? error.message : 'कृपया पुनः प्रयास गर्नुहोस्',
+        title: t('analysisFailed'),
+        description: error instanceof Error ? error.message : t('tryAgain'),
         variant: 'destructive'
       });
     } finally {
@@ -672,7 +674,7 @@ export function NepaliDiseaseDetector() {
         symptoms_keypoints: result.symptoms || [],
         recommended_chemicals: result.recommended_chemicals || [],
         organic_treatment: result.organic_treatment || (result.organicTreatment ? {
-          name: 'जैविक उपचार',
+          name: t('organicTreatment'),
           preparation: '',
           application: result.organicTreatment
         } : null),
@@ -680,7 +682,8 @@ export function NepaliDiseaseDetector() {
         possible_alternatives: result.possible_alternatives || [],
         when_to_seek_help: result.whenToSeekHelp || '',
         nepaliReport: result.nepaliReport || '',
-        imageUrl: image || ''
+        imageUrl: image || '',
+        language
       };
 
       const { data, error } = await supabase.functions.invoke('generate-disease-pdf', {
@@ -691,7 +694,7 @@ export function NepaliDiseaseDetector() {
 
       // Create HTML blob and download as file
       const blob = new Blob([data], { type: 'text/html; charset=utf-8' });
-      const fileName = `कृषि-रिपोर्ट-${cropLabel}-${new Date().toLocaleDateString('ne-NP').replace(/\//g, '-')}.html`;
+      const fileName = `crop-report-${cropLabel}-${new Date().toLocaleDateString(language === 'ne' ? 'ne-NP' : 'en-US').replace(/\//g, '-')}.html`;
       
       // Create download link
       const url = URL.createObjectURL(blob);
@@ -704,14 +707,14 @@ export function NepaliDiseaseDetector() {
       URL.revokeObjectURL(url);
 
       toast({
-        title: '✅ रिपोर्ट डाउनलोड भयो!',
-        description: 'फाइल तपाईंको डिभाइसमा सेभ भयो।',
+        title: t('reportDownloaded'),
+        description: t('fileSaved'),
       });
     } catch (error) {
       console.error('PDF generation error:', error);
       toast({
-        title: 'माफ गर्नुहोस्, रिपोर्ट डाउनलोड हुन सकेन',
-        description: 'कृपया फेरि प्रयास गर्नुहोस्।',
+        title: t('reportDownloadFailed'),
+        description: t('tryAgain'),
         variant: 'destructive'
       });
     } finally {
@@ -724,7 +727,7 @@ export function NepaliDiseaseDetector() {
     if (!result || !resultSectionRef.current) return;
     
     setIsDownloadingImage(true);
-    const cropLabel = cropTypes.find(c => c.value === selectedCrop)?.label || 'बाली';
+    const cropLabel = cropTypes.find(c => c.value === selectedCrop)?.label || 'crop';
     
     try {
       const canvas = await html2canvas(resultSectionRef.current, {
@@ -740,7 +743,7 @@ export function NepaliDiseaseDetector() {
           throw new Error('Failed to create image');
         }
         
-        const fileName = `कृषि-रिपोर्ट-${cropLabel}-${new Date().toLocaleDateString('ne-NP').replace(/\//g, '-')}.png`;
+        const fileName = `crop-report-${cropLabel}-${new Date().toLocaleDateString(language === 'ne' ? 'ne-NP' : 'en-US').replace(/\//g, '-')}.png`;
         const url = URL.createObjectURL(blob);
         const link = document.createElement('a');
         link.href = url;
@@ -751,16 +754,16 @@ export function NepaliDiseaseDetector() {
         URL.revokeObjectURL(url);
         
         toast({
-          title: '✅ इमेज डाउनलोड भयो!',
-          description: 'रिपोर्ट फोटोको रूपमा सेभ भयो।',
+          title: t('imageDownloaded'),
+          description: t('reportSavedAsImage'),
         });
         setIsDownloadingImage(false);
       }, 'image/png', 1.0);
     } catch (error) {
       console.error('Image download error:', error);
       toast({
-        title: 'माफ गर्नुहोस्, इमेज डाउनलोड हुन सकेन',
-        description: 'कृपया फेरि प्रयास गर्नुहोस्।',
+        title: t('imageDownloadFailed'),
+        description: t('tryAgain'),
         variant: 'destructive'
       });
       setIsDownloadingImage(false);
@@ -772,7 +775,7 @@ export function NepaliDiseaseDetector() {
     if (!result || !resultSectionRef.current) return;
     
     setIsDownloadingPdf(true);
-    const cropLabel = cropTypes.find(c => c.value === selectedCrop)?.label || 'बाली';
+    const cropLabel = cropTypes.find(c => c.value === selectedCrop)?.label || 'crop';
     
     try {
       const canvas = await html2canvas(resultSectionRef.current, {
@@ -794,11 +797,11 @@ export function NepaliDiseaseDetector() {
       
       // Add header
       pdf.setFontSize(16);
-      pdf.text('कृषि मित्र - रोग विश्लेषण रिपोर्ट', 10, 15);
+      pdf.text(t('kisanSathiAI'), 10, 15);
       pdf.setFontSize(10);
-      pdf.text(`मिति: ${new Date().toLocaleDateString('ne-NP')}`, 10, 22);
+      pdf.text(`${t('activeSeason')} ${new Date().toLocaleDateString(language === 'ne' ? 'ne-NP' : 'en-US')}`, 10, 22);
       if (locationName) {
-        pdf.text(`स्थान: ${locationName}`, 10, 28);
+        pdf.text(`${t('locationLabel')} ${locationName}`, 10, 28);
       }
       
       // Add image
@@ -807,20 +810,20 @@ export function NepaliDiseaseDetector() {
       // Add footer
       const pageHeight = pdf.internal.pageSize.getHeight();
       pdf.setFontSize(8);
-      pdf.text('⚠️ यो AI अनुमान हो। कृषि प्राविधिकसँग सल्लाह लिनुहोस्।', 10, pageHeight - 10);
+      pdf.text('⚠️ ' + t('expertAdviceLabel'), 10, pageHeight - 10);
       
-      const fileName = `कृषि-रिपोर्ट-${cropLabel}-${new Date().toLocaleDateString('ne-NP').replace(/\//g, '-')}.pdf`;
+      const fileName = `crop-report-${cropLabel}-${new Date().toLocaleDateString(language === 'ne' ? 'ne-NP' : 'en-US').replace(/\//g, '-')}.pdf`;
       pdf.save(fileName);
       
       toast({
-        title: '✅ PDF डाउनलोड भयो!',
-        description: 'रिपोर्ट PDF को रूपमा सेभ भयो।',
+        title: t('pdfDownloaded'),
+        description: t('reportSavedAsPdf'),
       });
     } catch (error) {
       console.error('PDF download error:', error);
       toast({
-        title: 'माफ गर्नुहोस्, PDF डाउनलोड हुन सकेन',
-        description: 'कृपया फेरि प्रयास गर्नुहोस्।',
+        title: t('pdfDownloadFailed'),
+        description: t('tryAgain'),
         variant: 'destructive'
       });
     } finally {
@@ -852,24 +855,24 @@ export function NepaliDiseaseDetector() {
       
       // Check if Web Share API with files is supported
       if (navigator.canShare && navigator.canShare({ files: [new File([blob], 'report.png', { type: 'image/png' })] })) {
-        const file = new File([blob], `कृषि-रिपोर्ट.png`, { type: 'image/png' });
+        const file = new File([blob], `crop-report.png`, { type: 'image/png' });
         
         await navigator.share({
           files: [file],
-          title: 'कृषि रोग रिपोर्ट',
+          title: t('diseaseDetectorTitle'),
           text: generateReportShareText(),
         });
         
         toast({
-          title: '✅ Share सफल भयो!',
-          description: 'रिपोर्ट इमेज सहित share भयो।',
+          title: t('shareSuccess'),
+          description: t('reportSharedWithImage'),
         });
       } else {
         // Fallback: Download image first, then open WhatsApp
         const url = URL.createObjectURL(blob);
         const link = document.createElement('a');
         link.href = url;
-        link.download = 'कृषि-रिपोर्ट.png';
+        link.download = 'crop-report.png';
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
@@ -881,8 +884,8 @@ export function NepaliDiseaseDetector() {
         }, 500);
         
         toast({
-          title: '📥 इमेज डाउनलोड भयो',
-          description: 'WhatsApp मा इमेज attach गर्नुहोस्।',
+          title: t('imageDownloadedForShare'),
+          description: t('attachToWhatsapp'),
         });
       }
     } catch (error) {
@@ -890,8 +893,8 @@ export function NepaliDiseaseDetector() {
       // Fallback to text share
       handleShareWhatsApp();
       toast({
-        title: 'इमेज share हुन सकेन',
-        description: 'Text रिपोर्ट share गरिएको छ।',
+        title: t('imageShareFailed'),
+        description: t('textReportShared'),
         variant: 'default'
       });
     } finally {
@@ -903,23 +906,23 @@ export function NepaliDiseaseDetector() {
   const generateReportShareText = () => {
     if (!result) return '';
     
-    const cropLabel = cropTypes.find(c => c.value === selectedCrop)?.label || 'बाली';
-    const severityLabel = result.severity === 'high' ? 'गम्भीर' : result.severity === 'medium' ? 'मध्यम' : 'सामान्य';
+    const cropLabel = cropTypes.find(c => c.value === selectedCrop)?.label || 'crop';
+    const severityLabel = result.severity === 'high' ? t('severityHigh') : result.severity === 'medium' ? t('severityMedium') : t('severityLow');
     const confidencePercent = Math.round(result.confidence * 100);
     
-    let text = `🌾 *कृषि मित्र - रोग विश्लेषण रिपोर्ट*\n`;
+    let text = `🌾 *${t('kisanSathiAI')} - ${t('diseaseDetectorTitle')}*\n`;
     text += `━━━━━━━━━━━━━━━━━━━━\n\n`;
-    text += `📅 मिति: ${new Date().toLocaleDateString('ne-NP')}\n`;
+    text += `📅 ${t('activeSeason')} ${new Date().toLocaleDateString(language === 'ne' ? 'ne-NP' : 'en-US')}\n`;
     if (locationName) {
-      text += `📍 स्थान: ${locationName}\n`;
+      text += `📍 ${t('locationLabel')} ${locationName}\n`;
     }
-    text += `🌱 बाली: ${cropLabel}\n`;
-    text += `🦠 पहिचान: *${result.detectedIssue}*\n`;
-    text += `⚠️ गम्भीरता: ${severityLabel}\n`;
-    text += `📊 विश्वासनियता: ${confidencePercent}%\n\n`;
+    text += `🌱 ${t('stepCropType')}: ${cropLabel}\n`;
+    text += `🦠 ${t('diseaseDetected')}: *${result.detectedIssue}*\n`;
+    text += `⚠️ ${t('severityLow')}: ${severityLabel}\n`;
+    text += `📊 ${t('confidenceLabel')} ${confidencePercent}%\n\n`;
     
     if (result.symptoms && result.symptoms.length > 0) {
-      text += `*🔍 लक्षणहरू:*\n`;
+      text += `*🔍 ${t('symptomsLabel')}:*\n`;
       result.symptoms.slice(0, 3).forEach(s => {
         text += `• ${s}\n`;
       });
@@ -927,20 +930,20 @@ export function NepaliDiseaseDetector() {
     }
     
     if (result.treatment) {
-      text += `*💊 उपचार:*\n${result.treatment}\n\n`;
+      text += `*💊 ${t('treatment')}:*\n${result.treatment}\n\n`;
     }
     
     if (result.prevention && result.prevention.length > 0) {
-      text += `*🛡️ रोकथाम:*\n`;
+      text += `*🛡️ ${t('preventionMeasures')}:*\n`;
       result.prevention.slice(0, 2).forEach(p => {
         text += `• ${p}\n`;
       });
       text += `\n`;
     }
     
-    text += `⚠️ *सावधानी:* यो AI अनुमान हो। कृषि प्राविधिकसँग सल्लाह लिनुहोस्।\n\n`;
+    text += `⚠️ *${t('expertAdviceLabel')}* ${t('submitDisclaimer')}\n\n`;
     text += `━━━━━━━━━━━━━━━━━━━━\n`;
-    text += `🌾 कृषि मित्र - तपाईंको कृषि सहायक`;
+    text += `🌾 ${t('kisanSathiAI')} - ${t('heroTagline')}`;
     
     return text;
   };
@@ -966,22 +969,22 @@ export function NepaliDiseaseDetector() {
           window.location.href = whatsappUrl;
         } else {
           toast({
-            title: 'WhatsApp खोल्न सकिएन',
-            description: 'कृपया popup blocker बन्द गर्नुहोस् वा रिपोर्ट डाउनलोड गरेर manually share गर्नुहोस्।',
+            title: t('whatsappOpenFailed'),
+            description: t('usePopupBlocker'),
             variant: 'destructive'
           });
         }
       } else {
         toast({
-          title: '✅ WhatsApp खुल्यो',
-          description: 'रिपोर्ट पठाउन तयार छ।',
+          title: t('whatsappOpened'),
+          description: t('reportReady'),
         });
       }
     } catch (error) {
       console.error('WhatsApp share error:', error);
       toast({
-        title: 'WhatsApp बाट पठाउन समस्या आयो',
-        description: 'कृपया रिपोर्ट डाउनलोड गरेर manually share गर्नुहोस्।',
+        title: t('whatsappShareFailed'),
+        description: t('downloadAndShare'),
         variant: 'destructive'
       });
     }
@@ -1021,16 +1024,16 @@ export function NepaliDiseaseDetector() {
   };
 
   const severityLabels: Record<string, string> = {
-    low: 'सामान्य',
-    medium: 'मध्यम',
-    high: 'गम्भीर'
+    low: t('severityLow'),
+    medium: t('severityMedium'),
+    high: t('severityHigh')
   };
 
   const issueTypeLabels: Record<string, { label: string; icon: string; color: string }> = {
-    disease: { label: 'रोग', icon: '🦠', color: 'bg-destructive/10 text-destructive border-destructive/20' },
-    pest: { label: 'कीरा/किट', icon: '🐛', color: 'bg-orange-500/10 text-orange-600 border-orange-500/20' },
-    deficiency: { label: 'पोषक तत्व कमी', icon: '🧪', color: 'bg-yellow-500/10 text-yellow-600 border-yellow-500/20' },
-    healthy: { label: 'स्वस्थ', icon: '✅', color: 'bg-success/10 text-success border-success/20' }
+    disease: { label: t('issueTypeDisease'), icon: '🦠', color: 'bg-destructive/10 text-destructive border-destructive/20' },
+    pest: { label: t('issueTypePest'), icon: '🐛', color: 'bg-orange-500/10 text-orange-600 border-orange-500/20' },
+    deficiency: { label: t('issueTypeDeficiency'), icon: '🧪', color: 'bg-yellow-500/10 text-yellow-600 border-yellow-500/20' },
+    healthy: { label: t('issueTypeHealthy'), icon: '✅', color: 'bg-success/10 text-success border-success/20' }
   };
 
   return (
@@ -1038,10 +1041,10 @@ export function NepaliDiseaseDetector() {
       <CardHeader className="bg-gradient-to-r from-primary/10 to-accent/10">
         <CardTitle className="flex items-center gap-2 text-xl">
           <Leaf className="w-6 h-6 text-primary" />
-          🌿 बाली रोग र कीरा पहिचान प्रणाली
+          {t('diseaseDetectorTitle')}
         </CardTitle>
         <p className="text-sm text-muted-foreground mt-1">
-          AI द्वारा रोग, कीरा-किट र पोषक तत्व कमी पहिचान
+          {t('diseaseDetectorSubtitle')}
         </p>
       </CardHeader>
 
@@ -1049,23 +1052,23 @@ export function NepaliDiseaseDetector() {
         <TabsList className="grid w-full grid-cols-4 m-4 max-w-[calc(100%-2rem)]">
           <TabsTrigger value="detect" className="flex items-center gap-1 text-xs sm:text-sm">
             <Camera className="w-4 h-4" />
-            <span className="hidden sm:inline">रोग पहिचान</span>
-            <span className="sm:hidden">पहिचान</span>
+            <span className="hidden sm:inline">{t('tabDetect')}</span>
+            <span className="sm:hidden">{t('tabDetect')}</span>
           </TabsTrigger>
           <TabsTrigger value="history" className="flex items-center gap-1 text-xs sm:text-sm">
             <History className="w-4 h-4" />
-            <span className="hidden sm:inline">इतिहास</span>
-            <span className="sm:hidden">इतिहास</span>
+            <span className="hidden sm:inline">{t('tabHistory')}</span>
+            <span className="sm:hidden">{t('tabHistory')}</span>
           </TabsTrigger>
           <TabsTrigger value="database" className="flex items-center gap-1 text-xs sm:text-sm">
             <BookOpen className="w-4 h-4" />
-            <span className="hidden sm:inline">रोग पुस्तिका</span>
-            <span className="sm:hidden">पुस्तिका</span>
+            <span className="hidden sm:inline">{t('tabDatabase')}</span>
+            <span className="sm:hidden">{t('tabDatabase')}</span>
           </TabsTrigger>
           <TabsTrigger value="tips" className="flex items-center gap-1 text-xs sm:text-sm">
             <Shield className="w-4 h-4" />
-            <span className="hidden sm:inline">रोकथाम</span>
-            <span className="sm:hidden">रोकथाम</span>
+            <span className="hidden sm:inline">{t('tabPrevention')}</span>
+            <span className="sm:hidden">{t('tabPrevention')}</span>
           </TabsTrigger>
         </TabsList>
 
@@ -1073,10 +1076,10 @@ export function NepaliDiseaseDetector() {
         <TabsContent value="detect" className="p-4 pt-0 space-y-4">
           {/* Crop Selection */}
           <div className="space-y-2">
-            <label className="text-sm font-medium">बालीको प्रकार छान्नुहोस्:</label>
+            <label className="text-sm font-medium">{t('selectCropType')}</label>
             <Select value={selectedCrop} onValueChange={setSelectedCrop}>
               <SelectTrigger className="w-full">
-                <SelectValue placeholder="बाली छान्नुहोस्..." />
+                <SelectValue placeholder={t('selectCropPlaceholder')} />
               </SelectTrigger>
               <SelectContent>
                 {cropTypes.map((crop) => (
@@ -1092,7 +1095,7 @@ export function NepaliDiseaseDetector() {
           <div className="space-y-2">
             <div className="flex items-center justify-between flex-wrap gap-2">
               <label className="text-sm font-medium">
-                🎤 लक्षण बर्णन गर्नुहोस् (ऐच्छिक):
+                {t('symptomDescLabel')}
               </label>
               {voiceSupported && (
                 <Button
@@ -1104,14 +1107,14 @@ export function NepaliDiseaseDetector() {
                   {isListening ? (
                     <>
                       <MicOff className="w-4 h-4" />
-                      <span className="hidden sm:inline">रोक्नुहोस्</span>
-                      <span className="sm:hidden">रोक</span>
+                      <span className="hidden sm:inline">{t('stopRecording')}</span>
+                      <span className="sm:hidden">{t('stop')}</span>
                     </>
                   ) : (
                     <>
                       <Mic className="w-4 h-4" />
-                      <span className="hidden sm:inline">बोल्नुहोस्</span>
-                      <span className="sm:hidden">बोल्नु</span>
+                      <span className="hidden sm:inline">{t('startRecording')}</span>
+                      <span className="sm:hidden">{t('startRecording')}</span>
                     </>
                   )}
                 </Button>
@@ -1120,7 +1123,7 @@ export function NepaliDiseaseDetector() {
             
             <div className="relative">
               <Textarea
-                placeholder="उदाहरण: पातमा खैरो दाग देखिएको छ, पात पहेंलो भएको छ..."
+                placeholder={t('symptomDescPlaceholder')}
                 value={symptomDescription || transcript}
                 onChange={(e) => setSymptomDescription(e.target.value)}
                 rows={3}
@@ -1139,7 +1142,7 @@ export function NepaliDiseaseDetector() {
                   >
                     <div className="w-3 h-3 rounded-full bg-destructive" />
                   </motion.div>
-                  <span className="text-xs text-destructive font-medium">सुन्दै...</span>
+                  <span className="text-xs text-destructive font-medium">{t('listening')}</span>
                 </motion.div>
               )}
             </div>
@@ -1153,17 +1156,17 @@ export function NepaliDiseaseDetector() {
               >
                 <div className="flex items-center gap-2 mb-1">
                   <Mic className="w-4 h-4 text-primary animate-pulse" />
-                  <span className="text-xs font-medium text-primary">लाइभ ट्रान्सक्रिप्ट:</span>
+                  <span className="text-xs font-medium text-primary">{t('liveTranscript')}</span>
                 </div>
                 <p className="text-sm text-muted-foreground min-h-[20px]">
-                  {interimTranscript || transcript || 'बोल्नुहोस्...'}
+                  {interimTranscript || transcript || t('speakPrompt')}
                 </p>
               </motion.div>
             )}
             
             {!voiceSupported && (
               <p className="text-xs text-muted-foreground flex items-center gap-1">
-                ⚠️ तपाईंको ब्राउजरमा आवाज इनपुट उपलब्ध छैन। Chrome वा Edge प्रयोग गर्नुहोस्।
+                {t('voiceNotSupported')}
               </p>
             )}
           </div>
@@ -1185,10 +1188,10 @@ export function NepaliDiseaseDetector() {
                 <Camera className="w-8 h-8 text-primary" />
               </div>
               <h3 className="text-lg font-medium mb-2">
-                📸 बालीको फोटो अपलोड गर्नुहोस्
+                {t('uploadCropPhoto')}
               </h3>
               <p className="text-sm text-muted-foreground mb-4">
-                प्रभावित पात, डाँठ वा फलको नजिकबाट फोटो खिच्नुहोस्
+                {t('uploadPhotoSubtext')}
               </p>
               <div className="flex gap-3 justify-center flex-wrap">
                 <Button 
@@ -1199,7 +1202,7 @@ export function NepaliDiseaseDetector() {
                   }}
                 >
                   <Camera className="w-4 h-4 mr-2" />
-                  क्यामेरा खोल्नुहोस्
+                  {t('openCamera')}
                 </Button>
                 <Button 
                   onClick={(e) => {
@@ -1208,11 +1211,11 @@ export function NepaliDiseaseDetector() {
                   }}
                 >
                   <Upload className="w-4 h-4 mr-2" />
-                  गेलेरीबाट छान्नुहोस्
+                  {t('chooseFromGallery')}
                 </Button>
               </div>
               <p className="text-xs text-muted-foreground mt-4">
-                वा फोटो यहाँ ड्र्याग एन्ड ड्रप गर्नुहोस्
+                {t('dragDropHint')}
               </p>
               <input
                 ref={fileInputRef}
@@ -1263,12 +1266,12 @@ export function NepaliDiseaseDetector() {
                   {isAnalyzing ? (
                     <>
                       <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                      विश्लेषण गर्दैछ...
+                      {t('analyzingPhoto')}
                     </>
                   ) : (
                     <>
                       <CheckCircle2 className="w-4 h-4 mr-2" />
-                      विश्लेषण गर्नुहोस्
+                      {t('analyzeBtn')}
                     </>
                   )}
                 </Button>
@@ -1302,12 +1305,12 @@ export function NepaliDiseaseDetector() {
                         <div>
                           <h3 className="font-semibold text-lg">
                             {result.isHealthy 
-                              ? '✅ बाली स्वस्थ छ!' 
+                              ? t('cropHealthy') 
                               : result.issueType === 'pest'
-                                ? '🐛 कीरा/किट पहिचान भयो'
+                                ? t('pestDetected')
                                 : result.issueType === 'deficiency'
-                                  ? '🧪 पोषक तत्व कमी'
-                                  : '⚠️ रोग पहिचान भयो'
+                                  ? t('nutrientDeficiency')
+                                  : t('diseaseIdentified')
                             }
                           </h3>
                           <p className="text-sm text-muted-foreground">{result.detectedIssue}</p>
@@ -1322,7 +1325,7 @@ export function NepaliDiseaseDetector() {
                           {issueTypeLabels[result.issueType]?.icon} {issueTypeLabels[result.issueType]?.label}
                         </Badge>
                         <Badge variant="outline">
-                          विश्वास: {Math.round(result.confidence * 100)}%
+                          {t('confidenceLabel')} {Math.round(result.confidence * 100)}%
                         </Badge>
                         <Badge variant="outline" className={severityColors[result.severity]}>
                           {severityLabels[result.severity]}
@@ -1337,24 +1340,24 @@ export function NepaliDiseaseDetector() {
                     {result.issueType === 'pest' && result.pestInfo && (
                       <div className="p-4 bg-orange-500/5 rounded-xl border border-orange-500/20">
                         <h4 className="font-semibold mb-2 flex items-center gap-2">
-                          🐛 कीरा जानकारी
+                          {t('pestInfoLabel')}
                         </h4>
                         <div className="grid grid-cols-2 gap-3 text-sm">
                           {result.pestInfo.scientificName && (
                             <div>
-                              <span className="text-muted-foreground">वैज्ञानिक नाम:</span>
+                              <span className="text-muted-foreground">{t('scientificName')}</span>
                               <p className="italic">{result.pestInfo.scientificName}</p>
                             </div>
                           )}
                           {result.pestInfo.activeSeasons && result.pestInfo.activeSeasons.length > 0 && (
                             <div>
-                              <span className="text-muted-foreground">सक्रिय समय:</span>
+                              <span className="text-muted-foreground">{t('activePeriod')}</span>
                               <p>{result.pestInfo.activeSeasons.join(', ')}</p>
                             </div>
                           )}
                           {result.pestInfo.hostCrops && result.pestInfo.hostCrops.length > 0 && (
                             <div className="col-span-2">
-                              <span className="text-muted-foreground">प्रभावित बालीहरू:</span>
+                              <span className="text-muted-foreground">{t('affectedCrops')}</span>
                               <p>{result.pestInfo.hostCrops.join(', ')}</p>
                             </div>
                           )}
@@ -1366,7 +1369,7 @@ export function NepaliDiseaseDetector() {
                     {result.symptoms.length > 0 && (
                       <div className="p-4 bg-muted/50 rounded-xl">
                         <h4 className="font-semibold mb-2 flex items-center gap-2">
-                          🔍 लक्षणहरू
+                          {t('symptomsLabel')}
                         </h4>
                         <ul className="text-sm space-y-1">
                           {result.symptoms.map((symptom, i) => (
@@ -1383,12 +1386,12 @@ export function NepaliDiseaseDetector() {
                     <div className="p-4 bg-primary/5 rounded-xl border border-primary/20">
                       <h4 className="font-semibold mb-2 flex items-center gap-2">
                         <Pill className="w-4 h-4 text-primary" />
-                        💊 उपचार विधि
+                        {t('treatmentMethod')}
                       </h4>
                       <p className="text-sm">{result.treatment}</p>
                       {result.organicTreatment && (
                         <div className="mt-3 p-3 bg-success/10 rounded-lg">
-                          <p className="text-sm font-medium text-success">🌿 जैविक उपचार:</p>
+                          <p className="text-sm font-medium text-success">{t('organicTreatment')}</p>
                           <p className="text-sm text-muted-foreground">{result.organicTreatment}</p>
                         </div>
                       )}
@@ -1398,24 +1401,24 @@ export function NepaliDiseaseDetector() {
                     {result.biologicalControl && (
                       <div className="p-4 bg-green-500/5 rounded-xl border border-green-500/20">
                         <h4 className="font-semibold mb-2 flex items-center gap-2">
-                          🌱 जैविक नियन्त्रण
+                          {t('biologicalControl')}
                         </h4>
                         <div className="space-y-2 text-sm">
                           {result.biologicalControl.naturalEnemies && result.biologicalControl.naturalEnemies.length > 0 && (
                             <div>
-                              <span className="text-muted-foreground font-medium">प्राकृतिक शत्रुहरू:</span>
+                              <span className="text-muted-foreground font-medium">{t('naturalEnemies')}</span>
                               <p className="text-muted-foreground">{result.biologicalControl.naturalEnemies.join(', ')}</p>
                             </div>
                           )}
                           {result.biologicalControl.trapCrops && result.biologicalControl.trapCrops.length > 0 && (
                             <div>
-                              <span className="text-muted-foreground font-medium">ट्र्याप बाली:</span>
+                              <span className="text-muted-foreground font-medium">{t('trapCrops')}</span>
                               <p className="text-muted-foreground">{result.biologicalControl.trapCrops.join(', ')}</p>
                             </div>
                           )}
                           {result.biologicalControl.culturalPractices && result.biologicalControl.culturalPractices.length > 0 && (
                             <div>
-                              <span className="text-muted-foreground font-medium">सांस्कृतिक विधि:</span>
+                              <span className="text-muted-foreground font-medium">{t('culturalPractices')}</span>
                               <p className="text-muted-foreground">{result.biologicalControl.culturalPractices.join(', ')}</p>
                             </div>
                           )}
@@ -1428,7 +1431,7 @@ export function NepaliDiseaseDetector() {
                       <div className="p-4 bg-muted/50 rounded-xl">
                         <h4 className="font-semibold mb-2 flex items-center gap-2">
                           <Shield className="w-4 h-4 text-primary" />
-                          🛡️ रोकथामका उपायहरू
+                          {t('preventionMeasures')}
                         </h4>
                         <ul className="text-sm space-y-1">
                           {result.prevention.map((tip, i) => (
@@ -1452,185 +1455,158 @@ export function NepaliDiseaseDetector() {
                     {result.whenToSeekHelp && (
                       <div className="p-3 bg-warning/10 rounded-lg border border-warning/20">
                         <p className="text-sm">
-                          <strong>⚠️ विशेषज्ञ सल्लाह:</strong> {result.whenToSeekHelp}
+                          <strong>{t('expertAdviceLabel')}</strong> {result.whenToSeekHelp}
                         </p>
                       </div>
                     )}
 
-                    {/* Location indicator */}
-                    <div className="flex items-center gap-2 p-3 bg-muted/50 rounded-lg">
-                      <MapPin className="w-4 h-4 text-primary" />
-                      <span className="text-sm text-muted-foreground">स्थान:</span>
-                      {locationLoading ? (
-                        <span className="text-sm flex items-center gap-1">
-                          <Loader2 className="w-3 h-3 animate-spin" />
-                          पत्ता लगाउँदै...
-                        </span>
-                      ) : locationName ? (
-                        <span className="text-sm font-medium text-foreground">{locationName}</span>
-                      ) : (
-                        <Button 
-                          variant="ghost" 
-                          size="sm" 
-                          onClick={fetchLocation}
-                          className="h-auto py-1 px-2 text-xs"
-                          disabled={!geoSupported}
-                        >
-                          <Navigation className="w-3 h-3 mr-1" />
-                          स्थान पत्ता लगाउनुहोस्
-                        </Button>
-                      )}
-                    </div>
-
-                    {/* Actions - Responsive Share & Download */}
-                    <div className="space-y-3">
-                      {/* Download Buttons - Three options */}
-                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
-                        {/* PDF Download Button */}
-                        <Button 
-                          onClick={downloadReportAsPdf} 
-                          disabled={isDownloadingPdf}
-                          className="h-12 text-base bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70"
-                          size="lg"
-                        >
-                          {isDownloadingPdf ? (
-                            <>
-                              <Loader2 className="w-5 h-5 mr-2 animate-spin" />
-                              PDF बन्दैछ...
-                            </>
-                          ) : (
-                            <>
-                              <FileText className="w-5 h-5 mr-2" />
-                              📄 PDF रिपोर्ट
-                            </>
-                          )}
-                        </Button>
-
-                        {/* Image Download Button */}
-                        <Button 
-                          onClick={downloadReportAsImage} 
-                          disabled={isDownloadingImage}
-                          variant="outline"
-                          className="h-12 text-base border-2 border-primary/30 hover:bg-primary/10"
-                          size="lg"
-                        >
-                          {isDownloadingImage ? (
-                            <>
-                              <Loader2 className="w-5 h-5 mr-2 animate-spin" />
-                              इमेज बन्दैछ...
-                            </>
-                          ) : (
-                            <>
-                              <ImageDown className="w-5 h-5 mr-2" />
-                              🖼️ फोटो सेभ
-                            </>
-                          )}
-                        </Button>
-
-                        {/* HTML Report Download */}
-                        <Button 
-                          onClick={downloadReport} 
-                          disabled={isDownloading}
-                          variant="outline"
-                          className="h-12 text-base border-2 border-muted-foreground/30 hover:bg-muted/50"
-                          size="lg"
-                        >
-                          {isDownloading ? (
-                            <>
-                              <Loader2 className="w-5 h-5 mr-2 animate-spin" />
-                              डाउनलोड...
-                            </>
-                          ) : (
-                            <>
-                              <Download className="w-5 h-5 mr-2" />
-                              HTML
-                            </>
-                          )}
-                        </Button>
-                      </div>
-
-                      {/* Share buttons - Responsive Grid */}
-                      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-                        {/* WhatsApp with Image */}
-                        <Button 
-                          onClick={shareImageToWhatsApp} 
-                          disabled={isSharingToWhatsApp}
-                          variant="outline" 
-                          className="h-11 bg-[#25D366]/10 hover:bg-[#25D366]/20 border-[#25D366]/30 col-span-2 sm:col-span-1"
-                        >
-                          {isSharingToWhatsApp ? (
-                            <Loader2 className="w-4 h-4 mr-1.5 animate-spin" />
-                          ) : (
-                            <MessageCircle className="w-4 h-4 mr-1.5 text-[#25D366]" />
-                          )}
-                          <span className="text-sm">WhatsApp + फोटो</span>
-                        </Button>
-
-                        {/* WhatsApp text only */}
-                        <Button 
-                          onClick={handleShareWhatsApp} 
-                          variant="outline" 
-                          className="h-11 bg-[#25D366]/5 hover:bg-[#25D366]/10 border-[#25D366]/20"
-                        >
-                          <MessageCircle className="w-4 h-4 mr-1.5 text-[#25D366]" />
-                          <span className="text-sm">Text</span>
-                        </Button>
-
-                        <Button 
-                          onClick={handleShareSMS}
-                          variant="outline" 
-                          className="h-11"
-                        >
-                          <Phone className="w-4 h-4 mr-1.5" />
-                          <span className="text-sm">SMS</span>
-                        </Button>
-                        <Button 
-                          onClick={() => {
-                            // Native share API for mobile
-                            if (navigator.share) {
-                              navigator.share({
-                                title: 'कृषि रोग रिपोर्ट',
-                                text: generateReportShareText(),
-                              }).catch(() => {
-                                // Fallback to WhatsApp
-                                handleShareWhatsApp();
-                              });
-                            } else {
-                              handleShareWhatsApp();
-                            }
-                          }} 
-                          variant="outline"
-                          className="h-11 col-span-2 sm:col-span-1"
-                        >
-                          <Share2 className="w-4 h-4 mr-1.5" />
-                          <span className="text-sm">अरू</span>
-                        </Button>
-                      </div>
-                      
-                      {/* Share to officer button */}
+                    {/* Action Buttons */}
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-4">
+                      {/* PDF Report Download */}
                       <Button 
-                        onClick={() => handleShareToOfficer()} 
+                        onClick={downloadReportAsPdf} 
+                        disabled={isDownloadingPdf}
                         variant="outline"
-                        className="w-full h-11 bg-primary/5 hover:bg-primary/10 border-primary/20"
+                        className="h-12 text-base border-2 border-primary/30 hover:bg-primary/10"
+                        size="lg"
                       >
-                        <Share2 className="w-4 h-4 mr-2 text-primary" />
-                        <span className="hidden sm:inline">कृषि अधिकारीलाई रिपोर्ट पठाउनुहोस्</span>
-                        <span className="sm:hidden">अधिकारीलाई पठाउनु</span>
+                        {isDownloadingPdf ? (
+                          <>
+                            <Loader2 className="w-5 h-5 mr-2 animate-spin" />
+                            {t('creatingPdf')}
+                          </>
+                        ) : (
+                          <>
+                            <FileText className="w-5 h-5 mr-2" />
+                            {t('pdfReport')}
+                          </>
+                        )}
                       </Button>
 
-                      {/* New analysis button */}
+                      {/* Image Download Button */}
                       <Button 
-                        variant="secondary" 
-                        className="w-full"
-                        onClick={() => {
-                          setImage(null);
-                          setResult(null);
-                          setSymptomDescription('');
-                        }}
+                        onClick={downloadReportAsImage} 
+                        disabled={isDownloadingImage}
+                        variant="outline"
+                        className="h-12 text-base border-2 border-primary/30 hover:bg-primary/10"
+                        size="lg"
                       >
-                        🔄 नयाँ विश्लेषण गर्नुहोस्
+                        {isDownloadingImage ? (
+                          <>
+                            <Loader2 className="w-5 h-5 mr-2 animate-spin" />
+                            {t('creatingImage')}
+                          </>
+                        ) : (
+                          <>
+                            <ImageDown className="w-5 h-5 mr-2" />
+                            {t('saveAsPhoto')}
+                          </>
+                        )}
+                      </Button>
+
+                      {/* HTML Report Download */}
+                      <Button 
+                        onClick={downloadReport} 
+                        disabled={isDownloading}
+                        variant="outline"
+                        className="h-12 text-base border-2 border-muted-foreground/30 hover:bg-muted/50"
+                        size="lg"
+                      >
+                        {isDownloading ? (
+                          <>
+                            <Loader2 className="w-5 h-5 mr-2 animate-spin" />
+                            {t('downloadingLabel')}
+                          </>
+                        ) : (
+                          <>
+                            <Download className="w-5 h-5 mr-2" />
+                            HTML
+                          </>
+                        )}
                       </Button>
                     </div>
+
+                    {/* Share buttons - Responsive Grid */}
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                      {/* WhatsApp with Image */}
+                      <Button 
+                        onClick={shareImageToWhatsApp} 
+                        disabled={isSharingToWhatsApp}
+                        variant="outline" 
+                        className="h-11 bg-[#25D366]/10 hover:bg-[#25D366]/20 border-[#25D366]/30 col-span-2 sm:col-span-1"
+                      >
+                        {isSharingToWhatsApp ? (
+                          <Loader2 className="w-4 h-4 mr-1.5 animate-spin" />
+                        ) : (
+                          <MessageCircle className="w-4 h-4 mr-1.5 text-[#25D366]" />
+                        )}
+                        <span className="text-sm">{t('whatsappWithPhoto')}</span>
+                      </Button>
+
+                      {/* WhatsApp text only */}
+                      <Button 
+                        onClick={handleShareWhatsApp} 
+                        variant="outline" 
+                        className="h-11 bg-[#25D366]/5 hover:bg-[#25D366]/10 border-[#25D366]/20"
+                      >
+                        <MessageCircle className="w-4 h-4 mr-1.5 text-[#25D366]" />
+                        <span className="text-sm">Text</span>
+                      </Button>
+
+                      <Button 
+                        onClick={handleShareSMS}
+                        variant="outline" 
+                        className="h-11"
+                      >
+                        <Phone className="w-4 h-4 mr-1.5" />
+                        <span className="text-sm">SMS</span>
+                      </Button>
+                      <Button 
+                        onClick={() => {
+                          // Native share API for mobile
+                          if (navigator.share) {
+                            navigator.share({
+                              title: t('diseaseDetectorTitle'),
+                              text: generateReportShareText(),
+                            }).catch(() => {
+                              // Fallback to WhatsApp
+                              handleShareWhatsApp();
+                            });
+                          } else {
+                            handleShareWhatsApp();
+                          }
+                        }} 
+                        variant="outline"
+                        className="h-11 col-span-2 sm:col-span-1"
+                      >
+                        <Share2 className="w-4 h-4 mr-1.5" />
+                        <span className="text-sm">{t('shareOther')}</span>
+                      </Button>
+                    </div>
+                    
+                    {/* Share to officer button */}
+                    <Button 
+                      onClick={() => handleShareToOfficer()} 
+                      variant="outline"
+                      className="w-full h-11 bg-primary/5 hover:bg-primary/10 border-primary/20"
+                    >
+                      <Share2 className="w-4 h-4 mr-2 text-primary" />
+                      <span className="hidden sm:inline">{t('sendToOfficer')}</span>
+                      <span className="sm:hidden">{t('sendToOfficerShort')}</span>
+                    </Button>
+
+                    {/* New analysis button */}
+                    <Button 
+                      variant="secondary" 
+                      className="w-full"
+                      onClick={() => {
+                        setImage(null);
+                        setResult(null);
+                        setSymptomDescription('');
+                      }}
+                    >
+                      {t('newAnalysis')}
+                    </Button>
                   </motion.div>
                 )}
               </AnimatePresence>
@@ -1649,11 +1625,11 @@ export function NepaliDiseaseDetector() {
             >
               <div className="flex items-center gap-2 mb-2">
                 <AlertTriangle className="w-5 h-5 text-destructive" />
-                <span className="font-semibold text-destructive">रोग प्रकोप चेतावनी</span>
+                <span className="font-semibold text-destructive">{t('outbreakWarning')}</span>
               </div>
               {outbreakAlerts.slice(0, 2).map(alert => (
                 <div key={alert.id} className="text-sm text-muted-foreground mb-1">
-                  <strong>{alert.disease_name}</strong> - {alert.district} जिल्लामा {alert.detection_count} रिपोर्ट
+                  <strong>{alert.disease_name}</strong> - {alert.district} {t('districtLabel')} {alert.detection_count} {t('reportsIn')}
                 </div>
               ))}
             </motion.div>
@@ -1668,10 +1644,10 @@ export function NepaliDiseaseDetector() {
             >
               <div className="flex items-center gap-2">
                 <Bell className="w-4 h-4 text-primary" />
-                <span className="text-sm">रोग प्रकोप सूचना प्राप्त गर्नुहोस्</span>
+                <span className="text-sm">{t('receiveOutbreakAlerts')}</span>
               </div>
               <Button size="sm" variant="outline" onClick={enablePushNotifications}>
-                सक्षम गर्नुहोस्
+                {t('enableAlerts')}
               </Button>
             </motion.div>
           )}
@@ -1679,8 +1655,8 @@ export function NepaliDiseaseDetector() {
           {!user ? (
             <div className="text-center py-8 text-muted-foreground">
               <History className="w-12 h-12 mx-auto mb-3 opacity-50" />
-              <p className="mb-2">इतिहास हेर्न लगइन गर्नुहोस्</p>
-              <p className="text-xs">तपाईंको विश्लेषण इतिहास सुरक्षित गर्न खाता चाहिन्छ</p>
+              <p className="mb-2">{t('loginForHistory')}</p>
+              <p className="text-xs">{t('loginForHistoryDesc')}</p>
             </div>
           ) : historyLoading ? (
             <div className="flex justify-center py-8">
@@ -1691,7 +1667,7 @@ export function NepaliDiseaseDetector() {
               {/* View mode toggle and count */}
               <div className="flex items-center justify-between">
                 <p className="text-sm text-muted-foreground">
-                  {diseaseHistory.length} विश्लेषणहरू
+                  {diseaseHistory.length} {t('analysesCount')}
                 </p>
                 <div className="flex gap-1 bg-muted rounded-lg p-1">
                   <Button 
@@ -1731,7 +1707,7 @@ export function NepaliDiseaseDetector() {
                         {isValidImageUrl ? (
                           <img
                             src={item.image_url}
-                            alt={item.detected_disease || 'Disease detection'}
+                            alt={item.detected_disease || t('diseaseIdentified')}
                             className="w-full h-full object-cover transition-transform group-hover:scale-110"
                             onError={(e) => {
                               (e.target as HTMLImageElement).src = '/placeholder.svg';
@@ -1779,7 +1755,7 @@ export function NepaliDiseaseDetector() {
                           {item.image_url && (item.image_url.startsWith('http') || item.image_url.startsWith('data:')) ? (
                             <img
                               src={item.image_url}
-                              alt={item.detected_disease || 'Disease detection'}
+                              alt={item.detected_disease || t('diseaseIdentified')}
                               className="w-full h-full object-cover"
                               onError={(e) => {
                                 (e.target as HTMLImageElement).src = '/placeholder.svg';
@@ -1796,7 +1772,7 @@ export function NepaliDiseaseDetector() {
                           <div className="flex items-center justify-between">
                             <div className="flex items-center gap-2 mb-1">
                               <Bug className="w-4 h-4 text-destructive" />
-                              <span className="font-medium truncate">{item.detected_disease || 'रोग पहिचान'}</span>
+                              <span className="font-medium truncate">{item.detected_disease || t('diseaseIdentified')}</span>
                             </div>
                             {item.severity && (
                               <Badge className={severityColors[item.severity] || severityColors.medium}>
@@ -1806,7 +1782,7 @@ export function NepaliDiseaseDetector() {
                           </div>
                           <div className="flex items-center gap-2 text-xs text-muted-foreground">
                             <Calendar className="w-3 h-3" />
-                            {new Date(item.analyzed_at).toLocaleDateString('ne-NP')}
+                            {new Date(item.analyzed_at).toLocaleDateString(language === 'ne' ? 'ne-NP' : 'en-US')}
                           </div>
                         </div>
                       </div>
@@ -1833,7 +1809,7 @@ export function NepaliDiseaseDetector() {
                           <div className="flex items-center justify-between">
                             <div className="flex items-center gap-2">
                               <Bug className="w-5 h-5 text-destructive" />
-                              <span className="font-semibold">{item.detected_disease || 'रोग पहिचान'}</span>
+                              <span className="font-semibold">{item.detected_disease || t('diseaseIdentified')}</span>
                             </div>
                             <Button 
                               size="sm" 
@@ -1849,54 +1825,10 @@ export function NepaliDiseaseDetector() {
                             <div className="w-full aspect-video rounded-lg overflow-hidden bg-muted">
                               <img
                                 src={item.image_url}
-                                alt={item.detected_disease || 'Disease detection'}
+                                alt={item.detected_disease || t('diseaseIdentified')}
                                 className="w-full h-full object-contain"
                               />
                             </div>
-                          )}
-                          
-                          <div className="flex items-center gap-2">
-                            <Calendar className="w-4 h-4 text-muted-foreground" />
-                            <span className="text-sm text-muted-foreground">
-                              {new Date(item.analyzed_at).toLocaleDateString('ne-NP', {
-                                year: 'numeric',
-                                month: 'long',
-                                day: 'numeric'
-                              })}
-                            </span>
-                            {item.severity && (
-                              <Badge className={severityColors[item.severity] || severityColors.medium}>
-                                {severityLabels[item.severity] || item.severity}
-                              </Badge>
-                            )}
-                          </div>
-                          
-                          {item.treatment_recommendations && (
-                            <div className="p-3 bg-primary/5 rounded-lg">
-                              <p className="text-xs font-medium mb-1">💊 उपचार:</p>
-                              <p className="text-sm text-muted-foreground">
-                                {typeof item.treatment_recommendations === 'object' 
-                                  ? (item.treatment_recommendations as any).chemical || 'N/A'
-                                  : String(item.treatment_recommendations)}
-                              </p>
-                            </div>
-                          )}
-                          
-                          {item.prevention_tips && item.prevention_tips.length > 0 && (
-                            <div>
-                              <p className="text-xs font-medium mb-1">🛡️ रोकथाम:</p>
-                              <ul className="text-sm text-muted-foreground space-y-1">
-                                {item.prevention_tips.slice(0, 3).map((tip, i) => (
-                                  <li key={i}>• {tip}</li>
-                                ))}
-                              </ul>
-                            </div>
-                          )}
-                          
-                          {item.confidence_score && (
-                            <p className="text-xs text-muted-foreground">
-                              विश्वास: {Math.round(item.confidence_score * 100)}%
-                            </p>
                           )}
                           
                           {/* Share buttons */}
@@ -1907,7 +1839,7 @@ export function NepaliDiseaseDetector() {
                               className="flex-1 bg-[#25D366]/10 hover:bg-[#25D366]/20 border-[#25D366]/30"
                               onClick={() => {
                                 const shareText = generateShareText({
-                                  detectedDisease: item.detected_disease || 'रोग',
+                                  detectedDisease: item.detected_disease || t('issueTypeDisease'),
                                   severity: item.severity || 'medium',
                                   treatment: typeof item.treatment_recommendations === 'object' 
                                     ? (item.treatment_recommendations as any).chemical || '' 
@@ -1931,8 +1863,8 @@ export function NepaliDiseaseDetector() {
           ) : (
             <div className="text-center py-8 text-muted-foreground">
               <History className="w-12 h-12 mx-auto mb-3 opacity-50" />
-              <p>कुनै विश्लेषण इतिहास छैन</p>
-              <p className="text-xs mt-1">रोग पहिचान गर्दा स्वतः सुरक्षित हुनेछ</p>
+              <p>{t('noHistoryYet')}</p>
+              <p className="text-xs mt-1">{t('autoSavedHint')}</p>
             </div>
           )}
         </TabsContent>
@@ -1940,11 +1872,11 @@ export function NepaliDiseaseDetector() {
         {/* Disease & Pest Database Tab */}
         <TabsContent value="database" className="p-4 pt-0 space-y-4">
           <p className="text-sm text-muted-foreground">
-            बाली छानेर त्यसका सामान्य रोग र कीराहरू हेर्नुहोस्:
+            {t('selectCropForGuide')}
           </p>
           <Select value={selectedCrop} onValueChange={setSelectedCrop}>
             <SelectTrigger>
-              <SelectValue placeholder="बाली छान्नुहोस्..." />
+              <SelectValue placeholder={t('selectCropPlaceholder')} />
             </SelectTrigger>
             <SelectContent>
               {cropTypes.map((crop) => (
@@ -1961,7 +1893,7 @@ export function NepaliDiseaseDetector() {
               {DISEASE_DATABASE[selectedCrop] && DISEASE_DATABASE[selectedCrop].length > 0 && (
                 <div className="space-y-4">
                   <h3 className="font-semibold text-lg flex items-center gap-2">
-                    🦠 रोगहरू
+                    {t('diseasesLabel')}
                   </h3>
                   {DISEASE_DATABASE[selectedCrop].map((disease, index) => (
                     <motion.div
@@ -1980,7 +1912,7 @@ export function NepaliDiseaseDetector() {
                       
                       <div className="space-y-3 text-sm">
                         <div>
-                          <p className="font-medium text-primary mb-1">🔍 लक्षणहरू:</p>
+                          <p className="font-medium text-primary mb-1">{t('symptomsShort')}</p>
                           <ul className="text-muted-foreground space-y-1">
                             {disease.symptoms.map((s, i) => (
                               <li key={i}>• {s}</li>
@@ -1989,12 +1921,12 @@ export function NepaliDiseaseDetector() {
                         </div>
                         
                         <div className="p-3 bg-primary/5 rounded-lg">
-                          <p className="font-medium text-primary mb-1">💊 उपचार:</p>
+                          <p className="font-medium text-primary mb-1">{t('treatmentShort')}</p>
                           <p className="text-muted-foreground">{disease.treatment}</p>
                         </div>
                         
                         <div>
-                          <p className="font-medium text-success mb-1">🛡️ रोकथाम:</p>
+                          <p className="font-medium text-success mb-1">{t('preventionShort')}</p>
                           <ul className="text-muted-foreground space-y-1">
                             {disease.prevention.map((p, i) => (
                               <li key={i}>✓ {p}</li>
@@ -2011,7 +1943,7 @@ export function NepaliDiseaseDetector() {
               {PEST_DATABASE[selectedCrop] && PEST_DATABASE[selectedCrop].length > 0 && (
                 <div className="space-y-4">
                   <h3 className="font-semibold text-lg flex items-center gap-2">
-                    🐛 कीरा-किटहरू
+                    {t('pestsLabel')}
                   </h3>
                   {PEST_DATABASE[selectedCrop].map((pest, index) => (
                     <motion.div
@@ -2028,7 +1960,7 @@ export function NepaliDiseaseDetector() {
                         </div>
                         <div className="flex gap-2">
                           <Badge variant="outline" className="bg-orange-500/10 text-orange-600 border-orange-500/20">
-                            🐛 कीरा
+                            {t('issueTypePest')}
                           </Badge>
                           <Badge className={severityColors[pest.severity]}>
                             {severityLabels[pest.severity]}
@@ -2038,7 +1970,7 @@ export function NepaliDiseaseDetector() {
                       
                       <div className="space-y-3 text-sm">
                         <div>
-                          <p className="font-medium text-orange-600 mb-1">🔍 क्षतिको लक्षण:</p>
+                          <p className="font-medium text-orange-600 mb-1">{t('damageSymptoms')}</p>
                           <ul className="text-muted-foreground space-y-1">
                             {pest.symptoms.map((s, i) => (
                               <li key={i}>• {s}</li>
@@ -2048,22 +1980,22 @@ export function NepaliDiseaseDetector() {
 
                         <div className="flex gap-2 flex-wrap">
                           <Badge variant="outline" className="text-xs">
-                            📅 सक्रिय: {pest.activeSeasons.join(', ')}
+                            {t('activeSeason')} {pest.activeSeasons.join(', ')}
                           </Badge>
                         </div>
                         
                         <div className="p-3 bg-orange-500/5 rounded-lg">
-                          <p className="font-medium text-orange-600 mb-1">💊 नियन्त्रण:</p>
+                          <p className="font-medium text-orange-600 mb-1">{t('controlShort')}</p>
                           <p className="text-muted-foreground">{pest.control}</p>
                         </div>
 
                         <div className="p-3 bg-green-500/5 rounded-lg">
-                          <p className="font-medium text-green-600 mb-1">🌱 जैविक नियन्त्रण:</p>
+                          <p className="font-medium text-green-600 mb-1">{t('bioControlShort')}</p>
                           <p className="text-muted-foreground">{pest.biologicalControl.join(', ')}</p>
                         </div>
                         
                         <div>
-                          <p className="font-medium text-success mb-1">🛡️ रोकथाम:</p>
+                          <p className="font-medium text-success mb-1">{t('preventionShort')}</p>
                           <ul className="text-muted-foreground space-y-1">
                             {pest.prevention.map((p, i) => (
                               <li key={i}>✓ {p}</li>
@@ -2081,7 +2013,7 @@ export function NepaliDiseaseDetector() {
           {!selectedCrop && (
             <div className="text-center py-8 text-muted-foreground">
               <BookOpen className="w-12 h-12 mx-auto mb-3 opacity-50" />
-              <p>बाली छानेर रोग र कीराहरूको जानकारी हेर्नुहोस्</p>
+              <p>{t('selectCropForGuide')}</p>
             </div>
           )}
         </TabsContent>
@@ -2089,9 +2021,9 @@ export function NepaliDiseaseDetector() {
         {/* Prevention Tips Tab */}
         <TabsContent value="tips" className="p-4 pt-0 space-y-4">
           <div className="text-center mb-4">
-            <h3 className="font-semibold text-lg">🛡️ रोग रोकथामका सुझावहरू</h3>
+            <h3 className="font-semibold text-lg">🛡️ {t('preventionTipsTitle')}</h3>
             <p className="text-sm text-muted-foreground">
-              यी उपायहरू अपनाएर बालीको रोग रोक्न सकिन्छ
+              {t('preventionTipsSubtitle')}
             </p>
           </div>
 
@@ -2107,20 +2039,20 @@ export function NepaliDiseaseDetector() {
                 <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
                   <tip.icon className="w-5 h-5 text-primary" />
                 </div>
-                <p className="text-sm font-medium">{tip.tip}</p>
+                <p className="text-sm font-medium">{t(tip.tipKey)}</p>
               </motion.div>
             ))}
           </div>
 
           <div className="mt-6 p-4 bg-warning/10 rounded-xl border border-warning/20">
             <h4 className="font-semibold mb-2 flex items-center gap-2">
-              ⚠️ महत्त्वपूर्ण सुझाव
+              {t('importantTipsTitle')}
             </h4>
             <ul className="text-sm text-muted-foreground space-y-2">
-              <li>• रोग देखिएपछि तुरुन्त उपचार गर्नुहोस्</li>
-              <li>• रासायनिक औषधि प्रयोग गर्दा सुरक्षा उपकरण लगाउनुहोस्</li>
-              <li>• गम्भीर समस्यामा नजिकको कृषि केन्द्रमा सम्पर्क गर्नुहोस्</li>
-              <li>• जैविक उपायलाई प्राथमिकता दिनुहोस्</li>
+              <li>{t('tip1')}</li>
+              <li>{t('tip2')}</li>
+              <li>{t('tip3')}</li>
+              <li>{t('tip4')}</li>
             </ul>
           </div>
         </TabsContent>

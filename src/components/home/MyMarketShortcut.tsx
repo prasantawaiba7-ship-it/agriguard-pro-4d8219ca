@@ -8,7 +8,7 @@ import { motion } from 'framer-motion';
 
 export function MyMarketShortcut() {
   const { selectedMarket, isLoading } = useUserSelectedMarket();
-  const { language } = useLanguage();
+  const { language, t } = useLanguage();
   const isNepali = language === 'ne';
 
   if (isLoading) return null;
@@ -31,10 +31,10 @@ export function MyMarketShortcut() {
                   </div>
                   <div>
                     <p className="text-sm text-muted-foreground">
-                      {isNepali ? 'आजको बजार भाउ' : "Today's Market Prices"}
+                      {t('todayMarketPrices')}
                     </p>
                     <h3 className="font-semibold text-foreground">
-                      {isNepali ? 'आफ्नो बजार छान्नुहोस्' : 'Select Your Market'}
+                      {t('selectYourMarket')}
                     </h3>
                   </div>
                 </div>
@@ -65,7 +65,7 @@ export function MyMarketShortcut() {
                 <div>
                   <p className="text-xs text-muted-foreground flex items-center gap-1">
                     <MapPin className="h-3 w-3" />
-                    {isNepali ? 'तपाईंको बजार' : 'Your Market'}
+                    {t('yourMarket')}
                   </p>
                   <h3 className="font-bold text-lg text-foreground">
                     {isNepali ? selectedMarket.marketNameNe : selectedMarket.marketNameEn}
@@ -84,7 +84,7 @@ export function MyMarketShortcut() {
           <div className="bg-primary/5 border-t border-primary/10 px-4 py-2">
             <Link to="/market?tab=prices">
               <Button variant="link" className="p-0 h-auto text-primary text-sm font-medium">
-                {isNepali ? 'आजको मूल्य हेर्नुहोस्' : "View Today's Prices"} →
+                {t('viewTodayPrices')} →
               </Button>
             </Link>
           </div>

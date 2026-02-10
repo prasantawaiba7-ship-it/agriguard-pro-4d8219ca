@@ -10,19 +10,22 @@ import { useMyDiagnosisCases, type DiagnosisCaseWithDetails } from '@/hooks/useD
 import { useAuth } from '@/hooks/useAuth';
 import { formatDistanceToNow } from 'date-fns';
 import type { Database } from '@/integrations/supabase/types';
+import { useLanguage } from '@/hooks/useLanguage';
 
 type DiagnosisCaseStatus = Database['public']['Enums']['diagnosis_case_status'];
 
-const statusConfig: Record<DiagnosisCaseStatus, { label: string; icon: React.ReactNode; color: string }> = {
-  new: { label: 'नयाँ', icon: <Clock className="w-3 h-3" />, color: 'bg-blue-500' },
-  ai_suggested: { label: 'प्रारम्भिक अनुमान', icon: <Bot className="w-3 h-3" />, color: 'bg-yellow-500' },
-  expert_pending: { label: 'विज्ञको पर्खाइमा', icon: <Clock className="w-3 h-3" />, color: 'bg-orange-500' },
-  expert_answered: { label: 'उत्तर आएको छ', icon: <CheckCircle className="w-3 h-3" />, color: 'bg-green-500' },
-  closed: { label: 'बन्द', icon: <CheckCircle className="w-3 h-3" />, color: 'bg-gray-500' }
-};
-
 function CaseCard({ caseData }: { caseData: DiagnosisCaseWithDetails }) {
   const [isExpanded, setIsExpanded] = useState(false);
+  const { t, language } = useLanguage();
+  
+  const statusConfig: Record<DiagnosisCaseStatus, { label: string; icon: React.ReactNode; color: string }> = {
+    new: { label: t('new'), icon: <Clock className="w-3 h-3" />, color: 'bg-blue-500' },
+    ai_suggested: { label: t('preliminaryEstimate'), icon: <Bot className="w-3 h-3" />, color: 'bg-yellow-500' },
+    expert_pending: { label: t('waitingForExpert'), icon: <Clock className="w-3 h-3" />, color: 'bg-orange-500' },
+    expert_answered: { label: t('expertAnswered'), icon: <CheckCircle className="w-3 h-3" />, color: 'bg-green-500' },
+    closed: { label: t('closed'), icon: <CheckCircle className="w-3 h-3" />, color: 'bg-gray-500' }
+  };
+
   const status = statusConfig[caseData.case_status];
   
   const finalSuggestion = caseData.suggestions.find(s => s.is_final);
@@ -60,7 +63,7 @@ function CaseCard({ caseData }: { caseData: DiagnosisCaseWithDetails }) {
             </div>
             
             <p className="font-medium text-sm">
-              {caseData.crops?.name_ne || 'अज्ञात बाली'}
+              {(language === 'ne' ? caseData.crops?.name_ne : caseData.crops?.name_en) || t('unknownCrop')}
             </p>
             
             {caseData.farmer_question && (
@@ -106,7 +109,7 @@ function CaseCard({ caseData }: { caseData: DiagnosisCaseWithDetails }) {
                   <div className="flex items-center gap-2 mb-2">
                     <Bot className="w-4 h-4 text-muted-foreground" />
                     <span className="text-xs font-medium text-muted-foreground">
-                      प्रारम्भिक अनुमान (AI/Rule आधारित – अन्तिम होइन)
+                      {t('preliminaryHint')}
                     </span>
                   </div>
                   <p className="text-sm font-medium">
@@ -124,7 +127,7 @@ function CaseCard({ caseData }: { caseData: DiagnosisCaseWithDetails }) {
                   <div className="flex items-center gap-2 mb-2">
                     <User className="w-4 h-4 text-success" />
                     <span className="text-xs font-medium text-success">
-                      कृषि विज्ञको उत्तर ✓
+                      {t('expertAnswer')}
                     </span>
                   </div>
                   <p className="text-sm font-semibold">
@@ -138,7 +141,7 @@ function CaseCard({ caseData }: { caseData: DiagnosisCaseWithDetails }) {
                 <div className="p-3 bg-warning/10 border border-warning/30 rounded-lg text-center">
                   <Clock className="w-5 h-5 mx-auto text-warning mb-1" />
                   <p className="text-sm text-muted-foreground">
-                    कृषि विज्ञको उत्तरको पर्खाइमा...
+                    {t('waitingForExpert')}...
                   </p>
                 </div>
               )}
@@ -153,6 +156,7 @@ function CaseCard({ caseData }: { caseData: DiagnosisCaseWithDetails }) {
 export function MyDiagnosisCases() {
   const { user } = useAuth();
   const { data: cases, isLoading } = useMyDiagnosisCases();
+  const { t } = useLanguage();
 
   if (!user) {
     return (
@@ -160,7 +164,7 @@ export function MyDiagnosisCases() {
         <CardContent className="py-8 text-center">
           <AlertCircle className="w-8 h-8 mx-auto text-muted-foreground mb-2" />
           <p className="text-sm text-muted-foreground">
-            आफ्ना केसहरू हेर्न लगइन गर्नुहोस्
+            {t('loginToViewCases')}
           </p>
         </CardContent>
       </Card>
@@ -173,7 +177,7 @@ export function MyDiagnosisCases() {
         <CardHeader>
           <CardTitle className="text-lg flex items-center gap-2">
             <Leaf className="w-5 h-5" />
-            मेरा रोग/किरा केसहरू
+            {t('myCases')}
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-3">
@@ -190,7 +194,7 @@ export function MyDiagnosisCases() {
       <CardHeader className="pb-3">
         <CardTitle className="text-lg flex items-center gap-2">
           <Leaf className="w-5 h-5 text-primary" />
-          मेरा रोग/किरा केसहरू
+          {t('myCases')}
         </CardTitle>
       </CardHeader>
       <CardContent>
@@ -204,7 +208,7 @@ export function MyDiagnosisCases() {
           <div className="py-8 text-center">
             <Leaf className="w-8 h-8 mx-auto text-muted-foreground mb-2" />
             <p className="text-sm text-muted-foreground">
-              अहिलेसम्म कुनै केस पठाइएको छैन
+              {t('noCasesYet')}
             </p>
           </div>
         )}

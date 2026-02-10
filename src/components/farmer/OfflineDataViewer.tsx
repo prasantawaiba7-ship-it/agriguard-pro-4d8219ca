@@ -10,7 +10,7 @@ import { useLanguage } from '@/hooks/useLanguage';
 import { format } from 'date-fns';
 
 export function OfflineDataViewer() {
-  const { language } = useLanguage();
+  const { t, language } = useLanguage();
   const {
     cropRecommendations,
     diseaseDetections,
@@ -63,13 +63,13 @@ export function OfflineDataViewer() {
           <div>
             <p className="font-medium text-foreground">
               {isOnline 
-                ? (isNepali ? 'अनलाइन' : 'Online')
-                : (isNepali ? 'अफलाइन मोड' : 'Offline Mode')
+                ? t('online')
+                : t('offlineMode')
               }
             </p>
             {lastSync && (
               <p className="text-xs text-muted-foreground">
-                {isNepali ? 'अन्तिम सिंक:' : 'Last synced:'} {formatDate(lastSync.toISOString())}
+                {t('lastSynced')} {formatDate(lastSync.toISOString())}
               </p>
             )}
           </div>
@@ -82,7 +82,7 @@ export function OfflineDataViewer() {
           disabled={!isOnline || isSyncing}
         >
           <RefreshCw className={`h-4 w-4 mr-2 ${isSyncing ? 'animate-spin' : ''}`} />
-          {isNepali ? 'सिंक गर्नुहोस्' : 'Sync Now'}
+          {t('syncNow')}
         </Button>
       </div>
 
@@ -96,13 +96,10 @@ export function OfflineDataViewer() {
           <AlertCircle className="h-5 w-5 text-warning mt-0.5" />
           <div>
             <p className="font-medium text-warning">
-              {isNepali ? 'तपाईं अफलाइन हुनुहुन्छ' : "You're offline"}
+              {t('youAreOffline')}
             </p>
             <p className="text-sm text-muted-foreground">
-              {isNepali 
-                ? 'तल भएको डाटा तपाईंको अन्तिम सिंकबाट क्यास गरिएको छ।'
-                : 'The data below is cached from your last sync.'
-              }
+              {t('offlineDataDesc')}
             </p>
           </div>
         </motion.div>
@@ -113,22 +110,16 @@ export function OfflineDataViewer() {
         <CardHeader className="pb-3">
           <CardTitle className="flex items-center gap-2 text-lg">
             <Leaf className="h-5 w-5 text-success" />
-            {isNepali ? 'बाली सिफारिसहरू' : 'Crop Recommendations'}
+            {t('cropRecommendations')}
           </CardTitle>
           <CardDescription>
-            {isNepali 
-              ? `${cropRecommendations.length} सिफारिसहरू क्यास गरिएको`
-              : `${cropRecommendations.length} recommendations cached`
-            }
+            {`${cropRecommendations.length} ${t('recommendationsCached')}`}
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-3">
           {cropRecommendations.length === 0 ? (
             <p className="text-sm text-muted-foreground text-center py-4">
-              {isNepali 
-                ? 'कुनै क्यास गरिएको सिफारिस छैन'
-                : 'No cached recommendations'
-              }
+              {t('noCachedRecs')}
             </p>
           ) : (
             cropRecommendations.map((rec) => (
@@ -163,7 +154,7 @@ export function OfflineDataViewer() {
                     {rec.recommended_crops && (
                       <div>
                         <p className="text-sm font-medium mb-2">
-                          {isNepali ? 'सिफारिस गरिएका बालीहरू:' : 'Recommended Crops:'}
+                          {t('recommendedCrops')}
                         </p>
                         <div className="flex flex-wrap gap-2">
                           {(Array.isArray(rec.recommended_crops) ? rec.recommended_crops : [rec.recommended_crops]).map((crop: any, i: number) => (
@@ -177,7 +168,7 @@ export function OfflineDataViewer() {
                     {rec.reasoning && (
                       <div>
                         <p className="text-sm font-medium mb-1">
-                          {isNepali ? 'कारण:' : 'Reasoning:'}
+                          {t('reasoning')}
                         </p>
                         <p className="text-sm text-muted-foreground">{rec.reasoning}</p>
                       </div>
@@ -195,22 +186,16 @@ export function OfflineDataViewer() {
         <CardHeader className="pb-3">
           <CardTitle className="flex items-center gap-2 text-lg">
             <Bug className="h-5 w-5 text-warning" />
-            {isNepali ? 'रोग पत्ता लगाउने' : 'Disease Detections'}
+            {t('diseaseDetections')}
           </CardTitle>
           <CardDescription>
-            {isNepali 
-              ? `${diseaseDetections.length} विश्लेषणहरू क्यास गरिएको`
-              : `${diseaseDetections.length} analyses cached`
-            }
+            {`${diseaseDetections.length} ${t('analysesCached')}`}
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-3">
           {diseaseDetections.length === 0 ? (
             <p className="text-sm text-muted-foreground text-center py-4">
-              {isNepali 
-                ? 'कुनै क्यास गरिएको विश्लेषण छैन'
-                : 'No cached analyses'
-              }
+              {t('noCachedAnalyses')}
             </p>
           ) : (
             diseaseDetections.map((det) => (
@@ -234,7 +219,7 @@ export function OfflineDataViewer() {
                       </div>
                       <div>
                         <p className="font-medium text-foreground">
-                          {det.detected_disease || (isNepali ? 'स्वस्थ' : 'Healthy')}
+                          {det.detected_disease || t('healthyCrop')}
                         </p>
                         <p className="text-xs text-muted-foreground">
                           {formatDate(det.analyzed_at)}
@@ -256,7 +241,7 @@ export function OfflineDataViewer() {
                     {det.confidence_score && (
                       <div className="flex items-center gap-2">
                         <span className="text-sm text-muted-foreground">
-                          {isNepali ? 'विश्वास:' : 'Confidence:'}
+                          {t('confidence')}
                         </span>
                         <Badge variant="outline">
                           {Math.round(det.confidence_score * 100)}%
@@ -266,7 +251,7 @@ export function OfflineDataViewer() {
                     {det.treatment_recommendations && (
                       <div>
                         <p className="text-sm font-medium mb-1">
-                          {isNepali ? 'उपचार:' : 'Treatment:'}
+                          {t('treatment')}
                         </p>
                         <p className="text-sm text-muted-foreground">
                           {typeof det.treatment_recommendations === 'string' 
@@ -279,7 +264,7 @@ export function OfflineDataViewer() {
                     {det.prevention_tips && det.prevention_tips.length > 0 && (
                       <div>
                         <p className="text-sm font-medium mb-1">
-                          {isNepali ? 'रोकथाम सुझावहरू:' : 'Prevention Tips:'}
+                          {t('preventionTips')}
                         </p>
                         <ul className="text-sm text-muted-foreground list-disc pl-4 space-y-1">
                           {det.prevention_tips.map((tip, i) => (

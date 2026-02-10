@@ -4,13 +4,13 @@ import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { 
-  LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
+  XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
   AreaChart, Area, Legend
 } from 'recharts';
 import { TrendingUp, TrendingDown, AlertTriangle, Brain, Calendar, Loader2 } from 'lucide-react';
+import { useLanguage } from '@/hooks/useLanguage';
 
 interface DiseaseDetection {
   id: string;
@@ -27,20 +27,6 @@ interface Prediction {
   confidence: number;
   predictedIncrease: number;
   reasoning: string;
-}
-
-// Simple moving average calculation
-function calculateMovingAverage(data: number[], window: number): number[] {
-  const result: number[] = [];
-  for (let i = 0; i < data.length; i++) {
-    if (i < window - 1) {
-      result.push(data[i]);
-    } else {
-      const sum = data.slice(i - window + 1, i + 1).reduce((a, b) => a + b, 0);
-      result.push(sum / window);
-    }
-  }
-  return result;
 }
 
 // Linear regression for trend prediction
@@ -76,8 +62,8 @@ function linearRegression(data: number[]): { slope: number; intercept: number; r
 }
 
 export function DiseasePrediction() {
-  const [selectedDisease, setSelectedDisease] = useState<string>('all');
   const [timeRange, setTimeRange] = useState<'30d' | '60d' | '90d'>('30d');
+  const { t, language } = useLanguage();
 
   // Fetch historical disease data
   const { data: detections, isLoading } = useQuery({
@@ -129,12 +115,12 @@ export function DiseasePrediction() {
     return Object.entries(dateGroups)
       .sort((a, b) => a[0].localeCompare(b[0]))
       .map(([date, data]) => ({
-        date: new Date(date).toLocaleDateString('ne-NP', { month: 'short', day: 'numeric' }),
+        date: new Date(date).toLocaleDateString(language === 'ne' ? 'ne-NP' : 'en-US', { month: 'short', day: 'numeric' }),
         fullDate: date,
         total: data.total,
         ...data.byDisease,
       }));
-  }, [detections]);
+  }, [detections, language]);
 
   // Calculate predictions
   const predictions = useMemo(() => {
@@ -194,18 +180,26 @@ export function DiseasePrediction() {
       const predictedIncrease = Math.round(slope * 2 * 10) / 10; // Next 2 weeks
 
       // Generate reasoning
+      // Using simple string logic for now, could be improved with t()
       let reasoning = '';
       if (trend === 'rising') {
-        reasoning = `पछिल्लो ${timeRange.replace('d', '')} दिनमा बढ्दो प्रवृत्ति देखिएको छ। `;
+        reasoning = language === 'ne' 
+          ? `पछिल्लो ${timeRange.replace('d', '')} दिनमा बढ्दो प्रवृत्ति देखिएको छ। `
+          : `Rising trend observed in last ${timeRange.replace('d', '')} days. `;
+        
         if (riskLevel === 'high') {
-          reasoning += 'तत्काल सावधानी आवश्यक।';
+          reasoning += language === 'ne' ? 'तत्काल सावधानी आवश्यक।' : 'Immediate attention required.';
         } else {
-          reasoning += 'नियमित निरीक्षण गर्नुहोस्।';
+          reasoning += language === 'ne' ? 'नियमित निरीक्षण गर्नुहोस्।' : 'Inspect regularly.';
         }
       } else if (trend === 'falling') {
-        reasoning = 'रोगको प्रभाव घट्दै गइरहेको छ। सावधानी जारी राख्नुहोस्।';
+        reasoning = language === 'ne' 
+          ? 'रोगको प्रभाव घट्दै गइरहेको छ। सावधानी जारी राख्नुहोस्।'
+          : 'Disease impact is decreasing. Maintain caution.';
       } else {
-        reasoning = 'स्थिर अवस्थामा छ। नियमित बाली जाँच गर्नुहोस्।';
+        reasoning = language === 'ne'
+          ? 'स्थिर अवस्थामा छ। नियमित बाली जाँच गर्नुहोस्।'
+          : 'Stable condition. Check crops regularly.';
       }
 
       predictionResults.push({
@@ -223,7 +217,7 @@ export function DiseasePrediction() {
       const riskOrder = { high: 0, medium: 1, low: 2 };
       return riskOrder[a.riskLevel] - riskOrder[b.riskLevel];
     });
-  }, [detections, diseases, timeRange]);
+  }, [detections, diseases, timeRange, language]);
 
   // Forecast data for chart
   const forecastData = useMemo(() => {
@@ -249,7 +243,7 @@ export function DiseasePrediction() {
       forecastDate.setDate(forecastDate.getDate() + i);
       
       forecast.push({
-        date: forecastDate.toLocaleDateString('ne-NP', { month: 'short', day: 'numeric' }),
+        date: forecastDate.toLocaleDateString(language === 'ne' ? 'ne-NP' : 'en-US', { month: 'short', day: 'numeric' }),
         fullDate: forecastDate.toISOString().split('T')[0],
         total: 0,
         forecast: predictedValue,
@@ -257,7 +251,7 @@ export function DiseasePrediction() {
     }
 
     return forecast;
-  }, [timeSeriesData]);
+  }, [timeSeriesData, language]);
 
   if (isLoading) {
     return (
@@ -276,7 +270,7 @@ export function DiseasePrediction() {
         <div>
           <h3 className="text-xl font-bold flex items-center gap-2">
             <Brain className="h-5 w-5 text-primary" />
-            रोग प्रवृत्ति पूर्वानुमान
+            {t('diseaseTrendPrediction')}
           </h3>
           <p className="text-sm text-muted-foreground">Disease Trend Prediction</p>
         </div>
@@ -285,9 +279,9 @@ export function DiseasePrediction() {
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="30d">३० दिन</SelectItem>
-            <SelectItem value="60d">६० दिन</SelectItem>
-            <SelectItem value="90d">९० दिन</SelectItem>
+            <SelectItem value="30d">{t('days30')}</SelectItem>
+            <SelectItem value="60d">{t('days60')}</SelectItem>
+            <SelectItem value="90d">{t('days90')}</SelectItem>
           </SelectContent>
         </Select>
       </div>
@@ -316,8 +310,8 @@ export function DiseasePrediction() {
                       variant={pred.riskLevel === 'high' ? 'destructive' : 
                                pred.riskLevel === 'medium' ? 'secondary' : 'outline'}
                     >
-                      {pred.riskLevel === 'high' ? 'उच्च जोखिम' :
-                       pred.riskLevel === 'medium' ? 'मध्यम' : 'कम'}
+                      {pred.riskLevel === 'high' ? t('highRisk') :
+                       pred.riskLevel === 'medium' ? t('mediumRisk') : t('lowRisk')}
                     </Badge>
                   </div>
                 </CardHeader>
@@ -326,28 +320,28 @@ export function DiseasePrediction() {
                     {pred.currentTrend === 'rising' ? (
                       <div className="flex items-center gap-1 text-destructive">
                         <TrendingUp className="h-4 w-4" />
-                        <span className="text-sm font-medium">बढ्दो</span>
+                        <span className="text-sm font-medium">{t('rising')}</span>
                       </div>
                     ) : pred.currentTrend === 'falling' ? (
                       <div className="flex items-center gap-1 text-success">
                         <TrendingDown className="h-4 w-4" />
-                        <span className="text-sm font-medium">घट्दो</span>
+                        <span className="text-sm font-medium">{t('falling')}</span>
                       </div>
                     ) : (
-                      <span className="text-sm text-muted-foreground">स्थिर</span>
+                      <span className="text-sm text-muted-foreground">{t('stable')}</span>
                     )}
                     <span className="text-xs text-muted-foreground">
-                      ({Math.round(pred.confidence * 100)}% विश्वास)
+                      ({Math.round(pred.confidence * 100)}% {t('confidenceLabel')})
                     </span>
                   </div>
                   
                   {pred.predictedIncrease !== 0 && (
                     <div className="text-sm mb-2">
-                      <span className="text-muted-foreground">अनुमानित परिवर्तन:</span>
+                      <span className="text-muted-foreground">{t('predictedChange')}</span>
                       <span className={`ml-1 font-medium ${
                         pred.predictedIncrease > 0 ? 'text-destructive' : 'text-success'
                       }`}>
-                        {pred.predictedIncrease > 0 ? '+' : ''}{pred.predictedIncrease} केस/हप्ता
+                        {pred.predictedIncrease > 0 ? '+' : ''}{pred.predictedIncrease} {t('casesPerWeek')}
                       </span>
                     </div>
                   )}
@@ -362,8 +356,8 @@ export function DiseasePrediction() {
         <Card>
           <CardContent className="text-center py-8 text-muted-foreground">
             <Brain className="h-12 w-12 mx-auto mb-3 opacity-50" />
-            <p>पूर्वानुमानको लागि पर्याप्त डाटा छैन</p>
-            <p className="text-xs mt-1">कम्तीमा ७ दिनको डाटा चाहिन्छ</p>
+            <p>{t('insufficientData')}</p>
+            <p className="text-xs mt-1">{t('need7DaysData')}</p>
           </CardContent>
         </Card>
       )}
@@ -374,9 +368,9 @@ export function DiseasePrediction() {
           <CardHeader>
             <CardTitle className="text-lg flex items-center gap-2">
               <Calendar className="h-5 w-5" />
-              ७ दिनको पूर्वानुमान
+              {t('forecast7Days')}
             </CardTitle>
-            <CardDescription>अगामी हप्ताको अनुमानित रोग रिपोर्ट</CardDescription>
+            <CardDescription>{t('forecastSubtitle')}</CardDescription>
           </CardHeader>
           <CardContent>
             <ResponsiveContainer width="100%" height={250}>
@@ -392,7 +386,7 @@ export function DiseasePrediction() {
                   stroke="hsl(var(--primary))" 
                   fill="hsl(var(--primary))"
                   fillOpacity={0.3}
-                  name="वास्तविक"
+                  name={t('actual')}
                 />
                 <Area 
                   type="monotone" 
@@ -401,7 +395,7 @@ export function DiseasePrediction() {
                   fill="hsl(var(--warning))"
                   fillOpacity={0.3}
                   strokeDasharray="5 5"
-                  name="पूर्वानुमान"
+                  name={t('forecast')}
                 />
               </AreaChart>
             </ResponsiveContainer>
@@ -420,9 +414,9 @@ export function DiseasePrediction() {
               <div className="flex items-start gap-3">
                 <AlertTriangle className="h-6 w-6 text-destructive flex-shrink-0 mt-0.5" />
                 <div>
-                  <h4 className="font-semibold text-destructive mb-1">⚠️ उच्च जोखिम चेतावनी</h4>
+                  <h4 className="font-semibold text-destructive mb-1">⚠️ {t('highRiskWarning')}</h4>
                   <p className="text-sm text-muted-foreground">
-                    निम्न रोगहरूमा बढ्दो प्रवृत्ति देखिएको छ र तत्काल सावधानी आवश्यक छ:
+                    {t('highRiskText')}
                   </p>
                   <div className="flex flex-wrap gap-2 mt-2">
                     {predictions

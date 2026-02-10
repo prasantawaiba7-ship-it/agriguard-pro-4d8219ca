@@ -3,6 +3,7 @@ import { Cloud, Thermometer, Droplets, Wind, Sun, CloudRain, Umbrella } from 'lu
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useWeatherData } from '@/hooks/useFarmerData';
 import { Skeleton } from '@/components/ui/skeleton';
+import { useLanguage } from '@/hooks/useLanguage';
 
 interface WeatherWidgetProps {
   latitude?: number;
@@ -11,13 +12,14 @@ interface WeatherWidgetProps {
 
 export function WeatherWidget({ latitude, longitude }: WeatherWidgetProps) {
   const { data: weather, isLoading, error } = useWeatherData(latitude, longitude);
+  const { t } = useLanguage();
 
   if (!latitude || !longitude) {
     return (
       <Card className="border-border/50">
         <CardContent className="p-6 text-center text-muted-foreground">
           <Cloud className="w-8 h-8 mx-auto mb-2 opacity-50" />
-          <p className="text-sm">Add a plot with location to see weather</p>
+          <p className="text-sm">{t('addPlotForWeather')}</p>
         </CardContent>
       </Card>
     );
@@ -42,7 +44,7 @@ export function WeatherWidget({ latitude, longitude }: WeatherWidgetProps) {
       <Card className="border-border/50">
         <CardContent className="p-6 text-center text-muted-foreground">
           <Cloud className="w-8 h-8 mx-auto mb-2 opacity-50" />
-          <p className="text-sm">Unable to load weather data</p>
+          <p className="text-sm">{t('weatherDataUnavailable')}</p>
         </CardContent>
       </Card>
     );
@@ -67,7 +69,7 @@ export function WeatherWidget({ latitude, longitude }: WeatherWidgetProps) {
           <CardTitle className="flex items-center justify-between">
             <span className="flex items-center gap-2">
               <Cloud className="w-5 h-5 text-blue-500" />
-              Weather
+              {t('weather')}
             </span>
             {getWeatherIcon(current?.weatherCode || 0)}
           </CardTitle>
@@ -96,24 +98,24 @@ export function WeatherWidget({ latitude, longitude }: WeatherWidgetProps) {
             <div className="text-center">
               <Thermometer className="w-4 h-4 mx-auto text-orange-500" />
               <div className="text-sm font-medium">{summary?.averageTemperature}°C</div>
-              <div className="text-xs text-muted-foreground">Avg Temp</div>
+              <div className="text-xs text-muted-foreground">{t('avgTemp')}</div>
             </div>
             <div className="text-center">
               <Umbrella className="w-4 h-4 mx-auto text-blue-500" />
               <div className="text-sm font-medium">{summary?.totalExpectedRainfall}mm</div>
-              <div className="text-xs text-muted-foreground">Rainfall</div>
+              <div className="text-xs text-muted-foreground">{t('rainfall')}</div>
             </div>
             <div className="text-center">
               <CloudRain className="w-4 h-4 mx-auto text-gray-500" />
-              <div className="text-sm font-medium">{summary?.rainyDays} days</div>
-              <div className="text-xs text-muted-foreground">Rainy</div>
+              <div className="text-sm font-medium">{summary?.rainyDays} {t('days')}</div>
+              <div className="text-xs text-muted-foreground">{t('rainy')}</div>
             </div>
           </div>
 
           {/* Farming Advisory */}
           {farmingAdvisory && farmingAdvisory.length > 0 && (
             <div className="space-y-2">
-              <div className="text-sm font-medium">🌾 Farming Advisory</div>
+              <div className="text-sm font-medium">🌾 {t('farmingAdvisory')}</div>
               {farmingAdvisory.map((advice: string, i: number) => (
                 <div key={i} className="text-xs p-2 bg-primary/5 rounded-lg text-muted-foreground">
                   {advice}
