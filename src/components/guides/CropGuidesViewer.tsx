@@ -493,7 +493,12 @@ export function CropGuidesViewer() {
                   <button
                     type="button"
                     onClick={() => {
-                      if (!hasGuide) return;
+                      if (!hasGuide) {
+                        toast.info(language === 'ne'
+                          ? 'यो बालीको विस्तृत गाइड चाँडै थपिन्छ।'
+                          : 'Detailed guide for this crop is coming soon.');
+                        return;
+                      }
                       const cropName = crop.name_ne || crop.name_en;
                       setSelectedCrop(cropName);
                       setActiveSection(null);
@@ -501,12 +506,9 @@ export function CropGuidesViewer() {
                       setAiSummary(null);
                       setFarmerQuestion('');
                     }}
-                    className={`w-full flex flex-col items-center rounded-xl border-2 bg-card shadow-sm p-2 sm:p-3 transition-all duration-200 touch-manipulation active:scale-95 ${
-                      hasGuide 
-                        ? 'hover:shadow-lg hover:border-primary/50 hover:-translate-y-0.5 cursor-pointer' 
-                        : 'opacity-60 cursor-not-allowed'
+                    className={`w-full flex flex-col items-center rounded-xl border-2 bg-card shadow-sm p-2 sm:p-3 transition-all duration-200 touch-manipulation active:scale-95 hover:shadow-lg hover:border-primary/50 hover:-translate-y-0.5 cursor-pointer ${
+                      !hasGuide ? 'opacity-60' : ''
                     }`}
-                    disabled={!hasGuide}
                   >
                     {/* Crop Image - Full aspect-square */}
                     <div className="w-full aspect-square rounded-lg overflow-hidden bg-muted flex items-center justify-center mb-2 relative">
@@ -521,11 +523,6 @@ export function CropGuidesViewer() {
                       ) : (
                         <span className="text-3xl">{categoryLabel.emoji}</span>
                       )}
-                      {hasGuide && (
-                        <div className="absolute top-1 right-1 w-5 h-5 rounded-full bg-primary flex items-center justify-center shadow-sm">
-                          <BookOpen className="h-3 w-3 text-primary-foreground" />
-                        </div>
-                      )}
                     </div>
                     
                     {/* Crop Name */}
@@ -538,23 +535,10 @@ export function CropGuidesViewer() {
                       </div>
                     </div>
                     
-                    {/* Guide badge - full card, text changes */}
-                    <div className={`mt-1.5 text-[10px] sm:text-[11px] font-medium px-2 py-1 rounded-full flex items-center gap-1 ${
-                      hasGuide
-                        ? 'bg-primary/10 text-primary border border-primary/20'
-                        : 'bg-muted/60 text-muted-foreground border border-border'
-                    }`}>
-                      {hasGuide ? (
-                        <>
-                          <span>✅</span>
-                          <span className="truncate">{language === 'ne' ? 'पूर्ण गाइड' : 'Full Guide'}</span>
-                        </>
-                      ) : (
-                        <>
-                          <span>📖</span>
-                          <span className="truncate">{language === 'ne' ? 'गाइड आउँदैछ' : 'Guide coming soon'}</span>
-                        </>
-                      )}
+                    {/* Guide badge - same style for all */}
+                    <div className="mt-1.5 text-[10px] sm:text-[11px] font-medium px-2 py-1 rounded-full flex items-center gap-1 border bg-muted/60 text-muted-foreground">
+                      <span>📖</span>
+                      <span className="truncate">{language === 'ne' ? 'पूर्ण खेती जानकारी' : 'Complete crop info'}</span>
                     </div>
                   </button>
                 </motion.div>
