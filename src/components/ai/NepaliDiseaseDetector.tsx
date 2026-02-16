@@ -379,6 +379,12 @@ const CROP_OPTIONS = [
   "आलु", "कफी", "सुन्तला", "केरा", "धान (Basmati)", "Paddy", "Wheat", "Maize"
 ];
 
+const normalizeText = (value: string) =>
+  value
+    .normalize("NFKD")
+    .toLowerCase()
+    .trim();
+
 export function NepaliDiseaseDetector() {
   const [selectedCrop, setSelectedCrop] = useState<string>('');
   const [cropName, setCropName] = useState<string>('');
@@ -387,7 +393,7 @@ export function NepaliDiseaseDetector() {
   const [isDragging, setIsDragging] = useState(false);
   
   const filteredCrops = CROP_OPTIONS.filter((c) =>
-    c.toLowerCase().includes(cropName.toLowerCase())
+    normalizeText(c).includes(normalizeText(cropName))
   );
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [result, setResult] = useState<AnalysisResult | null>(null);
