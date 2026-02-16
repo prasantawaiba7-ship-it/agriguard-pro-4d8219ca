@@ -255,6 +255,8 @@ Provide detailed diagnosis in Nepali with locally available treatments.`;
       },
       body: JSON.stringify({
         model: "google/gemini-2.5-pro",
+        temperature: 0,
+        top_p: 1,
         messages: [
           { role: "system", content: getImageAnalysisPrompt(lang) },
           { 
@@ -343,6 +345,8 @@ Provide detailed diagnosis in Nepali with locally available treatments.`;
       },
       body: JSON.stringify({
         model: "google/gemini-2.5-flash",
+        temperature: 0,
+        top_p: 1,
         messages: [
           { role: "system", content: getReportPrompt(lang) },
           { 
