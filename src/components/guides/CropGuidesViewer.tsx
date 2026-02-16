@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
+import { getCropImageUrl, handleCropImageError } from '@/lib/cropPlaceholder';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -28,6 +29,7 @@ export function CropGuidesViewer() {
   const { activeCrops } = useCrops();
   const [selectedCrop, setSelectedCrop] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
+  const [activeCategory, setActiveCategory] = useState<string | null>(null);
   const [activeSection, setActiveSection] = useState<GuideSection | null>(null);
   const [expandedSections, setExpandedSections] = useState<Set<string>>(new Set());
   const guideContentRef = useRef<HTMLDivElement>(null);
@@ -87,7 +89,37 @@ export function CropGuidesViewer() {
   const availableSections = (Object.keys(SECTION_LABELS) as GuideSection[])
     .filter(section => groupedGuides[section]?.length > 0);
 
-  // Filter crops for display
+  // Normalize for Nepali + English search
+  const normalize = (value: string) => value.normalize('NFKD').toLowerCase().trim();
+
+  // Categories from crops data
+  const CATEGORY_LABELS: Record<string, { ne: string; en: string; emoji: string }> = {
+    grain: { ne: 'अन्न बाली', en: 'Grains', emoji: '🌾' },
+    vegetable: { ne: 'तरकारी', en: 'Vegetables', emoji: '🥬' },
+    fruit: { ne: 'फलफूल', en: 'Fruits', emoji: '🍎' },
+    pulse: { ne: 'दलहन', en: 'Pulses', emoji: '🫘' },
+    spice: { ne: 'मसला', en: 'Spices', emoji: '🌶️' },
+    oilseed: { ne: 'तेलहन', en: 'Oilseeds', emoji: '🌻' },
+    cash: { ne: 'नगदे बाली', en: 'Cash Crops', emoji: '💰' },
+    other: { ne: 'अन्य', en: 'Other', emoji: '🌿' },
+  };
+
+  // Get unique categories from active crops
+  const availableCategories = [...new Set(activeCrops.map(c => c.category || 'other'))].sort();
+
+  // Filter crops by search and category
+  const displayCrops = activeCrops.filter(crop => {
+    const matchesCategory = !activeCategory || (crop.category || 'other') === activeCategory;
+    if (!searchQuery.trim()) return matchesCategory;
+    const q = normalize(searchQuery);
+    const matchesSearch = normalize(crop.name_ne).includes(q) || normalize(crop.name_en).includes(q);
+    return matchesSearch && matchesCategory;
+  });
+
+  // Check if crop has guides
+  const cropHasGuide = (cropName: string) => guides.some(g => g.crop_name === cropName);
+
+  // Filter crops for display (legacy - used for string-based guide crops)
   const filteredCrops = guideCrops.filter(crop => 
     crop.toLowerCase().includes(searchQuery.toLowerCase())
   );
@@ -357,7 +389,7 @@ export function CropGuidesViewer() {
     );
   }
 
-  // Crop selection screen
+  // Crop Library screen
   if (!selectedCrop) {
     return (
       <motion.div 
@@ -365,8 +397,8 @@ export function CropGuidesViewer() {
         animate={{ opacity: 1 }}
         className="space-y-4 md:space-y-6"
       >
-        {/* Header - Enhanced */}
-        <div className="text-center space-y-3 px-4">
+        {/* Header */}
+        <div className="text-center space-y-3 px-2">
           <motion.div 
             initial={{ scale: 0.9, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
@@ -374,105 +406,157 @@ export function CropGuidesViewer() {
           >
             <Leaf className="h-5 w-5" />
             <span className="font-semibold text-sm md:text-base">
-              {language === 'ne' ? 'खेती गाइड' : 'Farming Guide'}
+              {language === 'ne' ? 'बाली पुस्तकालय' : 'Crop Library'}
             </span>
           </motion.div>
           <h1 className="text-2xl md:text-3xl lg:text-4xl font-bold bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text">
-            {language === 'ne' ? 'बाली छान्नुहोस्' : 'Select a Crop'}
+            {language === 'ne' ? 'नेपालका सबै बालीहरू' : 'All Nepal Crops'}
           </h1>
           <p className="text-muted-foreground text-sm md:text-base max-w-lg mx-auto">
             {language === 'ne' 
-              ? 'तपाईंले खेती गर्न चाहनुभएको बालीको पूर्ण गाइड र AI सल्लाह पाउनुहोस्'
-              : 'Get complete guide and AI advice for your chosen crop'}
+              ? 'बाली छान्नुहोस् र पूर्ण खेती गाइड, AI सल्लाह पाउनुहोस्'
+              : 'Select a crop for complete farming guide & AI advice'}
           </p>
         </div>
 
-        {/* Search - Enhanced */}
-        <div className="relative w-full max-w-md mx-auto px-2 md:px-0">
-          <Search className="absolute left-5 md:left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <Input 
-            placeholder={language === 'ne' ? 'बाली खोज्नुहोस्...' : 'Search crops...'}
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="pl-10 h-12 md:h-11 text-base border-2 focus:border-primary shadow-sm"
-          />
-        </div>
+        {/* Search Bar */}
+        <Card className="mx-auto max-w-lg border-2 shadow-sm">
+          <CardContent className="p-3">
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input 
+                placeholder={language === 'ne' ? 'बाली खोज्नुहोस् (धान, गहुँ, Tomato...)' : 'Search crops (Rice, Wheat, टमाटर...)'}
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-10 h-12 text-base border-0 shadow-none focus-visible:ring-0"
+              />
+            </div>
+            <p className="mt-1 text-[11px] text-muted-foreground px-1">
+              {language === 'ne' 
+                ? `${activeCrops.length} बालीहरू उपलब्ध • नेपाली वा English मा खोज्नुहोस्`
+                : `${activeCrops.length} crops available • Search in Nepali or English`}
+            </p>
+          </CardContent>
+        </Card>
 
-        {/* Crops Grid - Enhanced Cards */}
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 sm:gap-4 px-1 md:px-0">
+        {/* Category Filter Tabs */}
+        <ScrollArea className="w-full whitespace-nowrap">
+          <div className="inline-flex gap-2 px-1 pb-2">
+            <button
+              onClick={() => setActiveCategory(null)}
+              className={`flex items-center gap-1.5 px-3 py-2 rounded-full text-sm font-medium transition-all touch-manipulation whitespace-nowrap ${
+                !activeCategory 
+                  ? 'bg-primary text-primary-foreground shadow-md' 
+                  : 'bg-muted text-muted-foreground hover:bg-muted/80'
+              }`}
+            >
+              🌱 {language === 'ne' ? 'सबै' : 'All'}
+            </button>
+            {availableCategories.map(cat => {
+              const label = CATEGORY_LABELS[cat] || CATEGORY_LABELS.other;
+              const count = activeCrops.filter(c => (c.category || 'other') === cat).length;
+              return (
+                <button
+                  key={cat}
+                  onClick={() => setActiveCategory(activeCategory === cat ? null : cat)}
+                  className={`flex items-center gap-1.5 px-3 py-2 rounded-full text-sm font-medium transition-all touch-manipulation whitespace-nowrap ${
+                    activeCategory === cat 
+                      ? 'bg-primary text-primary-foreground shadow-md' 
+                      : 'bg-muted text-muted-foreground hover:bg-muted/80'
+                  }`}
+                >
+                  {label.emoji} {language === 'ne' ? label.ne : label.en}
+                  <span className="text-[10px] opacity-70">({count})</span>
+                </button>
+              );
+            })}
+          </div>
+          <ScrollBar orientation="horizontal" />
+        </ScrollArea>
+
+        {/* Crops Grid - 3 columns mobile, responsive */}
+        <div className="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-2.5 sm:gap-3 px-1 md:px-0">
           <AnimatePresence mode="popLayout">
-            {filteredCrops.map((crop, index) => {
-              const cropGuides = guides.filter(g => g.crop_name === crop);
-              const category = getCropCategory(crop);
-              const imageUrl = getCropImage(crop);
+            {displayCrops.map((crop, index) => {
+              const hasGuide = cropHasGuide(crop.name_ne) || cropHasGuide(crop.name_en);
+              const imageUrl = getCropImageUrl(crop.image_url);
+              const categoryLabel = CATEGORY_LABELS[crop.category || 'other'] || CATEGORY_LABELS.other;
               
               return (
                 <motion.div
-                  key={crop}
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, scale: 0.9 }}
-                  transition={{ delay: index * 0.03, duration: 0.3 }}
+                  key={crop.id}
+                  initial={{ opacity: 0, scale: 0.9 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  exit={{ opacity: 0, scale: 0.85 }}
+                  transition={{ delay: Math.min(index * 0.02, 0.3), duration: 0.25 }}
                 >
-                  <Card 
-                    className="cursor-pointer group hover:shadow-xl hover:border-primary/50 hover:-translate-y-1 transition-all duration-300 overflow-hidden active:scale-95 touch-manipulation border-2"
+                  <button
+                    type="button"
                     onClick={() => {
-                      setSelectedCrop(crop);
+                      // Try Nepali name first (guides use crop_name which is typically Nepali)
+                      const cropName = crop.name_ne || crop.name_en;
+                      setSelectedCrop(cropName);
                       setActiveSection(null);
                       setExpandedSections(new Set());
                       setAiSummary(null);
                       setFarmerQuestion('');
                     }}
+                    className={`w-full flex flex-col items-center rounded-xl border-2 bg-card shadow-sm p-2 sm:p-3 transition-all duration-200 touch-manipulation active:scale-95 ${
+                      hasGuide 
+                        ? 'hover:shadow-lg hover:border-primary/50 hover:-translate-y-0.5 cursor-pointer' 
+                        : 'opacity-60 cursor-not-allowed'
+                    }`}
+                    disabled={!hasGuide}
                   >
-                    {/* Image or Emoji Header - Enhanced gradient */}
-                    <div className="aspect-[4/3] bg-gradient-to-br from-primary/10 via-primary/5 to-secondary/10 flex items-center justify-center relative overflow-hidden">
-                      {imageUrl ? (
-                        <img 
-                          src={imageUrl} 
-                          alt={crop}
-                          className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
-                          onError={(e) => {
-                            // Hide broken images
-                            e.currentTarget.style.display = 'none';
-                            const fallback = e.currentTarget.nextElementSibling as HTMLElement;
-                            if (fallback) fallback.style.display = 'flex';
-                          }}
-                        />
-                      ) : null}
-                      <div 
-                        className={`absolute inset-0 flex items-center justify-center ${imageUrl ? 'hidden' : ''}`}
-                      >
-                        <span className="text-5xl sm:text-6xl group-hover:scale-125 transition-transform duration-300 drop-shadow-lg">
-                          {getCategoryEmoji(category)}
-                        </span>
-                      </div>
-                      {/* Gradient overlay */}
-                      <div className="absolute inset-0 bg-gradient-to-t from-black/30 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-                      <Badge 
-                        className="absolute top-2 right-2 text-[10px] sm:text-xs px-2 py-0.5 bg-background/90 backdrop-blur-sm border shadow-sm"
-                      >
-                        {cropGuides.length} {language === 'ne' ? 'विषय' : 'topics'}
-                      </Badge>
+                    {/* Crop Image */}
+                    <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-lg overflow-hidden bg-muted mb-1.5 relative">
+                      <img
+                        src={imageUrl}
+                        alt={crop.name_en}
+                        className="w-full h-full object-cover"
+                        onError={handleCropImageError}
+                        loading="lazy"
+                      />
+                      {hasGuide && (
+                        <div className="absolute top-0.5 right-0.5 w-4 h-4 rounded-full bg-primary flex items-center justify-center">
+                          <BookOpen className="h-2.5 w-2.5 text-primary-foreground" />
+                        </div>
+                      )}
                     </div>
                     
-                    <CardContent className="p-3 sm:p-4 bg-gradient-to-b from-background to-muted/30">
-                      <h3 className="font-bold text-center text-sm sm:text-base line-clamp-1 group-hover:text-primary transition-colors">
-                        {crop}
-                      </h3>
-                      <p className="text-xs text-center text-muted-foreground mt-1 group-hover:text-primary/70 transition-colors">
-                        {language === 'ne' ? 'गाइड हेर्नुहोस्' : 'View guide'} →
-                      </p>
-                    </CardContent>
-                  </Card>
+                    {/* Crop Name */}
+                    <span className="text-[11px] sm:text-xs font-semibold line-clamp-1 text-center w-full">
+                      {crop.name_ne}
+                    </span>
+                    <span className="text-[9px] sm:text-[10px] text-muted-foreground line-clamp-1 text-center w-full">
+                      {crop.name_en}
+                    </span>
+                    
+                    {/* Guide badge */}
+                    {hasGuide ? (
+                      <span className="mt-1 text-[8px] sm:text-[9px] text-primary font-medium">
+                        {language === 'ne' ? 'गाइड हेर्नुहोस्' : 'View Guide'} →
+                      </span>
+                    ) : (
+                      <span className="mt-1 text-[8px] sm:text-[9px] text-muted-foreground">
+                        {language === 'ne' ? 'चाँडै आउँदैछ' : 'Coming soon'}
+                      </span>
+                    )}
+                  </button>
                 </motion.div>
               );
             })}
           </AnimatePresence>
         </div>
 
-        {filteredCrops.length === 0 && (
-          <div className="text-center py-8 text-muted-foreground">
-            {language === 'ne' ? 'कुनै बाली फेला परेन' : 'No crops found'}
+        {displayCrops.length === 0 && (
+          <div className="text-center py-8 space-y-2">
+            <ImageOff className="h-10 w-10 mx-auto text-muted-foreground/50" />
+            <p className="text-sm text-muted-foreground">
+              {language === 'ne' 
+                ? 'सोधिएको नामको बाली फेला परेन। spelling change गरेर फेरि try गर्नुहोस्।' 
+                : 'No crops found. Try a different spelling.'}
+            </p>
           </div>
         )}
       </motion.div>
@@ -487,19 +571,15 @@ export function CropGuidesViewer() {
       animate={{ opacity: 1, x: 0 }}
       className="space-y-4 md:space-y-6"
     >
-      {/* Back Button & Header - Stacked on mobile */}
+      {/* Back Button & Header */}
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-4">
         <Button 
           variant="ghost" 
           size="sm" 
           onClick={() => {
-            // Clear selection states
             setSelectedCrop(null);
             setAiSummary(null);
             setFarmerQuestion('');
-            
-            // If we came from a specific location, navigate back
-            // Otherwise just clear the selection (stay on same page)
             if (location.state?.from) {
               navigate(location.state.from, { replace: true });
             }
