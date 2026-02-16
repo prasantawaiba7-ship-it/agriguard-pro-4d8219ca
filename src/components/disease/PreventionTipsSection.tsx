@@ -1,114 +1,195 @@
-import { useQuery } from '@tanstack/react-query';
-import { supabase } from '@/integrations/supabase/client';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Shield, Loader2, Leaf } from 'lucide-react';
+import { useState, useMemo } from 'react';
+import { Shield, Search, Loader2, Leaf } from 'lucide-react';
 import { useLanguage } from '@/hooks/useLanguage';
-import { useAuth } from '@/hooks/useAuth';
+import ReactMarkdown from 'react-markdown';
 
-interface PreventionTip {
-  id: string;
-  crop: string | null;
-  season: string | null;
-  short_tip: string;
-  detailed_tip: string | null;
-}
+const CROP_OPTIONS = [
+  "धान", "गहुँ", "मकै", "टमाटर", "बन्दा", "काउली", "ब्रोकाउली",
+  "आलु", "खुर्सानी", "क्याप्सिकम", "प्याज", "लसुन", "काँक्रो",
+  "फर्सी", "लौका", "गिलौरी", "करेला", "झिङ्गे", "भण्टा", "भिण्डी",
+  "धनिया", "पालुङ्गो", "रायो साग", "कोदो", "जौ", "तोरी",
+  "मसुरो", "केराउ", "राजमा", "भटमास", "चना",
+  "आँप", "लिची", "केरा", "सुन्तला", "कागती", "स्याउ", "नासपाती", "अम्बा", "मेवा",
+  "चिया", "कफी", "उखु", "अलैंची", "अदुवा", "बेसार",
+  "Paddy", "Wheat", "Maize", "Tomato", "Potato", "Cabbage", "Cauliflower",
+  "Chilli", "Onion", "Garlic", "Cucumber", "Pumpkin", "Banana", "Orange", "Apple",
+  "Tea", "Coffee", "Sugarcane", "Cardamom", "Ginger", "Turmeric"
+];
 
-interface PreventionResponse {
-  crop: string | null;
-  season: string;
-  tips: PreventionTip[];
-}
+const normalizeText = (value: string) =>
+  value.normalize("NFKD").toLowerCase().trim();
 
 export function PreventionTipsSection() {
-  const { t } = useLanguage();
-  const { profile } = useAuth();
+  const { language } = useLanguage();
+  const [cropName, setCropName] = useState('');
+  const [showSuggestions, setShowSuggestions] = useState(false);
+  const [guide, setGuide] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  const { data, isLoading, error } = useQuery({
-    queryKey: ['prevention-tips', profile?.id],
-    queryFn: async () => {
-      const params = new URLSearchParams();
-      if (profile?.id) params.set('farmer_id', profile.id);
+  const filteredCrops = useMemo(() => {
+    if (!cropName) return [];
+    return CROP_OPTIONS.filter((c) =>
+      normalizeText(c).includes(normalizeText(cropName))
+    ).slice(0, 6);
+  }, [cropName]);
 
+  const fetchPrevention = async (name: string) => {
+    if (!name.trim()) return;
+    setIsLoading(true);
+    setError(null);
+    setGuide(null);
+
+    try {
       const res = await fetch(
-        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/get-prevention-tips?${params}`,
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/get-prevention-tips`,
         {
+          method: 'POST',
           headers: {
+            'Content-Type': 'application/json',
             Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
           },
+          body: JSON.stringify({ crop_name: name.trim(), language }),
         }
       );
 
-      if (!res.ok) throw new Error('Failed to fetch prevention tips');
-      return (await res.json()) as PreventionResponse;
-    },
-  });
+      if (!res.ok) throw new Error('Failed to fetch');
+      const data = await res.json();
 
-  if (isLoading) {
-    return (
-      <Card>
-        <CardContent className="flex items-center justify-center py-12">
-          <Loader2 className="h-8 w-8 animate-spin text-primary" />
-        </CardContent>
-      </Card>
-    );
-  }
+      if (data.error) {
+        setError(data.error);
+      } else {
+        setGuide(data.guide);
+      }
+    } catch {
+      setError(language === 'ne'
+        ? 'रोकथाम सुझाव लोड गर्न सकिएन। पछि फेरि प्रयास गर्नुहोस्।'
+        : 'Failed to load prevention tips. Please try again.');
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
-  if (error) {
-    return (
-      <Card>
-        <CardContent className="text-center py-8 text-muted-foreground">
-          <p>Prevention tips unavailable right now.</p>
-        </CardContent>
-      </Card>
-    );
-  }
-
-  const tips = data?.tips || [];
+  const handleSelectCrop = (name: string) => {
+    setCropName(name);
+    setShowSuggestions(false);
+    fetchPrevention(name);
+  };
 
   return (
-    <div className="space-y-4">
-      <div className="flex items-center gap-2 mb-2">
-        <Shield className="h-5 w-5 text-primary" />
-        <h3 className="text-lg font-semibold">{t('preventionTips') || 'रोकथाम सुझावहरू'}</h3>
-        {data?.season && (
-          <Badge variant="outline" className="ml-2">{data.season}</Badge>
-        )}
-        {data?.crop && (
-          <Badge variant="secondary" className="ml-1">{data.crop}</Badge>
-        )}
-      </div>
-
-      {tips.length === 0 ? (
-        <Card>
-          <CardContent className="text-center py-8 text-muted-foreground">
-            <Leaf className="h-10 w-10 mx-auto mb-3 opacity-50" />
-            <p>{t('noPreventionTips') || 'अहिलेसम्म कुनै सुझाव उपलब्ध छैन।'}</p>
-          </CardContent>
-        </Card>
-      ) : (
-        <div className="grid gap-3 sm:grid-cols-2">
-          {tips.map((tip) => (
-            <Card key={tip.id} className="hover:shadow-md transition-shadow">
-              <CardHeader className="pb-2">
-                <CardTitle className="text-sm font-medium flex items-center gap-2">
-                  <span className="text-primary">🛡️</span>
-                  {tip.short_tip}
-                </CardTitle>
-              </CardHeader>
-              {tip.detailed_tip && (
-                <CardContent className="pt-0">
-                  <p className="text-xs text-muted-foreground">{tip.detailed_tip}</p>
-                  <div className="flex gap-2 mt-2">
-                    {tip.crop && <Badge variant="outline" className="text-[10px]">{tip.crop}</Badge>}
-                    {tip.season && <Badge variant="outline" className="text-[10px]">{tip.season}</Badge>}
-                  </div>
-                </CardContent>
-              )}
-            </Card>
-          ))}
+    <div className="mx-auto w-full">
+      <div className="rounded-2xl border bg-card text-card-foreground shadow-sm">
+        {/* Header */}
+        <div className="flex flex-col space-y-2 p-4 sm:p-6 bg-gradient-to-r from-primary/10 to-accent/10 rounded-t-2xl">
+          <h3 className="text-base sm:text-lg lg:text-xl font-semibold flex items-center gap-2">
+            <Shield className="w-5 h-5 sm:w-6 sm:h-6 text-primary" />
+            {language === 'ne' ? 'रोकथाम उपाय' : 'Prevention & Protection Tips'}
+          </h3>
+          <p className="text-xs sm:text-sm lg:text-base text-muted-foreground">
+            {language === 'ne'
+              ? 'बाली छानेर रोग र कीराबाट जोगिने उपायहरू हेर्नुहोस्।'
+              : 'Select a crop to view disease & pest prevention tips.'}
+          </p>
         </div>
-      )}
+
+        <div className="p-4 sm:p-6 space-y-4 sm:space-y-6">
+          {/* Crop input + suggestions */}
+          <div className="relative">
+            <div className="flex items-center gap-2 rounded-xl border bg-background px-3 py-2 sm:px-4 sm:py-3">
+              <Search className="w-4 h-4 sm:w-5 sm:h-5 text-muted-foreground shrink-0" />
+              <input
+                type="text"
+                value={cropName}
+                onChange={(e) => {
+                  setCropName(e.target.value);
+                  setShowSuggestions(e.target.value.length > 0);
+                }}
+                onFocus={() => cropName && setShowSuggestions(true)}
+                onBlur={() => setTimeout(() => setShowSuggestions(false), 150)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' && cropName.trim()) {
+                    setShowSuggestions(false);
+                    fetchPrevention(cropName);
+                  }
+                }}
+                placeholder={language === 'ne'
+                  ? 'जस्तै: धान, गहुँ, मकै, टमाटर...'
+                  : 'e.g. Paddy, Wheat, Tomato...'}
+                className="flex h-9 sm:h-10 w-full bg-transparent text-sm sm:text-base outline-none placeholder:text-muted-foreground"
+              />
+            </div>
+
+            {showSuggestions && filteredCrops.length > 0 && (
+              <div className="absolute z-20 mt-1 w-full rounded-xl border bg-popover shadow-md max-h-56 overflow-y-auto">
+                {filteredCrops.map((crop) => (
+                  <button
+                    key={crop}
+                    type="button"
+                    className="w-full text-left px-3 py-2 sm:px-4 sm:py-2.5 text-sm sm:text-base hover:bg-muted"
+                    onMouseDown={(e) => {
+                      e.preventDefault();
+                      handleSelectCrop(crop);
+                    }}
+                  >
+                    {crop}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* Result card */}
+          <div className="rounded-xl border bg-muted/50">
+            <div className="flex items-center justify-between px-3 py-2 sm:px-5 sm:py-3 border-b">
+              <span className="text-xs sm:text-sm font-medium text-muted-foreground">
+                {language === 'ne' ? 'रोकथाम उपाय' : 'Prevention Tips'}
+              </span>
+              <span className="text-[11px] sm:text-xs text-muted-foreground">
+                {cropName || (language === 'ne' ? 'बाली छानिएको छैन' : 'Crop not selected')}
+              </span>
+            </div>
+
+            <div className="max-h-[65vh] overflow-y-auto px-3 py-3 sm:px-5 sm:py-4 text-xs sm:text-sm lg:text-base leading-relaxed space-y-2 sm:space-y-3">
+              {isLoading && (
+                <div className="flex flex-col items-center justify-center py-8 sm:py-12 gap-2">
+                  <Loader2 className="h-6 w-6 sm:h-8 sm:w-8 animate-spin text-primary" />
+                  <p className="text-muted-foreground text-sm sm:text-base">
+                    {language === 'ne' ? 'AI रोकथाम सुझाव तयार गर्दैछ...' : 'Generating prevention tips...'}
+                  </p>
+                </div>
+              )}
+
+              {error && (
+                <p className="text-destructive text-center py-4 text-sm sm:text-base">{error}</p>
+              )}
+
+              {guide && !isLoading && (
+                <div className="prose prose-sm sm:prose-base lg:prose-lg dark:prose-invert max-w-none
+                                prose-headings:text-foreground prose-p:text-foreground
+                                prose-li:text-foreground prose-strong:text-foreground">
+                  <ReactMarkdown>{guide}</ReactMarkdown>
+                </div>
+              )}
+
+              {!guide && !isLoading && !error && (
+                <>
+                  <p className="text-muted-foreground">
+                    {language === 'ne'
+                      ? 'बाली रोजेपछि रोग र कीराबाट जोगिने विस्तृत उपायहरू यहाँ देखिन्छ।'
+                      : 'Select a crop above to see detailed prevention & protection tips.'}
+                  </p>
+                  <ul className="list-disc list-inside space-y-1 sm:space-y-2 text-muted-foreground">
+                    <li>{language === 'ne' ? 'रोग र कीराबाट बच्ने उपाय' : 'Disease & pest prevention methods'}</li>
+                    <li>{language === 'ne' ? 'मौसम अनुसार सावधानी' : 'Seasonal precautions'}</li>
+                    <li>{language === 'ne' ? 'जैविक र रासायनिक रोकथाम' : 'Organic & chemical protection'}</li>
+                    <li>{language === 'ne' ? 'बिरुवा सुरक्षाका सुझावहरू' : 'Plant safety recommendations'}</li>
+                  </ul>
+                </>
+              )}
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
   );
 }
