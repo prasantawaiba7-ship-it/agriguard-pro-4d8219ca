@@ -36,6 +36,12 @@ export function CropGuidesViewer() {
   const [aiSummary, setAiSummary] = useState<string | null>(null);
   const [isGeneratingSummary, setIsGeneratingSummary] = useState(false);
   const [showQueryForm, setShowQueryForm] = useState(false);
+
+  // Per-section Q&A state
+  const [sectionQuestion, setSectionQuestion] = useState<Record<string, string>>({});
+  const [sectionAnswer, setSectionAnswer] = useState<Record<string, string>>({});
+  const [sectionLoading, setSectionLoading] = useState<Record<string, boolean>>({});
+  const [showSectionAsk, setShowSectionAsk] = useState<Record<string, boolean>>({});
   
 
   const filteredGuides = selectedCrop 
@@ -148,6 +154,122 @@ export function CropGuidesViewer() {
       generateAISummary(farmerQuestion.trim());
       setShowQueryForm(false);
     }
+  };
+
+  // Per-section AI Q&A
+  const handleSectionAsk = async (section: GuideSection) => {
+    const q = sectionQuestion[section]?.trim();
+    if (!q || !selectedCrop) return;
+
+    setSectionLoading(prev => ({ ...prev, [section]: true }));
+    setSectionAnswer(prev => ({ ...prev, [section]: '' }));
+
+    try {
+      const sectionLabel = SECTION_LABELS[section];
+      const sectionName = language === 'ne' ? sectionLabel.ne : sectionLabel.en;
+
+      const { data, error } = await supabase.functions.invoke('guide-query', {
+        body: {
+          crop_name: selectedCrop,
+          question: `"${sectionName}" विषयमा मेरो प्रश्न: ${q}`,
+          language
+        }
+      });
+
+      if (error) throw error;
+      if (data?.summary) {
+        setSectionAnswer(prev => ({ ...prev, [section]: data.summary }));
+      }
+    } catch (err) {
+      console.error('Section Q&A error:', err);
+      toast.error(language === 'ne' ? 'जवाफ लोड गर्न सकिएन' : 'Failed to load answer');
+    } finally {
+      setSectionLoading(prev => ({ ...prev, [section]: false }));
+    }
+  };
+
+  // Reusable Section Q&A UI
+  const renderSectionQA = (section: GuideSection) => {
+    const isOpen = showSectionAsk[section];
+    const answer = sectionAnswer[section];
+    const loading = sectionLoading[section];
+    const question = sectionQuestion[section] || '';
+
+    return (
+      <div className="mt-4 pt-3 border-t border-dashed border-primary/20">
+        <button
+          onClick={() => setShowSectionAsk(prev => ({ ...prev, [section]: !prev[section] }))}
+          className="flex items-center gap-2 text-sm font-medium text-primary hover:text-primary/80 transition-colors touch-manipulation"
+        >
+          <MessageSquare className="h-4 w-4" />
+          {language === 'ne' ? 'यस विषयमा प्रश्न सोध्नुहोस्' : 'Ask about this topic'}
+          {isOpen ? <ChevronUp className="h-3 w-3" /> : <ChevronDown className="h-3 w-3" />}
+        </button>
+
+        <AnimatePresence>
+          {isOpen && (
+            <motion.div
+              initial={{ height: 0, opacity: 0 }}
+              animate={{ height: 'auto', opacity: 1 }}
+              exit={{ height: 0, opacity: 0 }}
+              className="overflow-hidden"
+            >
+              <div className="mt-3 space-y-3">
+                <div className="flex gap-2">
+                  <Textarea
+                    placeholder={language === 'ne' ? 'जस्तै: कति दिनमा सिँचाइ गर्ने?' : 'e.g., How often to irrigate?'}
+                    value={question}
+                    onChange={(e) => setSectionQuestion(prev => ({ ...prev, [section]: e.target.value }))}
+                    className="min-h-[50px] text-sm resize-none bg-background"
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' && !e.shiftKey) {
+                        e.preventDefault();
+                        handleSectionAsk(section);
+                      }
+                    }}
+                  />
+                  <Button
+                    onClick={() => handleSectionAsk(section)}
+                    disabled={!question.trim() || loading}
+                    size="default"
+                    className="self-end shrink-0"
+                  >
+                    {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <ArrowRight className="h-4 w-4" />}
+                  </Button>
+                </div>
+
+                {loading && (
+                  <div className="flex items-center gap-2 py-3 justify-center">
+                    <Loader2 className="h-5 w-5 animate-spin text-primary" />
+                    <span className="text-sm text-muted-foreground">
+                      {language === 'ne' ? 'जवाफ तयार पार्दै...' : 'Generating answer...'}
+                    </span>
+                  </div>
+                )}
+
+                {answer && !loading && (
+                  <motion.div
+                    initial={{ opacity: 0, y: 5 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="bg-primary/5 border border-primary/15 rounded-lg p-3 sm:p-4"
+                  >
+                    <div className="flex items-center gap-2 mb-2">
+                      <Sparkles className="h-4 w-4 text-primary" />
+                      <span className="text-xs font-semibold text-primary">
+                        {language === 'ne' ? 'AI जवाफ' : 'AI Answer'}
+                      </span>
+                    </div>
+                    <div className="prose prose-sm sm:prose-base dark:prose-invert max-w-none text-foreground whitespace-pre-line leading-relaxed">
+                      {answer}
+                    </div>
+                  </motion.div>
+                )}
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </div>
+    );
   };
 
 
@@ -545,6 +667,7 @@ export function CropGuidesViewer() {
                           );
                         })}
                       </div>
+                      {renderSectionQA(section)}
                     </div>
                   </CollapsibleContent>
                 </Card>
@@ -650,6 +773,7 @@ export function CropGuidesViewer() {
                         );
                       })}
                     </div>
+                    {renderSectionQA(section)}
                   </CardContent>
                 </Card>
               </motion.div>
