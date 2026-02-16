@@ -77,26 +77,26 @@ export function DiseaseGuideTab() {
   };
 
   return (
-    <div className="mx-auto w-full max-w-md sm:max-w-2xl lg:max-w-4xl">
+    <div className="mx-auto w-full">
       <div className="rounded-2xl border bg-card text-card-foreground shadow-sm">
         {/* Header */}
-        <div className="flex flex-col space-y-2 p-4 bg-gradient-to-r from-primary/10 to-accent/10 rounded-t-2xl">
-          <h3 className="text-base font-semibold flex items-center gap-2">
-            <Leaf className="w-5 h-5 text-primary" />
+        <div className="flex flex-col space-y-2 p-4 sm:p-6 bg-gradient-to-r from-primary/10 to-accent/10 rounded-t-2xl">
+          <h3 className="text-base sm:text-lg lg:text-xl font-semibold flex items-center gap-2">
+            <Leaf className="w-5 h-5 sm:w-6 sm:h-6 text-primary" />
             {language === 'ne' ? 'बाली रोग गाइड' : 'Disease & Pest Guide'}
           </h3>
-          <p className="text-xs text-muted-foreground">
+          <p className="text-xs sm:text-sm lg:text-base text-muted-foreground">
             {language === 'ne'
               ? 'बाली छानेर रोगको जानकारी, लक्षण र व्यवस्थापनको गाइड हेर्नुहोस्।'
               : 'Select a crop to view disease info, symptoms & management guide.'}
           </p>
         </div>
 
-        <div className="p-4 space-y-4">
+        <div className="p-4 sm:p-6 space-y-4 sm:space-y-6">
           {/* Crop input + suggestions */}
           <div className="relative">
-            <div className="flex items-center gap-2 rounded-xl border bg-background px-3 py-2">
-              <Search className="w-4 h-4 text-muted-foreground shrink-0" />
+            <div className="flex items-center gap-2 rounded-xl border bg-background px-3 py-2 sm:px-4 sm:py-3">
+              <Search className="w-4 h-4 sm:w-5 sm:h-5 text-muted-foreground shrink-0" />
               <input
                 type="text"
                 value={cropName}
@@ -115,7 +115,7 @@ export function DiseaseGuideTab() {
                 placeholder={language === 'ne'
                   ? 'जस्तै: धान, गहुँ, मकै, टमाटर...'
                   : 'e.g. Paddy, Wheat, Tomato...'}
-                className="flex h-9 w-full bg-transparent text-sm outline-none placeholder:text-muted-foreground"
+                className="flex h-9 sm:h-10 w-full bg-transparent text-sm sm:text-base outline-none placeholder:text-muted-foreground"
               />
             </div>
 
@@ -125,7 +125,7 @@ export function DiseaseGuideTab() {
                   <button
                     key={crop}
                     type="button"
-                    className="w-full text-left px-3 py-2 text-sm hover:bg-muted"
+                    className="w-full text-left px-3 py-2 sm:px-4 sm:py-2.5 text-sm sm:text-base hover:bg-muted"
                     onMouseDown={(e) => {
                       e.preventDefault();
                       handleSelectCrop(crop);
@@ -140,31 +140,31 @@ export function DiseaseGuideTab() {
 
           {/* Guide result card */}
           <div className="rounded-xl border bg-muted/50">
-            <div className="flex items-center justify-between px-3 py-2 border-b">
-              <span className="text-xs font-medium text-muted-foreground">
+            <div className="flex items-center justify-between px-3 py-2 sm:px-5 sm:py-3 border-b">
+              <span className="text-xs sm:text-sm font-medium text-muted-foreground">
                 {language === 'ne' ? 'रोग गाइड' : 'Disease Guide'}
               </span>
-              <span className="text-[11px] text-muted-foreground">
+              <span className="text-[11px] sm:text-xs text-muted-foreground">
                 {cropName || (language === 'ne' ? 'बाली छानिएको छैन' : 'Crop not selected')}
               </span>
             </div>
 
-            <div className="max-h-[65vh] overflow-y-auto px-3 py-3 text-xs leading-relaxed space-y-2">
+            <div className="max-h-[65vh] overflow-y-auto px-3 py-3 sm:px-5 sm:py-4 text-xs sm:text-sm lg:text-base leading-relaxed space-y-2 sm:space-y-3">
               {isLoading && (
-                <div className="flex flex-col items-center justify-center py-8 gap-2">
-                  <Loader2 className="h-6 w-6 animate-spin text-primary" />
-                  <p className="text-muted-foreground">
+                <div className="flex flex-col items-center justify-center py-8 sm:py-12 gap-2">
+                  <Loader2 className="h-6 w-6 sm:h-8 sm:w-8 animate-spin text-primary" />
+                  <p className="text-muted-foreground text-sm sm:text-base">
                     {language === 'ne' ? 'AI गाइड तयार गर्दैछ...' : 'Generating AI guide...'}
                   </p>
                 </div>
               )}
 
               {error && (
-                <p className="text-destructive text-center py-4">{error}</p>
+                <p className="text-destructive text-center py-4 text-sm sm:text-base">{error}</p>
               )}
 
               {guide && !isLoading && (
-                <div className="prose prose-sm dark:prose-invert max-w-none
+                <div className="prose prose-sm sm:prose-base lg:prose-lg dark:prose-invert max-w-none
                                 prose-headings:text-foreground prose-p:text-foreground
                                 prose-li:text-foreground prose-strong:text-foreground">
                   <ReactMarkdown>{guide}</ReactMarkdown>
@@ -178,7 +178,7 @@ export function DiseaseGuideTab() {
                       ? 'बाली रोजेपछि रोगको विस्तृत गाइड यहाँ देखिन्छ।'
                       : 'Select a crop above to see the detailed disease guide here.'}
                   </p>
-                  <ul className="list-disc list-inside space-y-1 text-muted-foreground">
+                  <ul className="list-disc list-inside space-y-1 sm:space-y-2 text-muted-foreground">
                     <li>{language === 'ne' ? 'मुख्य रोगहरूको नाम र लक्षण' : 'Major disease names & symptoms'}</li>
                     <li>{language === 'ne' ? 'कहिले जोखिम धेरै हुन्छ (मौसम / चरण)' : 'High-risk seasons & stages'}</li>
                     <li>{language === 'ne' ? 'जोगाउने तरिका (cultural, organic, chemical)' : 'Management (cultural, organic, chemical)'}</li>
