@@ -48,7 +48,7 @@ export default function DiseaseDetection() {
           <OutbreakAlertsBanner />
 
           <Tabs defaultValue="ai" className="space-y-6">
-            <TabsList className="grid w-full grid-cols-4">
+            <TabsList className="grid w-full grid-cols-2 sm:grid-cols-4 h-auto gap-1">
               <TabsTrigger value="ai">{t('aiInstantCheck')}</TabsTrigger>
               <TabsTrigger value="guide">{language === 'ne' ? 'रोग गाइड' : 'Disease Guide'}</TabsTrigger>
               <TabsTrigger value="expert">{t('askExpert')}</TabsTrigger>
