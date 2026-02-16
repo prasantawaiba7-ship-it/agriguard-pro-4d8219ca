@@ -130,6 +130,28 @@ export function DiseaseDetector() {
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-6">
+        <div className="space-y-3">
+          <label className="text-sm font-medium">{language === 'ne' ? 'बाली छान्नुहोस्' : 'Select Crop'}</label>
+          <div className="grid grid-cols-3 sm:grid-cols-5 gap-2">
+            {[
+              { label: 'धान', value: 'Rice', emoji: '🌾' },
+              { label: 'गहुँ', value: 'Wheat', emoji: '🌾' },
+              { label: 'मकै', value: 'Maize', emoji: '🌽' },
+              { label: 'आलु', value: 'Potato', emoji: '🥔' },
+              { label: 'गोलभेडा', value: 'Tomato', emoji: '🍅' }
+            ].map((crop) => (
+              <button
+                key={crop.value}
+                onClick={() => setSelectedImage(null) /* just placeholder for state logic if needed */}
+                className="p-2 rounded-xl border bg-muted/20 border-border/50 hover:bg-muted/40 flex flex-col items-center gap-1 transition-all"
+              >
+                <span className="text-xl">{crop.emoji}</span>
+                <span className="text-[10px] font-medium">{language === 'ne' ? crop.label : crop.value}</span>
+              </button>
+            ))}
+          </div>
+        </div>
+
         <input
           type="file"
           ref={fileInputRef}
