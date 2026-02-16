@@ -1074,39 +1074,79 @@ export function NepaliDiseaseDetector() {
 
       <div className="p-4 pt-0 space-y-4">
            {/* Crop Selection */}
-           <div className="space-y-2 relative">
-             <label className="text-sm font-medium">{language === 'ne' ? 'बाली' : 'Crop'}</label>
-             <input
-               type="text"
-               value={cropName}
-               onChange={(e) => {
-                 const value = e.target.value;
-                 setCropName(value);
-                 setShowSuggestions(value.length > 0);
-               }}
-               onFocus={() => cropName && setShowSuggestions(true)}
-               onBlur={() => {
-                 setTimeout(() => setShowSuggestions(false), 150);
-               }}
-               placeholder={t('selectCropPlaceholder') || "e.g. धान, गहुँ, टमाटर..."}
-               className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-             />
-             {showSuggestions && filteredCrops.length > 0 && (
-               <ul className="absolute z-10 mt-1 max-h-40 w-full overflow-auto rounded-md border bg-popover text-popover-foreground shadow-sm text-sm">
-                 {filteredCrops.map((crop) => (
-                   <li
-                     key={crop}
-                     onMouseDown={() => {
-                       setCropName(crop);
-                       setShowSuggestions(false);
-                     }}
-                     className="cursor-pointer px-3 py-1.5 hover:bg-muted"
-                   >
-                     {crop}
-                   </li>
-                 ))}
-               </ul>
-             )}
+           <div className="space-y-3">
+             <label className="text-sm font-medium flex items-center gap-2">
+               <Grid3X3 className="w-4 h-4 text-primary" />
+               {language === 'ne' ? 'बाली छान्नुहोस्' : 'Select Crop'}
+             </label>
+             
+             <div className="grid grid-cols-4 sm:grid-cols-5 gap-2">
+               {cropTypes.map((crop) => (
+                 <motion.button
+                   key={crop.value}
+                   whileHover={{ scale: 1.05 }}
+                   whileTap={{ scale: 0.95 }}
+                   onClick={() => {
+                     setCropName(crop.label);
+                     setShowSuggestions(false);
+                   }}
+                   className={`p-2 rounded-xl border flex flex-col items-center gap-1 transition-all relative ${
+                     cropName === crop.label 
+                       ? 'bg-primary/10 border-primary ring-2 ring-primary/20 shadow-sm' 
+                       : 'bg-muted/20 border-border/50 hover:bg-muted/40'
+                   }`}
+                 >
+                   <span className="text-xl sm:text-2xl">{crop.emoji}</span>
+                   <span className="text-[10px] font-medium truncate w-full text-center leading-tight">
+                     {crop.label}
+                   </span>
+                   {cropName === crop.label && (
+                     <motion.div 
+                       layoutId="selected-crop"
+                       className="absolute -top-1 -right-1"
+                       initial={{ scale: 0 }}
+                       animate={{ scale: 1 }}
+                     >
+                       <CheckCircle2 className="w-4 h-4 text-primary bg-white rounded-full" />
+                     </motion.div>
+                   )}
+                 </motion.button>
+               ))}
+             </div>
+
+             <div className="relative">
+               <input
+                 type="text"
+                 value={cropName}
+                 onChange={(e) => {
+                   const value = e.target.value;
+                   setCropName(value);
+                   setShowSuggestions(value.length > 0);
+                 }}
+                 onFocus={() => cropName && setShowSuggestions(true)}
+                 onBlur={() => {
+                   setTimeout(() => setShowSuggestions(false), 150);
+                 }}
+                 placeholder={t('selectCropPlaceholder') || (language === 'ne' ? "बाली खोज्नुहोस्..." : "Search or enter other crop...")}
+                 className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+               />
+               {showSuggestions && filteredCrops.length > 0 && (
+                 <ul className="absolute z-50 mt-1 max-h-40 w-full overflow-auto rounded-md border bg-popover text-popover-foreground shadow-lg text-sm">
+                   {filteredCrops.map((crop) => (
+                     <li
+                       key={crop}
+                       onMouseDown={() => {
+                         setCropName(crop);
+                         setShowSuggestions(false);
+                       }}
+                       className="cursor-pointer px-3 py-2 hover:bg-muted transition-colors border-b last:border-0"
+                     >
+                       {crop}
+                     </li>
+                   ))}
+                 </ul>
+               )}
+             </div>
            </div>
 
           {/* Voice Input for Symptom Description */}
