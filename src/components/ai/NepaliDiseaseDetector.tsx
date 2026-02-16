@@ -376,6 +376,7 @@ interface AnalysisResult {
 
 export function NepaliDiseaseDetector() {
   const [selectedCrop, setSelectedCrop] = useState<string>('');
+  const [cropName, setCropName] = useState<string>('');
   const [image, setImage] = useState<string | null>(null);
   const [isDragging, setIsDragging] = useState(false);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
@@ -541,14 +542,23 @@ export function NepaliDiseaseDetector() {
   }, []);
 
   const analyzeImage = async () => {
-    if (!image) {
-      toast({
-        title: t('selectPhotoFirst'),
-        description: t('uploadPhotoFirst'),
-        variant: 'destructive'
-      });
-      return;
-    }
+     if (!image) {
+       toast({
+         title: t('selectPhotoFirst'),
+         description: t('uploadPhotoFirst'),
+         variant: 'destructive'
+       });
+       return;
+     }
+
+     if (!cropName.trim()) {
+       toast({
+         title: t('selectCropType'),
+         description: t('selectCropPlaceholder'),
+         variant: 'destructive'
+       });
+       return;
+     }
 
     setIsAnalyzing(true);
     let uploadedImageUrl: string | null = null;
@@ -575,11 +585,11 @@ export function NepaliDiseaseDetector() {
             Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
           },
           body: JSON.stringify({
-            imageUrl: imageForAnalysis,
-            cropType: selectedCrop,
-            description: symptomDescription || undefined,
-            language
-          }),
+             imageUrl: imageForAnalysis,
+             cropType: cropName,
+             description: symptomDescription || undefined,
+             language
+           }),
         }
       );
 
@@ -658,10 +668,10 @@ export function NepaliDiseaseDetector() {
   const resultSectionRef = useRef<HTMLDivElement>(null);
 
   const downloadReport = async () => {
-    if (!result) return;
-    
-    setIsDownloading(true);
-    const cropLabel = cropTypes.find(c => c.value === selectedCrop)?.label || 'बाली';
+     if (!result) return;
+     
+     setIsDownloading(true);
+     const cropLabel = cropName || 'बाली';
     
     try {
       // Prepare data for the PDF endpoint
@@ -904,9 +914,9 @@ export function NepaliDiseaseDetector() {
 
 
   const generateReportShareText = () => {
-    if (!result) return '';
-    
-    const cropLabel = cropTypes.find(c => c.value === selectedCrop)?.label || 'crop';
+     if (!result) return '';
+     
+     const cropLabel = cropName || 'crop';
     const severityLabel = result.severity === 'high' ? t('severityHigh') : result.severity === 'medium' ? t('severityMedium') : t('severityLow');
     const confidencePercent = Math.round(result.confidence * 100);
     
@@ -1074,22 +1084,17 @@ export function NepaliDiseaseDetector() {
 
         {/* Disease Detection Tab */}
         <TabsContent value="detect" className="p-4 pt-0 space-y-4">
-          {/* Crop Selection */}
-          <div className="space-y-2">
-            <label className="text-sm font-medium">{t('selectCropType')}</label>
-            <Select value={selectedCrop} onValueChange={setSelectedCrop}>
-              <SelectTrigger className="w-full">
-                <SelectValue placeholder={t('selectCropPlaceholder')} />
-              </SelectTrigger>
-              <SelectContent>
-                {cropTypes.map((crop) => (
-                  <SelectItem key={crop.value} value={crop.value}>
-                    {crop.emoji} {crop.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
+           {/* Crop Selection */}
+           <div className="space-y-2">
+             <label className="text-sm font-medium">{t('selectCropType')}</label>
+             <input
+               type="text"
+               value={cropName}
+               onChange={(e) => setCropName(e.target.value)}
+               placeholder={t('selectCropPlaceholder') || "e.g. धान, गहुँ, टमाटर..."}
+               className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+             />
+           </div>
 
           {/* Voice Input for Symptom Description */}
           <div className="space-y-2">
