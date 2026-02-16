@@ -1075,7 +1075,7 @@ export function NepaliDiseaseDetector() {
       <div className="p-4 pt-0 space-y-4">
            {/* Crop Selection */}
            <div className="space-y-2 relative">
-             <label className="text-sm font-medium">{t('selectCropType')}</label>
+             <label className="text-sm font-medium">{language === 'ne' ? 'बाली' : 'Crop'}</label>
              <input
                type="text"
                value={cropName}
