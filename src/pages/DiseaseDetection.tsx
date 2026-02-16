@@ -7,6 +7,7 @@ import { OutbreakAlertsBanner } from '@/components/disease/OutbreakAlertsBanner'
 import { DiseasePrediction } from '@/components/disease/DiseasePrediction';
 import { DiagnosisCaseSubmit } from '@/components/diagnosis/DiagnosisCaseSubmit';
 import { MyDiagnosisCases } from '@/components/diagnosis/MyDiagnosisCases';
+import { PreventionTipsSection } from '@/components/disease/PreventionTipsSection';
 import { useAuth } from '@/hooks/useAuth';
 import { useLanguage } from '@/hooks/useLanguage';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -46,9 +47,10 @@ export default function DiseaseDetection() {
           <OutbreakAlertsBanner />
 
           <Tabs defaultValue="ai" className="space-y-6">
-            <TabsList className="grid w-full grid-cols-2">
+            <TabsList className="grid w-full grid-cols-3">
               <TabsTrigger value="ai">{t('aiInstantCheck')}</TabsTrigger>
               <TabsTrigger value="expert">{t('askExpert')}</TabsTrigger>
+              <TabsTrigger value="prevention">{t('preventionTips') || 'रोकथाम'}</TabsTrigger>
             </TabsList>
 
             <TabsContent value="ai" className="space-y-6">
@@ -67,6 +69,10 @@ export default function DiseaseDetection() {
                   <MyDiagnosisCases />
                 </div>
               )}
+            </TabsContent>
+
+            <TabsContent value="prevention" className="space-y-6">
+              <PreventionTipsSection />
             </TabsContent>
           </Tabs>
 

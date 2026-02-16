@@ -2461,6 +2461,33 @@ export type Database = {
           },
         ]
       }
+      prevention_tips: {
+        Row: {
+          created_at: string
+          crop: string | null
+          detailed_tip: string | null
+          id: string
+          season: string | null
+          short_tip: string
+        }
+        Insert: {
+          created_at?: string
+          crop?: string | null
+          detailed_tip?: string | null
+          id?: string
+          season?: string | null
+          short_tip: string
+        }
+        Update: {
+          created_at?: string
+          crop?: string | null
+          detailed_tip?: string | null
+          id?: string
+          season?: string | null
+          short_tip?: string
+        }
+        Relationships: []
+      }
       price_alerts: {
         Row: {
           condition_type: Database["public"]["Enums"]["price_alert_condition"]
