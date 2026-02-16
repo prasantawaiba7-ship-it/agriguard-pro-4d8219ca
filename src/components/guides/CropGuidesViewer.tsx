@@ -475,7 +475,7 @@ export function CropGuidesViewer() {
         </ScrollArea>
 
         {/* Crops Grid - 3 columns mobile, responsive */}
-        <div className="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-2.5 sm:gap-3 px-1 md:px-0">
+        <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-3 px-1 md:px-0">
           <AnimatePresence mode="popLayout">
             {displayCrops.map((crop, index) => {
               const hasGuide = cropHasGuide(crop.name_ne) || cropHasGuide(crop.name_en);
@@ -493,7 +493,7 @@ export function CropGuidesViewer() {
                   <button
                     type="button"
                     onClick={() => {
-                      // Try Nepali name first (guides use crop_name which is typically Nepali)
+                      if (!hasGuide) return;
                       const cropName = crop.name_ne || crop.name_en;
                       setSelectedCrop(cropName);
                       setActiveSection(null);
@@ -508,40 +508,54 @@ export function CropGuidesViewer() {
                     }`}
                     disabled={!hasGuide}
                   >
-                    {/* Crop Image */}
-                    <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-lg overflow-hidden bg-muted mb-1.5 relative">
-                      <img
-                        src={imageUrl}
-                        alt={crop.name_en}
-                        className="w-full h-full object-cover"
-                        onError={handleCropImageError}
-                        loading="lazy"
-                      />
+                    {/* Crop Image - Full aspect-square */}
+                    <div className="w-full aspect-square rounded-lg overflow-hidden bg-muted flex items-center justify-center mb-2 relative">
+                      {imageUrl ? (
+                        <img
+                          src={imageUrl}
+                          alt={crop.name_ne || crop.name_en}
+                          className="w-full h-full object-cover"
+                          onError={handleCropImageError}
+                          loading="lazy"
+                        />
+                      ) : (
+                        <span className="text-3xl">{categoryLabel.emoji}</span>
+                      )}
                       {hasGuide && (
-                        <div className="absolute top-0.5 right-0.5 w-4 h-4 rounded-full bg-primary flex items-center justify-center">
-                          <BookOpen className="h-2.5 w-2.5 text-primary-foreground" />
+                        <div className="absolute top-1 right-1 w-5 h-5 rounded-full bg-primary flex items-center justify-center shadow-sm">
+                          <BookOpen className="h-3 w-3 text-primary-foreground" />
                         </div>
                       )}
                     </div>
                     
                     {/* Crop Name */}
-                    <span className="text-[11px] sm:text-xs font-semibold line-clamp-1 text-center w-full">
-                      {crop.name_ne}
-                    </span>
-                    <span className="text-[9px] sm:text-[10px] text-muted-foreground line-clamp-1 text-center w-full">
-                      {crop.name_en}
-                    </span>
+                    <div className="w-full text-center space-y-0.5">
+                      <div className="text-sm font-semibold leading-tight line-clamp-1">
+                        {crop.name_ne}
+                      </div>
+                      <div className="text-xs text-muted-foreground leading-tight line-clamp-1">
+                        {crop.name_en}
+                      </div>
+                    </div>
                     
-                    {/* Guide badge */}
-                    {hasGuide ? (
-                      <span className="mt-1 text-[8px] sm:text-[9px] text-primary font-medium">
-                        {language === 'ne' ? 'गाइड हेर्नुहोस्' : 'View Guide'} →
-                      </span>
-                    ) : (
-                      <span className="mt-1 text-[8px] sm:text-[9px] text-muted-foreground">
-                        {language === 'ne' ? 'चाँडै आउँदैछ' : 'Coming soon'}
-                      </span>
-                    )}
+                    {/* Guide badge - full card, text changes */}
+                    <div className={`mt-1.5 text-[10px] sm:text-[11px] font-medium px-2 py-1 rounded-full flex items-center gap-1 ${
+                      hasGuide
+                        ? 'bg-primary/10 text-primary border border-primary/20'
+                        : 'bg-muted/60 text-muted-foreground border border-border'
+                    }`}>
+                      {hasGuide ? (
+                        <>
+                          <span>✅</span>
+                          <span className="truncate">{language === 'ne' ? 'पूर्ण गाइड' : 'Full Guide'}</span>
+                        </>
+                      ) : (
+                        <>
+                          <span>📖</span>
+                          <span className="truncate">{language === 'ne' ? 'गाइड आउँदैछ' : 'Guide coming soon'}</span>
+                        </>
+                      )}
+                    </div>
                   </button>
                 </motion.div>
               );
