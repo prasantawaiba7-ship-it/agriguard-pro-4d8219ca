@@ -1,8 +1,5 @@
 import { useState, useMemo } from 'react';
-import { Card, CardContent } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { BookOpen, Loader2, Search, Leaf } from 'lucide-react';
+import { Leaf, Search, Loader2 } from 'lucide-react';
 import { useLanguage } from '@/hooks/useLanguage';
 import ReactMarkdown from 'react-markdown';
 
@@ -23,7 +20,7 @@ const normalizeText = (value: string) =>
   value.normalize("NFKD").toLowerCase().trim();
 
 export function DiseaseGuideTab() {
-  const { t, language } = useLanguage();
+  const { language } = useLanguage();
   const [cropName, setCropName] = useState('');
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [guide, setGuide] = useState<string | null>(null);
@@ -34,11 +31,11 @@ export function DiseaseGuideTab() {
     if (!cropName) return [];
     return CROP_OPTIONS.filter((c) =>
       normalizeText(c).includes(normalizeText(cropName))
-    );
+    ).slice(0, 6);
   }, [cropName]);
 
-  const fetchGuide = async () => {
-    if (!cropName.trim()) return;
+  const fetchGuide = async (name: string) => {
+    if (!name.trim()) return;
     setIsLoading(true);
     setError(null);
     setGuide(null);
@@ -52,7 +49,7 @@ export function DiseaseGuideTab() {
             'Content-Type': 'application/json',
             Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
           },
-          body: JSON.stringify({ crop_name: cropName.trim(), language }),
+          body: JSON.stringify({ crop_name: name.trim(), language }),
         }
       );
 
@@ -64,7 +61,7 @@ export function DiseaseGuideTab() {
       } else {
         setGuide(data.guide);
       }
-    } catch (err) {
+    } catch {
       setError(language === 'ne'
         ? 'गाइड लोड गर्न सकिएन। पछि फेरि प्रयास गर्नुहोस्।'
         : 'Failed to load guide. Please try again.');
@@ -73,127 +70,126 @@ export function DiseaseGuideTab() {
     }
   };
 
-  return (
-    <div className="space-y-4">
-      <div className="flex items-center gap-2 mb-2">
-        <BookOpen className="h-5 w-5 text-primary" />
-        <h3 className="text-lg font-semibold">
-          {language === 'ne' ? 'बाली रोग गाइड' : 'Crop Disease Guide'}
-        </h3>
-      </div>
+  const handleSelectCrop = (name: string) => {
+    setCropName(name);
+    setShowSuggestions(false);
+    fetchGuide(name);
+  };
 
-      {/* Crop input + search */}
-      <Card>
-        <CardContent className="pt-4 space-y-3">
-          <label className="text-xs font-medium text-muted-foreground">
-            {language === 'ne' ? 'बालीको नाम टाइप गर्नुहोस्' : 'Type crop name'}
-          </label>
+  return (
+    <div className="mx-auto w-full max-w-md">
+      <div className="rounded-2xl border bg-card text-card-foreground shadow-sm">
+        {/* Header */}
+        <div className="flex flex-col space-y-2 p-4 bg-gradient-to-r from-primary/10 to-accent/10 rounded-t-2xl">
+          <h3 className="text-base font-semibold flex items-center gap-2">
+            <Leaf className="w-5 h-5 text-primary" />
+            {language === 'ne' ? 'बाली रोग गाइड' : 'Disease & Pest Guide'}
+          </h3>
+          <p className="text-xs text-muted-foreground">
+            {language === 'ne'
+              ? 'बाली छानेर रोगको जानकारी, लक्षण र व्यवस्थापनको गाइड हेर्नुहोस्।'
+              : 'Select a crop to view disease info, symptoms & management guide.'}
+          </p>
+        </div>
+
+        <div className="p-4 space-y-4">
+          {/* Crop input + suggestions */}
           <div className="relative">
-            <input
-              type="text"
-              value={cropName}
-              onChange={(e) => {
-                setCropName(e.target.value);
-                setShowSuggestions(e.target.value.length > 0);
-              }}
-              onFocus={() => cropName && setShowSuggestions(true)}
-              onBlur={() => setTimeout(() => setShowSuggestions(false), 150)}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter' && cropName.trim()) {
-                  setShowSuggestions(false);
-                  fetchGuide();
-                }
-              }}
-              placeholder="e.g. धान, टमाटर, Potato, Maize..."
-              className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2
-                         text-sm ring-offset-background placeholder:text-muted-foreground
-                         focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
-            />
+            <div className="flex items-center gap-2 rounded-xl border bg-background px-3 py-2">
+              <Search className="w-4 h-4 text-muted-foreground shrink-0" />
+              <input
+                type="text"
+                value={cropName}
+                onChange={(e) => {
+                  setCropName(e.target.value);
+                  setShowSuggestions(e.target.value.length > 0);
+                }}
+                onFocus={() => cropName && setShowSuggestions(true)}
+                onBlur={() => setTimeout(() => setShowSuggestions(false), 150)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' && cropName.trim()) {
+                    setShowSuggestions(false);
+                    fetchGuide(cropName);
+                  }
+                }}
+                placeholder={language === 'ne'
+                  ? 'जस्तै: धान, गहुँ, मकै, टमाटर...'
+                  : 'e.g. Paddy, Wheat, Tomato...'}
+                className="flex h-9 w-full bg-transparent text-sm outline-none placeholder:text-muted-foreground"
+              />
+            </div>
+
             {showSuggestions && filteredCrops.length > 0 && (
-              <ul className="absolute z-10 mt-1 max-h-40 w-full overflow-auto rounded-md border
-                             bg-popover text-popover-foreground shadow-sm text-sm">
+              <div className="absolute z-20 mt-1 w-full rounded-xl border bg-popover shadow-md max-h-56 overflow-y-auto">
                 {filteredCrops.map((crop) => (
-                  <li
+                  <button
                     key={crop}
-                    onMouseDown={() => {
-                      setCropName(crop);
-                      setShowSuggestions(false);
+                    type="button"
+                    className="w-full text-left px-3 py-2 text-sm hover:bg-muted"
+                    onMouseDown={(e) => {
+                      e.preventDefault();
+                      handleSelectCrop(crop);
                     }}
-                    className="cursor-pointer px-3 py-1.5 hover:bg-muted"
                   >
                     {crop}
-                  </li>
+                  </button>
                 ))}
-              </ul>
+              </div>
             )}
           </div>
-          <Button
-            onClick={fetchGuide}
-            disabled={!cropName.trim() || isLoading}
-            className="w-full"
-          >
-            {isLoading ? (
-              <Loader2 className="h-4 w-4 animate-spin mr-2" />
-            ) : (
-              <Search className="h-4 w-4 mr-2" />
-            )}
-            {language === 'ne' ? 'रोग गाइड खोज्नुहोस्' : 'Search Disease Guide'}
-          </Button>
-        </CardContent>
-      </Card>
 
-      {/* Error */}
-      {error && (
-        <Card>
-          <CardContent className="text-center py-6 text-muted-foreground">
-            <p>{error}</p>
-          </CardContent>
-        </Card>
-      )}
-
-      {/* Loading */}
-      {isLoading && (
-        <Card>
-          <CardContent className="flex flex-col items-center justify-center py-12 gap-3">
-            <Loader2 className="h-8 w-8 animate-spin text-primary" />
-            <p className="text-sm text-muted-foreground">
-              {language === 'ne' ? 'AI गाइड तयार गर्दैछ...' : 'Generating AI guide...'}
-            </p>
-          </CardContent>
-        </Card>
-      )}
-
-      {/* Guide result */}
-      {guide && !isLoading && (
-        <Card>
-          <CardContent className="pt-4">
-            <div className="flex items-center gap-2 mb-3">
-              <Leaf className="h-4 w-4 text-primary" />
-              <Badge variant="secondary">{cropName}</Badge>
+          {/* Guide result card */}
+          <div className="rounded-xl border bg-muted/50">
+            <div className="flex items-center justify-between px-3 py-2 border-b">
+              <span className="text-xs font-medium text-muted-foreground">
+                {language === 'ne' ? 'रोग गाइड' : 'Disease Guide'}
+              </span>
+              <span className="text-[11px] text-muted-foreground">
+                {cropName || (language === 'ne' ? 'बाली छानिएको छैन' : 'Crop not selected')}
+              </span>
             </div>
-            <div className="prose prose-sm dark:prose-invert max-w-none
-                            prose-headings:text-foreground prose-p:text-foreground
-                            prose-li:text-foreground prose-strong:text-foreground
-                            max-h-[70vh] overflow-y-auto pr-2">
-              <ReactMarkdown>{guide}</ReactMarkdown>
-            </div>
-          </CardContent>
-        </Card>
-      )}
 
-      {/* Empty state */}
-      {!guide && !isLoading && !error && (
-        <Card>
-          <CardContent className="text-center py-8 text-muted-foreground">
-            <BookOpen className="h-10 w-10 mx-auto mb-3 opacity-50" />
-            <p>
-              {language === 'ne'
-                ? 'बालीको नाम लेखेर रोग गाइड खोज्नुहोस्।'
-                : 'Enter a crop name to search for disease guide.'}
-            </p>
-          </CardContent>
-        </Card>
-      )}
+            <div className="max-h-[65vh] overflow-y-auto px-3 py-3 text-xs leading-relaxed space-y-2">
+              {isLoading && (
+                <div className="flex flex-col items-center justify-center py-8 gap-2">
+                  <Loader2 className="h-6 w-6 animate-spin text-primary" />
+                  <p className="text-muted-foreground">
+                    {language === 'ne' ? 'AI गाइड तयार गर्दैछ...' : 'Generating AI guide...'}
+                  </p>
+                </div>
+              )}
+
+              {error && (
+                <p className="text-destructive text-center py-4">{error}</p>
+              )}
+
+              {guide && !isLoading && (
+                <div className="prose prose-sm dark:prose-invert max-w-none
+                                prose-headings:text-foreground prose-p:text-foreground
+                                prose-li:text-foreground prose-strong:text-foreground">
+                  <ReactMarkdown>{guide}</ReactMarkdown>
+                </div>
+              )}
+
+              {!guide && !isLoading && !error && (
+                <>
+                  <p className="text-muted-foreground">
+                    {language === 'ne'
+                      ? 'बाली रोजेपछि रोगको विस्तृत गाइड यहाँ देखिन्छ।'
+                      : 'Select a crop above to see the detailed disease guide here.'}
+                  </p>
+                  <ul className="list-disc list-inside space-y-1 text-muted-foreground">
+                    <li>{language === 'ne' ? 'मुख्य रोगहरूको नाम र लक्षण' : 'Major disease names & symptoms'}</li>
+                    <li>{language === 'ne' ? 'कहिले जोखिम धेरै हुन्छ (मौसम / चरण)' : 'High-risk seasons & stages'}</li>
+                    <li>{language === 'ne' ? 'जोगाउने तरिका (cultural, organic, chemical)' : 'Management (cultural, organic, chemical)'}</li>
+                    <li>{language === 'ne' ? 'सुरक्षासम्बन्धी सावधानी र PHI दिन' : 'Safety precautions & PHI days'}</li>
+                  </ul>
+                </>
+              )}
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
   );
 }
