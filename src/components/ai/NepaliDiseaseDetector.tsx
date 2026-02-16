@@ -374,11 +374,21 @@ interface AnalysisResult {
   possible_alternatives?: string[];
 }
 
+const CROP_OPTIONS = [
+  "धान", "गहुँ", "मकै", "टमाटर", "बन्दा", "काउली",
+  "आलु", "कफी", "सुन्तला", "केरा", "धान (Basmati)", "Paddy", "Wheat", "Maize"
+];
+
 export function NepaliDiseaseDetector() {
   const [selectedCrop, setSelectedCrop] = useState<string>('');
   const [cropName, setCropName] = useState<string>('');
+  const [showSuggestions, setShowSuggestions] = useState(false);
   const [image, setImage] = useState<string | null>(null);
   const [isDragging, setIsDragging] = useState(false);
+  
+  const filteredCrops = CROP_OPTIONS.filter((c) =>
+    c.toLowerCase().includes(cropName.toLowerCase())
+  );
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [result, setResult] = useState<AnalysisResult | null>(null);
   const [activeTab, setActiveTab] = useState('detect');
@@ -1085,15 +1095,39 @@ export function NepaliDiseaseDetector() {
         {/* Disease Detection Tab */}
         <TabsContent value="detect" className="p-4 pt-0 space-y-4">
            {/* Crop Selection */}
-           <div className="space-y-2">
+           <div className="space-y-2 relative">
              <label className="text-sm font-medium">{t('selectCropType')}</label>
              <input
                type="text"
                value={cropName}
-               onChange={(e) => setCropName(e.target.value)}
+               onChange={(e) => {
+                 const value = e.target.value;
+                 setCropName(value);
+                 setShowSuggestions(value.length > 0);
+               }}
+               onFocus={() => cropName && setShowSuggestions(true)}
+               onBlur={() => {
+                 setTimeout(() => setShowSuggestions(false), 150);
+               }}
                placeholder={t('selectCropPlaceholder') || "e.g. धान, गहुँ, टमाटर..."}
                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
              />
+             {showSuggestions && filteredCrops.length > 0 && (
+               <ul className="absolute z-10 mt-1 max-h-40 w-full overflow-auto rounded-md border bg-popover text-popover-foreground shadow-sm text-sm">
+                 {filteredCrops.map((crop) => (
+                   <li
+                     key={crop}
+                     onMouseDown={() => {
+                       setCropName(crop);
+                       setShowSuggestions(false);
+                     }}
+                     className="cursor-pointer px-3 py-1.5 hover:bg-muted"
+                   >
+                     {crop}
+                   </li>
+                 ))}
+               </ul>
+             )}
            </div>
 
           {/* Voice Input for Symptom Description */}
