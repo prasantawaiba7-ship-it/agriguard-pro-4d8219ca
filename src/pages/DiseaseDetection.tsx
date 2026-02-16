@@ -8,13 +8,14 @@ import { DiseasePrediction } from '@/components/disease/DiseasePrediction';
 import { DiagnosisCaseSubmit } from '@/components/diagnosis/DiagnosisCaseSubmit';
 import { MyDiagnosisCases } from '@/components/diagnosis/MyDiagnosisCases';
 import { PreventionTipsSection } from '@/components/disease/PreventionTipsSection';
+import { DiseaseGuideTab } from '@/components/disease/DiseaseGuideTab';
 import { useAuth } from '@/hooks/useAuth';
 import { useLanguage } from '@/hooks/useLanguage';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 export default function DiseaseDetection() {
   const { user } = useAuth();
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
   
   const steps = [
     { step: '१', title: t('stepSelectCrop'), desc: t('stepCropType') },
@@ -47,8 +48,9 @@ export default function DiseaseDetection() {
           <OutbreakAlertsBanner />
 
           <Tabs defaultValue="ai" className="space-y-6">
-            <TabsList className="grid w-full grid-cols-3">
+            <TabsList className="grid w-full grid-cols-4">
               <TabsTrigger value="ai">{t('aiInstantCheck')}</TabsTrigger>
+              <TabsTrigger value="guide">{language === 'ne' ? 'रोग गाइड' : 'Disease Guide'}</TabsTrigger>
               <TabsTrigger value="expert">{t('askExpert')}</TabsTrigger>
               <TabsTrigger value="prevention">{t('preventionTips') || 'रोकथाम'}</TabsTrigger>
             </TabsList>
@@ -60,6 +62,10 @@ export default function DiseaseDetection() {
                   <DiseasePrediction />
                 </div>
               )}
+            </TabsContent>
+
+            <TabsContent value="guide" className="space-y-6">
+              <DiseaseGuideTab />
             </TabsContent>
 
             <TabsContent value="expert" className="space-y-6">
