@@ -14,11 +14,116 @@ function getSeason(date: Date): string {
   return "Autumn";
 }
 
+const PREVENTION_PROMPT = `You are an agricultural plant protection expert for Nepali farmers.
+Generate practical prevention and protection tips for the given crop against diseases and pests.
+
+OUTPUT FORMAT (STRICT):
+## 🛡️ रोकथाम उपायहरू (Prevention Tips)
+
+### 1. बीउ र बिरुवा व्यवस्थापन (Seed & Seedling Management)
+- 3-4 bullet points
+
+### 2. खेत तयारी र सरसफाई (Field Preparation & Sanitation)
+- 3-4 bullet points
+
+### 3. मौसम अनुसार सावधानी (Seasonal Precautions)
+- Current season-specific tips (3-4 bullets)
+
+### 4. जैविक रोकथाम (Organic Prevention)
+- Neem, trichoderma, bio-agents, companion planting, etc.
+- 3-4 bullet points
+
+### 5. रासायनिक रोकथाम (Chemical Prevention - only if needed)
+- Preventive fungicides/insecticides with active ingredient names (NO brand names)
+- Safe dosage, PHI days
+- 2-3 bullet points
+
+### 6. कीरा व्यवस्थापन (Pest Management)
+- Common pests for this crop and prevention methods
+- 3-4 bullet points
+
+### 7. दैनिक निगरानी चेकलिस्ट (Daily Monitoring Checklist)
+- 5-6 quick field checks
+
+RULES:
+- Use simple Nepali mixed with English technical terms
+- Keep it practical and farmer-friendly
+- Never recommend banned chemicals
+- Only active ingredients, no brand names
+- Relate to Nepali seasons and local conditions`;
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
 
+  // POST = AI-generated prevention tips for a specific crop
+  if (req.method === "POST") {
+    try {
+      const { crop_name, language = "ne" } = await req.json();
+
+      if (!crop_name || !crop_name.trim()) {
+        return new Response(
+          JSON.stringify({ error: "crop_name is required" }),
+          { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+
+      const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
+      if (!LOVABLE_API_KEY) {
+        return new Response(
+          JSON.stringify({ error: "AI not configured" }),
+          { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+
+      const season = getSeason(new Date());
+      const userPrompt = language === "ne"
+        ? `"${crop_name}" बालीको रोकथाम उपायहरू दिनुहोस्। अहिलेको मौसम: ${season}।`
+        : `Give prevention tips for "${crop_name}" crop. Current season: ${season}.`;
+
+      const aiResponse = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${LOVABLE_API_KEY}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          model: "google/gemini-2.5-flash",
+          messages: [
+            { role: "system", content: PREVENTION_PROMPT },
+            { role: "user", content: userPrompt },
+          ],
+          max_tokens: 3000,
+          temperature: 0.3,
+        }),
+      });
+
+      if (!aiResponse.ok) {
+        console.error("[PREVENTION] AI error:", aiResponse.status);
+        return new Response(
+          JSON.stringify({ error: "AI service error" }),
+          { status: 502, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+
+      const aiData = await aiResponse.json();
+      const guide = aiData.choices?.[0]?.message?.content || null;
+
+      return new Response(
+        JSON.stringify({ guide, crop_name }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    } catch (error) {
+      console.error("[PREVENTION] Error:", error);
+      return new Response(
+        JSON.stringify({ error: error instanceof Error ? error.message : "Unknown error" }),
+        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+  }
+
+  // GET = original DB-based tips
   try {
     const supabase = createClient(
       Deno.env.get("SUPABASE_URL")!,
@@ -30,7 +135,6 @@ Deno.serve(async (req) => {
     let season = url.searchParams.get("season");
     const farmerId = url.searchParams.get("farmer_id");
 
-    // If crop/season not provided, derive from latest detection
     if (!crop && farmerId) {
       const { data: latest } = await supabase
         .from("disease_detections")
@@ -41,7 +145,6 @@ Deno.serve(async (req) => {
         .single();
 
       if (latest) {
-        // Try to extract crop from detected_disease string
         const disease = latest.detected_disease || "";
         const knownCrops = ["Rice", "Tomato", "Wheat", "Potato", "Maize", "Cauliflower", "Cabbage", "Onion", "Chilli"];
         for (const c of knownCrops) {
@@ -60,17 +163,9 @@ Deno.serve(async (req) => {
       season = getSeason(new Date());
     }
 
-    // Query with crop + season
     let query = supabase.from("prevention_tips").select("*");
-
-    if (crop) {
-      // Get crop-specific OR generic tips
-      query = query.or(`crop.eq.${crop},crop.is.null`);
-    }
-
-    if (season) {
-      query = query.or(`season.eq.${season},season.is.null`);
-    }
+    if (crop) query = query.or(`crop.eq.${crop},crop.is.null`);
+    if (season) query = query.or(`season.eq.${season},season.is.null`);
 
     const { data: tips, error } = await query.limit(10);
 
@@ -81,7 +176,6 @@ Deno.serve(async (req) => {
       });
     }
 
-    // Sort: crop-specific first, then generic
     const sorted = (tips || []).sort((a, b) => {
       if (a.crop && !b.crop) return -1;
       if (!a.crop && b.crop) return 1;
@@ -89,14 +183,8 @@ Deno.serve(async (req) => {
     }).slice(0, 5);
 
     return new Response(
-      JSON.stringify({
-        crop: crop || null,
-        season,
-        tips: sorted,
-      }),
-      {
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      }
+      JSON.stringify({ crop: crop || null, season, tips: sorted }),
+      { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   } catch (e) {
     return new Response(JSON.stringify({ error: e.message }), {
