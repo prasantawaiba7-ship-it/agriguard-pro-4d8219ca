@@ -50,7 +50,9 @@ Respond in STRICT JSON with this schema:
       "confidence": 0.0,
       "severity": "low" | "medium" | "high" | null,
       "affectedPart": "leaves/stem/fruit/roots/whole plant",
-      "short_reason": "1-2 sentence explanation${language === 'ne' ? ' नेपालीमा' : ''}",
+  "short_reason": "1-2 sentence explanation${language === 'ne' ? ' नेपालीमा' : ''}",
+      "local_name": "Common local/farmer name for this problem${language === 'ne' ? ' (नेपालीमा, किसानले चिन्ने नाम)' : ''}",
+      "cause_short": "1 short line explaining the cause in very simple farmer language${language === 'ne' ? ' (सरल नेपालीमा)' : ''}",
       "symptoms": ["symptom1", "symptom2"],
       "causes": ["cause1", "cause2"],
       "recommended_chemicals": [
@@ -129,6 +131,13 @@ CONFIDENCE HANDLING:
 - 0.5-0.8: Note "this is an estimate only."
 - < 0.5: Strong warning, no chemical recommendations.
 
+AUDIO SCRIPT:
+At the very end, add a section called "AUDIO_SCRIPT:" followed by a 20-40 second spoken summary in very simple English:
+- Start with what the problem is.
+- Then 2-3 immediate actions.
+- End with a safety reminder.
+Keep it under 80 words, conversational tone.
+
 Use only facts from input. Do not invent information.`;
   }
 
@@ -154,6 +163,13 @@ CONFIDENCE:
 - >= 0.8: सामान्य report।
 - 0.5-0.8: "अनुमान मात्र हो" उल्लेख।
 - < 0.5: कडा चेतावनी, औषधि सिफारिस नगर्ने।
+
+अडियो स्क्रिप्ट:
+अन्तिममा "AUDIO_SCRIPT:" भनेर एउटा खण्ड थप्नुहोस् जसमा 20-40 सेकेन्डको सरल नेपाली बोल्ने स्क्रिप्ट हुनुपर्छ:
+- पहिले समस्या के हो भन्ने।
+- त्यसपछि 2-3 तुरुन्तै गर्ने कदम।
+- अन्तिममा सावधानी/सल्लाह।
+80 शब्दभन्दा कम राख्नुस्, किसानसँग कुरा गरे जस्तो सरल भाषामा।
 
 Input को तथ्य मात्र प्रयोग गर्नुहोस्।`;
 }
@@ -326,12 +342,20 @@ Provide detailed diagnosis with locally available treatments.`;
       crop_name: cropType || structuredData.crop || (lang === 'en' ? "Crop" : "बाली"),
       disease_name: topDisease.name || topDisease.name_en || "Unknown",
       disease_id: topDisease.disease_id || "unknown",
+      local_name: topDisease.local_name || topDisease.name || "",
+      cause_short: topDisease.cause_short || topDisease.short_reason || "",
       confidence: overallConfidence,
       severity: severityLabel,
+      danger_level: severityLabel,
       farmer_location: farmerLocation || "",
       symptoms_keypoints: topDisease.symptoms || [],
       recommended_chemicals: topDisease.recommended_chemicals || [],
       organic_treatment: topDisease.organic_treatment || null,
+      what_to_do_now: [
+        ...(topDisease.recommended_actions || []),
+        ...(topDisease.management_practices || []).slice(0, 2)
+      ],
+      what_to_prevent_next_time: topDisease.preventive_measures || [],
       management_practices: [
         ...(topDisease.management_practices || []),
         ...(topDisease.preventive_measures || [])
@@ -377,6 +401,34 @@ Provide detailed diagnosis with locally available treatments.`;
       }
     }
 
+    // Extract audio script from report if present
+    let audioScript = "";
+    if (nepaliReport.includes("AUDIO_SCRIPT:")) {
+      const parts = nepaliReport.split("AUDIO_SCRIPT:");
+      nepaliReport = parts[0].trim();
+      audioScript = parts[1]?.trim() || "";
+    }
+
+    // Fallback audio script if not generated
+    if (!audioScript) {
+      const cropName = enrichedData.crop_name;
+      const diseaseName = enrichedData.disease_name;
+      const severity = enrichedData.danger_level;
+      if (lang === 'ne') {
+        audioScript = `तपाईंको ${cropName} मा ${diseaseName} देखिएको छ। गम्भीरता: ${severity}। `;
+        if (enrichedData.what_to_do_now.length > 0) {
+          audioScript += `तुरुन्तै गर्ने: ${enrichedData.what_to_do_now.slice(0, 2).join(', ')}। `;
+        }
+        audioScript += `नजिकको कृषि प्राविधिकसँग पनि सल्लाह लिनुहोस्।`;
+      } else {
+        audioScript = `Your ${cropName} shows ${diseaseName}. Severity: ${severity}. `;
+        if (enrichedData.what_to_do_now.length > 0) {
+          audioScript += `Do this now: ${enrichedData.what_to_do_now.slice(0, 2).join(', ')}. `;
+        }
+        audioScript += `Also consult your local agriculture officer.`;
+      }
+    }
+
     // Build backward-compatible response
     const defaultFallback = lang === 'en' ? "Consult an agricultural technician" : "कृषि प्राविधिकसँग सल्लाह लिनुहोस्";
 
@@ -388,6 +440,13 @@ Provide detailed diagnosis with locally available treatments.`;
       overall_confidence: overallConfidence,
       notes_for_doctor: enrichedData.notes_for_doctor,
       nepaliReport,
+      audio_script: audioScript,
+      // Farmer-friendly structured fields (spec-aligned)
+      local_name: enrichedData.local_name,
+      cause_short: enrichedData.cause_short,
+      danger_level: enrichedData.danger_level,
+      what_to_do_now: enrichedData.what_to_do_now,
+      what_to_prevent_next_time: enrichedData.what_to_prevent_next_time,
       // Backward-compatible fields
       isHealthy: structuredData.isHealthy ?? (topDisease.type === "healthy"),
       issueType: topDisease.type || "disease",
