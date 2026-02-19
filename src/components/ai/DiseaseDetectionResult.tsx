@@ -26,7 +26,14 @@ export interface DiseaseResult {
   whenToSeekHelp?: string;
   estimatedRecoveryTime?: string;
   nepaliReport?: string;
-  // New consensus fields
+  // Farmer-friendly fields (spec-aligned)
+  audio_script?: string;
+  local_name?: string;
+  cause_short?: string;
+  danger_level?: string;
+  what_to_do_now?: string[];
+  what_to_prevent_next_time?: string[];
+  // Consensus fields
   status?: 'ok' | 'uncertain';
   consensus_reached?: boolean;
   notes_for_doctor?: string;
@@ -36,6 +43,8 @@ export interface DiseaseResult {
     confidence: number;
     type?: string;
     short_reason?: string;
+    local_name?: string;
+    cause_short?: string;
   }>;
 }
 
@@ -177,13 +186,20 @@ export function DiseaseDetectionResult({ result, language, onSpeak, isSpeaking, 
 
   // Get readable text for TTS
   const getReadableText = () => {
+    // Prefer the AI-generated audio script
+    if (result.audio_script) return result.audio_script;
     if (result.nepaliReport) return result.nepaliReport;
     
     let text = result.isHealthy 
       ? (language === 'ne' ? 'तपाईंको बाली स्वस्थ देखिन्छ।' : 'Your crop appears healthy.')
       : `${result.detectedIssue}. `;
     
-    if (result.symptoms && result.symptoms.length > 0) {
+    if (result.cause_short) {
+      text += result.cause_short + '. ';
+    }
+    if (result.what_to_do_now && result.what_to_do_now.length > 0) {
+      text += (language === 'ne' ? 'तुरुन्तै गर्ने: ' : 'Do now: ') + result.what_to_do_now.slice(0, 2).join(', ') + '. ';
+    } else if (result.symptoms && result.symptoms.length > 0) {
       text += (language === 'ne' ? 'लक्षणहरू: ' : 'Symptoms: ') + result.symptoms.join(', ') + '. ';
     }
     if (result.treatment) {
@@ -264,11 +280,43 @@ export function DiseaseDetectionResult({ result, language, onSpeak, isSpeaking, 
             <h3 className="font-bold text-lg mt-1 break-words">
               {result.detectedIssue}
             </h3>
+            {result.local_name && result.local_name !== result.detectedIssue && (
+              <p className="text-sm text-muted-foreground italic">
+                ({result.local_name})
+              </p>
+            )}
             {result.detectedIssueEnglish && result.detectedIssueEnglish !== result.detectedIssue && (
               <p className="text-sm text-muted-foreground">{result.detectedIssueEnglish}</p>
             )}
           </div>
         </div>
+
+        {/* 🔊 PROMINENT LISTEN BUTTON - Layer 3: Audio (low-literacy priority) */}
+        {onSpeak && (
+          <Button
+            onClick={() => onSpeak(getReadableText())}
+            className={cn(
+              "w-full mt-3 h-12 text-base font-semibold gap-3 rounded-xl",
+              isSpeaking
+                ? "bg-destructive/10 text-destructive border-destructive/30 hover:bg-destructive/20"
+                : "bg-primary/10 text-primary border-primary/30 hover:bg-primary/20"
+            )}
+            variant="outline"
+          >
+            {isSpeaking ? <VolumeX className="w-5 h-5" /> : <Volume2 className="w-5 h-5" />}
+            {isSpeaking 
+              ? (language === 'ne' ? '🔇 बन्द गर्नुहोस्' : '🔇 Stop')
+              : (language === 'ne' ? '🔊 सुन्नुहोस्' : '🔊 Listen')
+            }
+          </Button>
+        )}
+
+        {/* Cause - simple 1-line explanation */}
+        {result.cause_short && (
+          <p className="mt-3 text-sm text-muted-foreground bg-muted/50 rounded-lg p-2.5">
+            💡 {result.cause_short}
+          </p>
+        )}
 
         {/* Confidence meter */}
         <div className="mt-3 space-y-1">
@@ -327,6 +375,39 @@ export function DiseaseDetectionResult({ result, language, onSpeak, isSpeaking, 
 
       {/* Main content */}
       <div className="p-4 space-y-4">
+        {/* 🎯 WHAT TO DO NOW - Priority action card */}
+        {result.what_to_do_now && result.what_to_do_now.length > 0 && (
+          <div className="bg-primary/5 rounded-xl p-3 border-2 border-primary/20">
+            <h4 className="font-bold text-sm flex items-center gap-2 mb-2 text-primary">
+              ⚡ {language === 'ne' ? 'तुरुन्तै गर्ने' : 'Do This NOW'}
+            </h4>
+            <ul className="text-sm space-y-1.5">
+              {result.what_to_do_now.slice(0, 4).map((action, i) => (
+                <li key={i} className="flex items-start gap-2">
+                  <span className="text-primary font-bold">{i + 1}.</span>
+                  <span>{action}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
+
+        {/* 🛡️ PREVENTION - What to prevent next time */}
+        {result.what_to_prevent_next_time && result.what_to_prevent_next_time.length > 0 && (
+          <div className="bg-success/5 rounded-xl p-3 border border-success/20">
+            <h4 className="font-semibold text-sm flex items-center gap-2 mb-2 text-success">
+              🛡️ {language === 'ne' ? 'अर्को पटक रोक्न' : 'Prevent Next Time'}
+            </h4>
+            <ul className="text-sm space-y-1 text-muted-foreground">
+              {result.what_to_prevent_next_time.slice(0, 3).map((tip, i) => (
+                <li key={i} className="flex items-start gap-2">
+                  <span className="text-success">✓</span>
+                  <span>{tip}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
         {/* Symptoms */}
         {result.symptoms && result.symptoms.length > 0 && (
           <div>
