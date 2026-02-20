@@ -1,59 +1,75 @@
 import { useState, useEffect, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
-import { HelpCircle, X, ChevronRight, Check } from 'lucide-react';
+import { HelpCircle, X, ChevronRight, ChevronLeft, Check } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { toast } from 'sonner';
 
 interface TourStep {
   targetSelector: string;
   title: string;
-  text: string;
-  position: 'top' | 'bottom' | 'left' | 'right';
+  text: string[];
 }
 
 const TOUR_STEPS: TourStep[] = [
   {
     targetSelector: '[data-tour="page-title"]',
-    title: 'मेरो खेत',
-    text: 'यो पेजबाट तपाईंले आफ्ना सबै खेत र बाली हेर्न र मिलाउन सक्नुहुन्छ। मल, सिंचाइ, बिउ सबै जानकारी यहींबाट भेटिन्छ।',
-    position: 'bottom',
+    title: 'पेज के हो?',
+    text: [
+      "यो 'मेरो खेत' पेजबाट तपाईंका सबै खेत र बालीको अवस्था हेर्न मिल्छ।",
+      "आज के गर्नु, कुन खेतमा के काम छ — सबै जानकारी यहाँ देखिन्छ।",
+    ],
   },
   {
     targetSelector: '[data-tour="tabs"]',
-    title: 'ट्याबहरू',
-    text: '"खेतहरू" मा तपाईंका सबै खेतको सूची देखिन्छ। "गाइड" मा बालीको खेती गाइड पढ्न/सुन्न सकिन्छ।',
-    position: 'bottom',
+    title: 'ट्याबहरू (खेतहरू / गाइड)',
+    text: [
+      '`खेतहरू` मा तपाईंका सबै खेतको सूची देखिन्छ।',
+      '`गाइड` मा बालीको विस्तृत खेती गाइड पढ्न/सुनिन सकिन्छ।',
+    ],
   },
   {
     targetSelector: '[data-tour="today-summary"]',
-    title: 'आजको सारांश',
-    text: 'यहाँ आजका मुख्य सल्लाह देखिन्छन् — कुन बालीमा सिंचाइ गर्ने, मल कहिले हाल्ने आदि। "आज के गर्ने?" छिटो जानकारी यहाँबाट पाउनुहोस्।',
-    position: 'bottom',
+    title: 'आजको सारांश कार्ड',
+    text: [
+      "यहाँ आजका मुख्य सल्लाह देखिन्छन् – जस्तै सिंचाइ, मल, सावधानी।",
+      "पहिले यो कार्ड पढेर 'आज के गर्ने?' थाहा पाउनुहोस्।",
+    ],
   },
   {
     targetSelector: '[data-tour="field-card"]',
-    title: 'खेत कार्ड',
-    text: 'यो तपाईंको एउटा खेत हो। हरियो बिन्दु = सब ठीक छ। बालीको नाम, दिन, ठेगाना र आजको सल्लाह देखिन्छ।',
-    position: 'bottom',
+    title: 'एउटा खेत card के हो?',
+    text: [
+      'यो card तपाईंको एउटा खेत हो — नाम, बाली, ठाउँ र आजको सल्लाह देखिन्छ।',
+      'माथिको हरियो बिन्दुले खेत सामान्य अवस्थामा छ भनेर देखाउँछ।',
+    ],
   },
   {
     targetSelector: '[data-tour="field-card"]',
-    title: 'विस्तृत जानकारी',
-    text: 'कार्ड थिच्दा खेतको पूरा जानकारी खुल्छ — कति मल, कति बिउ, कुन दिन के गर्ने। हप्तामा कम्तीमा १ पटक हेर्नुहोस्।',
-    position: 'bottom',
+    title: 'खेत खोल्दा के देखिन्छ?',
+    text: [
+      'यो cardमा थिच्दा सो खेतको विस्तृत पेज खुल्छ।',
+      "त्यहाँ कति मल/बिउ चाहिन्छ, कुन दिन के काम गर्ने, रोग–गाइड सबै हुन्छ।",
+    ],
   },
   {
     targetSelector: '[data-tour="add-field-btn"]',
-    title: 'नयाँ खेत थप्नुहोस्',
-    text: 'यहाँ थिच्नुहोस्। क्षेत्रफल, बाली, ठाउँ भर्नुहोस् — app ले मल, बिउ र कामको तालिका बनाइदिन्छ।',
-    position: 'bottom',
+    title: 'नयाँ खेत कसरी थप्ने?',
+    text: [
+      'नयाँ खेत राख्न यहाँ थिच्नुहोस्।',
+      "क्षेत्रफल, बाली र ठाउँ हाल्यो भने app ले मल, बिउ र कामको तालिका तयार गर्छ।",
+    ],
   },
   {
     targetSelector: '[data-tour="guide-tab"]',
-    title: 'गाइड ट्याब',
-    text: 'यो ट्याबमा बालीको पूरा खेती गाइड हेर्न सकिन्छ — रोग, मल, सिंचाइ, कटान सबै खण्ड छुट्टाछुट्टै।',
-    position: 'bottom',
+    title: 'गाइड कहिले प्रयोग गर्ने?',
+    text: [
+      "बाली बारे विस्तारमा जान्न 'गाइड' ट्याब खोल्नुहोस्।",
+      'रोग, मल, सिंचाइ, कटान र भण्डारण सबै खण्ड यहाँ उपलब्ध हुन्छ।',
+    ],
   },
 ];
+
+const TOUR_SEEN_KEY = 'kisan-fields-tour-seen';
 
 export function FieldsGuidedTour() {
   const [isOpen, setIsOpen] = useState(false);
@@ -61,12 +77,24 @@ export function FieldsGuidedTour() {
   const [tooltipStyle, setTooltipStyle] = useState<React.CSSProperties>({});
   const [highlightStyle, setHighlightStyle] = useState<React.CSSProperties>({});
 
+  // Show first-time toast hint
+  useEffect(() => {
+    const seen = localStorage.getItem(TOUR_SEEN_KEY);
+    if (!seen) {
+      const timer = setTimeout(() => {
+        toast.info("पहिलो पटक हुनुहुन्छ? '?' थिचेर सानो घुम्ती सिकाइ हेर्नुहोस्।", {
+          duration: 6000,
+        });
+      }, 1500);
+      return () => clearTimeout(timer);
+    }
+  }, []);
+
   const positionTooltip = useCallback(() => {
     if (!isOpen) return;
     const step = TOUR_STEPS[currentStep];
     const el = document.querySelector(step.targetSelector);
     if (!el) {
-      // fallback: center
       setTooltipStyle({ top: '50%', left: '50%', transform: 'translate(-50%, -50%)', position: 'fixed' });
       setHighlightStyle({ display: 'none' });
       return;
@@ -85,17 +113,15 @@ export function FieldsGuidedTour() {
     });
 
     const tooltipW = Math.min(320, window.innerWidth - 32);
-    let top = rect.bottom + 12;
+    let top = rect.bottom + 14;
     let left = rect.left + rect.width / 2 - tooltipW / 2;
 
-    // keep on screen
     if (left < 16) left = 16;
     if (left + tooltipW > window.innerWidth - 16) left = window.innerWidth - 16 - tooltipW;
-    if (top + 200 > window.innerHeight) top = rect.top - 200;
+    if (top + 220 > window.innerHeight) top = rect.top - 220;
 
     setTooltipStyle({ position: 'fixed', top, left, width: tooltipW });
 
-    // scroll element into view
     el.scrollIntoView({ behavior: 'smooth', block: 'center' });
   }, [isOpen, currentStep]);
 
@@ -110,9 +136,14 @@ export function FieldsGuidedTour() {
     else close();
   };
 
+  const prev = () => {
+    if (currentStep > 0) setCurrentStep(s => s - 1);
+  };
+
   const close = () => {
     setIsOpen(false);
     setCurrentStep(0);
+    localStorage.setItem(TOUR_SEEN_KEY, 'true');
   };
 
   const open = () => {
@@ -125,10 +156,10 @@ export function FieldsGuidedTour() {
 
   return (
     <>
-      {/* Help trigger button */}
+      {/* Help trigger */}
       <button
         onClick={open}
-        className="inline-flex items-center gap-1.5 text-xs text-primary font-medium px-2.5 py-1.5 rounded-full bg-primary/10 hover:bg-primary/20 transition-colors"
+        className="inline-flex items-center gap-1.5 text-xs text-primary font-medium px-2.5 py-1.5 rounded-full bg-primary/10 hover:bg-primary/20 active:scale-95 transition-all"
         aria-label="यो पेज कसरी चलाउने?"
       >
         <HelpCircle className="h-4 w-4" />
@@ -136,27 +167,24 @@ export function FieldsGuidedTour() {
         <span className="sm:hidden">?</span>
       </button>
 
-      {/* Overlay */}
+      {/* Tour overlay */}
       {isOpen && (
         <div className="fixed inset-0 z-[100]">
-          {/* Dimmed backdrop */}
-          <div
-            className="absolute inset-0 bg-black/50 transition-opacity"
-            onClick={close}
-          />
+          {/* Backdrop */}
+          <div className="absolute inset-0 bg-black/50" onClick={close} />
 
-          {/* Highlight cutout */}
+          {/* Highlight ring */}
           <div
-            className="absolute z-[101] border-2 border-primary shadow-[0_0_0_9999px_rgba(0,0,0,0.45)] pointer-events-none transition-all duration-300"
+            className="absolute z-[101] border-2 border-primary shadow-[0_0_0_9999px_rgba(0,0,0,0.45)] pointer-events-none transition-all duration-300 ease-out"
             style={highlightStyle}
           />
 
-          {/* Tooltip */}
+          {/* Tooltip card */}
           <div
-            className="z-[102] bg-card rounded-xl shadow-xl border p-4 transition-all duration-300"
+            className="z-[102] bg-card rounded-xl shadow-2xl border p-4 transition-all duration-300 ease-out"
             style={tooltipStyle}
           >
-            {/* Close */}
+            {/* Close button */}
             <button
               onClick={close}
               className="absolute top-2 right-2 p-1 rounded-full hover:bg-muted text-muted-foreground"
@@ -164,35 +192,40 @@ export function FieldsGuidedTour() {
               <X className="h-4 w-4" />
             </button>
 
-            {/* Step counter */}
-            <div className="flex items-center gap-1.5 mb-2">
+            {/* Progress dots */}
+            <div className="flex items-center gap-1 mb-2.5">
               {TOUR_STEPS.map((_, i) => (
                 <div
                   key={i}
                   className={cn(
-                    'h-1.5 rounded-full transition-all',
-                    i === currentStep ? 'w-6 bg-primary' : 'w-1.5 bg-muted-foreground/30'
+                    'h-1.5 rounded-full transition-all duration-300',
+                    i === currentStep ? 'w-6 bg-primary' : i < currentStep ? 'w-2 bg-primary/40' : 'w-1.5 bg-muted-foreground/25'
                   )}
                 />
               ))}
             </div>
 
-            {/* Content */}
-            <h4 className="font-bold text-sm mb-1 text-foreground">{step.title}</h4>
-            <p className="text-sm text-muted-foreground leading-relaxed mb-4">{step.text}</p>
+            {/* Step content */}
+            <h4 className="font-bold text-sm mb-1.5 text-foreground pr-6">{step.title}</h4>
+            <div className="space-y-1 mb-4">
+              {step.text.map((line, i) => (
+                <p key={i} className="text-sm text-muted-foreground leading-relaxed">{line}</p>
+              ))}
+            </div>
 
-            {/* Actions */}
-            <div className="flex items-center justify-between gap-2">
-              <span className="text-xs text-muted-foreground">
+            {/* Navigation */}
+            <div className="flex items-center justify-between">
+              <span className="text-xs text-muted-foreground font-medium">
                 {currentStep + 1} / {TOUR_STEPS.length}
               </span>
               <div className="flex gap-2">
                 {currentStep > 0 && (
-                  <Button variant="ghost" size="sm" onClick={() => setCurrentStep(s => s - 1)}>
-                    पछाडि
+                  <Button variant="ghost" size="sm" onClick={prev} className="gap-1 h-8 px-3 text-xs">
+                    <ChevronLeft className="h-3.5 w-3.5" />
+                    अघिल्लो
                   </Button>
                 )}
-                <Button size="sm" onClick={next} className="gap-1.5">
+                <Button size="sm" onClick={next} className="gap-1 h-8 px-4 text-xs">
                   {isLast ? (
                     <>
                       <Check className="h-3.5 w-3.5" />
