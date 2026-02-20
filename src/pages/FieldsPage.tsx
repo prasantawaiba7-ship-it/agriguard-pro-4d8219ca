@@ -211,6 +211,19 @@ const FieldsPage = () => {
               open={isAddFieldOpen}
               onOpenChange={setIsAddFieldOpen}
               onSubmit={addField}
+              onCreateSeason={async (seasonData) => {
+                await createSeason({
+                  field_id: seasonData.field_id,
+                  crop_name: seasonData.crop_name,
+                  variety: seasonData.variety,
+                  season_start_date: seasonData.season_start_date,
+                  season_end_date: null,
+                  expected_yield: seasonData.expected_yield,
+                  actual_yield: null,
+                  notes: seasonData.notes,
+                  is_active: true,
+                });
+              }}
             />
 
             <AddCropSeasonModal

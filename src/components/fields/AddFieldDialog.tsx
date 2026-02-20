@@ -1,13 +1,11 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Badge } from '@/components/ui/badge';
-import { useLocationData } from '@/hooks/useLocationData';
+import { Progress } from '@/components/ui/progress';
 import { useLanguage } from '@/hooks/useLanguage';
-import { Mountain, MapPin, Loader2 } from 'lucide-react';
+import { Mountain } from 'lucide-react';
+import { AddFieldStepName } from './wizard/AddFieldStepName';
+import { AddFieldStepLocation } from './wizard/AddFieldStepLocation';
+import { AddFieldStepCrop } from './wizard/AddFieldStepCrop';
 
 interface AddFieldDialogProps {
   open: boolean;
@@ -21,179 +19,184 @@ interface AddFieldDialogProps {
     latitude: number | null;
     longitude: number | null;
   }) => Promise<unknown>;
+  onCreateSeason?: (data: {
+    field_id: string;
+    crop_name: string;
+    crop_id?: number;
+    variety: string | null;
+    season_start_date: string;
+    expected_yield: number | null;
+    notes: string | null;
+  }) => Promise<void>;
 }
 
-export function AddFieldDialog({ open, onOpenChange, onSubmit }: AddFieldDialogProps) {
-  const { t, language } = useLanguage();
-  const [name, setName] = useState('');
-  const [area, setArea] = useState('');
-  const [areaUnit, setAreaUnit] = useState('ropani');
+export interface WizardFieldData {
+  name: string;
+  area: string;
+  areaUnit: string;
+  provinceId: number | null;
+  districtId: number | null;
+  localLevelId: number | null;
+  wardNumber: number | null;
+  districtName: string | null;
+  municipalityString: string | null;
+  latitude: number | null;
+  longitude: number | null;
+  cropId: number | null;
+  cropName: string | null;
+  startDate: string;
+}
+
+const STORAGE_KEY_UNIT = 'kisan_last_area_unit';
+
+export function AddFieldDialog({ open, onOpenChange, onSubmit, onCreateSeason }: AddFieldDialogProps) {
+  const { language } = useLanguage();
+  const [step, setStep] = useState(1);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const fieldNameSuggestions = [
-    t('fieldFront'), t('fieldBack'), t('fieldUpper'), t('fieldLower'),
-    t('fieldEast'), t('fieldWest'), t('fieldRiver'), t('fieldRoad'),
-    t('fieldRice'), t('fieldVegetable'), t('fieldFruit'), t('fieldMaize'),
-    t('fieldPotato'), t('fieldMain'),
-  ];
-
-  const areaUnits = [
-    { value: 'ropani', label: t('ropani') },
-    { value: 'katha', label: t('katha') },
-    { value: 'bigha', label: t('bigha') },
-    { value: 'hectare', label: t('hectare') },
-  ];
-
-  const localLevelTypeLabels: Record<string, string> = {
-    metropolitan: language === 'ne' ? 'महानगरपालिका' : 'Metropolitan',
-    sub_metropolitan: language === 'ne' ? 'उपमहानगरपालिका' : 'Sub-Metropolitan',
-    municipality: language === 'ne' ? 'नगरपालिका' : 'Municipality',
-    rural_municipality: language === 'ne' ? 'गाउँपालिका' : 'Rural Municipality',
-  };
-
-  const {
-    provinces, districts, localLevels, availableWards,
-    selectedProvinceId, selectedDistrictId, selectedLocalLevelId, selectedWardNumber,
-    handleProvinceChange, handleDistrictChange, handleLocalLevelChange, handleWardChange,
-    resetFilters, isLoading,
-  } = useLocationData();
+  const [data, setData] = useState<WizardFieldData>(() => ({
+    name: '',
+    area: '',
+    areaUnit: localStorage.getItem(STORAGE_KEY_UNIT) || 'ropani',
+    provinceId: null,
+    districtId: null,
+    localLevelId: null,
+    wardNumber: null,
+    districtName: null,
+    municipalityString: null,
+    latitude: null,
+    longitude: null,
+    cropId: null,
+    cropName: null,
+    startDate: new Date().toISOString().split('T')[0],
+  }));
 
   useEffect(() => {
     if (!open) {
-      setName(''); setArea(''); setAreaUnit('ropani'); resetFilters();
+      setStep(1);
+      setData({
+        name: '',
+        area: '',
+        areaUnit: localStorage.getItem(STORAGE_KEY_UNIT) || 'ropani',
+        provinceId: null,
+        districtId: null,
+        localLevelId: null,
+        wardNumber: null,
+        districtName: null,
+        municipalityString: null,
+        latitude: null,
+        longitude: null,
+        cropId: null,
+        cropName: null,
+        startDate: new Date().toISOString().split('T')[0],
+      });
     }
-  }, [open, resetFilters]);
+  }, [open]);
+
+  const updateData = useCallback((partial: Partial<WizardFieldData>) => {
+    setData(prev => ({ ...prev, ...partial }));
+  }, []);
 
   const handleSubmit = async () => {
-    if (!name.trim()) return;
+    if (!data.name.trim()) return;
     setIsSubmitting(true);
     try {
-      const selectedDistrict = districts.find(d => d.id === selectedDistrictId);
-      const selectedLocalLevel = localLevels.find(ll => ll.id === selectedLocalLevelId);
-      let municipalityString = '';
-      if (selectedLocalLevel) {
-        municipalityString = `${selectedLocalLevel.name_ne}`;
-        if (selectedWardNumber) {
-          municipalityString += ` ${t('wardNo')} ${selectedWardNumber}`;
+      localStorage.setItem(STORAGE_KEY_UNIT, data.areaUnit);
+      const result = await onSubmit({
+        name: data.name.trim(),
+        area: data.area ? parseFloat(data.area) : null,
+        area_unit: data.areaUnit,
+        district: data.districtName || null,
+        municipality: data.municipalityString || null,
+        latitude: data.latitude,
+        longitude: data.longitude,
+      });
+
+      // If crop was selected and onCreateSeason is provided, create the season too
+      if (data.cropName && onCreateSeason && result && typeof result === 'object' && 'id' in result) {
+        try {
+          await onCreateSeason({
+            field_id: (result as { id: string }).id,
+            crop_name: data.cropName,
+            crop_id: data.cropId ?? undefined,
+            variety: null,
+            season_start_date: data.startDate,
+            expected_yield: null,
+            notes: null,
+          });
+        } catch (err) {
+          console.error('Failed to create crop season:', err);
         }
       }
-      await onSubmit({
-        name: name.trim(), area: area ? parseFloat(area) : null, area_unit: areaUnit,
-        district: selectedDistrict?.name_ne || null, municipality: municipalityString || null,
-        latitude: null, longitude: null,
-      });
+
       onOpenChange(false);
-    } finally { setIsSubmitting(false); }
+    } finally {
+      setIsSubmitting(false);
+    }
   };
+
+  const stepLabels = language === 'ne'
+    ? ['नाम र क्षेत्रफल', 'स्थान', 'बाली']
+    : ['Name & Area', 'Location', 'Crop'];
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            <Mountain className="h-5 w-5 text-primary" />
-            {t('addNewField')}
-          </DialogTitle>
-        </DialogHeader>
-        <div className="space-y-5 pt-4">
+      <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto p-0">
+        {/* Header */}
+        <div className="px-5 pt-5 pb-3 space-y-3">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-lg">
+              <Mountain className="h-5 w-5 text-primary" />
+              {language === 'ne' ? 'नयाँ खेत थप्नुहोस्' : 'Add New Field'}
+            </DialogTitle>
+          </DialogHeader>
+
+          {/* Progress */}
           <div className="space-y-2">
-            <Label>{t('fieldName')}</Label>
-            <Input placeholder={t('fieldNamePlaceholder')} value={name} onChange={(e) => setName(e.target.value)} />
-            <div className="space-y-2">
-              <p className="text-xs text-muted-foreground">{t('orChooseOne')}</p>
-              <div className="flex flex-wrap gap-2">
-                {fieldNameSuggestions.slice(0, 8).map((suggestion) => (
-                  <Badge key={suggestion} variant={name === suggestion ? "default" : "outline"}
-                    className="cursor-pointer hover:bg-primary/10 transition-colors"
-                    onClick={() => setName(suggestion)}>{suggestion}</Badge>
-                ))}
-              </div>
-              <details className="text-xs">
-                <summary className="cursor-pointer text-muted-foreground hover:text-foreground">{t('moreSuggestions')}</summary>
-                <div className="flex flex-wrap gap-2 mt-2">
-                  {fieldNameSuggestions.slice(8).map((suggestion) => (
-                    <Badge key={suggestion} variant={name === suggestion ? "default" : "outline"}
-                      className="cursor-pointer hover:bg-primary/10 transition-colors"
-                      onClick={() => setName(suggestion)}>{suggestion}</Badge>
-                  ))}
-                </div>
-              </details>
+            <div className="flex justify-between text-xs text-muted-foreground">
+              {stepLabels.map((label, i) => (
+                <span
+                  key={i}
+                  className={i + 1 === step ? 'text-primary font-semibold' : i + 1 < step ? 'text-primary/60' : ''}
+                >
+                  {i + 1}. {label}
+                </span>
+              ))}
             </div>
+            <Progress value={(step / 3) * 100} className="h-1.5" />
           </div>
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label>{t('areaLabel')}</Label>
-              <Input type="number" placeholder="5" value={area} onChange={(e) => setArea(e.target.value)} />
-            </div>
-            <div className="space-y-2">
-              <Label>{t('unitLabel')}</Label>
-              <Select value={areaUnit} onValueChange={setAreaUnit}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
-                <SelectContent>{areaUnits.map((u) => (<SelectItem key={u.value} value={u.value}>{u.label}</SelectItem>))}</SelectContent>
-              </Select>
-            </div>
-          </div>
-          <div className="space-y-3 pt-2">
-            <div className="flex items-center gap-2 text-sm text-muted-foreground">
-              <MapPin className="h-4 w-4 text-primary" /><span>{t('selectLocation')}</span>
-            </div>
-            {isLoading ? (
-              <div className="flex items-center justify-center py-4"><Loader2 className="h-5 w-5 animate-spin text-primary" /></div>
-            ) : (
-              <div className="grid grid-cols-2 gap-3">
-                <div className="space-y-1.5">
-                  <Label className="text-xs">{t('province')}</Label>
-                  <Select value={selectedProvinceId?.toString() || '_none'} onValueChange={(v) => handleProvinceChange(v === '_none' ? null : parseInt(v))}>
-                    <SelectTrigger className="h-9"><SelectValue placeholder={t('selectProvince')} /></SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="_none">{t('choosePlaceholder')}</SelectItem>
-                      {provinces.map((p) => (<SelectItem key={p.id} value={p.id.toString()}>{p.name_ne}</SelectItem>))}
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="space-y-1.5">
-                  <Label className="text-xs">{t('district')}</Label>
-                  <Select value={selectedDistrictId?.toString() || '_none'} onValueChange={(v) => handleDistrictChange(v === '_none' ? null : parseInt(v))} disabled={!selectedProvinceId}>
-                    <SelectTrigger className="h-9"><SelectValue placeholder={t('selectDistrict')} /></SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="_none">{t('choosePlaceholder')}</SelectItem>
-                      {districts.map((d) => (<SelectItem key={d.id} value={d.id.toString()}>{d.name_ne}</SelectItem>))}
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="space-y-1.5">
-                  <Label className="text-xs">{language === 'ne' ? 'स्थानीय तह' : 'Local Level'}</Label>
-                  <Select value={selectedLocalLevelId?.toString() || '_none'} onValueChange={(v) => handleLocalLevelChange(v === '_none' ? null : parseInt(v))} disabled={!selectedDistrictId}>
-                    <SelectTrigger className="h-9"><SelectValue placeholder={t('selectLocalLevel')} /></SelectTrigger>
-                    <SelectContent className="max-h-60">
-                      <SelectItem value="_none">{t('choosePlaceholder')}</SelectItem>
-                      {localLevels.map((ll) => (
-                        <SelectItem key={ll.id} value={ll.id.toString()}>
-                          <span className="flex items-center gap-1.5">
-                            {ll.name_ne}
-                            <span className="text-[10px] text-muted-foreground">({localLevelTypeLabels[ll.type] || ll.type})</span>
-                          </span>
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="space-y-1.5">
-                  <Label className="text-xs">{t('ward')}</Label>
-                  <Select value={selectedWardNumber?.toString() || '_none'} onValueChange={(v) => handleWardChange(v === '_none' ? null : parseInt(v))} disabled={!selectedLocalLevelId}>
-                    <SelectTrigger className="h-9"><SelectValue placeholder={t('selectWard')} /></SelectTrigger>
-                    <SelectContent className="max-h-48">
-                      <SelectItem value="_none">{t('choosePlaceholder')}</SelectItem>
-                      {availableWards.map((w) => (<SelectItem key={w} value={w.toString()}>{t('wardNo')} {w}</SelectItem>))}
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-            )}
-          </div>
-          <Button onClick={handleSubmit} className="w-full" disabled={!name.trim() || isSubmitting}>
-            {isSubmitting ? (<><Loader2 className="h-4 w-4 mr-2 animate-spin" />{t('addingField')}</>) : t('addField')}
-          </Button>
+        </div>
+
+        {/* Steps */}
+        <div className="px-5 pb-5">
+          {step === 1 && (
+            <AddFieldStepName
+              data={data}
+              updateData={updateData}
+              onNext={() => setStep(2)}
+              onSkip={handleSubmit}
+              isSubmitting={isSubmitting}
+            />
+          )}
+          {step === 2 && (
+            <AddFieldStepLocation
+              data={data}
+              updateData={updateData}
+              onNext={() => setStep(3)}
+              onBack={() => setStep(1)}
+              onSkip={handleSubmit}
+              isSubmitting={isSubmitting}
+            />
+          )}
+          {step === 3 && (
+            <AddFieldStepCrop
+              data={data}
+              updateData={updateData}
+              onBack={() => setStep(2)}
+              onSubmit={handleSubmit}
+              isSubmitting={isSubmitting}
+            />
+          )}
         </div>
       </DialogContent>
     </Dialog>
