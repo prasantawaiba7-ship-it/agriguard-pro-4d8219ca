@@ -36,6 +36,7 @@ const FieldsPage = () => {
   const [isAddFieldOpen, setIsAddFieldOpen] = useState(false);
   const [isAddSeasonOpen, setIsAddSeasonOpen] = useState(false);
   const [isSoilTestOpen, setIsSoilTestOpen] = useState(false);
+  const [highlightFieldId, setHighlightFieldId] = useState<string | null>(null);
 
   if (authLoading || fieldsLoading) {
     return (
@@ -161,31 +162,32 @@ const FieldsPage = () => {
                       <div className="space-y-3">
                         {fields.map(field => (
                           <FieldCard
-                            key={field.id}
-                            field={field}
-                            seasons={seasons}
-                            crops={activeCrops}
-                            isSelected={selectedField?.id === field.id}
-                            onSelect={() => setSelectedField(field)}
-                            onDelete={() => handleDeleteField(field.id)}
-                          />
+                             key={field.id}
+                             field={field}
+                             seasons={seasons}
+                             crops={activeCrops}
+                             isSelected={selectedField?.id === field.id}
+                             isHighlighted={highlightFieldId === field.id}
+                             onSelect={() => setSelectedField(prev => prev?.id === field.id ? null : field)}
+                             onDelete={() => handleDeleteField(field.id)}
+                           />
                         ))}
                       </div>
                     </div>
 
                     {/* Right: Field Detail */}
-                    <div className="lg:col-span-3">
-                      {!selectedField ? (
-                        <Card className="border-dashed">
-                          <CardContent className="p-8 sm:p-12 text-center">
-                            <Leaf className="h-14 w-14 text-muted-foreground/20 mx-auto mb-4" />
-                            <h3 className="font-semibold mb-1 text-sm sm:text-base">{t('selectField')}</h3>
-                            <p className="text-xs sm:text-sm text-muted-foreground">
-                              {t('selectFieldHint')}
-                            </p>
-                          </CardContent>
-                        </Card>
-                      ) : (
+                     <div id="field-detail-panel" className="lg:col-span-3">
+                       {!selectedField ? (
+                         <Card className="border-dashed">
+                           <CardContent className="p-8 sm:p-12 text-center">
+                             <Leaf className="h-14 w-14 text-muted-foreground/20 mx-auto mb-4" />
+                             <h3 className="font-semibold mb-1 text-sm sm:text-base">{t('selectField')}</h3>
+                             <p className="text-xs sm:text-sm text-muted-foreground">
+                               {t('selectFieldHint')}
+                             </p>
+                           </CardContent>
+                         </Card>
+                       ) : (
                         <FieldDetailPanel
                           field={selectedField}
                           seasons={seasons}
@@ -210,7 +212,20 @@ const FieldsPage = () => {
             <AddFieldDialog
               open={isAddFieldOpen}
               onOpenChange={setIsAddFieldOpen}
-              onSubmit={addField}
+              onSubmit={async (data) => {
+                const result = await addField(data);
+                // Auto-select the newly created field
+                if (result) {
+                  setSelectedField(result as Field);
+                  setHighlightFieldId((result as Field).id);
+                  setTimeout(() => setHighlightFieldId(null), 3000);
+                  // Scroll to detail area on mobile
+                  setTimeout(() => {
+                    document.getElementById('field-detail-panel')?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                  }, 200);
+                }
+                return result;
+              }}
               onCreateSeason={async (seasonData) => {
                 await createSeason({
                   field_id: seasonData.field_id,

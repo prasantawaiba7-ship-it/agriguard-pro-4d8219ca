@@ -20,6 +20,7 @@ interface FieldCardProps {
   seasons: CropSeason[];
   crops: Crop[];
   isSelected: boolean;
+  isHighlighted?: boolean;
   onSelect: () => void;
   onDelete: () => void;
 }
@@ -35,7 +36,7 @@ function getStatusDot(seasons: CropSeason[]): { color: string; label: string } {
   return { color: 'bg-success', label: 'normal' };
 }
 
-export function FieldCard({ field, seasons, crops, isSelected, onSelect, onDelete }: FieldCardProps) {
+export function FieldCard({ field, seasons, crops, isSelected, isHighlighted, onSelect, onDelete }: FieldCardProps) {
   const { language } = useLanguage();
   const fieldSeasons = seasons.filter(s => s.field_id === field.id);
   const activeSeason = fieldSeasons.find(s => s.is_active);
@@ -64,7 +65,7 @@ export function FieldCard({ field, seasons, crops, isSelected, onSelect, onDelet
       data-tour="field-card"
       className={`cursor-pointer transition-all hover:shadow-md active:scale-[0.98] ${
         isSelected ? 'ring-2 ring-primary shadow-md' : ''
-      }`}
+      } ${isHighlighted ? 'animate-pulse ring-2 ring-primary/60 shadow-lg' : ''}`}
       onClick={onSelect}
     >
       <CardContent className="p-4">
