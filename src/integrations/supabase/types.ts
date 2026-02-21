@@ -50,16 +50,20 @@ export type Database = {
       agricultural_officers: {
         Row: {
           alternate_phone: string | null
+          channel_access: string[] | null
           created_at: string
           designation: string
           designation_ne: string | null
           district: string
           email: string | null
+          expertise_areas: string[] | null
           id: string
           is_active: boolean | null
           is_available: boolean | null
+          last_active_at: string | null
           latitude: number | null
           longitude: number | null
+          max_open_cases: number | null
           municipality: string | null
           name: string
           name_ne: string | null
@@ -67,26 +71,35 @@ export type Database = {
           office_address_ne: string | null
           office_name: string | null
           office_name_ne: string | null
+          open_cases_count: number | null
+          permission_level: string | null
           phone: string | null
+          preferred_languages: string[] | null
+          priority_types: string[] | null
           profile_image_url: string | null
           province: string
           specializations: string[] | null
           updated_at: string
           ward_no: number | null
           working_hours: string | null
+          years_of_experience: number | null
         }
         Insert: {
           alternate_phone?: string | null
+          channel_access?: string[] | null
           created_at?: string
           designation?: string
           designation_ne?: string | null
           district: string
           email?: string | null
+          expertise_areas?: string[] | null
           id?: string
           is_active?: boolean | null
           is_available?: boolean | null
+          last_active_at?: string | null
           latitude?: number | null
           longitude?: number | null
+          max_open_cases?: number | null
           municipality?: string | null
           name: string
           name_ne?: string | null
@@ -94,26 +107,35 @@ export type Database = {
           office_address_ne?: string | null
           office_name?: string | null
           office_name_ne?: string | null
+          open_cases_count?: number | null
+          permission_level?: string | null
           phone?: string | null
+          preferred_languages?: string[] | null
+          priority_types?: string[] | null
           profile_image_url?: string | null
           province: string
           specializations?: string[] | null
           updated_at?: string
           ward_no?: number | null
           working_hours?: string | null
+          years_of_experience?: number | null
         }
         Update: {
           alternate_phone?: string | null
+          channel_access?: string[] | null
           created_at?: string
           designation?: string
           designation_ne?: string | null
           district?: string
           email?: string | null
+          expertise_areas?: string[] | null
           id?: string
           is_active?: boolean | null
           is_available?: boolean | null
+          last_active_at?: string | null
           latitude?: number | null
           longitude?: number | null
+          max_open_cases?: number | null
           municipality?: string | null
           name?: string
           name_ne?: string | null
@@ -121,13 +143,18 @@ export type Database = {
           office_address_ne?: string | null
           office_name?: string | null
           office_name_ne?: string | null
+          open_cases_count?: number | null
+          permission_level?: string | null
           phone?: string | null
+          preferred_languages?: string[] | null
+          priority_types?: string[] | null
           profile_image_url?: string | null
           province?: string
           specializations?: string[] | null
           updated_at?: string
           ward_no?: number | null
           working_hours?: string | null
+          years_of_experience?: number | null
         }
         Relationships: []
       }
