@@ -71,6 +71,7 @@ import { DiagnosisCasesManager } from "@/components/admin/DiagnosisCasesManager"
  import { QuizManager } from "@/components/admin/QuizManager";
  import { CertificateTemplatesManager } from "@/components/admin/CertificateTemplatesManager";
 import { ExpertManager } from "@/components/admin/ExpertManager";
+import { CasesInboxManager } from "@/components/admin/CasesInboxManager";
 interface FarmerProfile {
   id: string;
   user_id: string;
@@ -473,6 +474,10 @@ const AdminDashboard = () => {
                   <Bug className="h-4 w-4" />
                   <span className="hidden sm:inline">रोग केस</span>
                 </TabsTrigger>
+                <TabsTrigger value="ticket-cases" className="flex items-center gap-2">
+                  <MessageSquare className="h-4 w-4" />
+                  <span className="hidden sm:inline">टिकट केस</span>
+                </TabsTrigger>
               </TabsList>
 
               {/* Overview Tab */}
@@ -589,6 +594,11 @@ const AdminDashboard = () => {
               {/* Disease Cases Management Tab */}
               <TabsContent value="diagnosis-cases">
                 <DiagnosisCasesManager />
+              </TabsContent>
+
+              {/* Ticket Cases (Ask Expert) Tab */}
+              <TabsContent value="ticket-cases">
+                <CasesInboxManager />
               </TabsContent>
 
               {/* Users Tab */}
