@@ -382,6 +382,62 @@ export type Database = {
           },
         ]
       }
+      cases: {
+        Row: {
+          ai_summary: Json | null
+          assigned_expert_id: string | null
+          channel: string | null
+          created_at: string | null
+          crop: string | null
+          district: string | null
+          farmer_id: string | null
+          farmer_phone: string | null
+          id: string
+          priority: string | null
+          problem_type: string | null
+          status: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          ai_summary?: Json | null
+          assigned_expert_id?: string | null
+          channel?: string | null
+          created_at?: string | null
+          crop?: string | null
+          district?: string | null
+          farmer_id?: string | null
+          farmer_phone?: string | null
+          id?: string
+          priority?: string | null
+          problem_type?: string | null
+          status?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          ai_summary?: Json | null
+          assigned_expert_id?: string | null
+          channel?: string | null
+          created_at?: string | null
+          crop?: string | null
+          district?: string | null
+          farmer_id?: string | null
+          farmer_phone?: string | null
+          id?: string
+          priority?: string | null
+          problem_type?: string | null
+          status?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "cases_assigned_expert_id_fkey"
+            columns: ["assigned_expert_id"]
+            isOneToOne: false
+            referencedRelation: "experts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       certificate_templates: {
         Row: {
           background_image_url: string | null
@@ -1623,6 +1679,48 @@ export type Database = {
           id?: string
           subject_template?: string
           updated_at?: string
+        }
+        Relationships: []
+      }
+      experts: {
+        Row: {
+          created_at: string | null
+          crops: string[] | null
+          districts: string[] | null
+          email: string | null
+          id: string
+          max_open_cases: number | null
+          name: string
+          phone: string
+          problem_types: string[] | null
+          status: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          crops?: string[] | null
+          districts?: string[] | null
+          email?: string | null
+          id?: string
+          max_open_cases?: number | null
+          name: string
+          phone: string
+          problem_types?: string[] | null
+          status?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          crops?: string[] | null
+          districts?: string[] | null
+          email?: string | null
+          id?: string
+          max_open_cases?: number | null
+          name?: string
+          phone?: string
+          problem_types?: string[] | null
+          status?: string | null
+          updated_at?: string | null
         }
         Relationships: []
       }
@@ -3038,6 +3136,41 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      ticket_messages: {
+        Row: {
+          attachments: Json | null
+          case_id: string | null
+          created_at: string | null
+          id: string
+          message: string | null
+          sender_type: string | null
+        }
+        Insert: {
+          attachments?: Json | null
+          case_id?: string | null
+          created_at?: string | null
+          id?: string
+          message?: string | null
+          sender_type?: string | null
+        }
+        Update: {
+          attachments?: Json | null
+          case_id?: string | null
+          created_at?: string | null
+          id?: string
+          message?: string | null
+          sender_type?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ticket_messages_case_id_fkey"
+            columns: ["case_id"]
+            isOneToOne: false
+            referencedRelation: "cases"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       training_documents: {
         Row: {
