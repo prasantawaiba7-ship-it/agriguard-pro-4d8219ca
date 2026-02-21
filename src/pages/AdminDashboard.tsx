@@ -70,6 +70,7 @@ import { DiagnosisCasesManager } from "@/components/admin/DiagnosisCasesManager"
  import { CoursesManager } from "@/components/admin/CoursesManager";
  import { QuizManager } from "@/components/admin/QuizManager";
  import { CertificateTemplatesManager } from "@/components/admin/CertificateTemplatesManager";
+import { ExpertManager } from "@/components/admin/ExpertManager";
 interface FarmerProfile {
   id: string;
   user_id: string;
@@ -424,6 +425,10 @@ const AdminDashboard = () => {
                   <Users className="h-4 w-4" />
                   <span className="hidden sm:inline">Officers</span>
                 </TabsTrigger>
+                <TabsTrigger value="experts" className="flex items-center gap-2">
+                  <Shield className="h-4 w-4" />
+                  <span className="hidden sm:inline">कृषि विज्ञ</span>
+                </TabsTrigger>
                 <TabsTrigger value="treatments" className="flex items-center gap-2">
                   <PlayCircle className="h-4 w-4" />
                   <span className="hidden sm:inline">उपचार</span>
@@ -743,6 +748,10 @@ const AdminDashboard = () => {
 
               <TabsContent value="officers">
                 <OfficerManager />
+              </TabsContent>
+
+              <TabsContent value="experts">
+                <ExpertManager />
               </TabsContent>
 
               {/* Treatments Tab */}
