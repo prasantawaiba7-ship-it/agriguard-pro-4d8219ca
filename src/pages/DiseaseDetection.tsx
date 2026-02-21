@@ -8,6 +8,7 @@ import { OutbreakAlertsBanner } from '@/components/disease/OutbreakAlertsBanner'
 import { DiseasePrediction } from '@/components/disease/DiseasePrediction';
 import { AskExpertForm } from '@/components/diagnosis/AskExpertForm';
 import { ExpertCaseHistory } from '@/components/diagnosis/ExpertCaseHistory';
+import { ContactExpertHub } from '@/components/diagnosis/ContactExpertHub';
 import { PreventionTipsSection } from '@/components/disease/PreventionTipsSection';
 import { DiseaseGuideTab } from '@/components/disease/DiseaseGuideTab';
 import { useAuth } from '@/hooks/useAuth';
@@ -96,6 +97,10 @@ export default function DiseaseDetection() {
             </TabsContent>
 
             <TabsContent value="expert" className="space-y-6">
+              {/* Multi-channel contact hub */}
+              <ContactExpertHub onOpenAppForm={() => {}} />
+
+              {/* In-app form */}
               <AskExpertForm 
                 prefill={expertPrefill} 
                 onSubmitted={() => setExpertPrefill(undefined)} 
