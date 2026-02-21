@@ -26,11 +26,39 @@ serve(async (req) => {
     logStep("Function started");
 
     const authHeader = req.headers.get("Authorization");
-    if (!authHeader) throw new Error("No authorization header provided");
+    if (!authHeader || authHeader === "Bearer " || authHeader === "Bearer null" || authHeader === "Bearer undefined") {
+      logStep("No valid auth header, returning free defaults");
+      return new Response(JSON.stringify({
+        subscribed: false,
+        plan: 'free',
+        subscription_end: null,
+        queries_used: 0,
+        queries_limit: 3,
+        can_query: true,
+        is_admin: false
+      }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        status: 200,
+      });
+    }
 
     const token = authHeader.replace("Bearer ", "");
     const { data: userData, error: userError } = await supabaseClient.auth.getUser(token);
-    if (userError) throw new Error(`Authentication error: ${userError.message}`);
+    if (userError) {
+      logStep("Auth error, returning free defaults", { error: userError.message });
+      return new Response(JSON.stringify({
+        subscribed: false,
+        plan: 'free',
+        subscription_end: null,
+        queries_used: 0,
+        queries_limit: 3,
+        can_query: true,
+        is_admin: false
+      }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        status: 200,
+      });
+    }
     const user = userData.user;
     if (!user?.id) throw new Error("User not authenticated");
     logStep("User authenticated", { userId: user.id, email: user.email });
