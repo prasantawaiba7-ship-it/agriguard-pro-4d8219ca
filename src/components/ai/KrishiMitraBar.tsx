@@ -34,17 +34,17 @@ export function KrishiMitraBar({ onOpenAssistant, initialAction = null }: Krishi
             initial={{ opacity: 0, y: 100 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: 100 }}
-            className="fixed bottom-4 left-4 right-4 z-50 md:left-auto md:right-4 md:w-auto"
+            className="fixed bottom-4 left-4 right-4 z-50 md:left-auto md:right-6 md:w-auto"
           >
-            <div className="bg-gradient-to-r from-primary via-primary to-accent rounded-2xl shadow-2xl p-3 backdrop-blur-sm border border-primary-foreground/10">
+            <div className="bg-gradient-to-r from-primary via-primary/90 to-accent rounded-full shadow-2xl p-2.5 sm:p-3 backdrop-blur-sm border border-primary-foreground/10" style={{ boxShadow: '0 0 20px hsl(153 55% 27% / 0.2), 0 8px 32px rgba(0,0,0,0.12)' }}>
               <div className="flex items-center gap-3">
                 {/* Logo & Name */}
                 <div 
                   className="flex items-center gap-2 cursor-pointer" 
                   onClick={() => handleAction('chat')}
                 >
-                  <div className="w-10 h-10 rounded-full bg-primary-foreground/20 flex items-center justify-center">
-                    <Sparkles className="w-5 h-5 text-primary-foreground" />
+                  <div className="w-10 h-10 rounded-full bg-primary-foreground/20 flex items-center justify-center animate-pulse">
+                    <Sparkles className="w-5 h-5 text-primary-foreground drop-shadow-sm" />
                   </div>
                   <div className="hidden sm:block">
                     <h3 className="font-bold text-primary-foreground text-sm">Krishi Mitra</h3>

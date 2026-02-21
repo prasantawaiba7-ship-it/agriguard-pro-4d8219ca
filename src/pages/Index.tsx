@@ -6,6 +6,7 @@ import FeaturesSection from "@/components/home/FeaturesSection";
 import HowItWorksSection from "@/components/home/HowItWorksSection";
 import CTASection from "@/components/home/CTASection";
 import { MyMarketShortcut } from "@/components/home/MyMarketShortcut";
+import { PageTransition } from "@/components/layout/PageTransition";
 import { Helmet } from "react-helmet-async";
 
 const Index = () => {
@@ -20,20 +21,22 @@ const Index = () => {
       </Helmet>
       <div className="min-h-screen bg-background">
         <Header />
-        <main>
-          <HeroSection />
-          <QuickActionsGrid />
-          
-          <section className="py-4 sm:py-6">
-            <div className="container mx-auto px-4 max-w-xl">
-              <MyMarketShortcut />
-            </div>
-          </section>
-          
-          <FeaturesSection />
-          <HowItWorksSection />
-          <CTASection />
-        </main>
+        <PageTransition>
+          <main>
+            <HeroSection />
+            <QuickActionsGrid />
+            
+            <section className="py-4 sm:py-6">
+              <div className="container mx-auto px-4 max-w-xl">
+                <MyMarketShortcut />
+              </div>
+            </section>
+            
+            <FeaturesSection />
+            <HowItWorksSection />
+            <CTASection />
+          </main>
+        </PageTransition>
         <Footer />
       </div>
     </>

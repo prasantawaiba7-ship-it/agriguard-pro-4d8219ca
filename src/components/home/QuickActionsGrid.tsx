@@ -96,18 +96,18 @@ const QuickActionsGrid = () => {
             >
               <Link to={action.href}>
                 <div
-                  className={`relative rounded-2xl p-4 sm:p-5 ${action.bgColor} border ${action.borderColor} ${action.hoverColor} transition-all duration-300 hover:shadow-lg active:scale-[0.98] cursor-pointer group`}
+                  className={`relative rounded-2xl p-5 sm:p-6 ${action.bgColor} border ${action.borderColor} ${action.hoverColor} transition-all duration-200 hover:shadow-lg hover:-translate-y-1 active:scale-[0.97] cursor-pointer group min-h-[120px] flex flex-col items-center justify-center`}
                 >
                   <div
-                    className={`w-12 h-12 sm:w-14 sm:h-14 rounded-xl ${action.color} flex items-center justify-center mb-3 shadow-md group-hover:scale-110 transition-transform mx-auto`}
+                    className={`w-12 h-12 sm:w-14 sm:h-14 rounded-2xl ${action.color} flex items-center justify-center mb-3 shadow-md group-hover:scale-105 transition-transform`}
                   >
                     <action.icon className="w-6 h-6 sm:w-7 sm:h-7 text-white" />
                   </div>
                   <div className="text-center">
-                    <div className="text-sm sm:text-base font-semibold text-foreground">
+                    <div className="text-sm sm:text-base font-semibold text-foreground leading-tight">
                       {action.label}
                     </div>
-                    <div className="text-[10px] sm:text-xs text-muted-foreground mt-0.5 line-clamp-1">
+                    <div className="text-[10px] sm:text-xs text-muted-foreground mt-1 line-clamp-1">
                       {action.sublabel}
                     </div>
                   </div>
