@@ -14,6 +14,10 @@ export interface DiagnosisCase {
   crop_id: number | null;
   case_status: DiagnosisCaseStatus;
   farmer_question: string | null;
+  problem_type: string | null;
+  priority: string | null;
+  channel: string | null;
+  assigned_expert_id: string | null;
   location_province_id: number | null;
   location_district_id: number | null;
   created_at: string;
@@ -21,6 +25,7 @@ export interface DiagnosisCase {
   crops?: { name_ne: string; name_en: string } | null;
   provinces?: { name_ne: string } | null;
   districts?: { name_ne: string } | null;
+  assigned_expert?: { name: string; name_ne: string | null } | null;
 }
 
 export interface DiagnosisCaseImage {
@@ -164,6 +169,10 @@ export function useAdminDiagnosisCases(filters?: {
   status?: DiagnosisCaseStatus;
   cropId?: number;
   districtId?: number;
+  priority?: string;
+  problemType?: string;
+  channel?: string;
+  assignedExpertId?: string;
 }) {
   return useQuery({
     queryKey: ['admin-diagnosis-cases', filters],
@@ -174,7 +183,8 @@ export function useAdminDiagnosisCases(filters?: {
           *,
           crops:crop_id(name_ne, name_en),
           provinces:location_province_id(name_ne),
-          districts:location_district_id(name_ne)
+          districts:location_district_id(name_ne),
+          assigned_expert:assigned_expert_id(name, name_ne)
         `)
         .order('created_at', { ascending: false });
 
@@ -186,6 +196,18 @@ export function useAdminDiagnosisCases(filters?: {
       }
       if (filters?.districtId) {
         query = query.eq('location_district_id', filters.districtId);
+      }
+      if (filters?.priority) {
+        query = query.eq('priority', filters.priority);
+      }
+      if (filters?.problemType) {
+        query = query.eq('problem_type', filters.problemType);
+      }
+      if (filters?.channel) {
+        query = query.eq('channel', filters.channel);
+      }
+      if (filters?.assignedExpertId) {
+        query = query.eq('assigned_expert_id', filters.assignedExpertId);
       }
 
       const { data: cases, error } = await query;
@@ -229,6 +251,9 @@ export function useSubmitDiagnosisCase() {
     mutationFn: async (data: {
       cropId: number;
       farmerQuestion?: string;
+      problemType?: string;
+      priority?: string;
+      channel?: string;
       provinceId?: number;
       districtId?: number;
       images: { url: string; angleType?: DiagnosisAngleType }[];
@@ -240,6 +265,9 @@ export function useSubmitDiagnosisCase() {
           user_id: user?.id || null,
           crop_id: data.cropId,
           farmer_question: data.farmerQuestion || null,
+          problem_type: data.problemType || null,
+          priority: data.priority || 'normal',
+          channel: data.channel || 'APP',
           location_province_id: data.provinceId || null,
           location_district_id: data.districtId || null,
           case_status: 'new'

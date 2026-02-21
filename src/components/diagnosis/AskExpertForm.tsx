@@ -122,13 +122,8 @@ export function AskExpertForm({ prefill, onSubmitted }: AskExpertFormProps) {
         })
       );
 
-      // Build question with problem type + AI context
+      // Build question text (description only, structured fields stored separately)
       const questionParts: string[] = [];
-      if (problemType) {
-        const ptLabel = PROBLEM_TYPES.find(p => p.value === problemType)?.label;
-        questionParts.push(`[${ptLabel}]`);
-      }
-      if (priority === 'urgent') questionParts.push('[अत्यावश्यक]');
       if (farmerQuestion) questionParts.push(farmerQuestion);
       if (prefill?.aiDisease) {
         questionParts.push(`\n--- AI विश्लेषण ---\nरोग: ${prefill.aiDisease} (${Math.round((prefill.aiConfidence || 0) * 100)}%)`);
@@ -138,6 +133,9 @@ export function AskExpertForm({ prefill, onSubmitted }: AskExpertFormProps) {
       const result = await submitCase.mutateAsync({
         cropId: parseInt(selectedCropId),
         farmerQuestion: questionParts.join(' ') || undefined,
+        problemType: problemType || undefined,
+        priority,
+        channel: 'APP',
         provinceId: selectedProvinceId || undefined,
         districtId: selectedDistrictId || undefined,
         images: uploadedImages,

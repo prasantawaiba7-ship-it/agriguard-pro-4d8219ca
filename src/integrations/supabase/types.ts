@@ -1281,39 +1281,58 @@ export type Database = {
       }
       diagnosis_cases: {
         Row: {
+          assigned_expert_id: string | null
           case_status: Database["public"]["Enums"]["diagnosis_case_status"]
+          channel: string | null
           created_at: string
           crop_id: number | null
           farmer_question: string | null
           id: string
           location_district_id: number | null
           location_province_id: number | null
+          priority: string | null
+          problem_type: string | null
           updated_at: string
           user_id: string | null
         }
         Insert: {
+          assigned_expert_id?: string | null
           case_status?: Database["public"]["Enums"]["diagnosis_case_status"]
+          channel?: string | null
           created_at?: string
           crop_id?: number | null
           farmer_question?: string | null
           id?: string
           location_district_id?: number | null
           location_province_id?: number | null
+          priority?: string | null
+          problem_type?: string | null
           updated_at?: string
           user_id?: string | null
         }
         Update: {
+          assigned_expert_id?: string | null
           case_status?: Database["public"]["Enums"]["diagnosis_case_status"]
+          channel?: string | null
           created_at?: string
           crop_id?: number | null
           farmer_question?: string | null
           id?: string
           location_district_id?: number | null
           location_province_id?: number | null
+          priority?: string | null
+          problem_type?: string | null
           updated_at?: string
           user_id?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "diagnosis_cases_assigned_expert_id_fkey"
+            columns: ["assigned_expert_id"]
+            isOneToOne: false
+            referencedRelation: "agricultural_officers"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "diagnosis_cases_crop_id_fkey"
             columns: ["crop_id"]
