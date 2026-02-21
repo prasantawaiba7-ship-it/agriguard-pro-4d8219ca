@@ -56,7 +56,7 @@ const QuickActionsGrid = () => {
       icon: BookOpen,
       label: t('farmingGuide'),
       sublabel: t('farmingKnowledge'),
-      href: "/crop-guides",
+      href: "/guides",
       iconColor: "text-accent-foreground",
       bgColor: "bg-accent/12",
       borderColor: "border-accent/15",
