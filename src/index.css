@@ -9,155 +9,155 @@
 
 @layer base {
   :root {
-    /* HUNCHA – किसान साथी Design System 2026 */
+    /* HUNCHA – Premium Agriculture Design System 2026 */
     
-    /* Core Background - Soft cream (FAFAF5 ≈ 60 20% 97%) */
-    --background: 60 20% 97%;
-    --foreground: 220 20% 16%;
+    /* Core Background - Soft Mist White (#F6F8F5) */
+    --background: 100 8% 96%;
+    --foreground: 214 11% 12%;
 
-    /* Card surfaces - Pure white with subtle warmth */
+    /* Card surfaces - Pure white */
     --card: 0 0% 100%;
-    --card-foreground: 25 25% 15%;
+    --card-foreground: 214 15% 15%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 25 25% 15%;
+    --popover-foreground: 214 15% 15%;
 
-    /* Primary - Trust Green (#1F6B4E ≈ 153 55% 27%) */
-    --primary: 153 55% 27%;
+    /* Primary - Deep Teal Green (#0F4C5C) */
+    --primary: 191 72% 21%;
     --primary-foreground: 0 0% 100%;
 
-    /* Secondary - Earth Terracotta (#C96A3A ≈ 20 55% 51%) */
-    --secondary: 20 55% 51%;
+    /* Secondary - Natural Clay (#B65C3A) */
+    --secondary: 16 52% 47%;
     --secondary-foreground: 0 0% 100%;
 
-    /* Muted - Soft neutral for backgrounds */
-    --muted: 60 12% 93%;
-    --muted-foreground: 220 8% 46%;
+    /* Muted - Soft neutral */
+    --muted: 100 5% 92%;
+    --muted-foreground: 213 5% 44%;
 
-    /* Accent - Wheat Gold (#F2C94C ≈ 45 87% 63%) */
-    --accent: 45 87% 63%;
-    --accent-foreground: 220 20% 16%;
+    /* Accent - Harvest Amber (#E6B325) */
+    --accent: 44 79% 52%;
+    --accent-foreground: 214 11% 12%;
 
-    /* Semantic colors — muted, non-alarming */
-    --destructive: 0 55% 48%;
+    /* Semantic colors — professional & muted */
+    --destructive: 0 45% 40%;
     --destructive-foreground: 0 0% 100%;
 
-    --success: 153 45% 32%;
+    --success: 160 40% 30%;
     --success-foreground: 0 0% 100%;
 
-    --warning: 38 75% 52%;
-    --warning-foreground: 25 25% 15%;
+    --warning: 40 70% 45%;
+    --warning-foreground: 214 11% 12%;
 
     /* Borders & Inputs */
-    --border: 45 20% 88%;
-    --input: 45 20% 88%;
-    --ring: 153 55% 27%;
+    --border: 191 15% 90%;
+    --input: 191 15% 90%;
+    --ring: 191 72% 21%;
 
     --radius: 0.75rem;
 
-    /* Sidebar - Deep forest green */
-    --sidebar-background: 153 40% 14%;
+    /* Sidebar - Deep climate teal */
+    --sidebar-background: 191 75% 12%;
     --sidebar-foreground: 0 0% 98%;
-    --sidebar-primary: 45 87% 63%;
-    --sidebar-primary-foreground: 220 20% 16%;
-    --sidebar-accent: 153 30% 22%;
+    --sidebar-primary: 44 79% 52%;
+    --sidebar-primary-foreground: 214 11% 12%;
+    --sidebar-accent: 191 50% 18%;
     --sidebar-accent-foreground: 0 0% 98%;
-    --sidebar-border: 153 25% 22%;
-    --sidebar-ring: 45 87% 63%;
+    --sidebar-border: 191 40% 18%;
+    --sidebar-ring: 44 79% 52%;
 
     /* Premium Gradients */
-    --gradient-hero: linear-gradient(135deg, hsl(153 55% 27%) 0%, hsl(153 45% 34%) 50%, hsl(165 40% 30%) 100%);
+    --gradient-hero: linear-gradient(135deg, hsl(191 72% 21%) 0%, hsl(191 60% 28%) 50%, hsl(191 50% 32%) 100%);
     --gradient-glass: linear-gradient(135deg, rgba(255,255,255,0.95) 0%, rgba(255,255,255,0.85) 100%);
-    --gradient-vibrant: linear-gradient(135deg, hsl(153 55% 27%) 0%, hsl(165 45% 32%) 100%);
-    --gradient-warm: linear-gradient(135deg, hsl(45 87% 63%) 0%, hsl(20 55% 51%) 100%);
-    --gradient-card: linear-gradient(165deg, hsl(0 0% 100%) 0%, hsl(60 18% 98%) 100%);
-    --gradient-mesh: radial-gradient(ellipse at 20% 0%, hsl(153 55% 27% / 0.06) 0px, transparent 50%),
-                     radial-gradient(ellipse at 80% 20%, hsl(45 87% 63% / 0.05) 0px, transparent 50%),
-                     radial-gradient(ellipse at 40% 80%, hsl(20 55% 51% / 0.03) 0px, transparent 50%);
+    --gradient-vibrant: linear-gradient(135deg, hsl(191 72% 21%) 0%, hsl(191 60% 28%) 100%);
+    --gradient-warm: linear-gradient(135deg, hsl(44 79% 52%) 0%, hsl(16 52% 47%) 100%);
+    --gradient-card: linear-gradient(165deg, hsl(0 0% 100%) 0%, hsl(100 8% 98%) 100%);
+    --gradient-mesh: radial-gradient(ellipse at 20% 0%, hsl(191 72% 21% / 0.05) 0px, transparent 50%),
+                     radial-gradient(ellipse at 80% 20%, hsl(44 79% 52% / 0.04) 0px, transparent 50%),
+                     radial-gradient(ellipse at 40% 80%, hsl(16 52% 47% / 0.03) 0px, transparent 50%);
 
     /* Chat Theme */
-    --chat-bg: 60 18% 97%;
-    --chat-user-bubble: 153 55% 27%;
-    --chat-assistant-bubble: 60 15% 94%;
-    --chat-assistant-border: 60 18% 86%;
-    --gradient-chat: linear-gradient(180deg, hsl(60 18% 98%) 0%, hsl(60 15% 95%) 100%);
-    --gradient-chat-header: linear-gradient(135deg, hsl(153 50% 24%) 0%, hsl(153 45% 30%) 100%);
+    --chat-bg: 100 8% 97%;
+    --chat-user-bubble: 191 72% 21%;
+    --chat-assistant-bubble: 100 5% 93%;
+    --chat-assistant-border: 100 8% 88%;
+    --gradient-chat: linear-gradient(180deg, hsl(100 8% 98%) 0%, hsl(100 8% 95%) 100%);
+    --gradient-chat-header: linear-gradient(135deg, hsl(191 70% 18%) 0%, hsl(191 60% 24%) 100%);
 
     /* Glassmorphism */
     --glass-bg: rgba(255, 255, 255, 0.92);
     --glass-border: rgba(255, 255, 255, 0.6);
-    --glass-shadow: 0 8px 32px rgba(0, 0, 0, 0.06);
+    --glass-shadow: 0 8px 32px rgba(0, 0, 0, 0.04);
 
-    /* Enhanced Shadows — soft, calm */
-    --shadow-sm: 0 1px 2px 0 hsl(25 25% 15% / 0.03);
-    --shadow-md: 0 4px 12px -4px hsl(25 25% 15% / 0.06);
-    --shadow-lg: 0 10px 24px -8px hsl(25 25% 15% / 0.07), 0 4px 8px -4px hsl(25 25% 15% / 0.03);
-    --shadow-xl: 0 20px 40px -12px hsl(25 25% 15% / 0.1);
-    --shadow-glow: 0 0 20px hsl(153 55% 27% / 0.12);
-    --shadow-glow-accent: 0 0 20px hsl(45 87% 63% / 0.15);
-    --shadow-chat-bubble: 0 1px 6px hsl(25 25% 15% / 0.04);
+    /* Enhanced Shadows */
+    --shadow-sm: 0 1px 2px 0 hsl(214 11% 12% / 0.03);
+    --shadow-md: 0 4px 12px -4px hsl(214 11% 12% / 0.05);
+    --shadow-lg: 0 10px 24px -8px hsl(214 11% 12% / 0.06), 0 4px 8px -4px hsl(214 11% 12% / 0.03);
+    --shadow-xl: 0 20px 40px -12px hsl(214 11% 12% / 0.08);
+    --shadow-glow: 0 0 20px hsl(191 72% 21% / 0.1);
+    --shadow-glow-accent: 0 0 20px hsl(44 79% 52% / 0.12);
+    --shadow-chat-bubble: 0 1px 4px hsl(214 11% 12% / 0.04);
   }
 
   .dark {
-    --background: 220 15% 8%;
-    --foreground: 60 15% 95%;
+    --background: 191 40% 6%;
+    --foreground: 100 8% 95%;
 
-    --card: 220 12% 12%;
-    --card-foreground: 60 15% 95%;
+    --card: 191 30% 10%;
+    --card-foreground: 100 8% 95%;
 
-    --popover: 220 12% 12%;
-    --popover-foreground: 60 15% 95%;
+    --popover: 191 30% 10%;
+    --popover-foreground: 100 8% 95%;
 
-    --primary: 153 50% 45%;
-    --primary-foreground: 220 20% 8%;
+    --primary: 191 60% 35%;
+    --primary-foreground: 0 0% 100%;
 
-    --secondary: 20 55% 55%;
-    --secondary-foreground: 220 20% 8%;
+    --secondary: 16 52% 55%;
+    --secondary-foreground: 0 0% 100%;
 
-    --muted: 220 10% 16%;
-    --muted-foreground: 60 10% 60%;
+    --muted: 191 25% 14%;
+    --muted-foreground: 213 5% 65%;
 
-    --accent: 45 85% 58%;
-    --accent-foreground: 220 20% 8%;
+    --accent: 44 79% 52%;
+    --accent-foreground: 191 40% 6%;
 
-    --destructive: 0 65% 50%;
+    --destructive: 0 60% 50%;
     --destructive-foreground: 0 0% 100%;
 
-    --success: 153 50% 45%;
-    --success-foreground: 220 20% 8%;
+    --success: 160 50% 40%;
+    --success-foreground: 0 0% 100%;
 
-    --warning: 38 85% 50%;
-    --warning-foreground: 220 20% 8%;
+    --warning: 40 80% 50%;
+    --warning-foreground: 191 40% 6%;
 
-    --border: 220 10% 20%;
-    --input: 220 10% 20%;
-    --ring: 153 50% 45%;
+    --border: 191 20% 18%;
+    --input: 191 20% 18%;
+    --ring: 191 60% 35%;
 
-    --sidebar-background: 220 15% 6%;
-    --sidebar-foreground: 60 10% 92%;
-    --sidebar-primary: 45 85% 58%;
-    --sidebar-primary-foreground: 220 20% 8%;
-    --sidebar-accent: 220 10% 14%;
-    --sidebar-accent-foreground: 60 10% 92%;
-    --sidebar-border: 220 10% 18%;
-    --sidebar-ring: 45 85% 58%;
+    --sidebar-background: 191 50% 4%;
+    --sidebar-foreground: 100 5% 92%;
+    --sidebar-primary: 44 79% 52%;
+    --sidebar-primary-foreground: 191 40% 6%;
+    --sidebar-accent: 191 30% 12%;
+    --sidebar-accent-foreground: 100 5% 92%;
+    --sidebar-border: 191 25% 15%;
+    --sidebar-ring: 44 79% 52%;
 
-    --gradient-hero: linear-gradient(135deg, hsl(153 50% 45%) 0%, hsl(153 45% 40%) 50%, hsl(165 40% 38%) 100%);
-    --gradient-glass: linear-gradient(135deg, rgba(25,28,35,0.92) 0%, rgba(25,28,35,0.85) 100%);
-    --gradient-card: linear-gradient(165deg, hsl(220 12% 12%) 0%, hsl(220 10% 10%) 100%);
-    --gradient-mesh: radial-gradient(ellipse at 20% 0%, hsl(153 50% 45% / 0.06) 0px, transparent 50%),
-                     radial-gradient(ellipse at 80% 20%, hsl(45 85% 58% / 0.04) 0px, transparent 50%),
-                     radial-gradient(ellipse at 40% 80%, hsl(20 55% 55% / 0.03) 0px, transparent 50%);
+    --gradient-hero: linear-gradient(135deg, hsl(191 60% 35%) 0%, hsl(191 50% 30%) 50%, hsl(191 40% 25%) 100%);
+    --gradient-glass: linear-gradient(135deg, rgba(15,20,25,0.92) 0%, rgba(15,20,25,0.85) 100%);
+    --gradient-card: linear-gradient(165deg, hsl(191 30% 10%) 0%, hsl(191 40% 6%) 100%);
+    --gradient-mesh: radial-gradient(ellipse at 20% 0%, hsl(191 60% 35% / 0.08) 0px, transparent 50%),
+                     radial-gradient(ellipse at 80% 20%, hsl(44 79% 52% / 0.05) 0px, transparent 50%),
+                     radial-gradient(ellipse at 40% 80%, hsl(16 52% 55% / 0.04) 0px, transparent 50%);
 
-    --chat-bg: 220 12% 10%;
-    --chat-user-bubble: 153 50% 40%;
-    --chat-assistant-bubble: 220 10% 16%;
-    --chat-assistant-border: 220 12% 22%;
-    --gradient-chat: linear-gradient(180deg, hsl(220 12% 8%) 0%, hsl(220 10% 10%) 100%);
-    --gradient-chat-header: linear-gradient(135deg, hsl(153 45% 30%) 0%, hsl(153 40% 26%) 100%);
+    --chat-bg: 191 40% 4%;
+    --chat-user-bubble: 191 60% 30%;
+    --chat-assistant-bubble: 191 20% 12%;
+    --chat-assistant-border: 191 25% 18%;
+    --gradient-chat: linear-gradient(180deg, hsl(191 40% 6%) 0%, hsl(191 40% 4%) 100%);
+    --gradient-chat-header: linear-gradient(135deg, hsl(191 65% 15%) 0%, hsl(191 55% 20%) 100%);
     --shadow-chat-bubble: 0 2px 8px hsl(0 0% 0% / 0.2);
 
-    --glass-bg: rgba(25, 28, 35, 0.92);
+    --glass-bg: rgba(15, 20, 25, 0.92);
     --glass-border: rgba(255, 255, 255, 0.08);
     --glass-shadow: 0 8px 32px rgba(0, 0, 0, 0.25);
   }
