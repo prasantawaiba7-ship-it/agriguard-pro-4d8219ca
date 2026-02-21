@@ -341,6 +341,47 @@ export type Database = {
           },
         ]
       }
+      case_messages: {
+        Row: {
+          attachments: Json | null
+          case_id: string
+          created_at: string
+          id: string
+          is_internal_note: boolean
+          message_text: string
+          sender_id: string | null
+          sender_type: string
+        }
+        Insert: {
+          attachments?: Json | null
+          case_id: string
+          created_at?: string
+          id?: string
+          is_internal_note?: boolean
+          message_text: string
+          sender_id?: string | null
+          sender_type?: string
+        }
+        Update: {
+          attachments?: Json | null
+          case_id?: string
+          created_at?: string
+          id?: string
+          is_internal_note?: boolean
+          message_text?: string
+          sender_id?: string | null
+          sender_type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "case_messages_case_id_fkey"
+            columns: ["case_id"]
+            isOneToOne: false
+            referencedRelation: "diagnosis_cases"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       certificate_templates: {
         Row: {
           background_image_url: string | null
@@ -1284,14 +1325,17 @@ export type Database = {
           assigned_expert_id: string | null
           case_status: Database["public"]["Enums"]["diagnosis_case_status"]
           channel: string | null
+          closed_at: string | null
           created_at: string
           crop_id: number | null
           farmer_question: string | null
+          first_response_at: string | null
           id: string
           location_district_id: number | null
           location_province_id: number | null
           priority: string | null
           problem_type: string | null
+          title: string | null
           updated_at: string
           user_id: string | null
         }
@@ -1299,14 +1343,17 @@ export type Database = {
           assigned_expert_id?: string | null
           case_status?: Database["public"]["Enums"]["diagnosis_case_status"]
           channel?: string | null
+          closed_at?: string | null
           created_at?: string
           crop_id?: number | null
           farmer_question?: string | null
+          first_response_at?: string | null
           id?: string
           location_district_id?: number | null
           location_province_id?: number | null
           priority?: string | null
           problem_type?: string | null
+          title?: string | null
           updated_at?: string
           user_id?: string | null
         }
@@ -1314,14 +1361,17 @@ export type Database = {
           assigned_expert_id?: string | null
           case_status?: Database["public"]["Enums"]["diagnosis_case_status"]
           channel?: string | null
+          closed_at?: string | null
           created_at?: string
           crop_id?: number | null
           farmer_question?: string | null
+          first_response_at?: string | null
           id?: string
           location_district_id?: number | null
           location_province_id?: number | null
           priority?: string | null
           problem_type?: string | null
+          title?: string | null
           updated_at?: string
           user_id?: string | null
         }
@@ -3526,6 +3576,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      auto_route_case: { Args: { p_case_id: string }; Returns: undefined }
       can_user_query: { Args: { p_user_id: string }; Returns: boolean }
       has_role: {
         Args: {

@@ -13,6 +13,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useCrops } from '@/hooks/useCrops';
 import { useSubmitDiagnosisCase } from '@/hooks/useDiagnosisCases';
 import { uploadDiseaseImage } from '@/lib/uploadDiseaseImage';
+import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { useLanguage } from '@/hooks/useLanguage';
 import { useLocationData } from '@/hooks/useLocationData';
@@ -140,6 +141,24 @@ export function AskExpertForm({ prefill, onSubmitted }: AskExpertFormProps) {
         districtId: selectedDistrictId || undefined,
         images: uploadedImages,
       });
+
+      // Create initial case_message for the thread
+      if (farmerQuestion || prefill?.aiDisease) {
+        await supabase.from('case_messages').insert({
+          case_id: result.id,
+          sender_type: 'farmer',
+          sender_id: user?.id || null,
+          message_text: farmerQuestion || `AI विश्लेषण: ${prefill?.aiDisease}`,
+          attachments: uploadedImages.map(img => ({ type: 'image', url: img.url })),
+        });
+      }
+
+      // Auto-route the case
+      try {
+        await supabase.rpc('auto_route_case', { p_case_id: result.id });
+      } catch (e) {
+        console.warn('Auto-routing skipped:', e);
+      }
 
       setSubmittedCaseId(result.id);
       setShowSuccess(true);
