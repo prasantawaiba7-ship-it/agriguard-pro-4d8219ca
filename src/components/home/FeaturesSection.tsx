@@ -15,103 +15,52 @@ const FeaturesSection = () => {
   const { t } = useLanguage();
 
   const features = [
-    {
-      icon: Camera,
-      titleKey: 'featPhotoUpload',
-      descKey: 'featPhotoUploadDesc',
-      color: "bg-primary",
-      lightBg: "bg-primary/5",
-    },
-    {
-      icon: Cpu,
-      titleKey: 'featAIAnalysis',
-      descKey: 'featAIAnalysisDesc',
-      color: "bg-secondary",
-      lightBg: "bg-secondary/5",
-    },
-    {
-      icon: FileText,
-      titleKey: 'featReport',
-      descKey: 'featReportDesc',
-      color: "bg-accent",
-      lightBg: "bg-accent/8",
-    },
-    {
-      icon: Clock,
-      titleKey: 'featInstantResult',
-      descKey: 'featInstantResultDesc',
-      color: "bg-primary",
-      lightBg: "bg-primary/5",
-    },
-    {
-      icon: MapPin,
-      titleKey: 'featLocationBased',
-      descKey: 'featLocationBasedDesc',
-      color: "bg-secondary",
-      lightBg: "bg-secondary/5",
-    },
-    {
-      icon: Shield,
-      titleKey: 'featExpertAdvice',
-      descKey: 'featExpertAdviceDesc',
-      color: "bg-primary",
-      lightBg: "bg-primary/5",
-    },
-    {
-      icon: Smartphone,
-      titleKey: 'featOfflineSupport',
-      descKey: 'featOfflineSupportDesc',
-      color: "bg-accent",
-      lightBg: "bg-accent/8",
-    },
-    {
-      icon: Users,
-      titleKey: 'featExpertContact',
-      descKey: 'featExpertContactDesc',
-      color: "bg-secondary",
-      lightBg: "bg-secondary/5",
-    },
+    { icon: Camera, titleKey: 'featPhotoUpload', descKey: 'featPhotoUploadDesc', color: "text-primary", bg: "bg-primary/8" },
+    { icon: Cpu, titleKey: 'featAIAnalysis', descKey: 'featAIAnalysisDesc', color: "text-secondary", bg: "bg-secondary/8" },
+    { icon: FileText, titleKey: 'featReport', descKey: 'featReportDesc', color: "text-accent-foreground", bg: "bg-accent/10" },
+    { icon: Clock, titleKey: 'featInstantResult', descKey: 'featInstantResultDesc', color: "text-primary", bg: "bg-primary/8" },
+    { icon: MapPin, titleKey: 'featLocationBased', descKey: 'featLocationBasedDesc', color: "text-secondary", bg: "bg-secondary/8" },
+    { icon: Shield, titleKey: 'featExpertAdvice', descKey: 'featExpertAdviceDesc', color: "text-primary", bg: "bg-primary/8" },
+    { icon: Smartphone, titleKey: 'featOfflineSupport', descKey: 'featOfflineSupportDesc', color: "text-accent-foreground", bg: "bg-accent/10" },
+    { icon: Users, titleKey: 'featExpertContact', descKey: 'featExpertContactDesc', color: "text-secondary", bg: "bg-secondary/8" },
   ];
 
   return (
-    <section className="py-16 sm:py-20 relative overflow-hidden">
-      <div className="absolute inset-0 bg-muted/30 pointer-events-none" />
-      <div className="absolute inset-0 bg-mesh pointer-events-none" />
+    <section className="py-14 sm:py-20 relative overflow-hidden">
+      <div className="absolute inset-0 bg-muted/20 pointer-events-none" />
 
       <div className="container mx-auto px-4 relative">
         <motion.div
-          initial={{ opacity: 0, y: 20 }}
+          initial={{ opacity: 0, y: 16 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
-          transition={{ duration: 0.5 }}
-          className="text-center max-w-2xl mx-auto mb-10 sm:mb-14"
+          transition={{ duration: 0.4 }}
+          className="text-center max-w-2xl mx-auto mb-10"
         >
-          <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-foreground mb-3">
+          <h2 className="text-2xl sm:text-3xl font-bold text-foreground mb-2">
             {t('featuresSubheading')}{" "}
             <span className="text-gradient">{t('featuresHeading')}</span>
           </h2>
-          <p className="text-base sm:text-lg text-muted-foreground">
+          <p className="text-sm sm:text-base text-muted-foreground">
             {t('featuresTagline')}
           </p>
         </motion.div>
 
-        <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-5">
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
           {features.map((feature, index) => (
             <motion.div
               key={feature.titleKey}
-              initial={{ opacity: 0, y: 20 }}
+              initial={{ opacity: 0, y: 16 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
-              transition={{ duration: 0.4, delay: index * 0.05 }}
+              transition={{ duration: 0.3, delay: index * 0.04 }}
               className="group"
             >
-              <div className={`${feature.lightBg} rounded-2xl p-5 sm:p-6 h-full border border-border/30 hover:border-primary/20 transition-all duration-300 hover:shadow-md`}>
-                <div
-                  className={`w-12 h-12 sm:w-14 sm:h-14 rounded-xl ${feature.color} flex items-center justify-center mb-4 group-hover:scale-105 transition-transform`}
-                >
-                  <feature.icon className="w-6 h-6 sm:w-7 sm:h-7 text-white" />
+              <div className="bg-card rounded-2xl p-5 sm:p-6 h-full border border-border/40 hover:border-primary/20 transition-all duration-200 hover:shadow-md">
+                <div className={`w-11 h-11 sm:w-12 sm:h-12 rounded-xl ${feature.bg} flex items-center justify-center mb-3 group-hover:scale-105 transition-transform`}>
+                  <feature.icon className={`w-5 h-5 sm:w-6 sm:h-6 ${feature.color}`} />
                 </div>
-                <h3 className="text-base sm:text-lg font-semibold text-foreground mb-1.5">
+                <h3 className="text-sm sm:text-base font-semibold text-foreground mb-1">
                   {t(feature.titleKey)}
                 </h3>
                 <p className="text-xs sm:text-sm text-muted-foreground leading-relaxed">

@@ -1,74 +1,71 @@
 import { useAuth } from "@/hooks/useAuth";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useLanguage } from "@/hooks/useLanguage";
-import { Button } from "@/components/ui/button";
-import { User, LogOut, Settings, Crown, Home } from "lucide-react";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+import { Home, Mountain, Sparkles, Bell, User } from "lucide-react";
+import { motion } from "framer-motion";
 
 export function UserBar() {
-  const { user, profile, signOut } = useAuth();
+  const { user } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const { t } = useLanguage();
 
   if (!user || location.pathname !== "/") return null;
 
-  const displayName = profile?.full_name || user.email?.split("@")[0] || "User";
+  const navItems = [
+    { icon: Home, label: t('homeNav') || 'Home', path: '/' },
+    { icon: Mountain, label: t('myField') || 'Fields', path: '/fields' },
+    { icon: Sparkles, label: 'Krishi Mitra', path: '/krishi-mitra', isCenter: true },
+    { icon: Bell, label: t('alerts') || 'Alerts', path: '/farmer?tab=weather' },
+    { icon: User, label: t('profileLabel') || 'Profile', path: '/farmer/profile' },
+  ];
 
-  const handleProfileClick = () => {
-    if (location.pathname !== "/farmer/profile") {
-      navigate("/farmer/profile", { replace: true });
-    }
-  };
+  const isActive = (path: string) => location.pathname === path;
 
   return (
-    <div className="fixed bottom-0 left-0 right-0 z-50 bg-background/80 backdrop-blur-sm border-t border-border/50">
-      <div className="container mx-auto px-3 py-1.5 flex items-center justify-between">
-        <div 
-          className="flex items-center gap-2 cursor-pointer hover:opacity-80 transition-opacity"
-          onClick={handleProfileClick}
-        >
-          <div className="w-6 h-6 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0 overflow-hidden">
-            {profile?.avatar_url ? (
-              <img src={profile.avatar_url} alt="" className="w-full h-full object-cover" />
-            ) : (
-              <User className="w-3.5 h-3.5 text-primary" />
-            )}
-          </div>
-          <span className="font-medium text-xs text-foreground truncate max-w-[120px] sm:max-w-[180px]">
-            {displayName}
-          </span>
-        </div>
+    <div className="fixed bottom-0 left-0 right-0 z-50 bg-background/95 backdrop-blur-lg border-t border-border/40 safe-area-inset-bottom">
+      <div className="flex items-end justify-around px-2 py-1.5">
+        {navItems.map((item) => {
+          const active = isActive(item.path);
+          
+          if (item.isCenter) {
+            return (
+              <button
+                key={item.path}
+                onClick={() => navigate(item.path)}
+                className="flex flex-col items-center -mt-3 relative"
+              >
+                <motion.div
+                  whileTap={{ scale: 0.9 }}
+                  className="w-14 h-14 rounded-2xl bg-gradient-to-br from-primary to-primary/80 flex items-center justify-center shadow-lg"
+                  style={{ boxShadow: '0 4px 16px hsl(153 55% 27% / 0.25)' }}
+                >
+                  <item.icon className="w-6 h-6 text-primary-foreground" />
+                </motion.div>
+                <span className="text-[10px] font-semibold text-primary mt-1">{item.label}</span>
+              </button>
+            );
+          }
 
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="ghost" size="sm" className="h-6 px-1.5 gap-1">
-              <Settings className="w-3.5 h-3.5" />
-              <span className="hidden sm:inline text-xs">{t('settingsLabel')}</span>
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="w-48 bg-popover z-50">
-            <DropdownMenuItem onClick={() => navigate("/farmer")}>
-              <Home className="w-4 h-4 mr-2" />
-              {t('dashboardLabel')}
-            </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => navigate("/subscription")}>
-              <Crown className="w-4 h-4 mr-2" />
-              {t('subscription')}
-            </DropdownMenuItem>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem onClick={signOut} className="text-destructive">
-              <LogOut className="w-4 h-4 mr-2" />
-              {t('signOut')}
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
+          return (
+            <button
+              key={item.path}
+              onClick={() => navigate(item.path)}
+              className={`flex flex-col items-center gap-0.5 py-1.5 px-3 min-w-[56px] transition-colors ${
+                active ? 'text-primary' : 'text-muted-foreground'
+              }`}
+            >
+              <item.icon className={`w-5 h-5 ${active ? 'text-primary' : ''}`} />
+              <span className={`text-[10px] ${active ? 'font-semibold' : 'font-medium'}`}>{item.label}</span>
+              {active && (
+                <motion.div
+                  layoutId="activeTab"
+                  className="w-5 h-0.5 rounded-full bg-primary mt-0.5"
+                />
+              )}
+            </button>
+          );
+        })}
       </div>
     </div>
   );

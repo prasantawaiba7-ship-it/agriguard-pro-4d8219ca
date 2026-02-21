@@ -6,15 +6,15 @@ const Footer = () => {
   const { t } = useLanguage();
 
   return (
-    <footer className="bg-card text-foreground border-t border-border/50 py-14">
+    <footer className="bg-card border-t border-border/40 py-10 sm:py-14">
       <div className="container mx-auto px-4">
-        <div className="grid md:grid-cols-4 gap-12 mb-12">
-          <div className="md:col-span-2">
-          <Link to="/" className="flex items-center gap-2 mb-4">
-            <div className="w-10 h-10 rounded-xl bg-primary flex items-center justify-center">
-              <Leaf className="w-5 h-5 text-primary-foreground" />
-            </div>
-            <span className="font-bold text-xl text-foreground">{t('kisanSathi')}</span>
+        <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-8 sm:gap-10 mb-10">
+          <div className="sm:col-span-2 lg:col-span-2">
+            <Link to="/" className="inline-flex items-center gap-2.5 mb-3">
+              <div className="w-9 h-9 rounded-xl bg-primary flex items-center justify-center">
+                <Leaf className="w-4.5 h-4.5 text-primary-foreground" />
+              </div>
+              <span className="font-bold text-lg text-foreground">{t('kisanSathi')}</span>
             </Link>
             <p className="text-muted-foreground max-w-sm leading-relaxed text-sm">
               {t('footerDescription')}
@@ -22,66 +22,50 @@ const Footer = () => {
           </div>
 
           <div>
-            <h4 className="font-semibold mb-4 text-foreground">{t('platform')}</h4>
+            <h4 className="font-semibold mb-3 text-foreground text-sm">{t('platform')}</h4>
             <ul className="space-y-2">
-              <li>
-                <Link to="/farmer" className="text-muted-foreground hover:text-foreground transition-colors text-sm">
-                  {t('farmerPortal')}
-                </Link>
-              </li>
-              <li>
-                <Link to="/market" className="text-muted-foreground hover:text-foreground transition-colors text-sm">
-                  {t('krishiBazar')}
-                </Link>
-              </li>
-              <li>
-                <Link to="/krishi-mitra" className="text-muted-foreground hover:text-foreground transition-colors text-sm">
-                  {t('kisanSathiAI')}
-                </Link>
-              </li>
+              {[
+                { to: "/farmer", label: t('farmerPortal') },
+                { to: "/market", label: t('krishiBazar') },
+                { to: "/krishi-mitra", label: t('kisanSathiAI') },
+              ].map(link => (
+                <li key={link.to}>
+                  <Link to={link.to} className="text-muted-foreground hover:text-foreground transition-colors text-sm">
+                    {link.label}
+                  </Link>
+                </li>
+              ))}
             </ul>
           </div>
 
           <div>
-            <h4 className="font-semibold mb-4 text-foreground">{t('resources')}</h4>
+            <h4 className="font-semibold mb-3 text-foreground text-sm">{t('resources')}</h4>
             <ul className="space-y-2">
-              <li>
-                <Link to="/disease-detection" className="text-muted-foreground hover:text-foreground transition-colors text-sm">
-                  {t('diseaseDetection')}
-                </Link>
-              </li>
-              <li>
-                <a href="#" className="text-muted-foreground hover:text-foreground transition-colors text-sm">
-                  {t('userGuide')}
-                </a>
-              </li>
-              <li>
-                <a href="#" className="text-muted-foreground hover:text-foreground transition-colors text-sm">
-                  {t('contactSupport')}
-                </a>
-              </li>
+              {[
+                { to: "/disease-detection", label: t('diseaseDetection') },
+                { to: "/guides", label: t('farmingGuide') || 'Crop Guides' },
+                { to: "/expert-directory", label: t('contactSupport') },
+              ].map(link => (
+                <li key={link.to}>
+                  <Link to={link.to} className="text-muted-foreground hover:text-foreground transition-colors text-sm">
+                    {link.label}
+                  </Link>
+                </li>
+              ))}
             </ul>
           </div>
         </div>
 
-        <div className="border-t border-border/40 pt-8">
-          <div className="flex flex-col md:flex-row justify-between items-center gap-4 mb-4">
-            <p className="text-sm text-muted-foreground">
+        <div className="border-t border-border/30 pt-6">
+          <div className="flex flex-col sm:flex-row justify-between items-center gap-3">
+            <p className="text-xs text-muted-foreground">
               {t('copyright')}
             </p>
-            <div className="flex gap-6">
-              <a href="#" className="text-sm text-muted-foreground hover:text-foreground">
-                {t('privacyPolicy')}
-              </a>
-              <a href="#" className="text-sm text-muted-foreground hover:text-foreground">
-                {t('termsOfService')}
-              </a>
+            <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+              <span>Powered by</span>
+              <Heart className="w-3.5 h-3.5 text-destructive fill-current" />
+              <span className="font-medium text-foreground/60">Pragati Tech</span>
             </div>
-          </div>
-          <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground">
-            <span>Powered by</span>
-            <Heart className="w-4 h-4 text-destructive fill-current" />
-            <span className="font-medium text-foreground/70">Pragati Tech</span>
           </div>
         </div>
       </div>

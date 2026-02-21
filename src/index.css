@@ -228,12 +228,12 @@
 
   /* Floating Animation */
   .float-animation {
-    animation: float 6s ease-in-out infinite;
+    animation: float 8s ease-in-out infinite;
   }
 
   @keyframes float {
     0%, 100% { transform: translateY(0px); }
-    50% { transform: translateY(-16px); }
+    50% { transform: translateY(-8px); }
   }
 
   /* Pulse Glow */
@@ -265,12 +265,12 @@
 
   /* Interactive Card Hover — gentle lift */
   .card-interactive {
-    @apply transition-all duration-300 ease-out;
+    @apply transition-all duration-200 ease-out;
   }
 
   .card-interactive:hover {
-    transform: translateY(-2px);
-    box-shadow: var(--shadow-lg);
+    transform: translateY(-1px);
+    box-shadow: var(--shadow-md);
   }
 
   /* Premium Feature Card */

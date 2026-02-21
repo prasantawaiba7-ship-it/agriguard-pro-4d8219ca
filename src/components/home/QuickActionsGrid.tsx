@@ -12,60 +12,54 @@ const QuickActionsGrid = () => {
       label: t('diseaseDetection'),
       sublabel: t('detectFromPhoto'),
       href: "/disease-detection",
-      color: "bg-primary",
-      bgColor: "bg-primary/5",
-      borderColor: "border-primary/15",
-      hoverColor: "hover:border-primary/30",
+      iconColor: "text-primary",
+      bgColor: "bg-primary/8",
+      borderColor: "border-primary/12",
     },
     {
       icon: Store,
       label: t('krishiBazar'),
       sublabel: t('todayPrice'),
       href: "/market",
-      color: "bg-primary",
-      bgColor: "bg-primary/5",
-      borderColor: "border-primary/20",
-      hoverColor: "hover:border-primary/40",
+      iconColor: "text-primary",
+      bgColor: "bg-primary/8",
+      borderColor: "border-primary/12",
     },
     {
       icon: Cloud,
       label: t('weather'),
       sublabel: t('weatherInfo'),
       href: "/farmer?tab=weather",
-      color: "bg-blue-500",
-      bgColor: "bg-blue-50 dark:bg-blue-950/30",
-      borderColor: "border-blue-200 dark:border-blue-900/50",
-      hoverColor: "hover:border-blue-300 dark:hover:border-blue-800",
+      iconColor: "text-primary",
+      bgColor: "bg-primary/8",
+      borderColor: "border-primary/12",
     },
     {
       icon: Bot,
       label: t('aiHelper'),
       sublabel: t('agriKnowledge'),
       href: "/krishi-mitra",
-      color: "bg-secondary",
-      bgColor: "bg-secondary/5",
-      borderColor: "border-secondary/20",
-      hoverColor: "hover:border-secondary/40",
+      iconColor: "text-secondary",
+      bgColor: "bg-secondary/8",
+      borderColor: "border-secondary/12",
     },
     {
       icon: MapPin,
       label: t('myFieldLabel'),
       sublabel: t('fieldManagement'),
       href: "/fields",
-      color: "bg-teal-500",
-      bgColor: "bg-teal-50 dark:bg-teal-950/30",
-      borderColor: "border-teal-200 dark:border-teal-900/50",
-      hoverColor: "hover:border-teal-300 dark:hover:border-teal-800",
+      iconColor: "text-primary",
+      bgColor: "bg-primary/8",
+      borderColor: "border-primary/12",
     },
     {
       icon: BookOpen,
       label: t('farmingGuide'),
       sublabel: t('farmingKnowledge'),
       href: "/crop-guides",
-      color: "bg-amber-500",
-      bgColor: "bg-amber-50 dark:bg-amber-950/30",
-      borderColor: "border-amber-200 dark:border-amber-900/50",
-      hoverColor: "hover:border-amber-300 dark:hover:border-amber-800",
+      iconColor: "text-accent-foreground",
+      bgColor: "bg-accent/12",
+      borderColor: "border-accent/15",
     },
   ];
 
@@ -73,9 +67,9 @@ const QuickActionsGrid = () => {
     <section className="py-8 sm:py-12">
       <div className="container mx-auto px-4">
         <motion.div
-          initial={{ opacity: 0, y: 20 }}
+          initial={{ opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5 }}
+          transition={{ duration: 0.4 }}
           className="text-center mb-6 sm:mb-8"
         >
           <h2 className="text-xl sm:text-2xl font-bold text-foreground">
@@ -90,18 +84,18 @@ const QuickActionsGrid = () => {
           {quickActions.map((action, index) => (
             <motion.div
               key={action.href}
-              initial={{ opacity: 0, y: 20 }}
+              initial={{ opacity: 0, y: 16 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.4, delay: index * 0.05 }}
+              transition={{ duration: 0.3, delay: index * 0.04 }}
             >
               <Link to={action.href}>
                 <div
-                  className={`relative rounded-2xl p-5 sm:p-6 ${action.bgColor} border ${action.borderColor} ${action.hoverColor} transition-all duration-200 hover:shadow-md hover:-translate-y-0.5 active:scale-[0.98] cursor-pointer group min-h-[120px] flex flex-col items-center justify-center`}
+                  className={`relative rounded-2xl p-5 sm:p-6 bg-card border ${action.borderColor} hover:border-primary/25 transition-all duration-200 hover:shadow-md active:scale-[0.98] cursor-pointer group min-h-[120px] flex flex-col items-center justify-center`}
                 >
                   <div
-                    className={`w-12 h-12 sm:w-14 sm:h-14 rounded-2xl ${action.color} flex items-center justify-center mb-3 shadow-md group-hover:scale-105 transition-transform`}
+                    className={`w-12 h-12 sm:w-14 sm:h-14 rounded-2xl ${action.bgColor} flex items-center justify-center mb-3 group-hover:scale-105 transition-transform`}
                   >
-                    <action.icon className="w-6 h-6 sm:w-7 sm:h-7 text-white" />
+                    <action.icon className={`w-6 h-6 sm:w-7 sm:h-7 ${action.iconColor}`} />
                   </div>
                   <div className="text-center">
                     <div className="text-sm sm:text-base font-semibold text-foreground leading-tight">
