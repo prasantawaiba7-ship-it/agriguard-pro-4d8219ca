@@ -3710,6 +3710,7 @@ export type Database = {
     }
     Functions: {
       auto_route_case: { Args: { p_case_id: string }; Returns: undefined }
+      auto_route_ticket: { Args: { p_case_id: string }; Returns: undefined }
       can_user_query: { Args: { p_user_id: string }; Returns: boolean }
       has_role: {
         Args: {
