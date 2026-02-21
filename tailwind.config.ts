@@ -16,6 +16,19 @@ export default {
       fontFamily: {
         sans: ["Plus Jakarta Sans", "system-ui", "sans-serif"],
       },
+      fontSize: {
+        /* Typography scale – mobile-first, WCAG-friendly */
+        "helper": ["0.8125rem", { lineHeight: "1.4" }],    /* 13sp – smallest allowed */
+        "small": ["0.875rem", { lineHeight: "1.45" }],      /* 14sp */
+        "body": ["0.9375rem", { lineHeight: "1.5" }],       /* 15sp */
+        "body-lg": ["1rem", { lineHeight: "1.5" }],         /* 16sp */
+        "section": ["1.0625rem", { lineHeight: "1.35" }],   /* 17sp section title */
+        "section-lg": ["1.125rem", { lineHeight: "1.35" }], /* 18sp section title */
+        "page": ["1.25rem", { lineHeight: "1.3" }],         /* 20sp page title */
+        "page-lg": ["1.375rem", { lineHeight: "1.3" }],     /* 22sp page title */
+        "display": ["1.5rem", { lineHeight: "1.25" }],      /* 24sp display */
+        "display-lg": ["1.75rem", { lineHeight: "1.2" }],   /* 28sp display */
+      },
       colors: {
         border: "hsl(var(--border))",
         input: "hsl(var(--input))",
