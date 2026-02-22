@@ -12,7 +12,7 @@ interface RealtimeVoiceChatProps {
   onShowPremium?: () => void;
 }
 
-type ConnectionStatus = 'disconnected' | 'connecting' | 'connected' | 'error';
+type ConnectionStatus = 'disconnected' | 'connecting' | 'connected' | 'error' | 'model_error';
 
 export function RealtimeVoiceChat({ language, onClose, onShowPremium }: RealtimeVoiceChatProps) {
   const { toast } = useToast();
@@ -196,7 +196,7 @@ export function RealtimeVoiceChat({ language, onClose, onShowPremium }: Realtime
       addLog('Local description set ✓');
 
       addLog('Sending offer to OpenAI...');
-      const response = await fetch('https://api.openai.com/v1/realtime?model=gpt-4o-mini-realtime-preview', {
+      const response = await fetch('https://api.openai.com/v1/realtime?model=gpt-4o-realtime-preview', {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${ephemeralKey}`,
@@ -289,6 +289,24 @@ export function RealtimeVoiceChat({ language, onClose, onShowPremium }: Realtime
       case 'response.audio.done':
         setIsSpeaking(false);
         break;
+      case 'response.done':
+        // Check for model_not_found error
+        if (event.response?.status === 'failed') {
+          const err = event.response?.status_details?.error;
+          console.error('[VoiceChat] Response failed:', err);
+          if (err?.code === 'model_not_found') {
+            addLog(`MODEL ERROR: ${err.message}`);
+            setStatus('model_error');
+            toast({
+              title: language === 'ne' ? 'Model उपलब्ध छैन' : 'Model Not Available',
+              description: language === 'ne' 
+                ? 'तपाईंको OpenAI API key मा Realtime model access छैन।' 
+                : 'Your OpenAI API key does not have Realtime model access.',
+              variant: 'destructive'
+            });
+          }
+        }
+        break;
       case 'input_audio_buffer.speech_started':
         setIsSpeaking(true);
         setTranscript('');
@@ -309,7 +327,7 @@ export function RealtimeVoiceChat({ language, onClose, onShowPremium }: Realtime
         });
         break;
     }
-  }, [toast]);
+  }, [toast, language, addLog]);
 
   const formatDuration = (seconds: number) => {
     const mins = Math.floor(seconds / 60);
@@ -401,6 +419,7 @@ export function RealtimeVoiceChat({ language, onClose, onShowPremium }: Realtime
               : (language === 'ne' ? 'सुन्दैछु...' : 'Listening...')
             )}
             {status === 'error' && (language === 'ne' ? 'जडान असफल' : 'Connection Failed')}
+            {status === 'model_error' && (language === 'ne' ? '⚠️ Model उपलब्ध छैन' : '⚠️ Model Not Available')}
           </h2>
           
           {status === 'disconnected' && (
@@ -409,6 +428,13 @@ export function RealtimeVoiceChat({ language, onClose, onShowPremium }: Realtime
                 ? 'AI सँग नेपालीमा सिधै बोल्नुहोस्' 
                 : 'Talk directly with AI in your language'}
             </p>
+          )}
+          {status === 'model_error' && (
+            <div className="p-3 bg-destructive/10 border border-destructive/30 rounded-lg text-sm text-destructive max-w-sm">
+              {language === 'ne' 
+                ? 'तपाईंको OpenAI API key मा Realtime model access enable छैन। कृपया OpenAI Dashboard मा गएर Realtime API access check गर्नुहोस्।' 
+                : 'Your OpenAI API key does not have Realtime model access. Please check your OpenAI Dashboard to enable Realtime API access.'}
+            </div>
           )}
         </div>
 
@@ -430,7 +456,7 @@ export function RealtimeVoiceChat({ language, onClose, onShowPremium }: Realtime
 
         {/* Action Buttons */}
         <div className="flex gap-4">
-          {status === 'disconnected' || status === 'error' ? (
+          {status === 'disconnected' || status === 'error' || status === 'model_error' ? (
             <Button
               size="lg"
               onClick={connect}
