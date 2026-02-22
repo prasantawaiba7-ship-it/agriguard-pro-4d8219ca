@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   ArrowLeft, MessageCircle, Clock, CheckCircle2,
-  AlertTriangle, ChevronRight, Send, Loader2, Image as ImageIcon
+  AlertTriangle, ChevronRight, Send, Loader2, Image as ImageIcon, Bell
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -10,6 +10,7 @@ import { Badge } from '@/components/ui/badge';
 import { Textarea } from '@/components/ui/textarea';
 import { useAuth } from '@/hooks/useAuth';
 import { useMyExpertCases, useTicketMessages, useSendTicketMessage } from '@/hooks/useExpertCases';
+import { useNotifications } from '@/hooks/useNotifications';
 import type { ExpertCase } from '@/hooks/useExpertCases';
 import { PageTransition } from '@/components/layout/PageTransition';
 import Header from '@/components/layout/Header';
@@ -40,12 +41,12 @@ function getCropEmoji(crop: string | null): string {
   return CROP_EMOJI[lower] || '🌱';
 }
 
-function CaseListItem({ c, onClick }: { c: ExpertCase; onClick: () => void }) {
+function CaseListItem({ c, onClick, hasUnread }: { c: ExpertCase; onClick: () => void; hasUnread: boolean }) {
   const status = STATUS_MAP[c.status || 'new'] || STATUS_MAP.new;
   const priority = PRIORITY_MAP[c.priority || 'low'] || PRIORITY_MAP.low;
 
   return (
-    <Card className="cursor-pointer hover:border-primary/30 transition-colors" onClick={onClick}>
+    <Card className={`cursor-pointer hover:border-primary/30 transition-colors ${hasUnread ? 'border-primary/40 bg-primary/5' : ''}`} onClick={onClick}>
       <CardContent className="p-4">
         <div className="flex items-start gap-3">
           <span className="text-2xl">{getCropEmoji(c.crop)}</span>
@@ -57,6 +58,11 @@ function CaseListItem({ c, onClick }: { c: ExpertCase; onClick: () => void }) {
               <Badge variant="outline" className={`text-[10px] ${status.color}`}>
                 {status.label}
               </Badge>
+              {hasUnread && (
+                <Badge className="bg-primary text-primary-foreground text-[10px] px-1.5 py-0 animate-pulse">
+                  नयाँ जवाफ
+                </Badge>
+              )}
             </div>
             <p className="text-xs text-muted-foreground truncate">
               {c.problem_type || 'सामान्य प्रश्न'} • {c.district || '—'}
@@ -69,7 +75,10 @@ function CaseListItem({ c, onClick }: { c: ExpertCase; onClick: () => void }) {
               </span>
             </div>
           </div>
-          <ChevronRight className="w-4 h-4 text-muted-foreground flex-shrink-0 mt-1" />
+          <div className="flex items-center gap-1 flex-shrink-0 mt-1">
+            {hasUnread && <span className="h-2.5 w-2.5 rounded-full bg-primary animate-pulse" />}
+            <ChevronRight className="w-4 h-4 text-muted-foreground" />
+          </div>
         </div>
       </CardContent>
     </Card>
@@ -210,7 +219,24 @@ export default function MyQuestionsPage() {
   const { user } = useAuth();
   const navigate = useNavigate();
   const { data: cases, isLoading } = useMyExpertCases();
+  const { notifications, markAsRead } = useNotifications();
   const [selectedCase, setSelectedCase] = useState<ExpertCase | null>(null);
+
+  // Get case IDs that have unread expert_reply notifications
+  const unreadCaseIds = new Set(
+    (notifications || [])
+      .filter(n => !n.read && n.type === 'expert_reply' && (n.data as any)?.case_id)
+      .map(n => (n.data as any).case_id as string)
+  );
+
+  // When opening a case, mark its notifications as read
+  const handleSelectCase = (c: ExpertCase) => {
+    setSelectedCase(c);
+    // Mark related notifications as read
+    (notifications || [])
+      .filter(n => !n.read && n.type === 'expert_reply' && (n.data as any)?.case_id === c.id)
+      .forEach(n => markAsRead(n.id));
+  };
 
   if (!user) {
     return (
@@ -243,6 +269,11 @@ export default function MyQuestionsPage() {
                 <h1 className="text-lg font-bold text-foreground flex items-center gap-2">
                   <MessageCircle className="w-5 h-5 text-primary" />
                   मेरा प्रश्नहरू
+                  {unreadCaseIds.size > 0 && (
+                    <Badge className="bg-primary text-primary-foreground text-xs animate-pulse">
+                      {unreadCaseIds.size}
+                    </Badge>
+                  )}
                 </h1>
               </div>
 
@@ -253,7 +284,7 @@ export default function MyQuestionsPage() {
               ) : cases && cases.length > 0 ? (
                 <div className="space-y-3">
                   {cases.map((c) => (
-                    <CaseListItem key={c.id} c={c} onClick={() => setSelectedCase(c)} />
+                    <CaseListItem key={c.id} c={c} onClick={() => handleSelectCase(c)} hasUnread={unreadCaseIds.has(c.id)} />
                   ))}
                 </div>
               ) : (

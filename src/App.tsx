@@ -8,6 +8,7 @@ import { AuthProvider } from "@/hooks/useAuth";
 import { LanguageProvider } from "@/hooks/useLanguage";
 import { OnScreenAssistant } from "@/components/ai/OnScreenAssistant";
 import { UserBar } from "@/components/layout/UserBar";
+import { ExpertReplyListener } from "@/components/notifications/ExpertReplyListener";
 
 import Index from "./pages/Index";
 import Auth from "./pages/Auth";
@@ -76,6 +77,7 @@ const App = () => (
                 {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
                 <Route path="*" element={<NotFound />} />
               </Routes>
+              <ExpertReplyListener />
               <OnScreenAssistant />
             </BrowserRouter>
           </TooltipProvider>

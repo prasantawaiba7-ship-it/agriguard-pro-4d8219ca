@@ -364,12 +364,34 @@ function CaseDetailView({
       if (!isNote && (caseData.status === 'new' || caseData.status === 'in_review')) {
         await (supabase as any).from('cases').update({ status: 'answered' }).eq('id', caseData.id);
       }
+      // Create notification for farmer (if not internal note)
+      if (!isNote && caseData.farmer_id) {
+        try {
+          // Look up farmer_profiles.id from auth user id
+          const { data: farmerProfile } = await supabase
+            .from('farmer_profiles')
+            .select('id')
+            .eq('user_id', caseData.farmer_id)
+            .single();
+          if (farmerProfile) {
+            await supabase.from('farmer_notifications').insert({
+              farmer_id: farmerProfile.id,
+              type: 'expert_reply',
+              title: 'कृषि विज्ञको जवाफ आएको छ',
+              message: 'तपाईंको प्रश्नमा कृषि विज्ञले नयाँ जवाफ पठाउनुभएको छ।',
+              data: { case_id: caseData.id } as any,
+            });
+          }
+        } catch (e) {
+          console.warn('Failed to create farmer notification:', e);
+        }
+      }
     },
     onSuccess: () => {
       setReplyText('');
       queryClient.invalidateQueries({ queryKey: ['case-messages', caseData.id] });
       queryClient.invalidateQueries({ queryKey: ['admin-cases'] });
-      toast.success(isNote ? 'Internal note saved' : 'Reply sent');
+      toast.success(isNote ? 'Internal note saved' : 'Reply sent to farmer ✅');
     },
     onError: () => toast.error('Failed to send'),
   });
