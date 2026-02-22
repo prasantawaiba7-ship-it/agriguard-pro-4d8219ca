@@ -153,7 +153,7 @@ export function useRealtimeVoice(options: UseRealtimeVoiceOptions = {}) {
 
       // Connect to OpenAI's Realtime API
       const baseUrl = 'https://api.openai.com/v1/realtime';
-      const model = 'gpt-4o-realtime-preview-2024-12-17';
+      const model = 'gpt-4o-realtime-preview-2025-06-03';
       
       const sdpResponse = await fetch(`${baseUrl}?model=${model}`, {
         method: 'POST',
