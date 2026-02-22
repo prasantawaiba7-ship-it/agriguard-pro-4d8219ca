@@ -69,13 +69,23 @@ export function RealtimeVoiceChat({ language, onClose, onShowPremium }: Realtime
       const pc = new RTCPeerConnection();
       pcRef.current = pc;
 
-      // Set up audio playback
+      // Set up audio playback - MUST append to DOM and handle autoplay policy
       const audioEl = document.createElement('audio');
       audioEl.autoplay = true;
+      (audioEl as any).playsInline = true;
+      audioEl.setAttribute('playsinline', 'true');
+      document.body.appendChild(audioEl); // Append to DOM for autoplay to work
       audioElRef.current = audioEl;
 
       pc.ontrack = (event) => {
+        console.log('[Realtime] Got remote audio track');
         audioEl.srcObject = event.streams[0];
+        // Force play after user gesture (connect button click counts)
+        audioEl.play().then(() => {
+          console.log('[Realtime] Audio playback started');
+        }).catch(err => {
+          console.warn('[Realtime] Autoplay blocked, will retry:', err.message);
+        });
       };
 
       // Add microphone track
@@ -126,6 +136,7 @@ export function RealtimeVoiceChat({ language, onClose, onShowPremium }: Realtime
       dc.onmessage = (event) => {
         try {
           const msg = JSON.parse(event.data);
+          console.log('[Realtime] Event received:', msg.type);
           handleRealtimeEvent(msg);
         } catch (e) {
           console.error('[Realtime] Parse error:', e);
@@ -199,7 +210,9 @@ export function RealtimeVoiceChat({ language, onClose, onShowPremium }: Realtime
     }
 
     if (audioElRef.current) {
+      audioElRef.current.pause();
       audioElRef.current.srcObject = null;
+      audioElRef.current.remove(); // Remove from DOM
       audioElRef.current = null;
     }
 
