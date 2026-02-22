@@ -196,7 +196,7 @@ export function RealtimeVoiceChat({ language, onClose, onShowPremium }: Realtime
       addLog('Local description set ✓');
 
       addLog('Sending offer to OpenAI...');
-      const response = await fetch('https://api.openai.com/v1/realtime?model=gpt-4o-realtime-preview-2025-06-03', {
+      const response = await fetch('https://api.openai.com/v1/realtime?model=gpt-4o-mini-realtime-preview', {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${ephemeralKey}`,
