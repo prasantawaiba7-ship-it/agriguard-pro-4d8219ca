@@ -71,11 +71,9 @@ serve(async (req) => {
       },
       body: JSON.stringify({
         model: "gpt-4o-realtime-preview-2024-12-17",
-        voice: "shimmer", // More natural, friendly voice
+        voice: "shimmer",
         instructions,
-        input_audio_format: "pcm16",
-        output_audio_format: "pcm16",
-        speed: voiceSpeed, // Voice speed control
+        speed: voiceSpeed,
         input_audio_transcription: {
           model: "whisper-1"
         },
@@ -83,7 +81,7 @@ serve(async (req) => {
           type: "server_vad",
           threshold: 0.7,
           prefix_padding_ms: 400,
-          silence_duration_ms: 1000
+          silence_duration_ms: 1200
         }
       }),
     });

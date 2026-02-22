@@ -104,24 +104,37 @@ export function RealtimeVoiceChat({ language, onClose, onShowPremium }: Realtime
       dc.onmessage = (event) => {
         try {
           const msg = JSON.parse(event.data);
-          console.log('[Realtime] Event received:', msg.type);
           
-          // When session is created, send the initial greeting
+          // Log full data for debugging key events
+          if (msg.type === 'response.done' || msg.type === 'conversation.item.input_audio_transcription.failed' || msg.type === 'error') {
+            console.log('[Realtime] FULL EVENT:', JSON.stringify(msg).slice(0, 500));
+          } else {
+            console.log('[Realtime] Event received:', msg.type);
+          }
+          
+          // When session is created, send a conversation item + response.create for greeting
           if (msg.type === 'session.created') {
-            console.log('[Realtime] Session created - sending initial greeting');
-            const createResponse = {
-              type: 'response.create',
-              response: {
-                modalities: ['text', 'audio'],
-                instructions: language === 'ne' 
-                  ? 'नमस्ते भन्नुहोस् र आफूलाई कृषि मित्र भनेर चिनाउनुहोस्। किसानलाई सोध्नुहोस् कसरी सहयोग गर्न सक्नुहुन्छ।'
-                  : language === 'hi'
-                  ? 'नमस्ते कहें और अपना परिचय कृषि मित्र के रूप में दें। किसान से पूछें कि कैसे मदद कर सकते हैं।'
-                  : 'Say hello and introduce yourself as Krishi Mitra. Ask the farmer how you can help.'
+            console.log('[Realtime] Session created - sending greeting via conversation item');
+            
+            const greetingText = language === 'ne' 
+              ? 'नमस्ते भन्नुहोस् र आफूलाई कृषि मित्र भनेर चिनाउनुहोस्।'
+              : language === 'hi'
+              ? 'नमस्ते कहें और अपना परिचय कृषि मित्र के रूप में दें।'
+              : 'Say hello and introduce yourself as Krishi Mitra.';
+            
+            // First add a conversation item
+            dc.send(JSON.stringify({
+              type: 'conversation.item.create',
+              item: {
+                type: 'message',
+                role: 'user',
+                content: [{ type: 'input_text', text: greetingText }]
               }
-            };
-            dc.send(JSON.stringify(createResponse));
-            console.log('[Realtime] Initial greeting requested after session.created');
+            }));
+            
+            // Then request a response
+            dc.send(JSON.stringify({ type: 'response.create' }));
+            console.log('[Realtime] Greeting conversation item + response.create sent');
           }
           
           handleRealtimeEvent(msg);
@@ -227,7 +240,10 @@ export function RealtimeVoiceChat({ language, onClose, onShowPremium }: Realtime
         setAiResponse('');
         break;
       case 'response.done':
-        // Full response cycle complete
+        console.log('[Realtime] Response done - output items:', JSON.stringify(event.response?.output || []).slice(0, 300));
+        break;
+      case 'conversation.item.input_audio_transcription.failed':
+        console.error('[Realtime] Transcription FAILED:', JSON.stringify(event.error || event));
         break;
       case 'error':
         console.error('[Realtime] Error event:', event);
