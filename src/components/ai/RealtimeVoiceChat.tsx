@@ -21,12 +21,18 @@ export function RealtimeVoiceChat({ language, onClose, onShowPremium }: Realtime
   const [transcript, setTranscript] = useState('');
   const [aiResponse, setAiResponse] = useState('');
   const [callDuration, setCallDuration] = useState(0);
+  const [debugLog, setDebugLog] = useState<string[]>([]);
   
   const pcRef = useRef<RTCPeerConnection | null>(null);
   const dcRef = useRef<RTCDataChannel | null>(null);
   const audioElRef = useRef<HTMLAudioElement | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
+
+  const addLog = useCallback((msg: string) => {
+    console.log('[VoiceChat]', msg);
+    setDebugLog(prev => [...prev.slice(-20), `${new Date().toLocaleTimeString()}: ${msg}`]);
+  }, []);
 
   // Cleanup on unmount
   useEffect(() => {
@@ -40,89 +46,130 @@ export function RealtimeVoiceChat({ language, onClose, onShowPremium }: Realtime
     setStatus('connecting');
     setTranscript('');
     setAiResponse('');
+    setDebugLog([]);
     
     try {
-      // Request microphone
+      // Step 1: Request microphone
+      addLog('Requesting microphone...');
       const stream = await navigator.mediaDevices.getUserMedia({
         audio: {
-          sampleRate: 24000,
-          channelCount: 1,
           echoCancellation: true,
           noiseSuppression: true,
           autoGainControl: true
         }
       });
       streamRef.current = stream;
+      addLog('Microphone granted ✓');
 
-      // Get ephemeral token from edge function
+      // Step 2: Get ephemeral token
+      addLog('Getting session token...');
       const { data, error } = await supabase.functions.invoke('realtime-token', {
         body: { language, speed: 1.0 }
       });
 
-      if (error || !data?.client_secret?.value) {
-        throw new Error(error?.message || 'Failed to get session token');
+      if (error) {
+        addLog(`Token error: ${error.message}`);
+        throw new Error(error.message || 'Failed to get session token');
+      }
+      
+      if (!data?.client_secret?.value) {
+        addLog(`Token response missing client_secret: ${JSON.stringify(data).slice(0, 200)}`);
+        throw new Error('No ephemeral key in response');
       }
 
       const ephemeralKey = data.client_secret.value;
+      addLog(`Token received ✓ (${ephemeralKey.slice(0, 10)}...)`);
 
-      // Create peer connection
-      const pc = new RTCPeerConnection();
+      // Step 3: Create peer connection
+      const pc = new RTCPeerConnection({
+        iceServers: [] // OpenAI doesn't need ICE servers
+      });
       pcRef.current = pc;
 
-      // Set up audio playback - MUST append to DOM and handle autoplay policy
+      // Track connection state changes
+      pc.oniceconnectionstatechange = () => {
+        addLog(`ICE state: ${pc.iceConnectionState}`);
+        if (pc.iceConnectionState === 'failed' || pc.iceConnectionState === 'disconnected') {
+          addLog('ICE connection failed/disconnected!');
+          toast({
+            title: language === 'ne' ? 'जडान टुट्यो' : 'Connection lost',
+            variant: 'destructive'
+          });
+        }
+      };
+
+      pc.onconnectionstatechange = () => {
+        addLog(`Connection state: ${pc.connectionState}`);
+      };
+
+      // Step 4: Set up audio playback
       const audioEl = document.createElement('audio');
       audioEl.autoplay = true;
-      (audioEl as any).playsInline = true;
       audioEl.setAttribute('playsinline', 'true');
-      document.body.appendChild(audioEl); // Append to DOM for autoplay to work
+      document.body.appendChild(audioEl);
       audioElRef.current = audioEl;
 
       pc.ontrack = (event) => {
-        console.log('[Realtime] Got remote audio track');
-        audioEl.srcObject = event.streams[0];
-        // Force play after user gesture (connect button click counts)
-        audioEl.play().then(() => {
-          console.log('[Realtime] Audio playback started');
-        }).catch(err => {
-          console.warn('[Realtime] Autoplay blocked, will retry:', err.message);
-        });
+        addLog(`Remote track received: ${event.track.kind}, streams: ${event.streams.length}`);
+        if (event.streams[0]) {
+          audioEl.srcObject = event.streams[0];
+          audioEl.play().then(() => {
+            addLog('Audio playback started ✓');
+          }).catch(err => {
+            addLog(`Autoplay blocked: ${err.message}`);
+            // Try playing on next user interaction
+            const resumeAudio = () => {
+              audioEl.play().catch(() => {});
+              document.removeEventListener('click', resumeAudio);
+            };
+            document.addEventListener('click', resumeAudio);
+          });
+        } else {
+          addLog('WARNING: No streams in track event!');
+        }
       };
 
-      // Add microphone track
-      stream.getTracks().forEach(track => pc.addTrack(track, stream));
+      // Step 5: Add microphone track
+      const audioTrack = stream.getAudioTracks()[0];
+      addLog(`Adding mic track: ${audioTrack.label}`);
+      pc.addTrack(audioTrack, stream);
 
-      // Create data channel for events
+      // Step 6: Create data channel
       const dc = pc.createDataChannel('oai-events');
       dcRef.current = dc;
 
       dc.onopen = () => {
-        console.log('[Realtime] Data channel opened - waiting for session.created before greeting');
-        // Don't send session.update - edge function already configured everything
-        // Don't send response.create yet - wait for session.created event
+        addLog('Data channel opened ✓');
+      };
+
+      dc.onerror = (e) => {
+        addLog(`Data channel error: ${JSON.stringify(e)}`);
+      };
+
+      dc.onclose = () => {
+        addLog('Data channel closed');
       };
 
       dc.onmessage = (event) => {
         try {
           const msg = JSON.parse(event.data);
           
-          // Log full data for debugging key events
-          if (msg.type === 'response.done' || msg.type === 'conversation.item.input_audio_transcription.failed' || msg.type === 'error') {
-            console.log('[Realtime] FULL EVENT:', JSON.stringify(msg).slice(0, 500));
+          // Log important events fully
+          if (['session.created', 'session.updated', 'error', 'response.done', 
+               'conversation.item.input_audio_transcription.failed'].includes(msg.type)) {
+            addLog(`EVENT [${msg.type}]: ${JSON.stringify(msg).slice(0, 400)}`);
           } else {
-            console.log('[Realtime] Event received:', msg.type);
+            addLog(`Event: ${msg.type}`);
           }
           
-          // When session is created, send a conversation item + response.create for greeting
+          // On session created, send greeting
           if (msg.type === 'session.created') {
-            console.log('[Realtime] Session created - sending greeting via conversation item');
+            addLog('Session created! Sending greeting...');
             
             const greetingText = language === 'ne' 
               ? 'नमस्ते भन्नुहोस् र आफूलाई कृषि मित्र भनेर चिनाउनुहोस्।'
-              : language === 'hi'
-              ? 'नमस्ते कहें और अपना परिचय कृषि मित्र के रूप में दें।'
               : 'Say hello and introduce yourself as Krishi Mitra.';
             
-            // First add a conversation item
             dc.send(JSON.stringify({
               type: 'conversation.item.create',
               item: {
@@ -132,21 +179,23 @@ export function RealtimeVoiceChat({ language, onClose, onShowPremium }: Realtime
               }
             }));
             
-            // Then request a response
             dc.send(JSON.stringify({ type: 'response.create' }));
-            console.log('[Realtime] Greeting conversation item + response.create sent');
+            addLog('Greeting sent ✓');
           }
           
           handleRealtimeEvent(msg);
         } catch (e) {
-          console.error('[Realtime] Parse error:', e);
+          addLog(`Parse error: ${e}`);
         }
       };
 
-      // Create and send offer
+      // Step 7: Create offer and connect to OpenAI
+      addLog('Creating WebRTC offer...');
       const offer = await pc.createOffer();
       await pc.setLocalDescription(offer);
+      addLog('Local description set ✓');
 
+      addLog('Sending offer to OpenAI...');
       const response = await fetch('https://api.openai.com/v1/realtime?model=gpt-4o-realtime-preview', {
         method: 'POST',
         headers: {
@@ -157,11 +206,16 @@ export function RealtimeVoiceChat({ language, onClose, onShowPremium }: Realtime
       });
 
       if (!response.ok) {
-        throw new Error('Failed to connect to OpenAI Realtime');
+        const errorText = await response.text();
+        addLog(`OpenAI SDP error ${response.status}: ${errorText.slice(0, 200)}`);
+        throw new Error(`OpenAI returned ${response.status}: ${errorText.slice(0, 100)}`);
       }
 
       const answerSdp = await response.text();
+      addLog(`Answer SDP received ✓ (${answerSdp.length} chars)`);
+      
       await pc.setRemoteDescription({ type: 'answer', sdp: answerSdp });
+      addLog('Remote description set ✓ - WebRTC connected!');
 
       setStatus('connected');
       
@@ -177,7 +231,8 @@ export function RealtimeVoiceChat({ language, onClose, onShowPremium }: Realtime
       });
 
     } catch (error) {
-      console.error('[Realtime] Connection error:', error);
+      console.error('[VoiceChat] Connection error:', error);
+      addLog(`FATAL ERROR: ${error instanceof Error ? error.message : String(error)}`);
       setStatus('error');
       toast({
         title: language === 'ne' ? 'जडान असफल' : 'Connection Failed',
@@ -186,9 +241,10 @@ export function RealtimeVoiceChat({ language, onClose, onShowPremium }: Realtime
       });
       disconnect();
     }
-  }, [language, toast]);
+  }, [language, toast, addLog]);
 
   const disconnect = useCallback(() => {
+    addLog('Disconnecting...');
     if (timerRef.current) {
       clearInterval(timerRef.current);
       timerRef.current = null;
@@ -212,13 +268,13 @@ export function RealtimeVoiceChat({ language, onClose, onShowPremium }: Realtime
     if (audioElRef.current) {
       audioElRef.current.pause();
       audioElRef.current.srcObject = null;
-      audioElRef.current.remove(); // Remove from DOM
+      audioElRef.current.remove();
       audioElRef.current = null;
     }
 
     setStatus('disconnected');
     setIsSpeaking(false);
-  }, []);
+  }, [addLog]);
 
   const handleRealtimeEvent = useCallback((event: any) => {
     switch (event.type) {
@@ -226,7 +282,12 @@ export function RealtimeVoiceChat({ language, onClose, onShowPremium }: Realtime
         setAiResponse(prev => prev + (event.delta || ''));
         break;
       case 'response.audio_transcript.done':
-        // Response complete
+        break;
+      case 'response.audio.delta':
+        setIsSpeaking(true);
+        break;
+      case 'response.audio.done':
+        setIsSpeaking(false);
         break;
       case 'input_audio_buffer.speech_started':
         setIsSpeaking(true);
@@ -239,14 +300,8 @@ export function RealtimeVoiceChat({ language, onClose, onShowPremium }: Realtime
         setTranscript(event.transcript || '');
         setAiResponse('');
         break;
-      case 'response.done':
-        console.log('[Realtime] Response done - output items:', JSON.stringify(event.response?.output || []).slice(0, 300));
-        break;
-      case 'conversation.item.input_audio_transcription.failed':
-        console.error('[Realtime] Transcription FAILED:', JSON.stringify(event.error || event));
-        break;
       case 'error':
-        console.error('[Realtime] Error event:', event);
+        console.error('[VoiceChat] Error event:', event);
         toast({
           title: 'Error',
           description: event.error?.message || 'An error occurred',
@@ -397,6 +452,15 @@ export function RealtimeVoiceChat({ language, onClose, onShowPremium }: Realtime
             </Button>
           )}
         </div>
+
+        {/* Debug Log - visible during error or connected */}
+        {debugLog.length > 0 && (
+          <div className="w-full max-h-32 overflow-y-auto p-3 bg-black/80 rounded-lg text-xs font-mono text-green-400 space-y-0.5">
+            {debugLog.map((log, i) => (
+              <div key={i}>{log}</div>
+            ))}
+          </div>
+        )}
 
         {/* Premium Feature Notice */}
         {onShowPremium && (
