@@ -4,35 +4,30 @@ import {
   Clock, CheckCircle, ChevronDown, ChevronUp, 
   User, Bot, Leaf, AlertCircle, MessageSquare, Loader2, Send
 } from 'lucide-react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Textarea } from '@/components/ui/textarea';
-import { useMyDiagnosisCases, useSubmitDiagnosisCase, type DiagnosisCaseWithDetails } from '@/hooks/useDiagnosisCases';
+import { useMyExpertCases, useTicketMessages, useSendTicketMessage, type ExpertCase } from '@/hooks/useExpertCases';
 import { useAuth } from '@/hooks/useAuth';
 import { useLanguage } from '@/hooks/useLanguage';
 import { formatDistanceToNow } from 'date-fns';
-import type { Database } from '@/integrations/supabase/types';
 
-type DiagnosisCaseStatus = Database['public']['Enums']['diagnosis_case_status'];
-
-const STATUS_MAP: Record<DiagnosisCaseStatus, { label: string; color: string; icon: React.ReactNode }> = {
+const STATUS_MAP: Record<string, { label: string; color: string; icon: React.ReactNode }> = {
   new: { label: 'नयाँ', color: 'bg-blue-100 text-blue-700 border-blue-200', icon: <Clock className="w-3 h-3" /> },
-  ai_suggested: { label: 'AI हेर्दै', color: 'bg-amber-100 text-amber-700 border-amber-200', icon: <Bot className="w-3 h-3" /> },
-  expert_pending: { label: 'विज्ञ हेर्दै', color: 'bg-orange-100 text-orange-700 border-orange-200', icon: <Clock className="w-3 h-3" /> },
-  expert_answered: { label: 'जवाफ आयो! ✅', color: 'bg-green-100 text-green-700 border-green-200', icon: <CheckCircle className="w-3 h-3" /> },
+  in_review: { label: 'हेर्दै', color: 'bg-amber-100 text-amber-700 border-amber-200', icon: <Clock className="w-3 h-3" /> },
+  answered: { label: 'जवाफ आयो! ✅', color: 'bg-green-100 text-green-700 border-green-200', icon: <CheckCircle className="w-3 h-3" /> },
   closed: { label: 'बन्द', color: 'bg-muted text-muted-foreground border-border', icon: <CheckCircle className="w-3 h-3" /> },
 };
 
-function ExpertCaseCard({ caseData }: { caseData: DiagnosisCaseWithDetails }) {
+function ExpertCaseCard({ caseData }: { caseData: ExpertCase }) {
   const [isExpanded, setIsExpanded] = useState(false);
-  const { language } = useLanguage();
+  const { data: messages, isLoading: msgsLoading } = useTicketMessages(isExpanded ? caseData.id : null);
 
-  const status = STATUS_MAP[caseData.case_status];
-  const finalSuggestion = caseData.suggestions.find(s => s.is_final);
-  const aiSuggestion = caseData.suggestions.find(s => s.source_type === 'rule_engine');
-  const cropName = language === 'ne' ? caseData.crops?.name_ne : caseData.crops?.name_en;
+  const status = STATUS_MAP[caseData.status || 'new'] || STATUS_MAP.new;
+  const imageUrls: string[] = caseData.ai_summary?.imageUrls || [];
+  const aiSummary = caseData.ai_summary;
 
   return (
     <Card className="overflow-hidden border-border/40">
@@ -41,9 +36,9 @@ function ExpertCaseCard({ caseData }: { caseData: DiagnosisCaseWithDetails }) {
         onClick={() => setIsExpanded(!isExpanded)}
       >
         <div className="flex items-start gap-3">
-          {caseData.images[0] && (
+          {imageUrls[0] && (
             <div className="w-14 h-14 rounded-xl overflow-hidden flex-shrink-0 border border-border/30">
-              <img src={caseData.images[0].image_url} alt="" className="w-full h-full object-cover" />
+              <img src={imageUrls[0]} alt="" className="w-full h-full object-cover" />
             </div>
           )}
 
@@ -58,11 +53,11 @@ function ExpertCaseCard({ caseData }: { caseData: DiagnosisCaseWithDetails }) {
               </span>
             </div>
             <p className="font-medium text-sm text-foreground">
-              {cropName || 'बाली'}
+              {caseData.crop || 'बाली'}
             </p>
-            {caseData.farmer_question && (
+            {caseData.problem_type && (
               <p className="text-xs text-muted-foreground truncate mt-0.5">
-                {caseData.farmer_question.slice(0, 60)}
+                {caseData.problem_type} • {caseData.district || ''}
               </p>
             )}
           </div>
@@ -83,11 +78,11 @@ function ExpertCaseCard({ caseData }: { caseData: DiagnosisCaseWithDetails }) {
           >
             <CardContent className="pt-0 pb-4 space-y-4 px-4">
               {/* All photos */}
-              {caseData.images.length > 0 && (
+              {imageUrls.length > 0 && (
                 <div className="grid grid-cols-3 gap-2">
-                  {caseData.images.map((img) => (
-                    <div key={img.id} className="aspect-square rounded-xl overflow-hidden border border-border/30">
-                      <img src={img.image_url} alt="" className="w-full h-full object-cover" />
+                  {imageUrls.map((url, i) => (
+                    <div key={i} className="aspect-square rounded-xl overflow-hidden border border-border/30">
+                      <img src={url} alt="" className="w-full h-full object-cover" />
                     </div>
                   ))}
                 </div>
@@ -98,48 +93,71 @@ function ExpertCaseCard({ caseData }: { caseData: DiagnosisCaseWithDetails }) {
                 केस: <span className="font-mono">KS-{caseData.id.slice(0, 8).toUpperCase()}</span>
               </p>
 
-              {/* AI preliminary hint */}
-              {aiSuggestion && (
+              {/* AI Summary */}
+              {aiSummary && (aiSummary.detectedIssue || aiSummary.aiDisease) && (
                 <div className="p-3 bg-muted/40 rounded-xl border border-border/30">
                   <div className="flex items-center gap-2 mb-1">
                     <Bot className="w-4 h-4 text-muted-foreground" />
-                    <span className="text-xs font-medium text-muted-foreground">AI प्रारम्भिक अनुमान</span>
-                    <Badge variant="outline" className="text-[10px] px-1.5 py-0">प्रारम्भिक</Badge>
+                    <span className="text-xs font-medium text-muted-foreground">AI विश्लेषण</span>
                   </div>
-                  <p className="text-sm font-medium text-foreground">{aiSuggestion.suspected_problem}</p>
-                  <p className="text-xs text-muted-foreground mt-1">{aiSuggestion.advice_text}</p>
+                  <p className="text-sm font-medium text-foreground">
+                    {aiSummary.detectedIssue || aiSummary.aiDisease}
+                    {aiSummary.confidence && (
+                      <span className="text-muted-foreground"> ({Math.round(aiSummary.confidence * 100)}%)</span>
+                    )}
+                  </p>
+                  {aiSummary.aiRecommendation && (
+                    <p className="text-xs text-muted-foreground mt-1">{aiSummary.aiRecommendation}</p>
+                  )}
                 </div>
               )}
 
-              {/* Expert Answer */}
-              {finalSuggestion ? (
-                <div className="p-4 bg-success/5 border-2 border-success/30 rounded-xl">
-                  <div className="flex items-center gap-2 mb-2">
-                    <div className="w-6 h-6 rounded-full bg-success/20 flex items-center justify-center">
-                      <User className="w-3.5 h-3.5 text-success" />
-                    </div>
-                    <span className="text-sm font-semibold text-success">कृषि विज्ञको जवाफ</span>
-                  </div>
-                  <p className="text-sm font-semibold text-foreground mb-1">
-                    {finalSuggestion.suspected_problem}
-                  </p>
-                  <p className="text-sm text-foreground whitespace-pre-wrap leading-relaxed">
-                    {finalSuggestion.advice_text}
-                  </p>
-
-                  {/* Follow-up box */}
-                  <div className="mt-3 pt-3 border-t border-success/20">
-                    <FollowUpBox caseId={caseData.id} cropId={caseData.crop_id} />
-                  </div>
+              {/* Messages thread */}
+              {msgsLoading ? (
+                <div className="flex justify-center py-4">
+                  <Loader2 className="w-4 h-4 animate-spin text-muted-foreground" />
+                </div>
+              ) : messages && messages.length > 0 ? (
+                <div className="space-y-2">
+                  {messages.map((msg: any) => {
+                    const isExpert = msg.sender_type === 'expert';
+                    const text = msg.message || '';
+                    if (msg.sender_type === 'expert_note') return null;
+                    return (
+                      <div key={msg.id} className={`p-3 rounded-xl ${
+                        isExpert 
+                          ? 'bg-green-500/5 border-2 border-green-500/30' 
+                          : 'bg-muted/40 border border-border/30'
+                      }`}>
+                        <div className="flex items-center gap-2 mb-1">
+                          {isExpert ? (
+                            <>
+                              <User className="w-3.5 h-3.5 text-green-600" />
+                              <span className="text-xs font-semibold text-green-700">कृषि विज्ञको जवाफ</span>
+                            </>
+                          ) : (
+                            <>
+                              <Leaf className="w-3.5 h-3.5 text-primary" />
+                              <span className="text-xs font-medium text-muted-foreground">तपाईं</span>
+                            </>
+                          )}
+                        </div>
+                        <p className="text-sm text-foreground whitespace-pre-wrap">{text}</p>
+                      </div>
+                    );
+                  })}
                 </div>
               ) : (
-                <div className="p-4 bg-warning/5 border border-warning/20 rounded-xl text-center">
-                  <Clock className="w-6 h-6 mx-auto text-warning mb-2" />
+                <div className="p-4 bg-amber-500/5 border border-amber-500/20 rounded-xl text-center">
+                  <Clock className="w-6 h-6 mx-auto text-amber-500 mb-2" />
                   <p className="text-sm font-medium text-foreground">विज्ञको जवाफ पर्खिरहेको छ</p>
-                  <p className="text-xs text-muted-foreground mt-1">
-                    औसत जवाफ समय: लगभग २४ घण्टा
-                  </p>
+                  <p className="text-xs text-muted-foreground mt-1">औसत जवाफ समय: लगभग २४ घण्टा</p>
                 </div>
+              )}
+
+              {/* Follow-up reply */}
+              {caseData.status !== 'closed' && (
+                <FollowUpReply caseId={caseData.id} />
               )}
             </CardContent>
           </motion.div>
@@ -149,25 +167,14 @@ function ExpertCaseCard({ caseData }: { caseData: DiagnosisCaseWithDetails }) {
   );
 }
 
-function FollowUpBox({ caseId, cropId }: { caseId: string; cropId: number | null }) {
+function FollowUpReply({ caseId }: { caseId: string }) {
   const [text, setText] = useState('');
-  const [isSending, setIsSending] = useState(false);
-  const submitCase = useSubmitDiagnosisCase();
+  const sendMessage = useSendTicketMessage();
 
-  // Note: Follow-up creates a new linked case for simplicity
-  const handleFollowUp = async () => {
-    if (!text.trim() || !cropId) return;
-    setIsSending(true);
-    try {
-      await submitCase.mutateAsync({
-        cropId,
-        farmerQuestion: `[थप प्रश्न - केस ${caseId.slice(0, 8)}] ${text}`,
-        images: [],
-      });
-      setText('');
-    } finally {
-      setIsSending(false);
-    }
+  const handleSend = async () => {
+    if (!text.trim()) return;
+    await sendMessage.mutateAsync({ caseId, message: text.trim() });
+    setText('');
   };
 
   return (
@@ -182,10 +189,10 @@ function FollowUpBox({ caseId, cropId }: { caseId: string; cropId: number | null
       <Button
         size="icon"
         className="flex-shrink-0 h-9 w-9"
-        disabled={!text.trim() || isSending}
-        onClick={handleFollowUp}
+        disabled={!text.trim() || sendMessage.isPending}
+        onClick={handleSend}
       >
-        {isSending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
+        {sendMessage.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
       </Button>
     </div>
   );
@@ -193,7 +200,7 @@ function FollowUpBox({ caseId, cropId }: { caseId: string; cropId: number | null
 
 export function ExpertCaseHistory() {
   const { user } = useAuth();
-  const { data: cases, isLoading } = useMyDiagnosisCases();
+  const { data: cases, isLoading } = useMyExpertCases();
 
   if (!user) {
     return (
