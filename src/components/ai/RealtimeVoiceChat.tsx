@@ -147,7 +147,7 @@ export function RealtimeVoiceChat({ language, onClose, onShowPremium }: Realtime
       const offer = await pc.createOffer();
       await pc.setLocalDescription(offer);
 
-      const response = await fetch('https://api.openai.com/v1/realtime?model=gpt-4o-realtime-preview-2025-06-03', {
+      const response = await fetch('https://api.openai.com/v1/realtime?model=gpt-4o-realtime-preview', {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${ephemeralKey}`,
