@@ -120,6 +120,31 @@ export function CasesInboxManager() {
     },
   });
 
+  // Realtime subscription for new cases
+  useEffect(() => {
+    const channel = supabase
+      .channel('admin-new-cases')
+      .on('postgres_changes', {
+        event: 'INSERT', schema: 'public', table: 'cases',
+      }, (payload: any) => {
+        toast.info(`नयाँ केस प्राप्त भयो — ${payload.new?.crop || 'Unknown crop'}`, {
+          description: `District: ${payload.new?.district || '—'} | Priority: ${payload.new?.priority || 'low'}`,
+          action: {
+            label: 'हेर्नुहोस्',
+            onClick: () => setSelectedCaseId(payload.new?.id),
+          },
+        });
+        queryClient.invalidateQueries({ queryKey: ['admin-cases'] });
+      })
+      .on('postgres_changes', {
+        event: 'UPDATE', schema: 'public', table: 'cases',
+      }, () => {
+        queryClient.invalidateQueries({ queryKey: ['admin-cases'] });
+      })
+      .subscribe();
+    return () => { supabase.removeChannel(channel); };
+  }, [queryClient]);
+
   // Filter by search
   const filtered = cases?.filter(c => {
     if (!search) return true;
@@ -136,9 +161,19 @@ export function CasesInboxManager() {
   const selectedCase = cases?.find(c => c.id === selectedCaseId) || null;
 
   // Stats
+  const newCount = cases?.filter(c => c.status === 'new').length || 0;
   const openCount = cases?.filter(c => c.status !== 'closed').length || 0;
   const highCount = cases?.filter(c => c.priority === 'high' && c.status !== 'closed').length || 0;
   const unassignedCount = cases?.filter(c => !c.assigned_expert_id && c.status !== 'closed').length || 0;
+
+  // Auto-set status to 'in_review' when admin opens a 'new' case
+  const handleOpenCase = async (caseRow: CaseRow) => {
+    setSelectedCaseId(caseRow.id);
+    if (caseRow.status === 'new') {
+      await (supabase as any).from('cases').update({ status: 'in_review', updated_at: new Date().toISOString() }).eq('id', caseRow.id);
+      queryClient.invalidateQueries({ queryKey: ['admin-cases'] });
+    }
+  };
 
   if (selectedCase) {
     return (
@@ -158,6 +193,11 @@ export function CasesInboxManager() {
             <CardTitle className="text-xl flex items-center gap-2">
               <MsgIcon className="h-5 w-5 text-primary" />
               टिकट केस Inbox
+              {newCount > 0 && (
+                <Badge className="bg-destructive text-destructive-foreground ml-2 animate-pulse">
+                  New ({newCount})
+                </Badge>
+              )}
             </CardTitle>
             <Button variant="outline" size="sm" onClick={() => queryClient.invalidateQueries({ queryKey: ['admin-cases'] })}>
               <RefreshCw className="h-4 w-4 mr-1" /> Refresh
@@ -165,13 +205,14 @@ export function CasesInboxManager() {
           </div>
 
           {/* Stats row */}
-          <div className="grid grid-cols-3 gap-3">
+          <div className="grid grid-cols-4 gap-3">
             {[
+              { label: 'नयाँ (New)', value: newCount, color: 'text-destructive' },
               { label: 'Open', value: openCount, color: 'text-blue-600' },
-              { label: 'High Priority', value: highCount, color: 'text-destructive' },
-              { label: 'Unassigned', value: unassignedCount, color: 'text-orange-500' },
+              { label: 'High Priority', value: highCount, color: 'text-orange-500' },
+              { label: 'Unassigned', value: unassignedCount, color: 'text-muted-foreground' },
             ].map(s => (
-              <div key={s.label} className="p-3 rounded-lg bg-muted/50 text-center">
+              <div key={s.label} className={`p-3 rounded-lg text-center ${s.label === 'नयाँ (New)' && s.value > 0 ? 'bg-destructive/10 ring-1 ring-destructive/30' : 'bg-muted/50'}`}>
                 <p className={`text-2xl font-bold ${s.color}`}>{s.value}</p>
                 <p className="text-xs text-muted-foreground">{s.label}</p>
               </div>
@@ -221,6 +262,7 @@ export function CasesInboxManager() {
             <Table>
               <TableHeader>
                 <TableRow>
+                  <TableHead className="w-[30px]"></TableHead>
                   <TableHead>Channel</TableHead>
                   <TableHead>Farmer</TableHead>
                   <TableHead>Crop</TableHead>
@@ -234,19 +276,26 @@ export function CasesInboxManager() {
               <TableBody>
                 {filtered.map(c => {
                   const ChannelIcon = CHANNEL_ICONS[c.channel || 'app'] || Smartphone;
+                  const isNew = c.status === 'new';
                   return (
                     <TableRow
                       key={c.id}
-                      className="cursor-pointer hover:bg-accent/50"
-                      onClick={() => setSelectedCaseId(c.id)}
+                      className={`cursor-pointer hover:bg-accent/50 ${isNew ? 'bg-yellow-50 dark:bg-yellow-900/10 font-medium' : ''}`}
+                      onClick={() => handleOpenCase(c)}
                     >
+                      <TableCell className="pr-0">
+                        {isNew && <span className="block h-2.5 w-2.5 rounded-full bg-destructive animate-pulse" />}
+                      </TableCell>
                       <TableCell><ChannelIcon className="h-4 w-4 text-muted-foreground" /></TableCell>
                       <TableCell className="font-mono text-xs">{c.farmer_phone || '—'}</TableCell>
                       <TableCell>{c.crop || '—'}</TableCell>
                       <TableCell className="max-w-[120px] truncate">{c.problem_type || '—'}</TableCell>
                       <TableCell>{c.district || '—'}</TableCell>
                       <TableCell><PriorityBadge priority={c.priority} /></TableCell>
-                      <TableCell><StatusBadge status={c.status} /></TableCell>
+                      <TableCell>
+                        <StatusBadge status={c.status} />
+                        {isNew && <Badge variant="destructive" className="ml-1 text-[10px] px-1.5 py-0">NEW</Badge>}
+                      </TableCell>
                       <TableCell className="text-xs text-muted-foreground">{formatDistanceToNow(new Date(c.created_at), { addSuffix: true })}</TableCell>
                     </TableRow>
                   );
