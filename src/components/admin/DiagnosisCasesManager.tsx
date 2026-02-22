@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   Search, Send, Clock, CheckCircle, 
@@ -26,6 +26,7 @@ import { useCrops } from '@/hooks/useCrops';
 import { supabase } from '@/integrations/supabase/client';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { formatDistanceToNow, format } from 'date-fns';
+import { toast } from 'sonner';
 import type { Database } from '@/integrations/supabase/types';
 import { CaseThread } from '@/components/diagnosis/CaseThread';
 
@@ -299,6 +300,7 @@ export function DiagnosisCasesManager() {
   const [selectedCase, setSelectedCase] = useState<DiagnosisCaseWithDetails | null>(null);
   const [showFilters, setShowFilters] = useState(false);
   const [savedView, setSavedView] = useState<string>('all');
+  const queryClient = useQueryClient();
 
   const filters: any = {};
   if (statusFilter !== 'all') filters.status = statusFilter;
@@ -309,6 +311,27 @@ export function DiagnosisCasesManager() {
   const { data: cases, isLoading, refetch } = useAdminDiagnosisCases(
     Object.keys(filters).length > 0 ? filters : undefined
   );
+
+  // Realtime subscription for new diagnosis cases
+  useEffect(() => {
+    const channel = supabase
+      .channel('admin-diagnosis-realtime')
+      .on('postgres_changes', {
+        event: 'INSERT', schema: 'public', table: 'diagnosis_cases',
+      }, (payload: any) => {
+        toast.info('नयाँ केस प्राप्त भयो!', {
+          description: `Crop ID: ${payload.new?.crop_id || '—'} | Priority: ${payload.new?.priority || 'normal'}`,
+        });
+        queryClient.invalidateQueries({ queryKey: ['admin-diagnosis-cases'] });
+      })
+      .on('postgres_changes', {
+        event: 'UPDATE', schema: 'public', table: 'diagnosis_cases',
+      }, () => {
+        queryClient.invalidateQueries({ queryKey: ['admin-diagnosis-cases'] });
+      })
+      .subscribe();
+    return () => { supabase.removeChannel(channel); };
+  }, [queryClient]);
 
   // Saved views filtering
   let viewFilteredCases = cases || [];
@@ -345,7 +368,7 @@ export function DiagnosisCasesManager() {
       {/* Stats Row */}
       <div className="grid grid-cols-3 sm:grid-cols-6 gap-3">
         <StatCard label="कुल" value={stats.total} onClick={() => setSavedView('all')} active={savedView === 'all'} />
-        <StatCard label="नयाँ" value={stats.new} color="text-blue-500" onClick={() => { setSavedView('all'); setStatusFilter('new'); }} />
+        <StatCard label="नयाँ" value={stats.new} color="text-destructive" highlight={stats.new > 0} onClick={() => { setSavedView('all'); setStatusFilter('new'); }} />
         <StatCard label="हेर्दै" value={stats.inReview} color="text-orange-500" />
         <StatCard label="उत्तर" value={stats.answered} color="text-green-500" />
         <StatCard label="अत्यावश्यक" value={stats.urgent} color="text-destructive" onClick={() => setSavedView('high_priority')} active={savedView === 'high_priority'} />
@@ -443,9 +466,9 @@ export function DiagnosisCasesManager() {
   );
 }
 
-function StatCard({ label, value, color, onClick, active }: { label: string; value: number; color?: string; onClick?: () => void; active?: boolean }) {
+function StatCard({ label, value, color, onClick, active, highlight }: { label: string; value: number; color?: string; onClick?: () => void; active?: boolean; highlight?: boolean }) {
   return (
-    <Card className={`cursor-pointer transition-colors ${active ? 'ring-2 ring-primary' : ''}`} onClick={onClick}>
+    <Card className={`cursor-pointer transition-colors ${active ? 'ring-2 ring-primary' : ''} ${highlight ? 'ring-2 ring-destructive/50 bg-destructive/5' : ''}`} onClick={onClick}>
       <CardContent className="pt-3 pb-3 text-center">
         <p className={`text-xl font-bold ${color || ''}`}>{value}</p>
         <p className="text-[10px] text-muted-foreground">{label}</p>
@@ -460,10 +483,12 @@ function CaseRow({ caseData, onOpen }: { caseData: DiagnosisCaseWithDetails; onO
   const channel = (caseData as any).channel || 'APP';
   const assignedExpert = (caseData as any).assigned_expert;
 
+  const isNew = caseData.case_status === 'new' || caseData.case_status === 'ai_suggested';
+
   return (
     <div
       className={`p-3 sm:p-4 border rounded-xl hover:bg-muted/30 transition-colors cursor-pointer ${
-        isUrgent ? 'border-destructive/30 bg-destructive/5' : 'border-border/40'
+        isUrgent ? 'border-destructive/30 bg-destructive/5' : isNew ? 'border-primary/30 bg-yellow-50 dark:bg-yellow-900/10' : 'border-border/40'
       }`}
       onClick={onOpen}
     >
