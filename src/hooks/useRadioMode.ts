@@ -65,7 +65,10 @@ export function useRadioMode(options: UseRadioModeOptions = {}) {
         },
         body: JSON.stringify(configRef.current),
       });
-      if (!response.ok) throw new Error(`HTTP ${response.status}`);
+      if (!response.ok) {
+        const errData = await response.json().catch(() => ({}));
+        throw new Error(errData.error || `HTTP ${response.status}`);
+      }
       const data = await response.json();
       const text = data.textTip || null;
 
