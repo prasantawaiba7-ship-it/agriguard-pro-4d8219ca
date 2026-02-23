@@ -23,7 +23,7 @@ const STAGES = [
 export function RadioModePanel() {
   const { language } = useLanguage();
   const { activeCrops, isLoading: cropsLoading } = useCrops();
-  const { isPlaying, currentTip, tipCount, isFetching, isSpeaking, isOnline, cachedCount, start, stop } = useRadioMode({
+  const { isPlaying, currentTip, tipCount, isFetching, isSpeaking, isOnline, cachedCount, isDemo, start, stop } = useRadioMode({
     intervalSeconds: 45,
     language,
   });
@@ -154,6 +154,11 @@ export function RadioModePanel() {
                 <p className="text-[10px] text-muted-foreground mt-2">
                   टिप #{tipCount} {!isOnline && '• (cached)'} {isFetching && '• अर्को लोड हुँदैछ...'}
                 </p>
+                {isDemo && (
+                  <p className="text-[10px] text-orange-500 mt-1">
+                    Demo tip: AI credits सकिएर अहिले demo mode मा छ। पूरा सुविधा प्रयोग गर्न AI credits थप्नुहोस्।
+                  </p>
+                )}
               </motion.div>
             )}
           </AnimatePresence>
