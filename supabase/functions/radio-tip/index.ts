@@ -5,6 +5,23 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version',
 };
 
+const fallbackTips = [
+  "दाइ, खेतमा पानी धेरै जमेको छैन भनेर आज बेलुका एकचोटि हेर्नुहोस्।",
+  "गहुँको बालीमा जरासम्म पानी पुगेको छ कि छैन, हल्का खन्ती चलाएर जाँच्नुस्।",
+  "रासायनिक मल प्रयोग गर्नुअघि लेबल राम्ररी पढ्नुहोस् र मात्रा बारे स्थानीय कृषि कार्यालयसँग सल्लाह लिनुहोस्।",
+  "बिरुवा सार्दा जरा नबिग्रिने गरी सावधानी अपनाउनुहोस्।",
+  "माटो परीक्षण गराएर बाली अनुसारको मल प्रयोग गर्नुहोस्।",
+  "सिँचाइ गर्दा बिहान वा बेलुकाको समय छान्नुहोस्।",
+  "रोग वा कीरा लागेको शंका लागेमा तुरुन्तै कृषि प्राविधिकलाई सम्पर्क गर्नुहोस्।",
+  "बाली लगाउनुअघि खेतको माटो राम्ररी जोत्नुहोस्।",
+  "जैविक मल प्रयोगले माटोको उर्वराशक्ति बढाउँछ।",
+  "मौसम अनुसारको बाली लगाउनुहोस्।",
+  "फाइबरयुक्त बालीले माटोलाई बलियो बनाउँछ।",
+  "बालीनालीको बिमा गराउनुहोस्।",
+  "कम्पोस्ट मल बनाउन सिकेर प्रयोग गर्नुहोस्।",
+  "बालीनालीको बीउ गुणस्तरीय हुनुपर्छ।",
+];
+
 function getTimeOfDay(): string {
   const hour = new Date().getUTCHours() + 5.75; // Nepal UTC+5:45
   const nplHour = hour >= 24 ? hour - 24 : hour;
@@ -67,15 +84,17 @@ serve(async (req) => {
     if (!response.ok) {
       const errorText = await response.text();
       console.error("[radio-tip] AI error:", response.status, errorText);
-      if (response.status === 429) {
-        return new Response(JSON.stringify({ error: "Too many requests, please try again later." }), {
-          status: 429,
+
+      // Fallback for 402 (credits exhausted)
+      if (response.status === 402) {
+        const randomTip = fallbackTips[Math.floor(Math.random() * fallbackTips.length)];
+        return new Response(JSON.stringify({ textTip: randomTip, fromAI: false }), {
           headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
-      if (response.status === 402) {
-        return new Response(JSON.stringify({ error: "AI credits exhausted. Please add credits to your workspace." }), {
-          status: 402,
+      if (response.status === 429) {
+        return new Response(JSON.stringify({ error: "Too many requests, please try again later." }), {
+          status: 429,
           headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
@@ -88,7 +107,7 @@ serve(async (req) => {
     const data = await response.json();
     const textTip = data.choices?.[0]?.message?.content?.trim() || '';
 
-    return new Response(JSON.stringify({ textTip }), {
+    return new Response(JSON.stringify({ textTip, fromAI: true }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (error) {

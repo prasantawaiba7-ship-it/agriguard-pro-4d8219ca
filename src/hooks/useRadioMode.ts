@@ -24,6 +24,7 @@ export function useRadioMode(options: UseRadioModeOptions = {}) {
   const [isSpeaking, setIsSpeaking] = useState(false);
   const [isOnline, setIsOnline] = useState(navigator.onLine);
   const [cachedCount, setCachedCount] = useState(getCachedTipCount());
+  const [isDemo, setIsDemo] = useState(false);
 
   const configRef = useRef<RadioModeConfig | null>(null);
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -71,6 +72,8 @@ export function useRadioMode(options: UseRadioModeOptions = {}) {
       }
       const data = await response.json();
       const text = data.textTip || null;
+      if (data.fromAI === false) setIsDemo(true);
+      else setIsDemo(false);
 
       // Cache the tip
       if (text && configRef.current) {
@@ -213,7 +216,7 @@ export function useRadioMode(options: UseRadioModeOptions = {}) {
 
   return {
     isPlaying, currentTip, tipCount, isFetching, isSpeaking,
-    isOnline, cachedCount,
+    isOnline, cachedCount, isDemo,
     start, stop,
   };
 }
