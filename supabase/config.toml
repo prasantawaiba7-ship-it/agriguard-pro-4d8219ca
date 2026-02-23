@@ -48,3 +48,6 @@ verify_jwt = false
 [functions.radio-tip]
 verify_jwt = false
 
+[functions.tomorrow-plan]
+verify_jwt = false
+
