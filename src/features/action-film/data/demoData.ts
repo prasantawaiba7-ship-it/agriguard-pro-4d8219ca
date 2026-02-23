@@ -26,6 +26,19 @@ export interface FarmerFilm {
   badges: { icon: string; label: string }[];
 }
 
+export interface DemoSeason {
+  id: string;
+  label: string;
+  cropName: string;
+  emoji: string;
+}
+
+export const demoSeasons: DemoSeason[] = [
+  { id: 'barkha-2081', label: 'बर्खा सिजन २०८१', cropName: 'धान (Rice)', emoji: '🌾' },
+  { id: 'hiwnd-2081', label: 'हिउँद सिजन २०८१', cropName: 'गहुँ (Wheat)', emoji: '🌿' },
+  { id: 'basanta-2082', label: 'बसन्त सिजन २०८२', cropName: 'मकै (Maize)', emoji: '🌽' },
+];
+
 export const demoFilm: FarmerFilm = {
   farmerName: 'रामबहादुर किसान',
   cropName: 'धान (Rice)',
