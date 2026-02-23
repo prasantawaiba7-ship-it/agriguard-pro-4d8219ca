@@ -369,6 +369,20 @@ const FarmerDashboard = () => {
                       <p className="text-[10px] sm:text-xs text-muted-foreground hidden lg:block">{t('kisanSathi')}</p>
                     </CardContent>
                   </Card>
+
+                  {/* Farmer Action Film */}
+                  <Card 
+                    className="border-accent/20 bg-gradient-to-br from-accent/5 to-primary/5 cursor-pointer hover:shadow-lg transition-all"
+                    onClick={() => navigate('/action-film')}
+                  >
+                    <CardContent className="p-3 sm:p-4 flex flex-col items-center text-center gap-2">
+                      <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-accent/10 flex items-center justify-center">
+                        <span className="text-xl">🎬</span>
+                      </div>
+                      <h3 className="font-semibold text-xs sm:text-sm text-foreground">🎬 मेरो कृषि यात्रा</h3>
+                      <p className="text-[10px] sm:text-xs text-muted-foreground hidden lg:block">बालीको कथा हेर्नुहोस्</p>
+                    </CardContent>
+                  </Card>
                 </div>
               </motion.div>
             )}
