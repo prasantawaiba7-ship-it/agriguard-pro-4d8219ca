@@ -1,6 +1,6 @@
 import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
-import { Camera, Cloud, Store, Bot, MapPin, BookOpen } from "lucide-react";
+import { Camera, Cloud, Store, Bot, MapPin, BookOpen, Film } from "lucide-react";
 import { useLanguage } from "@/hooks/useLanguage";
 
 const QuickActionsGrid = () => {
@@ -61,6 +61,15 @@ const QuickActionsGrid = () => {
       iconCircleBg: "bg-[hsl(var(--card-guide-icon))]",
       iconColor: "text-white",
     },
+    {
+      icon: Film,
+      label: "🎬 कृषि यात्रा",
+      sublabel: "बालीको कथा बनाउनुहोस्",
+      href: "/action-film",
+      cardBg: "bg-accent/5",
+      iconCircleBg: "bg-accent",
+      iconColor: "text-white",
+    },
   ];
 
   return (
@@ -80,7 +89,7 @@ const QuickActionsGrid = () => {
           </p>
         </motion.div>
 
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 sm:gap-4 max-w-5xl mx-auto">
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-7 gap-3 sm:gap-4 max-w-6xl mx-auto">
           {quickActions.map((action, index) => (
             <motion.div
               key={action.href}
