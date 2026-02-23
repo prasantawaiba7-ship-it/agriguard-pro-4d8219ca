@@ -43,6 +43,7 @@ import {
   CloudSun,
   Stethoscope,
 } from "lucide-react";
+import { RadioModePanel } from "@/components/radio/RadioModePanel";
 import { Database } from "@/integrations/supabase/types";
 
 type CropType = Database['public']['Enums']['crop_type'];
@@ -369,6 +370,18 @@ const FarmerDashboard = () => {
                     </CardContent>
                   </Card>
                 </div>
+              </motion.div>
+            )}
+
+            {/* Radio Mode */}
+            {activeTab !== "weather" && (
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.6 }}
+                className="mb-8"
+              >
+                <RadioModePanel />
               </motion.div>
             )}
 
