@@ -13,6 +13,7 @@ interface RadioModeConfig {
   crop: string;
   stage: string;
   location?: string;
+  language?: string;
 }
 
 interface UseRadioModeOptions {
@@ -60,7 +61,10 @@ export function useRadioMode(options: UseRadioModeOptions = {}) {
           'Content-Type': 'application/json',
           Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
         },
-        body: JSON.stringify(configRef.current),
+        body: JSON.stringify({
+          ...configRef.current,
+          language: configRef.current.language || options.language || 'ne',
+        }),
       });
       if (!response.ok) {
         const errData = await response.json().catch(() => ({}));
@@ -98,6 +102,18 @@ export function useRadioMode(options: UseRadioModeOptions = {}) {
     }
   }, []);
 
+  // Pick a TTS voice based on language
+  const getVoiceForLanguage = useCallback((lang: string) => {
+    const voices = window.speechSynthesis.getVoices();
+    if (lang === 'en') {
+      return voices.find(v => v.lang.startsWith('en-')) || null;
+    }
+    // Nepali or fallback to Hindi
+    return voices.find(v => v.lang.includes('ne') || v.name.toLowerCase().includes('nepali'))
+      || voices.find(v => v.lang.startsWith('hi') || v.name.toLowerCase().includes('hindi'))
+      || null;
+  }, []);
+
   // Speak a single segment, returns a promise that resolves on end
   const speakSegment = useCallback((text: string): Promise<void> => {
     return new Promise((resolve) => {
@@ -109,15 +125,13 @@ export function useRadioMode(options: UseRadioModeOptions = {}) {
       // Cancel any previous speech
       window.speechSynthesis.cancel();
 
+      const currentLang = configRef.current?.language || options.language || 'ne';
       const utterance = new SpeechSynthesisUtterance(text);
-      const voices = window.speechSynthesis.getVoices();
-      const nepaliVoice = voices.find(v => v.lang.includes('ne') || v.name.toLowerCase().includes('nepali'));
-      const hindiVoice = voices.find(v => v.lang.startsWith('hi') || v.name.toLowerCase().includes('hindi'));
-      if (nepaliVoice) utterance.voice = nepaliVoice;
-      else if (hindiVoice) utterance.voice = hindiVoice;
+      const voice = getVoiceForLanguage(currentLang);
+      if (voice) utterance.voice = voice;
 
-      utterance.lang = 'ne-NP';
-      utterance.rate = 0.95;
+      utterance.lang = currentLang === 'en' ? 'en-US' : 'ne-NP';
+      utterance.rate = currentLang === 'en' ? 1.0 : 0.95;
       utterance.pitch = 1;
 
       utterance.onstart = () => setIsSpeaking(true);
