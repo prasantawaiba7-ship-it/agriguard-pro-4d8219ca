@@ -5,7 +5,7 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version',
 };
 
-const fallbackTips = [
+const fallbackSegments = [
   "दाइ, खेतमा पानी धेरै जमेको छैन भनेर आज बेलुका एकचोटि हेर्नुहोस्।",
   "गहुँको बालीमा जरासम्म पानी पुगेको छ कि छैन, हल्का खन्ती चलाएर जाँच्नुस्।",
   "रासायनिक मल प्रयोग गर्नुअघि लेबल राम्ररी पढ्नुहोस् र मात्रा बारे स्थानीय कृषि कार्यालयसँग सल्लाह लिनुहोस्।",
@@ -14,12 +14,6 @@ const fallbackTips = [
   "सिँचाइ गर्दा बिहान वा बेलुकाको समय छान्नुहोस्।",
   "रोग वा कीरा लागेको शंका लागेमा तुरुन्तै कृषि प्राविधिकलाई सम्पर्क गर्नुहोस्।",
   "बाली लगाउनुअघि खेतको माटो राम्ररी जोत्नुहोस्।",
-  "जैविक मल प्रयोगले माटोको उर्वराशक्ति बढाउँछ।",
-  "मौसम अनुसारको बाली लगाउनुहोस्।",
-  "फाइबरयुक्त बालीले माटोलाई बलियो बनाउँछ।",
-  "बालीनालीको बिमा गराउनुहोस्।",
-  "कम्पोस्ट मल बनाउन सिकेर प्रयोग गर्नुहोस्।",
-  "बालीनालीको बीउ गुणस्तरीय हुनुपर्छ।",
 ];
 
 function getTimeOfDay(): string {
@@ -46,23 +40,33 @@ serve(async (req) => {
 
     const timeOfDay = getTimeOfDay();
 
-    const systemPrompt = `You are Krishi Radio AI, a Nepali farming coach.
-- Output ONLY a SHORT tip (1–3 sentences) in very simple Nepali, as if speaking on the radio to a small farmer.
-- The message should be actionable for the selected crop, growth stage, season, and time of day.
-- Example style:
-  - "दाइ, आज बिहान धानको खेतको पानीको लेभल जाँच्नुहोस्…"
-  - "सायँझतिर गहुँको खेतमा हल्का सिंचाइ गर्दा राम्रो हुन्छ…"
-- Avoid giving exact pesticide/chemical doses. If needed, say they must confirm with स्थानीय कृषि कार्यालय / agrovet.
-- Each response must be independent; do not refer to previous messages like "जस्तो मैले अघि भनेँ…".
-- Do NOT use any greeting. Just give the tip directly.
-- Keep it under 50 words in Nepali.`;
+    const systemPrompt = `You are Krishi Radio AI, a friendly Nepali farming radio host.
+You speak naturally to small farmers as if on a live radio program.
+
+RULES:
+- Output a JSON array of 5–8 short segments. Each segment is 1–2 sentences in very simple Nepali.
+- Each segment should be an independent, practical farming tip or advice for the given crop, growth stage, season, and time of day.
+- Do NOT number them ("पहिलो टिप", "दोस्रो टिप" etc.). Speak naturally, as if it's a small radio program flowing from one topic to the next.
+- Use transitions like "अब अर्को कुरा…", "त्यसै गरी…", "एउटा सल्लाह दिन्छु…" to connect segments.
+- Total speaking time of all segments combined: roughly 2–3 minutes.
+- Avoid giving exact pesticide/chemical doses. Say they must confirm with स्थानीय कृषि कार्यालय / agrovet.
+- Do NOT use any greeting in the first segment. Just start with a tip.
+- Keep each segment under 40 words in Nepali.
+
+OUTPUT FORMAT (strict JSON, no markdown):
+[
+  {"text": "segment text here", "pauseMs": 2000},
+  {"text": "next segment", "pauseMs": 1500}
+]
+
+pauseMs should be between 1500 and 3000, varying naturally.`;
 
     const userPrompt = `बाली: ${crop || 'सामान्य'}
 चरण: ${stage || 'सामान्य'}
 स्थान: ${location || 'नेपाल'}
 समय: ${timeOfDay}
 
-एउटा छोटो, व्यावहारिक कृषि टिप दिनुहोस्।`;
+कृपया 5–8 वटा छोटा radio segments JSON array मा दिनुहोस्।`;
 
     const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
@@ -76,7 +80,7 @@ serve(async (req) => {
           { role: "system", content: systemPrompt },
           { role: "user", content: userPrompt },
         ],
-        max_tokens: 200,
+        max_tokens: 800,
         temperature: 0.8,
       }),
     });
@@ -87,8 +91,9 @@ serve(async (req) => {
 
       // Fallback for 402 (credits exhausted)
       if (response.status === 402) {
-        const randomTip = fallbackTips[Math.floor(Math.random() * fallbackTips.length)];
-        return new Response(JSON.stringify({ textTip: randomTip, fromAI: false }), {
+        const shuffled = [...fallbackSegments].sort(() => Math.random() - 0.5).slice(0, 6);
+        const segments = shuffled.map(text => ({ text, pauseMs: 2000 }));
+        return new Response(JSON.stringify({ segments, fromAI: false }), {
           headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
@@ -105,9 +110,23 @@ serve(async (req) => {
     }
 
     const data = await response.json();
-    const textTip = data.choices?.[0]?.message?.content?.trim() || '';
+    const rawContent = data.choices?.[0]?.message?.content?.trim() || '[]';
+    
+    // Parse AI response - handle possible markdown code block wrapping
+    let segments: Array<{text: string; pauseMs: number}>;
+    try {
+      const cleaned = rawContent.replace(/^```json?\s*/i, '').replace(/```\s*$/, '').trim();
+      segments = JSON.parse(cleaned);
+      if (!Array.isArray(segments) || segments.length === 0) throw new Error("not array");
+      // Validate each segment
+      segments = segments.filter(s => s && typeof s.text === 'string' && s.text.trim())
+        .map(s => ({ text: s.text.trim(), pauseMs: Math.max(1500, Math.min(3000, s.pauseMs || 2000)) }));
+    } catch {
+      // If parsing fails, treat raw content as a single tip (backward compat)
+      segments = [{ text: rawContent, pauseMs: 2000 }];
+    }
 
-    return new Response(JSON.stringify({ textTip, fromAI: true }), {
+    return new Response(JSON.stringify({ segments, fromAI: true }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (error) {

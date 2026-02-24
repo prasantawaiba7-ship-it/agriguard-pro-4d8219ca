@@ -24,7 +24,6 @@ export function RadioModePanel() {
   const { language } = useLanguage();
   const { activeCrops, isLoading: cropsLoading } = useCrops();
   const { isPlaying, currentTip, tipCount, isFetching, isSpeaking, isOnline, cachedCount, isDemo, start, stop } = useRadioMode({
-    intervalSeconds: 45,
     language,
   });
 
