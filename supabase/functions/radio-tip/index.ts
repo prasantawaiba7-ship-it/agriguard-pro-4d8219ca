@@ -31,7 +31,7 @@ serve(async (req) => {
   }
 
   try {
-    const { crop, stage, location } = await req.json();
+    const { crop, stage, location, language } = await req.json();
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
 
     if (!LOVABLE_API_KEY) {
@@ -39,9 +39,32 @@ serve(async (req) => {
     }
 
     const timeOfDay = getTimeOfDay();
+    const isEnglish = language === 'en';
 
-    const systemPrompt = `You are Krishi Radio AI, a friendly Nepali farming radio host.
-You speak naturally to small farmers as if on a live radio program.
+    const systemPrompt = isEnglish
+      ? `You are Krishi Radio AI, a friendly English-speaking farming radio host for Nepal.
+You speak naturally to small farmers as if on a live radio program. The user has selected LANGUAGE = English. You must respond ONLY in English.
+
+RULES:
+- Output a JSON array of 5–8 short segments. Each segment is 1–2 sentences in simple English.
+- Each segment should be an independent, practical farming tip for the given crop, growth stage, season, and time of day.
+- Do NOT number them ("Tip 1", "Tip 2" etc.). Speak naturally, flowing from one topic to the next.
+- Use transitions like "Now, another thing…", "Also keep in mind…", "Here's a useful suggestion…" to connect segments.
+- Total speaking time: roughly 2–3 minutes.
+- Avoid giving exact pesticide/chemical doses. Say they must confirm with their local agriculture office.
+- Do NOT use any greeting in the first segment. Just start with a tip.
+- Keep each segment under 40 words.
+- Do NOT include any Nepali words.
+
+OUTPUT FORMAT (strict JSON, no markdown):
+[
+  {"text": "segment text here", "pauseMs": 2000},
+  {"text": "next segment", "pauseMs": 1500}
+]
+
+pauseMs should be between 1500 and 3000, varying naturally.`
+      : `You are Krishi Radio AI, a friendly Nepali farming radio host.
+You speak naturally to small farmers as if on a live radio program. The user has selected LANGUAGE = Nepali. You must respond ONLY in Nepali.
 
 RULES:
 - Output a JSON array of 5–8 short segments. Each segment is 1–2 sentences in very simple Nepali.
@@ -52,6 +75,7 @@ RULES:
 - Avoid giving exact pesticide/chemical doses. Say they must confirm with स्थानीय कृषि कार्यालय / agrovet.
 - Do NOT use any greeting in the first segment. Just start with a tip.
 - Keep each segment under 40 words in Nepali.
+- Do NOT mix English words unless they are commonly used farming terms.
 
 OUTPUT FORMAT (strict JSON, no markdown):
 [
@@ -61,7 +85,14 @@ OUTPUT FORMAT (strict JSON, no markdown):
 
 pauseMs should be between 1500 and 3000, varying naturally.`;
 
-    const userPrompt = `बाली: ${crop || 'सामान्य'}
+    const userPrompt = isEnglish
+      ? `Crop: ${crop || 'General'}
+Stage: ${stage || 'General'}
+Location: ${location || 'Nepal'}
+Time: ${timeOfDay}
+
+Please provide 5–8 short radio segments as a JSON array.`
+      : `बाली: ${crop || 'सामान्य'}
 चरण: ${stage || 'सामान्य'}
 स्थान: ${location || 'नेपाल'}
 समय: ${timeOfDay}

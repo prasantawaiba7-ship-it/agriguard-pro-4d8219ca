@@ -41,6 +41,7 @@ export function RadioModePanel() {
         crop: cropObj ? `${cropObj.name_ne} (${cropObj.name_en})` : selectedCrop,
         stage: selectedStage,
         location: location || undefined,
+        language,
       });
     }
   };
