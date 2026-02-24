@@ -1,5 +1,13 @@
 import { useState, useCallback, useRef, useEffect } from 'react';
-import { saveTip, loadCachedTips, getCachedTipCount, type RadioTip } from '@/lib/radioCache';
+import { saveTip, loadCachedTips, getCachedTipCount } from '@/lib/radioCache';
+
+/** Silence gap between segments (ms). Change this to adjust pacing. */
+const RADIO_GAP_MS = 12000;
+
+interface RadioSegment {
+  text: string;
+  pauseMs: number;
+}
 
 interface RadioModeConfig {
   crop: string;
@@ -8,15 +16,12 @@ interface RadioModeConfig {
 }
 
 interface UseRadioModeOptions {
-  intervalSeconds?: number;
   language?: string;
 }
 
 const RADIO_TIP_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/radio-tip`;
 
 export function useRadioMode(options: UseRadioModeOptions = {}) {
-  const { intervalSeconds = 45 } = options;
-
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentTip, setCurrentTip] = useState('');
   const [tipCount, setTipCount] = useState(0);
@@ -27,24 +32,15 @@ export function useRadioMode(options: UseRadioModeOptions = {}) {
   const [isDemo, setIsDemo] = useState(false);
 
   const configRef = useRef<RadioModeConfig | null>(null);
-  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
-  const utteranceRef = useRef<SpeechSynthesisUtterance | null>(null);
   const isPlayingRef = useRef(false);
-  const tipQueueRef = useRef<string[]>([]);
-  const isSpeakingRef = useRef(false);
+  const gapTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const segmentQueueRef = useRef<RadioSegment[]>([]);
   const offlineIndexRef = useRef(0);
 
   // Online/offline detection
   useEffect(() => {
     const goOnline = () => setIsOnline(true);
-    const goOffline = () => {
-      setIsOnline(false);
-      // If playing online, stop interval - will switch to cache
-      if (intervalRef.current) {
-        clearInterval(intervalRef.current);
-        intervalRef.current = null;
-      }
-    };
+    const goOffline = () => setIsOnline(false);
     window.addEventListener('online', goOnline);
     window.addEventListener('offline', goOffline);
     return () => {
@@ -53,8 +49,8 @@ export function useRadioMode(options: UseRadioModeOptions = {}) {
     };
   }, []);
 
-  // Fetch a single tip from the edge function
-  const fetchTip = useCallback(async (): Promise<string | null> => {
+  // Fetch a batch of segments from the edge function
+  const fetchSegments = useCallback(async (): Promise<RadioSegment[] | null> => {
     if (!configRef.current) return null;
     try {
       setIsFetching(true);
@@ -71,23 +67,29 @@ export function useRadioMode(options: UseRadioModeOptions = {}) {
         throw new Error(errData.error || `HTTP ${response.status}`);
       }
       const data = await response.json();
-      const text = data.textTip || null;
+      
       if (data.fromAI === false) setIsDemo(true);
       else setIsDemo(false);
 
-      // Cache the tip
-      if (text && configRef.current) {
-        saveTip({
-          id: crypto.randomUUID(),
-          createdAt: new Date().toISOString(),
-          crop: configRef.current.crop,
-          stage: configRef.current.stage,
-          location: configRef.current.location,
-          text,
-        });
+      const segments: RadioSegment[] = data.segments || [];
+      
+      // Cache each segment text
+      if (configRef.current) {
+        for (const seg of segments) {
+          if (seg.text) {
+            saveTip({
+              id: crypto.randomUUID(),
+              createdAt: new Date().toISOString(),
+              crop: configRef.current.crop,
+              stage: configRef.current.stage,
+              location: configRef.current.location,
+              text: seg.text,
+            });
+          }
+        }
         setCachedCount(getCachedTipCount());
       }
-      return text;
+      return segments;
     } catch (err) {
       console.error('[RadioMode] Fetch error:', err);
       return null;
@@ -96,120 +98,158 @@ export function useRadioMode(options: UseRadioModeOptions = {}) {
     }
   }, []);
 
-  // Speak a tip using browser SpeechSynthesis
-  const speakTip = useCallback((text: string) => {
-    if (!('speechSynthesis' in window) || !text) return;
-    const utterance = new SpeechSynthesisUtterance(text);
-    utteranceRef.current = utterance;
-
-    const voices = window.speechSynthesis.getVoices();
-    const nepaliVoice = voices.find(v => v.lang.includes('ne') || v.name.toLowerCase().includes('nepali'));
-    const hindiVoice = voices.find(v => v.lang.startsWith('hi') || v.name.toLowerCase().includes('hindi'));
-    if (nepaliVoice) utterance.voice = nepaliVoice;
-    else if (hindiVoice) utterance.voice = hindiVoice;
-
-    utterance.lang = 'ne-NP';
-    utterance.rate = 0.95;
-    utterance.pitch = 1;
-
-    utterance.onstart = () => { isSpeakingRef.current = true; setIsSpeaking(true); };
-    utterance.onend = () => {
-      isSpeakingRef.current = false;
-      setIsSpeaking(false);
-      utteranceRef.current = null;
-      if (tipQueueRef.current.length > 0 && isPlayingRef.current) {
-        const next = tipQueueRef.current.shift()!;
-        setCurrentTip(next);
-        speakTip(next);
+  // Speak a single segment, returns a promise that resolves on end
+  const speakSegment = useCallback((text: string): Promise<void> => {
+    return new Promise((resolve) => {
+      if (!('speechSynthesis' in window) || !text) {
+        resolve();
+        return;
       }
-    };
-    utterance.onerror = (event) => {
-      console.error('[RadioMode] TTS error:', event.error);
-      isSpeakingRef.current = false;
-      setIsSpeaking(false);
-    };
 
-    window.speechSynthesis.speak(utterance);
+      // Cancel any previous speech
+      window.speechSynthesis.cancel();
+
+      const utterance = new SpeechSynthesisUtterance(text);
+      const voices = window.speechSynthesis.getVoices();
+      const nepaliVoice = voices.find(v => v.lang.includes('ne') || v.name.toLowerCase().includes('nepali'));
+      const hindiVoice = voices.find(v => v.lang.startsWith('hi') || v.name.toLowerCase().includes('hindi'));
+      if (nepaliVoice) utterance.voice = nepaliVoice;
+      else if (hindiVoice) utterance.voice = hindiVoice;
+
+      utterance.lang = 'ne-NP';
+      utterance.rate = 0.95;
+      utterance.pitch = 1;
+
+      utterance.onstart = () => setIsSpeaking(true);
+      utterance.onend = () => {
+        setIsSpeaking(false);
+        resolve();
+      };
+      utterance.onerror = (event) => {
+        console.error('[RadioMode] TTS error:', event.error);
+        setIsSpeaking(false);
+        resolve();
+      };
+
+      window.speechSynthesis.speak(utterance);
+    });
   }, []);
 
-  // Play next cached tip (offline mode)
-  const playNextCachedTip = useCallback(() => {
-    if (!isPlayingRef.current) return;
+  // Play through a queue of segments one by one with pauses
+  const playSegmentQueue = useCallback(async () => {
+    while (segmentQueueRef.current.length > 0 && isPlayingRef.current) {
+      const seg = segmentQueueRef.current.shift()!;
+      setCurrentTip(seg.text);
+      setTipCount(c => c + 1);
+
+      await speakSegment(seg.text);
+
+      if (!isPlayingRef.current) return;
+
+      // Wait for the segment's pause or the default gap
+      const gap = seg.pauseMs || RADIO_GAP_MS;
+      await new Promise<void>((resolve) => {
+        gapTimeoutRef.current = setTimeout(() => {
+          gapTimeoutRef.current = null;
+          resolve();
+        }, gap);
+      });
+
+      if (!isPlayingRef.current) return;
+    }
+
+    // Queue exhausted — if still playing, fetch next batch
+    if (isPlayingRef.current) {
+      if (navigator.onLine) {
+        const segments = await fetchSegments();
+        if (segments && segments.length > 0 && isPlayingRef.current) {
+          segmentQueueRef.current = segments;
+          playSegmentQueue();
+        } else {
+          // No more segments available, stop
+          stopInternal();
+        }
+      } else {
+        // Offline: try cached tips
+        const cachedSegments = getOfflineBatch();
+        if (cachedSegments.length > 0) {
+          segmentQueueRef.current = cachedSegments;
+          playSegmentQueue();
+        } else {
+          stopInternal();
+        }
+      }
+    }
+  }, [speakSegment, fetchSegments]);
+
+  // Get a batch of cached tips for offline playback
+  const getOfflineBatch = useCallback((): RadioSegment[] => {
     const tips = loadCachedTips();
-    if (tips.length === 0 || offlineIndexRef.current >= tips.length) {
-      // All cached tips exhausted
-      stop();
-      return 'exhausted';
+    if (tips.length === 0) return [];
+    const batch: RadioSegment[] = [];
+    for (let i = 0; i < 6 && offlineIndexRef.current < tips.length; i++) {
+      const tip = tips[tips.length - 1 - offlineIndexRef.current];
+      offlineIndexRef.current++;
+      batch.push({ text: tip.text, pauseMs: RADIO_GAP_MS });
     }
-    const tip = tips[tips.length - 1 - offlineIndexRef.current]; // newest first
-    offlineIndexRef.current++;
-    setTipCount(c => c + 1);
+    return batch;
+  }, []);
 
-    if (isSpeakingRef.current) {
-      tipQueueRef.current.push(tip.text);
-    } else {
-      setCurrentTip(tip.text);
-      speakTip(tip.text);
-    }
-    return 'ok';
-  }, [speakTip]);
-
-  // Fetch and queue a new tip (online)
-  const fetchAndPlay = useCallback(async () => {
-    if (!isPlayingRef.current) return;
-    const tip = await fetchTip();
-    if (!tip || !isPlayingRef.current) return;
-    setTipCount(c => c + 1);
-    if (isSpeakingRef.current) {
-      tipQueueRef.current.push(tip);
-    } else {
-      setCurrentTip(tip);
-      speakTip(tip);
-    }
-  }, [fetchTip, speakTip]);
-
-  // Stop radio mode
-  const stop = useCallback(() => {
+  const stopInternal = useCallback(() => {
     isPlayingRef.current = false;
     setIsPlaying(false);
-    tipQueueRef.current = [];
-    if (intervalRef.current) { clearInterval(intervalRef.current); intervalRef.current = null; }
-    if (utteranceRef.current) { window.speechSynthesis.cancel(); utteranceRef.current = null; }
-    isSpeakingRef.current = false;
+    segmentQueueRef.current = [];
+    if (gapTimeoutRef.current) { clearTimeout(gapTimeoutRef.current); gapTimeoutRef.current = null; }
+    if ('speechSynthesis' in window) window.speechSynthesis.cancel();
     setIsSpeaking(false);
   }, []);
 
-  // Start radio mode
-  const start = useCallback((config: RadioModeConfig) => {
+  // Public stop
+  const stop = useCallback(() => {
+    stopInternal();
+  }, [stopInternal]);
+
+  // Public start
+  const start = useCallback(async (config: RadioModeConfig) => {
     configRef.current = config;
     isPlayingRef.current = true;
-    tipQueueRef.current = [];
+    segmentQueueRef.current = [];
     offlineIndexRef.current = 0;
     setIsPlaying(true);
     setTipCount(0);
     setCurrentTip('');
 
     if (navigator.onLine) {
-      // Online: fetch from API
-      fetchAndPlay();
-      intervalRef.current = setInterval(() => { fetchAndPlay(); }, intervalSeconds * 1000);
-    } else {
-      // Offline: play from cache
-      const result = playNextCachedTip();
-      if (result === 'exhausted') return;
-      intervalRef.current = setInterval(() => {
-        const r = playNextCachedTip();
-        if (r === 'exhausted') {
-          if (intervalRef.current) clearInterval(intervalRef.current);
+      const segments = await fetchSegments();
+      if (segments && segments.length > 0 && isPlayingRef.current) {
+        segmentQueueRef.current = segments;
+        playSegmentQueue();
+      } else if (isPlayingRef.current) {
+        // Fetch failed, try cache
+        const cached = getOfflineBatch();
+        if (cached.length > 0) {
+          segmentQueueRef.current = cached;
+          playSegmentQueue();
+        } else {
+          stopInternal();
         }
-      }, intervalSeconds * 1000);
+      }
+    } else {
+      const cached = getOfflineBatch();
+      if (cached.length > 0) {
+        segmentQueueRef.current = cached;
+        playSegmentQueue();
+      } else {
+        stopInternal();
+      }
     }
-  }, [fetchAndPlay, playNextCachedTip, intervalSeconds]);
+  }, [fetchSegments, playSegmentQueue, getOfflineBatch, stopInternal]);
 
   // Cleanup on unmount
   useEffect(() => {
     return () => {
-      if (intervalRef.current) clearInterval(intervalRef.current);
+      isPlayingRef.current = false;
+      if (gapTimeoutRef.current) clearTimeout(gapTimeoutRef.current);
       if ('speechSynthesis' in window) window.speechSynthesis.cancel();
     };
   }, []);
