@@ -1,6 +1,5 @@
 // =============================================
-// Admin triage / assignment for expert tickets
-// To disable: remove this component and its tab from AdminDashboard.tsx
+// Admin view: all expert tickets (read + optional reassign)
 // =============================================
 
 import { useState, useEffect } from 'react';
@@ -51,7 +50,7 @@ const STATUS_CONFIG: Record<string, { label: string; color: string }> = {
   closed: { label: 'बन्द', color: 'bg-muted text-muted-foreground' },
 };
 
-// ── Admin triage / assignment start ──
+// ── Admin ticket overview start ──
 
 export function ExpertTicketsManager() {
   const queryClient = useQueryClient();
@@ -349,4 +348,4 @@ export function ExpertTicketsManager() {
   );
 }
 
-// ── Admin triage / assignment end ──
+// ── Admin ticket overview end ──

@@ -264,7 +264,7 @@ export function useCreateExpertTicket() {
   return useMutation({
     mutationFn: async (data: {
       officeId: string;
-      technicianId: string | null;
+      technicianId: string;
       cropName: string;
       problemTitle: string;
       problemDescription: string;
@@ -273,12 +273,12 @@ export function useCreateExpertTicket() {
       const insertData: any = {
         farmer_id: user!.id,
         office_id: data.officeId,
+        technician_id: data.technicianId,
         crop_name: data.cropName,
         problem_title: data.problemTitle,
         problem_description: data.problemDescription,
-        has_unread_technician: !!data.technicianId,
+        has_unread_technician: true,
       };
-      if (data.technicianId) insertData.technician_id = data.technicianId;
 
       const { data: ticket, error } = await (supabase as any)
         .from('expert_tickets')
@@ -311,9 +311,8 @@ export function useCreateExpertTicket() {
         }
       }
 
-      // Email notification (non-blocking, only if technician assigned)
-      // Admin triage: skip email if no technician assigned yet
-      if (data.technicianId) {
+      // Email notification (non-blocking)
+      {
         try {
           const { data: techData } = await (supabase as any)
             .from('technicians')
