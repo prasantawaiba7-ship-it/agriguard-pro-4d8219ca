@@ -1,14 +1,13 @@
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Leaf, Menu, X, LogIn, User, Shield, Camera, Bot, Store, Mountain, Home, Globe } from "lucide-react";
+import { Leaf, Menu, X, LogIn, User, Shield, Camera, Bot, Store, Mountain, Home, Globe, ShieldCheck } from "lucide-react";
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useAuth } from "@/hooks/useAuth";
 import { useUserRole } from "@/hooks/useUserRole";
 import { useLanguage } from "@/hooks/useLanguage";
-// Notification system start
+import { useIsExpert } from "@/hooks/useExpertTickets";
 import { TechnicianNotificationBell } from "@/components/notifications/TechnicianNotificationBell";
-// Notification system end
 
 const Header = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -17,6 +16,7 @@ const Header = () => {
   const { user, profile } = useAuth();
   const { isAdmin } = useUserRole();
   const { language, setLanguage, t } = useLanguage();
+  const { data: expertStatus } = useIsExpert();
 
   const toggleLanguage = () => {
     setLanguage(language === 'ne' ? 'en' : 'ne');
@@ -28,6 +28,7 @@ const Header = () => {
     { href: "/fields", label: t('myField'), icon: Mountain },
     { href: "/market", label: t('krishiBazar'), icon: Store },
     { href: "/krishi-mitra", label: t('aiNav'), icon: Bot },
+    ...(expertStatus?.isExpert ? [{ href: "/expert-dashboard", label: "विज्ञ Dashboard", icon: ShieldCheck }] : []),
     ...(isAdmin() ? [{ href: "/admin", label: "Admin", icon: Shield }] : []),
   ];
 

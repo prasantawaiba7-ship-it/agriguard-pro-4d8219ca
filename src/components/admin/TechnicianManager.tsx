@@ -30,6 +30,7 @@ interface TechnicianRow {
   specialization: string | null;
   is_active: boolean;
   is_primary: boolean;
+  is_expert: boolean;
   office?: { id: string; name: string; district: string } | null;
 }
 
@@ -165,6 +166,7 @@ export function TechnicianManager() {
             specialization: null,
             is_active: true,
             is_primary: false,
+            is_expert: false,
           })}>
             <Plus className="h-4 w-4 mr-1" /> Add
           </Button>
@@ -186,6 +188,7 @@ export function TechnicianManager() {
                   <TableHead>Name</TableHead>
                   <TableHead>Office</TableHead>
                   <TableHead>Auth Link</TableHead>
+                  <TableHead>Expert</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead>Actions</TableHead>
                 </TableRow>
@@ -210,6 +213,13 @@ export function TechnicianManager() {
                         <Badge variant="outline" className="text-xs text-amber-600 border-amber-300">
                           <Link2Off className="w-3 h-3 mr-1" /> Not linked
                         </Badge>
+                      )}
+                    </TableCell>
+                    <TableCell>
+                      {tech.is_expert ? (
+                        <Badge className="bg-primary text-primary-foreground text-xs">Expert ✓</Badge>
+                      ) : (
+                        <Badge variant="outline" className="text-xs text-muted-foreground">No</Badge>
                       )}
                     </TableCell>
                     <TableCell>
@@ -333,7 +343,7 @@ export function TechnicianManager() {
                 <Label>Specialization</Label>
                 <Input value={editingTech.specialization || ''} onChange={e => setEditingTech({ ...editingTech, specialization: e.target.value || null })} />
               </div>
-              <div className="flex items-center gap-4">
+              <div className="flex items-center gap-4 flex-wrap">
                 <div className="flex items-center gap-2">
                   <Switch checked={editingTech.is_active} onCheckedChange={v => setEditingTech({ ...editingTech, is_active: v })} />
                   <Label>Active</Label>
@@ -341,6 +351,10 @@ export function TechnicianManager() {
                 <div className="flex items-center gap-2">
                   <Switch checked={editingTech.is_primary} onCheckedChange={v => setEditingTech({ ...editingTech, is_primary: v })} />
                   <Label>Primary</Label>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Switch checked={editingTech.is_expert} onCheckedChange={v => setEditingTech({ ...editingTech, is_expert: v })} />
+                  <Label className="text-primary font-semibold">Expert (विज्ञ)</Label>
                 </div>
               </div>
             </div>

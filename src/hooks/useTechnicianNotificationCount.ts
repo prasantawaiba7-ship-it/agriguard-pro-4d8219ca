@@ -20,7 +20,7 @@ export function useCurrentTechnicianId() {
       if (!user) return null;
       const { data } = await (supabase as any)
         .from('technicians')
-        .select('id')
+        .select('id, is_expert')
         .eq('user_id', user.id)
         .eq('is_active', true)
         .single();

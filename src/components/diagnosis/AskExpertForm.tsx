@@ -140,7 +140,6 @@ export function AskExpertForm({ prefill, onSubmitted }: AskExpertFormProps) {
 
   return (
     <div className="space-y-4">
-      {/* Step indicators */}
       {formStep !== 'done' && (
         <div className="flex items-center gap-2">
           {stepLabels.map((label, i) => (
@@ -166,7 +165,6 @@ export function AskExpertForm({ prefill, onSubmitted }: AskExpertFormProps) {
                   <Leaf className="w-4 h-4 text-primary" />
                   समस्या विवरण भर्नुहोस्
                 </h2>
-
                 {prefill?.aiDisease && (
                   <div className="p-3 bg-muted/60 rounded-xl border border-border/40">
                     <div className="flex items-center gap-2 mb-1">
@@ -178,8 +176,6 @@ export function AskExpertForm({ prefill, onSubmitted }: AskExpertFormProps) {
                     </p>
                   </div>
                 )}
-
-                {/* Photos */}
                 <div>
                   <label className="text-sm font-medium mb-2 block text-foreground">📷 फोटो ({images.length}/3)</label>
                   {images.length > 0 ? (
@@ -210,26 +206,17 @@ export function AskExpertForm({ prefill, onSubmitted }: AskExpertFormProps) {
                   <input ref={fileInputRef} type="file" accept="image/*" multiple className="hidden" onChange={handleFileSelect} />
                   <input ref={cameraInputRef} type="file" accept="image/*" capture="environment" className="hidden" onChange={handleFileSelect} />
                 </div>
-
                 <div>
                   <label className="text-sm font-medium mb-1 block text-foreground">🌱 बालीको नाम</label>
                   <Input placeholder="जस्तै: धान, गहुँ, तरकारी..." value={cropName} onChange={e => setCropName(e.target.value)} />
                 </div>
-
                 <div>
                   <label className="text-sm font-medium mb-1 block text-foreground">समस्याको शीर्षक *</label>
                   <Input placeholder="जस्तै: पातमा पहेंलो दाग" value={problemTitle} onChange={e => setProblemTitle(e.target.value)} />
                 </div>
-
                 <div>
                   <label className="text-sm font-medium mb-1 block text-foreground">विस्तृत विवरण</label>
-                  <Textarea
-                    placeholder="बालीमा के भइरहेको छ? कति दिन भयो?"
-                    value={farmerQuestion}
-                    onChange={(e) => setFarmerQuestion(e.target.value)}
-                    rows={3}
-                    className="resize-none text-base"
-                  />
+                  <Textarea placeholder="बालीमा के भइरहेको छ? कति दिन भयो?" value={farmerQuestion} onChange={(e) => setFarmerQuestion(e.target.value)} rows={3} className="resize-none text-base" />
                   {interimTranscript && <p className="text-xs text-primary mt-1 animate-pulse">🎤 {interimTranscript}</p>}
                   {voiceSupported && (
                     <Button variant={isListening ? 'destructive' : 'outline'} size="sm" className="mt-2" onClick={isListening ? stopListening : startListening}>
@@ -238,7 +225,6 @@ export function AskExpertForm({ prefill, onSubmitted }: AskExpertFormProps) {
                     </Button>
                   )}
                 </div>
-
                 <Button className="w-full" disabled={!canProceedFromProblem} onClick={() => setFormStep('office')}>
                   अर्को: कार्यालय छान्नुहोस् <ArrowRight className="w-4 h-4 ml-1" />
                 </Button>
@@ -261,30 +247,18 @@ export function AskExpertForm({ prefill, onSubmitted }: AskExpertFormProps) {
                 ) : offices && offices.length > 0 ? (
                   <div className="space-y-2">
                     {offices.map(office => (
-                      <div
-                        key={office.id}
-                        onClick={() => { setSelectedOfficeId(office.id); setSelectedTechnicianId(null); }}
-                        className={`p-3 rounded-xl border cursor-pointer transition-all ${
-                          selectedOfficeId === office.id ? 'border-primary bg-primary/5 ring-2 ring-primary/20' : 'border-border hover:border-primary/40'
-                        }`}
-                      >
+                      <div key={office.id} onClick={() => { setSelectedOfficeId(office.id); setSelectedTechnicianId(null); }}
+                        className={`p-3 rounded-xl border cursor-pointer transition-all ${selectedOfficeId === office.id ? 'border-primary bg-primary/5 ring-2 ring-primary/20' : 'border-border hover:border-primary/40'}`}>
                         <p className="font-semibold text-sm text-foreground">{office.name}</p>
                         <p className="text-xs text-muted-foreground">{office.district}</p>
-                        {office.contact_phone && (
-                          <p className="text-xs text-muted-foreground flex items-center gap-1 mt-1"><Phone className="w-3 h-3" /> {office.contact_phone}</p>
-                        )}
+                        {office.contact_phone && <p className="text-xs text-muted-foreground flex items-center gap-1 mt-1"><Phone className="w-3 h-3" /> {office.contact_phone}</p>}
                       </div>
                     ))}
                     <div className="flex gap-2 mt-2">
                       <Button variant="outline" size="sm" onClick={() => setFormStep('problem')} className="flex-1">
                         <ArrowLeft className="w-4 h-4 mr-1" /> पछाडि
                       </Button>
-                      <Button
-                        size="sm"
-                        className="flex-1"
-                        disabled={!selectedOfficeId}
-                        onClick={() => setFormStep('technician')}
-                      >
+                      <Button size="sm" className="flex-1" disabled={!selectedOfficeId} onClick={() => setFormStep('technician')}>
                         अर्को: प्राविधिक छान्नुहोस् <ArrowRight className="w-4 h-4 ml-1" />
                       </Button>
                     </div>
@@ -312,13 +286,8 @@ export function AskExpertForm({ prefill, onSubmitted }: AskExpertFormProps) {
                 ) : technicians && technicians.length > 0 ? (
                   <div className="space-y-2">
                     {technicians.map(tech => (
-                      <div
-                        key={tech.id}
-                        onClick={() => setSelectedTechnicianId(tech.id)}
-                        className={`p-3 rounded-xl border cursor-pointer transition-all ${
-                          selectedTechnicianId === tech.id ? 'border-primary bg-primary/5 ring-2 ring-primary/20' : 'border-border hover:border-primary/40'
-                        }`}
-                      >
+                      <div key={tech.id} onClick={() => setSelectedTechnicianId(tech.id)}
+                        className={`p-3 rounded-xl border cursor-pointer transition-all ${selectedTechnicianId === tech.id ? 'border-primary bg-primary/5 ring-2 ring-primary/20' : 'border-border hover:border-primary/40'}`}>
                         <p className="font-semibold text-sm text-foreground">{tech.name}</p>
                         <p className="text-xs text-muted-foreground">{tech.role_title}</p>
                         {tech.specialization && <p className="text-xs text-muted-foreground">विशेषज्ञता: {tech.specialization}</p>}
@@ -330,12 +299,7 @@ export function AskExpertForm({ prefill, onSubmitted }: AskExpertFormProps) {
                       <Button variant="outline" size="sm" onClick={() => setFormStep('office')} className="flex-1">
                         <ArrowLeft className="w-4 h-4 mr-1" /> पछाडि
                       </Button>
-                      <Button
-                        size="sm"
-                        className="flex-1"
-                        disabled={!selectedTechnicianId || isUploading || createTicket.isPending}
-                        onClick={handleSubmit}
-                      >
+                      <Button size="sm" className="flex-1" disabled={!selectedTechnicianId || isUploading || createTicket.isPending} onClick={handleSubmit}>
                         {isUploading || createTicket.isPending ? (
                           <><Loader2 className="w-4 h-4 mr-1 animate-spin" />पठाउँदैछ...</>
                         ) : (
@@ -364,16 +328,10 @@ export function AskExpertForm({ prefill, onSubmitted }: AskExpertFormProps) {
               <CardContent className="p-5 text-center space-y-3">
                 <CheckCircle2 className="w-12 h-12 mx-auto text-primary" />
                 <p className="text-base font-semibold text-foreground">✅ प्रश्न पठाइयो!</p>
-                <p className="text-sm text-muted-foreground">
-                  कार्यालय: <strong>{selectedOffice?.name}</strong>
-                </p>
-                <p className="text-sm text-muted-foreground">
-                  प्राविधिक: <strong>{selectedTechnician?.name}</strong>
-                </p>
-                <p className="text-xs text-primary/80 font-medium">
-                  कृषि प्राविधिकले चाँडै हेर्नेछन् र जवाफ दिनेछन्।
-                </p>
-                <p className="text-xs text-muted-foreground">जवाफ आएपछि यहाँ पनि देख्न सक्नुहुन्छ।</p>
+                <p className="text-sm text-muted-foreground">कार्यालय: <strong>{selectedOffice?.name}</strong></p>
+                <p className="text-sm text-muted-foreground">प्राविधिक: <strong>{selectedTechnician?.name}</strong></p>
+                <p className="text-xs text-primary/80 font-medium">प्रशासनले समीक्षा गरेपछि कृषि विज्ञले जवाफ दिनेछन्।</p>
+                <p className="text-xs text-muted-foreground">जवाफ आएपछि "मेरा प्रश्नहरू" मा देख्न सक्नुहुन्छ।</p>
                 <Button variant="outline" size="sm" onClick={resetForm}>अर्को प्रश्न सोध्नुहोस्</Button>
               </CardContent>
             </Card>
