@@ -228,6 +228,7 @@ export function useCreateExpertTicket() {
       problemTitle: string;
       problemDescription: string;
       imageUrls?: string[];
+      farmerPhone?: string;
     }) => {
       // Ticket goes directly to the chosen technician
       const insertData: any = {
@@ -237,6 +238,7 @@ export function useCreateExpertTicket() {
         crop_name: data.cropName,
         problem_title: data.problemTitle,
         problem_description: data.problemDescription,
+        farmer_phone: data.farmerPhone || null,
         status: 'open',
         has_unread_technician: true,
         has_unread_farmer: false,

@@ -1,0 +1,1 @@
+ALTER TABLE public.expert_tickets ADD COLUMN IF NOT EXISTS farmer_phone text;
