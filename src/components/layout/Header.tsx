@@ -6,7 +6,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useAuth } from "@/hooks/useAuth";
 import { useUserRole } from "@/hooks/useUserRole";
 import { useLanguage } from "@/hooks/useLanguage";
-import { useIsExpert } from "@/hooks/useExpertTickets";
+import { useCurrentTechnician } from "@/hooks/useCurrentTechnician";
 import { TechnicianNotificationBell } from "@/components/notifications/TechnicianNotificationBell";
 
 const Header = () => {
@@ -16,7 +16,7 @@ const Header = () => {
   const { user, profile } = useAuth();
   const { isAdmin } = useUserRole();
   const { language, setLanguage, t } = useLanguage();
-  const { data: expertStatus } = useIsExpert();
+  const { data: currentTech } = useCurrentTechnician();
 
   const toggleLanguage = () => {
     setLanguage(language === 'ne' ? 'en' : 'ne');
@@ -28,7 +28,7 @@ const Header = () => {
     { href: "/fields", label: t('myField'), icon: Mountain },
     { href: "/market", label: t('krishiBazar'), icon: Store },
     { href: "/krishi-mitra", label: t('aiNav'), icon: Bot },
-    ...(expertStatus?.isExpert ? [{ href: "/expert-dashboard", label: "विज्ञ Dashboard", icon: ShieldCheck }] : []),
+    ...(currentTech?.is_expert ? [{ href: "/expert-dashboard", label: "विज्ञ Dashboard", icon: ShieldCheck }] : []),
     ...(isAdmin() ? [{ href: "/admin", label: "Admin", icon: Shield }] : []),
   ];
 

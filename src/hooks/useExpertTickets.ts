@@ -102,30 +102,23 @@ export function useMyExpertTickets() {
 }
 
 // Expert dashboard: only tickets with status assigned/in_progress/answered
-export function useExpertAssignedTickets() {
-  const { user } = useAuth();
+// Uses technician data passed from the component via useCurrentTechnician
+export function useExpertAssignedTickets(technicianId?: string | null, isExpert?: boolean) {
   return useQuery({
-    queryKey: ['expert-assigned-tickets', user?.id],
+    queryKey: ['expert-assigned-tickets', technicianId],
     queryFn: async () => {
-      // Find technician for current user
-      const { data: techData } = await (supabase as any)
-        .from('technicians')
-        .select('id, is_expert')
-        .eq('user_id', user!.id)
-        .eq('is_active', true)
-        .single();
-      if (!techData || !techData.is_expert) return [];
+      if (!technicianId) return [];
 
       const { data, error } = await (supabase as any)
         .from('expert_tickets')
         .select('*, technician:technicians(*), office:ag_offices(*)')
-        .eq('technician_id', techData.id)
+        .eq('technician_id', technicianId)
         .in('status', ['open', 'assigned', 'in_progress', 'answered'])
         .order('updated_at', { ascending: false });
       if (error) throw error;
       return (data || []) as ExpertTicket[];
     },
-    enabled: !!user,
+    enabled: !!technicianId && isExpert !== false,
   });
 }
 

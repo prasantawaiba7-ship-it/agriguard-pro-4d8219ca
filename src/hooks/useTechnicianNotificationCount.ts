@@ -1,35 +1,12 @@
 // =============================================
 // Notification system – technician unread count
-// To disable: remove this hook and <TechnicianNotificationBell />
+// Now uses useCurrentTechnician for auto-link by email
 // =============================================
 
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { useAuth } from '@/hooks/useAuth';
-
-/**
- * Returns the current technician's DB id (from `technicians` table)
- * mapped via `user_id = auth.uid()`.
- */
-export function useCurrentTechnicianId() {
-  const { user } = useAuth();
-  return useQuery({
-    queryKey: ['current-technician-id', user?.id],
-    queryFn: async () => {
-      if (!user) return null;
-      const { data } = await (supabase as any)
-        .from('technicians')
-        .select('id, is_expert')
-        .eq('user_id', user.id)
-        .eq('is_active', true)
-        .single();
-      return (data?.id as string) ?? null;
-    },
-    enabled: !!user,
-    staleTime: 5 * 60 * 1000,
-  });
-}
+import { useCurrentTechnician } from '@/hooks/useCurrentTechnician';
 
 /**
  * Returns the count of tickets where `has_unread_technician = true`
@@ -37,7 +14,8 @@ export function useCurrentTechnicianId() {
  * auto-refreshes on INSERT/UPDATE.
  */
 export function useTechnicianNotificationCount() {
-  const { data: technicianId } = useCurrentTechnicianId();
+  const { data: currentTech } = useCurrentTechnician();
+  const technicianId = currentTech?.id ?? null;
   const queryClient = useQueryClient();
 
   const countQuery = useQuery({
@@ -53,10 +31,10 @@ export function useTechnicianNotificationCount() {
       return count ?? 0;
     },
     enabled: !!technicianId,
-    refetchInterval: 30_000, // fallback polling every 30s
+    refetchInterval: 30_000,
   });
 
-  // Notification system start – realtime subscription
+  // Realtime subscription
   useEffect(() => {
     if (!technicianId) return;
     const channel = supabase
@@ -70,16 +48,15 @@ export function useTechnicianNotificationCount() {
           filter: `technician_id=eq.${technicianId}`,
         },
         () => {
-          // Refresh both unread count and ticket list
           queryClient.invalidateQueries({ queryKey: ['technician-unread-count', technicianId] });
           queryClient.invalidateQueries({ queryKey: ['technician-tickets'] });
+          queryClient.invalidateQueries({ queryKey: ['expert-assigned-tickets'] });
         },
       )
       .subscribe();
 
     return () => { supabase.removeChannel(channel); };
   }, [technicianId, queryClient]);
-  // Notification system end
 
   return {
     count: countQuery.data ?? 0,
