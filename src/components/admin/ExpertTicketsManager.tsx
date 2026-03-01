@@ -13,7 +13,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Search, RefreshCw, UserPlus, MessageCircle, Loader2, CheckCircle2, XCircle, ShieldCheck } from 'lucide-react';
+import { Search, RefreshCw, UserPlus, MessageCircle, Loader2, XCircle, ShieldCheck } from 'lucide-react';
 import { toast } from 'sonner';
 import { formatDistanceToNow } from 'date-fns';
 import { ExpertTicketChat } from '@/components/expert/ExpertTicketChat';
@@ -100,28 +100,13 @@ export function ExpertTicketsManager() {
     return () => { supabase.removeChannel(channel); };
   }, [queryClient]);
 
-  // Approve: keep same technician, set status=assigned
-  const handleApprove = async (ticketId: string) => {
-    try {
-      await (supabase as any)
-        .from('expert_tickets')
-        .update({ status: 'assigned', has_unread_technician: true, updated_at: new Date().toISOString() })
-        .eq('id', ticketId);
-      toast.success('Ticket approved & assigned ✅');
-      queryClient.invalidateQueries({ queryKey: ['admin-expert-tickets'] });
-    } catch {
-      toast.error('Approve गर्न सकिएन');
-    }
-  };
-
-  // Assign to different expert
-  const handleAssign = async (ticketId: string, technicianId: string) => {
+  // Change expert assignment
+  const handleAssignExpert = async (ticketId: string, technicianId: string) => {
     try {
       await (supabase as any)
         .from('expert_tickets')
         .update({
           technician_id: technicianId,
-          status: 'assigned',
           has_unread_technician: true,
           updated_at: new Date().toISOString(),
         })
@@ -134,8 +119,8 @@ export function ExpertTicketsManager() {
     }
   };
 
-  // Reject/close ticket
-  const handleReject = async (ticketId: string) => {
+  // Close ticket
+  const handleClose = async (ticketId: string) => {
     try {
       await (supabase as any)
         .from('expert_tickets')
@@ -312,16 +297,6 @@ export function ExpertTicketsManager() {
                       </TableCell>
                       <TableCell onClick={e => e.stopPropagation()}>
                         <div className="flex gap-1 flex-wrap">
-                          {isReview && (
-                            <>
-                              <Button variant="default" size="sm" className="text-xs" onClick={(e) => { e.stopPropagation(); handleApprove(ticket.id); }}>
-                                <CheckCircle2 className="w-3 h-3 mr-1" /> Approve
-                              </Button>
-                              <Button variant="destructive" size="sm" className="text-xs" onClick={(e) => { e.stopPropagation(); handleReject(ticket.id); }}>
-                                <XCircle className="w-3 h-3 mr-1" /> Reject
-                              </Button>
-                            </>
-                          )}
                           <Button
                             variant="outline"
                             size="sm"
@@ -329,8 +304,13 @@ export function ExpertTicketsManager() {
                             onClick={(e) => { e.stopPropagation(); setAssigningTicketId(ticket.id); }}
                           >
                             <UserPlus className="w-3 h-3 mr-1" />
-                            {ticket.technician_id ? 'Reassign' : 'Assign'}
+                            {ticket.technician_id ? 'Change Expert' : 'Assign'}
                           </Button>
+                          {ticket.status !== 'closed' && (
+                            <Button variant="destructive" size="sm" className="text-xs" onClick={(e) => { e.stopPropagation(); handleClose(ticket.id); }}>
+                              <XCircle className="w-3 h-3 mr-1" /> Close
+                            </Button>
+                          )}
                         </div>
                       </TableCell>
                     </TableRow>
@@ -371,7 +351,7 @@ export function ExpertTicketsManager() {
                       className={`p-3 rounded-xl border cursor-pointer transition-all hover:border-primary/40 ${
                         assigningTicket.technician_id === tech.id ? 'border-primary bg-primary/5 ring-2 ring-primary/20' : 'border-border'
                       }`}
-                      onClick={() => handleAssign(assigningTicket.id, tech.id)}
+                      onClick={() => handleAssignExpert(assigningTicket.id, tech.id)}
                     >
                       <p className="font-semibold text-sm flex items-center gap-1">
                         {tech.name}

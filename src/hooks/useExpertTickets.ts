@@ -120,7 +120,7 @@ export function useExpertAssignedTickets() {
         .from('expert_tickets')
         .select('*, technician:technicians(*), office:ag_offices(*)')
         .eq('technician_id', techData.id)
-        .in('status', ['assigned', 'in_progress', 'answered'])
+        .in('status', ['open', 'assigned', 'in_progress', 'answered'])
         .order('updated_at', { ascending: false });
       if (error) throw error;
       return (data || []) as ExpertTicket[];
@@ -229,7 +229,7 @@ export function useCreateExpertTicket() {
       problemDescription: string;
       imageUrls?: string[];
     }) => {
-      // New tickets start in 'in_review' — admin must approve before expert sees them
+      // Ticket goes directly to the chosen technician
       const insertData: any = {
         farmer_id: user!.id,
         office_id: data.officeId,
@@ -237,8 +237,8 @@ export function useCreateExpertTicket() {
         crop_name: data.cropName,
         problem_title: data.problemTitle,
         problem_description: data.problemDescription,
-        status: 'in_review',
-        has_unread_technician: false,
+        status: 'open',
+        has_unread_technician: true,
         has_unread_farmer: false,
       };
 
@@ -277,7 +277,7 @@ export function useCreateExpertTicket() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['my-expert-tickets'] });
-      toast({ title: '✅ प्रश्न पठाइयो', description: 'प्रशासनले समीक्षा गरेपछि कृषि विज्ञले जवाफ दिनेछन्।' });
+      toast({ title: '✅ प्रश्न पठाइयो', description: 'तपाईंको प्रश्न कृषि प्राविधिकलाई पठाइएको छ।' });
     },
     onError: () => {
       toast({ title: 'त्रुटि', description: 'प्रश्न पठाउन सकिएन।', variant: 'destructive' });
