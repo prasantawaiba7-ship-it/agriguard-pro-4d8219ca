@@ -45,7 +45,7 @@ export function TechnicianManager() {
   const [editingTech, setEditingTech] = useState<TechnicianRow | null>(null);
   const [linkingTechId, setLinkingTechId] = useState<string | null>(null);
   const [selectedUserId, setSelectedUserId] = useState<string>('');
-  const [userSearch, setUserSearch] = useState('');
+  
 
   // Fetch all technicians with office info
   const { data: technicians, isLoading } = useQuery({
@@ -103,7 +103,7 @@ export function TechnicianManager() {
       toast.success('User linked successfully ✅');
       setLinkingTechId(null);
       setSelectedUserId('');
-      setUserSearch('');
+      
     },
     onError: () => toast.error('Failed to link user'),
   });
@@ -270,16 +270,6 @@ export function TechnicianManager() {
                   यो प्राविधिकलाई कुन Kishan Sathi account सँग link गर्ने हो?
                 </p>
 
-                {/* Search to filter users by name */}
-                <div>
-                  <Label>Search users (name)</Label>
-                  <Input
-                    placeholder="Search name..."
-                    value={userSearch}
-                    onChange={e => setUserSearch(e.target.value)}
-                    className="mb-2"
-                  />
-                </div>
 
                 {/* Select from registered users */}
                 <div>
@@ -287,10 +277,7 @@ export function TechnicianManager() {
                   <Select value={selectedUserId} onValueChange={setSelectedUserId}>
                     <SelectTrigger><SelectValue placeholder="Choose a user..." /></SelectTrigger>
                     <SelectContent>
-                      {(userSearch
-                        ? authUsers?.filter(u => u.label.toLowerCase().includes(userSearch.toLowerCase()))
-                        : authUsers
-                      )?.map(u => (
+                      {authUsers?.map(u => (
                         <SelectItem key={u.id} value={u.id}>{u.label}</SelectItem>
                       ))}
                     </SelectContent>
