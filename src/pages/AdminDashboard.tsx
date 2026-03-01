@@ -74,6 +74,7 @@ import { DiagnosisCasesManager } from "@/components/admin/DiagnosisCasesManager"
 import { ExpertManager } from "@/components/admin/ExpertManager";
 import { CasesInboxManager } from "@/components/admin/CasesInboxManager";
 import { ExpertTicketsManager } from "@/components/admin/ExpertTicketsManager";
+import { TechnicianManager } from "@/components/admin/TechnicianManager";
 interface FarmerProfile {
   id: string;
   user_id: string;
@@ -484,6 +485,10 @@ const AdminDashboard = () => {
                   <UserPlus className="h-4 w-4" />
                   <span className="hidden sm:inline">विज्ञ टिकट</span>
                 </TabsTrigger>
+                <TabsTrigger value="technician-mgmt" className="flex items-center gap-2">
+                  <Users className="h-4 w-4" />
+                  <span className="hidden sm:inline">प्राविधिक</span>
+                </TabsTrigger>
               </TabsList>
 
               {/* Overview Tab */}
@@ -823,6 +828,11 @@ const AdminDashboard = () => {
               {/* Feedback Tab */}
               <TabsContent value="feedback">
                 <FeedbackManager />
+              </TabsContent>
+
+              {/* Technician Management Tab */}
+              <TabsContent value="technician-mgmt">
+                <TechnicianManager />
               </TabsContent>
             </Tabs>
           </div>
