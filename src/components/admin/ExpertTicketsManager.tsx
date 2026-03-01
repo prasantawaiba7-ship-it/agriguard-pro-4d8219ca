@@ -70,7 +70,22 @@ export function ExpertTicketsManager() {
       if (filterStatus !== 'all') q = q.eq('status', filterStatus);
       const { data, error } = await q.limit(200);
       if (error) throw error;
-      return (data || []) as AdminExpertTicket[];
+      const ticketsData = (data || []) as AdminExpertTicket[];
+      
+      // Fetch farmer profiles for phone numbers
+      const farmerIds = [...new Set(ticketsData.map(t => t.farmer_id))];
+      if (farmerIds.length > 0) {
+        const { data: profiles } = await supabase
+          .from('farmer_profiles')
+          .select('user_id, full_name, phone')
+          .in('user_id', farmerIds);
+        const profileMap = new Map((profiles || []).map(p => [p.user_id, p]));
+        ticketsData.forEach(t => {
+          const p = profileMap.get(t.farmer_id);
+          if (p) (t as any).farmer_profile = p;
+        });
+      }
+      return ticketsData;
     },
   });
 
@@ -277,7 +292,17 @@ export function ExpertTicketsManager() {
                         {isReview && <span className="block h-2.5 w-2.5 rounded-full bg-amber-500 animate-pulse" />}
                       </TableCell>
                       <TableCell className="font-medium">{ticket.crop_name}</TableCell>
-                      <TableCell className="max-w-[180px] truncate">{ticket.problem_title}</TableCell>
+                      <TableCell>
+                        <div className="max-w-[180px]">
+                          <p className="truncate text-sm">{ticket.problem_title}</p>
+                          <p className="text-xs text-muted-foreground">
+                            किसान: {(ticket as any).farmer_profile?.full_name || ticket.farmer_id.slice(0, 8)}
+                            {(ticket as any).farmer_profile?.phone && (
+                              <span className="ml-1 text-primary">({(ticket as any).farmer_profile.phone})</span>
+                            )}
+                          </p>
+                        </div>
+                      </TableCell>
                       <TableCell className="text-sm">{ticket.office?.name || '—'}</TableCell>
                       <TableCell>
                         {ticket.technician?.name ? (
