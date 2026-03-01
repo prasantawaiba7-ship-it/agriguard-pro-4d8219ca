@@ -612,7 +612,7 @@ const AdminDashboard = () => {
                 <CasesInboxManager />
               </TabsContent>
 
-              {/* Expert Tickets (Admin Triage) Tab */}
+              {/* Expert Tickets Tab */}
               <TabsContent value="expert-tickets">
                 <ExpertTicketsManager />
               </TabsContent>

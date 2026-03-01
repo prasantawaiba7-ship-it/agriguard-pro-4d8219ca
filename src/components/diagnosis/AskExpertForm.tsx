@@ -12,7 +12,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/hooks/useAuth';
 import { useLanguage } from '@/hooks/useLanguage';
 import { useVoiceInput } from '@/hooks/useVoiceInput';
-import { useAgOffices, useCreateExpertTicket, uploadExpertImage } from '@/hooks/useExpertTickets';
+import { useAgOffices, useTechnicians, useCreateExpertTicket, uploadExpertImage } from '@/hooks/useExpertTickets';
 
 interface AiPrefill {
   imageDataUrl?: string;
@@ -28,8 +28,7 @@ interface AskExpertFormProps {
   onSubmitted?: () => void;
 }
 
-// Admin triage: farmer only selects office, technician assigned by admin later
-type FormStep = 'problem' | 'office' | 'done';
+type FormStep = 'problem' | 'office' | 'technician' | 'done';
 
 export function AskExpertForm({ prefill, onSubmitted }: AskExpertFormProps) {
   const { user } = useAuth();
@@ -49,8 +48,10 @@ export function AskExpertForm({ prefill, onSubmitted }: AskExpertFormProps) {
   const [isUploading, setIsUploading] = useState(false);
 
   const { data: offices, isLoading: officesLoading } = useAgOffices();
+  const { data: technicians, isLoading: techsLoading } = useTechnicians(selectedOfficeId);
 
   const selectedOffice = offices?.find(o => o.id === selectedOfficeId);
+  const selectedTechnician = technicians?.find(t => t.id === selectedTechnicianId);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const cameraInputRef = useRef<HTMLInputElement>(null);
@@ -84,7 +85,7 @@ export function AskExpertForm({ prefill, onSubmitted }: AskExpertFormProps) {
   const canProceedFromProblem = problemTitle.trim().length > 0;
 
   const handleSubmit = async () => {
-    if (!selectedOfficeId || !problemTitle.trim()) return;
+    if (!selectedOfficeId || !selectedTechnicianId || !problemTitle.trim()) return;
     setIsUploading(true);
     try {
       const imageUrls: string[] = [];
@@ -106,10 +107,9 @@ export function AskExpertForm({ prefill, onSubmitted }: AskExpertFormProps) {
         if (prefill.aiRecommendation) descParts.push(`सिफारिस: ${prefill.aiRecommendation}`);
       }
 
-      // Admin triage: submit with technician_id = null
       await createTicket.mutateAsync({
         officeId: selectedOfficeId,
-        technicianId: null,
+        technicianId: selectedTechnicianId,
         cropName: cropName || 'N/A',
         problemTitle: problemTitle.trim(),
         problemDescription: descParts.join(' ') || problemTitle.trim(),
@@ -135,9 +135,8 @@ export function AskExpertForm({ prefill, onSubmitted }: AskExpertFormProps) {
     setFormStep('problem');
   };
 
-  // Admin triage: only 2 steps now (problem + office)
-  const stepIndex = ['problem', 'office'].indexOf(formStep);
-  const stepLabels = ['समस्या', 'कार्यालय'];
+  const stepIndex = ['problem', 'office', 'technician'].indexOf(formStep);
+  const stepLabels = ['समस्या', 'कार्यालय', 'प्राविधिक'];
 
   return (
     <div className="space-y-4">
@@ -150,7 +149,7 @@ export function AskExpertForm({ prefill, onSubmitted }: AskExpertFormProps) {
                 stepIndex === i ? 'bg-primary text-primary-foreground' :
                 stepIndex > i ? 'bg-primary/20 text-primary' : 'bg-muted text-muted-foreground'
               }`}>{i + 1}</div>
-              {i < 1 && <div className="w-5 h-0.5 bg-border" />}
+              {i < 2 && <div className="w-5 h-0.5 bg-border" />}
             </div>
           ))}
           <span className="text-xs text-muted-foreground ml-1">{stepLabels[stepIndex] || ''}</span>
@@ -158,7 +157,7 @@ export function AskExpertForm({ prefill, onSubmitted }: AskExpertFormProps) {
       )}
 
       <AnimatePresence mode="wait">
-        {/* Step 1: Problem details (crop, photo, title, description) */}
+        {/* Step 1: Problem details */}
         {formStep === 'problem' && (
           <motion.div key="problem" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }}>
             <Card className="border-border/50">
@@ -168,7 +167,6 @@ export function AskExpertForm({ prefill, onSubmitted }: AskExpertFormProps) {
                   समस्या विवरण भर्नुहोस्
                 </h2>
 
-                {/* AI prefill summary */}
                 {prefill?.aiDisease && (
                   <div className="p-3 bg-muted/60 rounded-xl border border-border/40">
                     <div className="flex items-center gap-2 mb-1">
@@ -213,19 +211,16 @@ export function AskExpertForm({ prefill, onSubmitted }: AskExpertFormProps) {
                   <input ref={cameraInputRef} type="file" accept="image/*" capture="environment" className="hidden" onChange={handleFileSelect} />
                 </div>
 
-                {/* Crop name */}
                 <div>
                   <label className="text-sm font-medium mb-1 block text-foreground">🌱 बालीको नाम</label>
                   <Input placeholder="जस्तै: धान, गहुँ, तरकारी..." value={cropName} onChange={e => setCropName(e.target.value)} />
                 </div>
 
-                {/* Problem title */}
                 <div>
                   <label className="text-sm font-medium mb-1 block text-foreground">समस्याको शीर्षक *</label>
                   <Input placeholder="जस्तै: पातमा पहेंलो दाग" value={problemTitle} onChange={e => setProblemTitle(e.target.value)} />
                 </div>
 
-                {/* Description + voice */}
                 <div>
                   <label className="text-sm font-medium mb-1 block text-foreground">विस्तृत विवरण</label>
                   <Textarea
@@ -287,7 +282,58 @@ export function AskExpertForm({ prefill, onSubmitted }: AskExpertFormProps) {
                       <Button
                         size="sm"
                         className="flex-1"
-                        disabled={!selectedOfficeId || isUploading || createTicket.isPending}
+                        disabled={!selectedOfficeId}
+                        onClick={() => setFormStep('technician')}
+                      >
+                        अर्को: प्राविधिक छान्नुहोस् <ArrowRight className="w-4 h-4 ml-1" />
+                      </Button>
+                    </div>
+                  </div>
+                ) : (
+                  <p className="text-center text-muted-foreground py-6 text-sm">कुनै कार्यालय उपलब्ध छैन।</p>
+                )}
+              </CardContent>
+            </Card>
+          </motion.div>
+        )}
+
+        {/* Step 3: Select Technician */}
+        {formStep === 'technician' && (
+          <motion.div key="technician" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }}>
+            <Card className="border-border/50">
+              <CardContent className="p-4 space-y-3">
+                <h2 className="text-base font-semibold text-foreground flex items-center gap-2">
+                  <User className="w-4 h-4 text-primary" />
+                  कृषि प्राविधिक छान्नुहोस्
+                </h2>
+                <p className="text-xs text-muted-foreground">{selectedOffice?.name} • {selectedOffice?.district}</p>
+                {techsLoading ? (
+                  <div className="flex justify-center py-6"><Loader2 className="w-5 h-5 animate-spin text-muted-foreground" /></div>
+                ) : technicians && technicians.length > 0 ? (
+                  <div className="space-y-2">
+                    {technicians.map(tech => (
+                      <div
+                        key={tech.id}
+                        onClick={() => setSelectedTechnicianId(tech.id)}
+                        className={`p-3 rounded-xl border cursor-pointer transition-all ${
+                          selectedTechnicianId === tech.id ? 'border-primary bg-primary/5 ring-2 ring-primary/20' : 'border-border hover:border-primary/40'
+                        }`}
+                      >
+                        <p className="font-semibold text-sm text-foreground">{tech.name}</p>
+                        <p className="text-xs text-muted-foreground">{tech.role_title}</p>
+                        {tech.specialization && <p className="text-xs text-muted-foreground">विशेषज्ञता: {tech.specialization}</p>}
+                        {tech.phone && <p className="text-xs text-muted-foreground flex items-center gap-1 mt-1"><Phone className="w-3 h-3" /> {tech.phone}</p>}
+                        {tech.email && <p className="text-xs text-muted-foreground flex items-center gap-1"><Mail className="w-3 h-3" /> {tech.email}</p>}
+                      </div>
+                    ))}
+                    <div className="flex gap-2 mt-2">
+                      <Button variant="outline" size="sm" onClick={() => setFormStep('office')} className="flex-1">
+                        <ArrowLeft className="w-4 h-4 mr-1" /> पछाडि
+                      </Button>
+                      <Button
+                        size="sm"
+                        className="flex-1"
+                        disabled={!selectedTechnicianId || isUploading || createTicket.isPending}
                         onClick={handleSubmit}
                       >
                         {isUploading || createTicket.isPending ? (
@@ -299,7 +345,12 @@ export function AskExpertForm({ prefill, onSubmitted }: AskExpertFormProps) {
                     </div>
                   </div>
                 ) : (
-                  <p className="text-center text-muted-foreground py-6 text-sm">कुनै कार्यालय उपलब्ध छैन।</p>
+                  <div className="text-center py-6">
+                    <p className="text-muted-foreground text-sm mb-2">यस कार्यालयमा अहिले सक्रिय प्राविधिक छैन।</p>
+                    <Button variant="outline" size="sm" onClick={() => setFormStep('office')}>
+                      <ArrowLeft className="w-4 h-4 mr-1" /> अर्को कार्यालय छान्नुहोस्
+                    </Button>
+                  </div>
                 )}
               </CardContent>
             </Card>
@@ -315,6 +366,9 @@ export function AskExpertForm({ prefill, onSubmitted }: AskExpertFormProps) {
                 <p className="text-base font-semibold text-foreground">✅ प्रश्न पठाइयो!</p>
                 <p className="text-sm text-muted-foreground">
                   कार्यालय: <strong>{selectedOffice?.name}</strong>
+                </p>
+                <p className="text-sm text-muted-foreground">
+                  प्राविधिक: <strong>{selectedTechnician?.name}</strong>
                 </p>
                 <p className="text-xs text-primary/80 font-medium">
                   कृषि प्राविधिकले चाँडै हेर्नेछन् र जवाफ दिनेछन्।
