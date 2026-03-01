@@ -2,21 +2,18 @@ import { useState, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   Camera, Upload, X, Loader2, Send, Mic, MicOff, 
-  Bot, MapPin, AlertTriangle, CheckCircle2, Leaf
+  Bot, MapPin, AlertTriangle, CheckCircle2, Leaf, Building2, User, Phone, Mail, ArrowRight, ArrowLeft
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Input } from '@/components/ui/input';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
-import { useCrops } from '@/hooks/useCrops';
-import { useSubmitExpertCase } from '@/hooks/useExpertCases';
-import { uploadDiseaseImage } from '@/lib/uploadDiseaseImage';
 import { useAuth } from '@/hooks/useAuth';
 import { useLanguage } from '@/hooks/useLanguage';
-import { useLocationData } from '@/hooks/useLocationData';
 import { useVoiceInput } from '@/hooks/useVoiceInput';
+import { useAgOffices, useTechnicians, useCreateExpertTicket, uploadExpertImage } from '@/hooks/useExpertTickets';
 
 interface AiPrefill {
   imageDataUrl?: string;
@@ -32,39 +29,33 @@ interface AskExpertFormProps {
   onSubmitted?: () => void;
 }
 
-const PROBLEM_TYPES = [
-  { value: 'disease', label: 'रोग (Disease)' },
-  { value: 'pest', label: 'कीरा (Pest)' },
-  { value: 'nutrition', label: 'पोषण (Nutrition)' },
-  { value: 'weather', label: 'मौसम (Weather)' },
-  { value: 'market', label: 'बजार (Market)' },
-  { value: 'other', label: 'अन्य (Other)' },
-];
+type FormStep = 'office' | 'technician' | 'details';
 
 export function AskExpertForm({ prefill, onSubmitted }: AskExpertFormProps) {
   const { user } = useAuth();
   const { toast } = useToast();
-  const { activeCrops: crops } = useCrops();
-  const submitCase = useSubmitExpertCase();
   const { language } = useLanguage();
-  const { 
-    provinces, districts, 
-    selectedProvinceId, selectedDistrictId,
-    handleProvinceChange, handleDistrictChange 
-  } = useLocationData();
+  const createTicket = useCreateExpertTicket();
 
-  const [selectedCropId, setSelectedCropId] = useState<string>(
-    prefill?.cropId ? prefill.cropId.toString() : ''
+  const [formStep, setFormStep] = useState<FormStep>('office');
+  const [selectedOfficeId, setSelectedOfficeId] = useState<string | null>(null);
+  const [selectedTechnicianId, setSelectedTechnicianId] = useState<string | null>(null);
+  const [cropName, setCropName] = useState(prefill?.cropName || '');
+  const [problemTitle, setProblemTitle] = useState(
+    prefill?.aiDisease ? `${prefill.aiDisease}` : ''
   );
-  const [problemType, setProblemType] = useState<string>(prefill?.aiDisease ? 'disease' : '');
   const [farmerQuestion, setFarmerQuestion] = useState('');
-  const [priority, setPriority] = useState<'low' | 'high'>('low');
-  const [images, setImages] = useState<{ dataUrl: string }[]>(
+  const [images, setImages] = useState<{ dataUrl: string; file?: File }[]>(
     prefill?.imageDataUrl ? [{ dataUrl: prefill.imageDataUrl }] : []
   );
   const [isUploading, setIsUploading] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
-  const [submittedCaseId, setSubmittedCaseId] = useState<string | null>(null);
+
+  const { data: offices, isLoading: officesLoading } = useAgOffices();
+  const { data: technicians, isLoading: techniciansLoading } = useTechnicians(selectedOfficeId);
+
+  const selectedOffice = offices?.find(o => o.id === selectedOfficeId);
+  const selectedTechnician = technicians?.find(t => t.id === selectedTechnicianId);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const cameraInputRef = useRef<HTMLInputElement>(null);
@@ -89,7 +80,7 @@ export function AskExpertForm({ prefill, onSubmitted }: AskExpertFormProps) {
       const reader = new FileReader();
       reader.onload = (e) => {
         const dataUrl = e.target?.result as string;
-        setImages(prev => [...prev, { dataUrl }]);
+        setImages(prev => [...prev, { dataUrl, file }]);
       };
       reader.readAsDataURL(file);
     }
@@ -101,23 +92,29 @@ export function AskExpertForm({ prefill, onSubmitted }: AskExpertFormProps) {
   };
 
   const handleSubmit = async () => {
-    if (!selectedCropId) {
-      toast({ title: 'बाली छान्नुहोस्', variant: 'destructive' });
-      return;
-    }
-    if (images.length === 0) {
-      toast({ title: 'कम्तिमा १ फोटो चाहिन्छ', variant: 'destructive' });
+    if (!selectedOfficeId || !selectedTechnicianId) return;
+    if (!problemTitle.trim()) {
+      toast({ title: 'समस्याको शीर्षक लेख्नुहोस्', variant: 'destructive' });
       return;
     }
 
     setIsUploading(true);
     try {
       // Upload images
-      const uploadedUrls = await Promise.all(
-        images.map(async (img) => {
-          return await uploadDiseaseImage(img.dataUrl, user?.id);
-        })
-      );
+      const imageUrls: string[] = [];
+      for (const img of images) {
+        if (img.file) {
+          const url = await uploadExpertImage(img.file);
+          imageUrls.push(url);
+        } else if (img.dataUrl) {
+          // Convert dataUrl to file for upload
+          const res = await fetch(img.dataUrl);
+          const blob = await res.blob();
+          const file = new File([blob], `photo-${Date.now()}.jpg`, { type: 'image/jpeg' });
+          const url = await uploadExpertImage(file);
+          imageUrls.push(url);
+        }
+      }
 
       // Build description
       const descParts: string[] = [];
@@ -127,35 +124,23 @@ export function AskExpertForm({ prefill, onSubmitted }: AskExpertFormProps) {
         if (prefill.aiRecommendation) descParts.push(`सिफारिस: ${prefill.aiRecommendation}`);
       }
 
-      // Get crop name & district name for the text fields
-      const selectedCrop = crops?.find(c => c.id.toString() === selectedCropId);
-      const selectedDistrict = districts.find(d => d.id === selectedDistrictId);
-
-      const aiSummary = prefill?.aiDisease ? {
-        detectedIssue: prefill.aiDisease,
-        confidence: prefill.aiConfidence,
-        aiRecommendation: prefill.aiRecommendation,
-        imageUrls: uploadedUrls,
-      } : { imageUrls: uploadedUrls };
-
-      const result = await submitCase.mutateAsync({
-        crop: selectedCrop ? (language === 'ne' ? selectedCrop.name_ne : selectedCrop.name_en) : selectedCropId,
-        problemType: problemType || undefined,
-        district: selectedDistrict?.name_ne || undefined,
-        priority,
-        channel: 'app',
-        aiSummary,
-        description: descParts.join(' ') || undefined,
-        imageUrls: uploadedUrls,
+      await createTicket.mutateAsync({
+        officeId: selectedOfficeId,
+        technicianId: selectedTechnicianId,
+        cropName: cropName || 'N/A',
+        problemTitle: problemTitle.trim(),
+        problemDescription: descParts.join(' ') || problemTitle.trim(),
+        imageUrls,
       });
 
-      setSubmittedCaseId(result.id);
       setShowSuccess(true);
-      setSelectedCropId('');
+      setCropName('');
+      setProblemTitle('');
       setFarmerQuestion('');
       setImages([]);
-      setProblemType('');
-      setPriority('low');
+      setFormStep('office');
+      setSelectedOfficeId(null);
+      setSelectedTechnicianId(null);
       onSubmitted?.();
 
       setTimeout(() => setShowSuccess(false), 8000);
@@ -176,22 +161,19 @@ export function AskExpertForm({ prefill, onSubmitted }: AskExpertFormProps) {
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -10 }}
           >
-            <Card className="border-2 border-success/40 bg-success/5">
+            <Card className="border-2 border-primary/40 bg-primary/5">
               <CardContent className="p-5 text-center space-y-2">
-                <CheckCircle2 className="w-10 h-10 mx-auto text-success" />
+                <CheckCircle2 className="w-10 h-10 mx-auto text-primary" />
                 <p className="text-base font-semibold text-foreground">
-                  ✅ तपाईंको प्रश्न विज्ञलाई पठाइयो!
+                  ✅ तपाईंको प्रश्न पठाइयो!
                 </p>
-                {submittedCaseId && (
+                {selectedTechnician && selectedOffice && (
                   <p className="text-sm text-muted-foreground">
-                    केस ID: <span className="font-mono font-medium">KS-{submittedCaseId.slice(0, 8).toUpperCase()}</span>
+                    पठाइएको: <strong>{selectedTechnician.name}</strong> ({selectedOffice.name})
                   </p>
                 )}
-                <p className="text-sm text-muted-foreground">
-                  स्थिति: <Badge variant="outline" className="ml-1 text-xs">नयाँ</Badge>
-                </p>
                 <p className="text-xs text-muted-foreground mt-2">
-                  औसत जवाफ समय: लगभग २४ घण्टा (कार्यालय समयमा)
+                  जवाफ आएपछि सूचना पाउनुहुनेछ।
                 </p>
               </CardContent>
             </Card>
@@ -199,201 +181,267 @@ export function AskExpertForm({ prefill, onSubmitted }: AskExpertFormProps) {
         )}
       </AnimatePresence>
 
-      {/* Section: समस्या पठाउनुहोस् */}
-      <Card className="border-border/50">
-        <CardContent className="p-4 sm:p-5 space-y-4">
-          <h2 className="text-lg font-semibold text-foreground flex items-center gap-2">
-            <Leaf className="w-5 h-5 text-primary" />
-            समस्या पठाउनुहोस्
-          </h2>
-
-          {/* AI Report Summary */}
-          {prefill?.aiDisease && (
-            <div className="p-3 bg-muted/60 rounded-xl border border-border/40">
-              <div className="flex items-center gap-2 mb-1.5">
-                <Bot className="w-4 h-4 text-muted-foreground" />
-                <span className="text-xs font-medium text-muted-foreground">AI विश्लेषण (स्वचालित संलग्न)</span>
-              </div>
-              <p className="text-sm font-medium text-foreground">
-                {prefill.aiDisease} — सम्भावना {Math.round((prefill.aiConfidence || 0) * 100)}%
-              </p>
-              {prefill.aiRecommendation && (
-                <p className="text-xs text-muted-foreground mt-1 line-clamp-2">
-                  सिफारिस: {prefill.aiRecommendation}
-                </p>
-              )}
+      {/* Step indicators */}
+      <div className="flex items-center gap-2 mb-2">
+        {(['office', 'technician', 'details'] as FormStep[]).map((s, i) => {
+          const idx = ['office', 'technician', 'details'].indexOf(formStep);
+          return (
+            <div key={s} className="flex items-center gap-2">
+              <div className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold ${
+                formStep === s ? 'bg-primary text-primary-foreground' :
+                idx > i ? 'bg-primary/20 text-primary' : 'bg-muted text-muted-foreground'
+              }`}>{i + 1}</div>
+              {i < 2 && <div className="w-6 h-0.5 bg-border" />}
             </div>
-          )}
+          );
+        })}
+        <span className="text-xs text-muted-foreground ml-2">
+          {formStep === 'office' ? 'कार्यालय' : formStep === 'technician' ? 'प्राविधिक' : 'विवरण'}
+        </span>
+      </div>
 
-          {/* Photo Upload */}
-          <div>
-            <label className="text-sm font-medium mb-2 block text-foreground">
-              📷 फोटो ({images.length}/3)
-            </label>
-            {images.length > 0 ? (
-              <div className="grid grid-cols-3 gap-2 mb-2">
-                {images.map((img, index) => (
-                  <div key={index} className="relative aspect-square rounded-xl overflow-hidden border border-border/40">
-                    <img src={img.dataUrl} alt={`Photo ${index + 1}`} className="w-full h-full object-cover" />
-                    <Button variant="destructive" size="icon" className="absolute top-1 right-1 w-6 h-6 rounded-full" onClick={() => removeImage(index)}>
-                      <X className="w-3 h-3" />
+      <AnimatePresence mode="wait">
+        {/* Step 1: Select Office */}
+        {formStep === 'office' && (
+          <motion.div key="office" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }}>
+            <Card className="border-border/50">
+              <CardContent className="p-4 space-y-3">
+                <h2 className="text-base font-semibold text-foreground flex items-center gap-2">
+                  <Building2 className="w-4 h-4 text-primary" />
+                  कृषि कार्यालय छान्नुहोस्
+                </h2>
+                {officesLoading ? (
+                  <div className="flex justify-center py-6"><Loader2 className="w-5 h-5 animate-spin text-muted-foreground" /></div>
+                ) : offices && offices.length > 0 ? (
+                  <div className="space-y-2">
+                    {offices.map(office => (
+                      <div
+                        key={office.id}
+                        onClick={() => {
+                          setSelectedOfficeId(office.id);
+                          setSelectedTechnicianId(null);
+                        }}
+                        className={`p-3 rounded-xl border cursor-pointer transition-all ${
+                          selectedOfficeId === office.id
+                            ? 'border-primary bg-primary/5 ring-2 ring-primary/20'
+                            : 'border-border hover:border-primary/40'
+                        }`}
+                      >
+                        <p className="font-semibold text-sm text-foreground">{office.name}</p>
+                        <p className="text-xs text-muted-foreground">{office.district}</p>
+                        {office.contact_phone && (
+                          <p className="text-xs text-muted-foreground flex items-center gap-1 mt-1">
+                            <Phone className="w-3 h-3" /> {office.contact_phone}
+                          </p>
+                        )}
+                      </div>
+                    ))}
+                    <Button
+                      className="w-full mt-2"
+                      size="sm"
+                      disabled={!selectedOfficeId}
+                      onClick={() => setFormStep('technician')}
+                    >
+                      अर्को <ArrowRight className="w-4 h-4 ml-1" />
                     </Button>
                   </div>
-                ))}
-              </div>
-            ) : (
-              <div
-                className="border-2 border-dashed border-muted-foreground/25 rounded-xl p-6 text-center cursor-pointer hover:border-primary/40 transition-colors"
-                onClick={() => cameraInputRef.current?.click()}
-              >
-                <Camera className="w-8 h-8 mx-auto text-muted-foreground mb-2" />
-                <p className="text-sm text-muted-foreground">बिरामी बालीको फोटो खिच्नुहोस्</p>
-              </div>
-            )}
-            <div className="flex gap-2 mt-2">
-              <Button variant="outline" size="sm" onClick={() => cameraInputRef.current?.click()} disabled={images.length >= 3}>
-                <Camera className="w-4 h-4 mr-1" /> क्यामेरा
-              </Button>
-              <Button variant="outline" size="sm" onClick={() => fileInputRef.current?.click()} disabled={images.length >= 3}>
-                <Upload className="w-4 h-4 mr-1" /> ग्यालेरी
-              </Button>
-            </div>
-            <input ref={fileInputRef} type="file" accept="image/*" multiple className="hidden" onChange={handleFileSelect} />
-            <input ref={cameraInputRef} type="file" accept="image/*" capture="environment" className="hidden" onChange={handleFileSelect} />
-          </div>
+                ) : (
+                  <p className="text-center text-muted-foreground py-6 text-sm">कुनै कार्यालय उपलब्ध छैन।</p>
+                )}
+              </CardContent>
+            </Card>
+          </motion.div>
+        )}
 
-          {/* Crop Selection */}
-          <div>
-            <label className="text-sm font-medium mb-2 block text-foreground">🌱 बाली</label>
-            <Select value={selectedCropId} onValueChange={setSelectedCropId}>
-              <SelectTrigger>
-                <SelectValue placeholder="बाली छान्नुहोस्" />
-              </SelectTrigger>
-              <SelectContent>
-                {crops?.map(crop => (
-                  <SelectItem key={crop.id} value={crop.id.toString()}>
-                    {language === 'ne' ? crop.name_ne : crop.name_en}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
+        {/* Step 2: Select Technician */}
+        {formStep === 'technician' && (
+          <motion.div key="technician" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }}>
+            <Card className="border-border/50">
+              <CardContent className="p-4 space-y-3">
+                <h2 className="text-base font-semibold text-foreground flex items-center gap-2">
+                  <User className="w-4 h-4 text-primary" />
+                  कृषि प्राविधिक छान्नुहोस्
+                </h2>
+                <p className="text-xs text-muted-foreground">
+                  कार्यालय: <strong>{selectedOffice?.name}</strong> • तपाईंको प्रश्न छानिएको प्राविधिकलाई मात्र पठाइनेछ।
+                </p>
+                {techniciansLoading ? (
+                  <div className="flex justify-center py-6"><Loader2 className="w-5 h-5 animate-spin text-muted-foreground" /></div>
+                ) : technicians && technicians.length > 0 ? (
+                  <div className="space-y-2">
+                    {technicians.map(tech => (
+                      <div
+                        key={tech.id}
+                        onClick={() => setSelectedTechnicianId(tech.id)}
+                        className={`p-3 rounded-xl border cursor-pointer transition-all ${
+                          selectedTechnicianId === tech.id
+                            ? 'border-primary bg-primary/5 ring-2 ring-primary/20'
+                            : 'border-border hover:border-primary/40'
+                        }`}
+                      >
+                        <p className="font-semibold text-sm text-foreground">कृषि प्राविधिक: {tech.name}</p>
+                        <p className="text-xs text-muted-foreground">{tech.role_title}</p>
+                        {tech.specialization && (
+                          <p className="text-xs text-muted-foreground mt-0.5">विशेषज्ञता: {tech.specialization}</p>
+                        )}
+                        <div className="flex items-center gap-3 mt-1">
+                          {tech.phone && (
+                            <span className="text-xs text-muted-foreground flex items-center gap-1">
+                              <Phone className="w-3 h-3" /> {tech.phone}
+                            </span>
+                          )}
+                          {tech.email && (
+                            <span className="text-xs text-muted-foreground flex items-center gap-1">
+                              <Mail className="w-3 h-3" /> {tech.email}
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                    <div className="flex gap-2 mt-2">
+                      <Button variant="outline" size="sm" onClick={() => setFormStep('office')} className="flex-1">
+                        <ArrowLeft className="w-4 h-4 mr-1" /> पछाडि
+                      </Button>
+                      <Button size="sm" className="flex-1" disabled={!selectedTechnicianId} onClick={() => setFormStep('details')}>
+                        अर्को <ArrowRight className="w-4 h-4 ml-1" />
+                      </Button>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="text-center py-6 space-y-2">
+                    <p className="text-sm text-muted-foreground">यस कार्यालयमा सक्रिय प्राविधिक उपलब्ध छैन।</p>
+                    <Button variant="outline" size="sm" onClick={() => setFormStep('office')}>
+                      <ArrowLeft className="w-4 h-4 mr-1" /> अर्को कार्यालय छान्नुहोस्
+                    </Button>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </motion.div>
+        )}
 
-          {/* Problem Type */}
-          <div>
-            <label className="text-sm font-medium mb-2 block text-foreground">समस्या के हो?</label>
-            <div className="flex flex-wrap gap-2">
-              {PROBLEM_TYPES.map(pt => (
-                <button
-                  key={pt.value}
-                  onClick={() => setProblemType(pt.value)}
-                  className={`px-3 py-1.5 rounded-full text-sm border transition-colors ${
-                    problemType === pt.value
-                      ? 'bg-primary text-primary-foreground border-primary'
-                      : 'bg-muted/40 text-foreground border-border/40 hover:border-primary/40'
-                  }`}
-                >
-                  {pt.label}
-                </button>
-              ))}
-            </div>
-          </div>
+        {/* Step 3: Problem Details */}
+        {formStep === 'details' && (
+          <motion.div key="details" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }}>
+            <Card className="border-border/50">
+              <CardContent className="p-4 space-y-4">
+                <h2 className="text-base font-semibold text-foreground flex items-center gap-2">
+                  <Leaf className="w-4 h-4 text-primary" />
+                  समस्या पठाउनुहोस्
+                </h2>
+                <p className="text-xs text-muted-foreground">
+                  पठाउने: <strong>{selectedTechnician?.name}</strong>, {selectedOffice?.name}
+                </p>
 
-          {/* Location */}
-          <div className="grid grid-cols-2 gap-2">
-            <div>
-              <label className="text-xs font-medium mb-1 block text-muted-foreground">
-                <MapPin className="w-3 h-3 inline mr-1" />प्रदेश
-              </label>
-              <Select value={selectedProvinceId?.toString() || ''} onValueChange={(v) => handleProvinceChange(v ? parseInt(v) : null)}>
-                <SelectTrigger className="h-9 text-sm"><SelectValue placeholder="प्रदेश" /></SelectTrigger>
-                <SelectContent>
-                  {provinces.map(p => (
-                    <SelectItem key={p.id} value={p.id.toString()} className="text-sm">{p.name_ne}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <div>
-              <label className="text-xs font-medium mb-1 block text-muted-foreground">जिल्ला</label>
-              <Select value={selectedDistrictId?.toString() || ''} onValueChange={(v) => handleDistrictChange(v ? parseInt(v) : null)} disabled={!selectedProvinceId}>
-                <SelectTrigger className="h-9 text-sm"><SelectValue placeholder="जिल्ला" /></SelectTrigger>
-                <SelectContent>
-                  {districts.map(d => (
-                    <SelectItem key={d.id} value={d.id.toString()} className="text-sm">{d.name_ne}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
+                {/* AI Report Summary */}
+                {prefill?.aiDisease && (
+                  <div className="p-3 bg-muted/60 rounded-xl border border-border/40">
+                    <div className="flex items-center gap-2 mb-1.5">
+                      <Bot className="w-4 h-4 text-muted-foreground" />
+                      <span className="text-xs font-medium text-muted-foreground">AI विश्लेषण (स्वचालित संलग्न)</span>
+                    </div>
+                    <p className="text-sm font-medium text-foreground">
+                      {prefill.aiDisease} — सम्भावना {Math.round((prefill.aiConfidence || 0) * 100)}%
+                    </p>
+                    {prefill.aiRecommendation && (
+                      <p className="text-xs text-muted-foreground mt-1 line-clamp-2">
+                        सिफारिस: {prefill.aiRecommendation}
+                      </p>
+                    )}
+                  </div>
+                )}
 
-          {/* Description + Voice */}
-          <div>
-            <label className="text-sm font-medium mb-2 block text-foreground">समस्या बताउनुहोस्</label>
-            <Textarea
-              placeholder="बालीमा के भइरहेको छ? कति दिन भयो? कुन भागमा समस्या छ?"
-              value={farmerQuestion}
-              onChange={(e) => setFarmerQuestion(e.target.value)}
-              rows={3}
-              className="resize-none text-base"
-            />
-            {interimTranscript && (
-              <p className="text-xs text-primary mt-1 animate-pulse">🎤 {interimTranscript}</p>
-            )}
-            {voiceSupported && (
-              <Button variant={isListening ? 'destructive' : 'outline'} size="sm" className="mt-2" onClick={isListening ? stopListening : startListening}>
-                {isListening ? <MicOff className="w-4 h-4 mr-1" /> : <Mic className="w-4 h-4 mr-1" />}
-                {isListening ? 'बन्द गर्नुहोस्' : 'आवाजमा बताउनुहोस्'}
-              </Button>
-            )}
-          </div>
+                {/* Photo Upload */}
+                <div>
+                  <label className="text-sm font-medium mb-2 block text-foreground">📷 फोटो ({images.length}/3)</label>
+                  {images.length > 0 ? (
+                    <div className="grid grid-cols-3 gap-2 mb-2">
+                      {images.map((img, index) => (
+                        <div key={index} className="relative aspect-square rounded-xl overflow-hidden border border-border/40">
+                          <img src={img.dataUrl} alt={`Photo ${index + 1}`} className="w-full h-full object-cover" />
+                          <Button variant="destructive" size="icon" className="absolute top-1 right-1 w-6 h-6 rounded-full" onClick={() => removeImage(index)}>
+                            <X className="w-3 h-3" />
+                          </Button>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <div
+                      className="border-2 border-dashed border-muted-foreground/25 rounded-xl p-6 text-center cursor-pointer hover:border-primary/40 transition-colors"
+                      onClick={() => cameraInputRef.current?.click()}
+                    >
+                      <Camera className="w-8 h-8 mx-auto text-muted-foreground mb-2" />
+                      <p className="text-sm text-muted-foreground">बिरामी बालीको फोटो खिच्नुहोस्</p>
+                    </div>
+                  )}
+                  <div className="flex gap-2 mt-2">
+                    <Button variant="outline" size="sm" onClick={() => cameraInputRef.current?.click()} disabled={images.length >= 3}>
+                      <Camera className="w-4 h-4 mr-1" /> क्यामेरा
+                    </Button>
+                    <Button variant="outline" size="sm" onClick={() => fileInputRef.current?.click()} disabled={images.length >= 3}>
+                      <Upload className="w-4 h-4 mr-1" /> ग्यालेरी
+                    </Button>
+                  </div>
+                  <input ref={fileInputRef} type="file" accept="image/*" multiple className="hidden" onChange={handleFileSelect} />
+                  <input ref={cameraInputRef} type="file" accept="image/*" capture="environment" className="hidden" onChange={handleFileSelect} />
+                </div>
 
-          {/* Priority */}
-          <div>
-            <label className="text-xs font-medium mb-2 block text-muted-foreground">प्राथमिकता</label>
-            <div className="flex gap-2">
-              <button
-                onClick={() => setPriority('low')}
-                className={`px-4 py-2 rounded-full text-sm border transition-colors ${
-                  priority === 'low'
-                    ? 'bg-primary/10 text-primary border-primary/30 font-medium'
-                    : 'bg-muted/30 text-muted-foreground border-border/30'
-                }`}
-              >
-                सामान्य
-              </button>
-              <button
-                onClick={() => setPriority('high')}
-                className={`px-4 py-2 rounded-full text-sm border transition-colors flex items-center gap-1 ${
-                  priority === 'high'
-                    ? 'bg-destructive/10 text-destructive border-destructive/30 font-medium'
-                    : 'bg-muted/30 text-muted-foreground border-border/30'
-                }`}
-              >
-                <AlertTriangle className="w-3 h-3" />
-                अत्यावश्यक
-              </button>
-            </div>
-            <p className="text-xs text-muted-foreground mt-1.5">
-              औसत जवाफ समय: लगभग २४ घण्टा (कार्यालय समयमा)।
-            </p>
-          </div>
+                {/* Crop Name */}
+                <div>
+                  <label className="text-sm font-medium mb-1 block text-foreground">🌱 बालीको नाम</label>
+                  <Input placeholder="जस्तै: धान, गहुँ, तरकारी..." value={cropName} onChange={e => setCropName(e.target.value)} />
+                </div>
 
-          {/* Submit */}
-          <Button
-            onClick={handleSubmit}
-            disabled={isUploading || submitCase.isPending || !selectedCropId || images.length === 0}
-            className="w-full"
-            size="lg"
-          >
-            {isUploading || submitCase.isPending ? (
-              <><Loader2 className="w-4 h-4 mr-2 animate-spin" />पठाउँदैछ...</>
-            ) : (
-              <><Send className="w-4 h-4 mr-2" />विज्ञलाई पठाउनुहोस्</>
-            )}
-          </Button>
-        </CardContent>
-      </Card>
+                {/* Problem Title */}
+                <div>
+                  <label className="text-sm font-medium mb-1 block text-foreground">समस्याको शीर्षक *</label>
+                  <Input placeholder="जस्तै: पातमा पहेंलो दाग" value={problemTitle} onChange={e => setProblemTitle(e.target.value)} required />
+                </div>
+
+                {/* Description + Voice */}
+                <div>
+                  <label className="text-sm font-medium mb-2 block text-foreground">समस्या बताउनुहोस्</label>
+                  <Textarea
+                    placeholder="बालीमा के भइरहेको छ? कति दिन भयो? कुन भागमा समस्या छ?"
+                    value={farmerQuestion}
+                    onChange={(e) => setFarmerQuestion(e.target.value)}
+                    rows={3}
+                    className="resize-none text-base"
+                  />
+                  {interimTranscript && (
+                    <p className="text-xs text-primary mt-1 animate-pulse">🎤 {interimTranscript}</p>
+                  )}
+                  {voiceSupported && (
+                    <Button variant={isListening ? 'destructive' : 'outline'} size="sm" className="mt-2" onClick={isListening ? stopListening : startListening}>
+                      {isListening ? <MicOff className="w-4 h-4 mr-1" /> : <Mic className="w-4 h-4 mr-1" />}
+                      {isListening ? 'बन्द गर्नुहोस्' : 'आवाजमा बताउनुहोस्'}
+                    </Button>
+                  )}
+                </div>
+
+                {/* Buttons */}
+                <div className="flex gap-2 pt-2">
+                  <Button variant="outline" size="sm" onClick={() => setFormStep('technician')} className="flex-1">
+                    <ArrowLeft className="w-4 h-4 mr-1" /> पछाडि
+                  </Button>
+                  <Button
+                    onClick={handleSubmit}
+                    disabled={isUploading || createTicket.isPending || !problemTitle.trim()}
+                    className="flex-1"
+                    size="sm"
+                  >
+                    {isUploading || createTicket.isPending ? (
+                      <><Loader2 className="w-4 h-4 mr-2 animate-spin" />पठाउँदैछ...</>
+                    ) : (
+                      <><Send className="w-4 h-4 mr-2" />विज्ञलाई पठाउनुहोस्</>
+                    )}
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
