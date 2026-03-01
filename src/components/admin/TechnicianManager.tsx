@@ -61,18 +61,17 @@ export function TechnicianManager() {
   });
 
   // Fetch auth users for linking (using farmer_profiles as proxy)
-  // Phone is used to help link technician auth users and identify farmers in admin tools.
   const { data: authUsers } = useQuery({
     queryKey: ['admin-auth-users-for-linking'],
     queryFn: async () => {
       const { data, error } = await supabase
         .from('farmer_profiles')
-        .select('user_id, full_name, phone')
+        .select('user_id, full_name')
         .order('full_name');
       if (error) throw error;
       return (data || []).map(p => ({
         id: p.user_id,
-        label: `${p.full_name || 'No name'} – ${p.phone || 'no phone'} – ${p.user_id.slice(0, 6)}…`,
+        label: `${p.full_name || 'No name'} – ${p.user_id.slice(0, 6)}…`,
       }));
     },
   });
@@ -263,20 +262,19 @@ export function TechnicianManager() {
                 {linkingTech && (
                   <div className="p-3 bg-muted/50 rounded-lg space-y-1">
                     <p className="text-sm font-semibold">Technician: {linkingTech.name}</p>
-                    <p className="text-xs text-muted-foreground">📞 Phone: {linkingTech.phone || '—'}</p>
                     <p className="text-xs text-muted-foreground">📧 Email: {linkingTech.email || '—'}</p>
                   </div>
                 )}
 
                 <p className="text-xs text-muted-foreground">
-                  यो प्राविधिकलाई कुन Kishan Sathi account सँग link गर्ने हो? Name + Phone राम्रोसँग जाँच गर्नुहोस्।
+                  यो प्राविधिकलाई कुन Kishan Sathi account सँग link गर्ने हो?
                 </p>
 
-                {/* Search to filter users by name or phone */}
+                {/* Search to filter users by name */}
                 <div>
-                  <Label>Search users (name / phone)</Label>
+                  <Label>Search users (name)</Label>
                   <Input
-                    placeholder="Search name or phone..."
+                    placeholder="Search name..."
                     value={userSearch}
                     onChange={e => setUserSearch(e.target.value)}
                     className="mb-2"
