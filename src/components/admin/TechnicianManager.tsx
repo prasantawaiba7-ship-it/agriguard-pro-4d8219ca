@@ -45,6 +45,7 @@ export function TechnicianManager() {
   const [editingTech, setEditingTech] = useState<TechnicianRow | null>(null);
   const [linkingTechId, setLinkingTechId] = useState<string | null>(null);
   const [selectedUserId, setSelectedUserId] = useState<string>('');
+  const [userSearch, setUserSearch] = useState('');
 
   // Fetch all technicians with office info
   const { data: technicians, isLoading } = useQuery({
@@ -59,12 +60,11 @@ export function TechnicianManager() {
     },
   });
 
-  // Fetch auth users for linking (using farmer_profiles as proxy since we can't query auth.users from client)
+  // Fetch auth users for linking (using farmer_profiles as proxy)
+  // Phone is used to help link technician auth users and identify farmers in admin tools.
   const { data: authUsers } = useQuery({
     queryKey: ['admin-auth-users-for-linking'],
     queryFn: async () => {
-      // We fetch farmer_profiles to get user_id + contact info
-      // Admin can also paste a user_id directly
       const { data, error } = await supabase
         .from('farmer_profiles')
         .select('user_id, full_name, phone')
@@ -72,7 +72,7 @@ export function TechnicianManager() {
       if (error) throw error;
       return (data || []).map(p => ({
         id: p.user_id,
-        label: `${p.full_name} (${p.phone || 'no phone'})`,
+        label: `${p.full_name || 'No name'} – ${p.phone || 'no phone'} – ${p.user_id.slice(0, 6)}…`,
       }));
     },
   });
@@ -104,6 +104,7 @@ export function TechnicianManager() {
       toast.success('User linked successfully ✅');
       setLinkingTechId(null);
       setSelectedUserId('');
+      setUserSearch('');
     },
     onError: () => toast.error('Failed to link user'),
   });
@@ -246,61 +247,89 @@ export function TechnicianManager() {
       </CardContent>
 
       {/* Link User Dialog */}
-      <Dialog open={!!linkingTechId} onOpenChange={open => !open && setLinkingTechId(null)}>
-        <DialogContent className="max-w-md">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <Link2 className="w-5 h-5 text-primary" />
-              Link to Auth User
-            </DialogTitle>
-          </DialogHeader>
-          <div className="space-y-4">
-            <p className="text-sm text-muted-foreground">
-              Technician: <strong>{technicians?.find(t => t.id === linkingTechId)?.name}</strong>
-            </p>
+      {(() => {
+        const linkingTech = technicians?.find(t => t.id === linkingTechId);
+        return (
+          <Dialog open={!!linkingTechId} onOpenChange={open => !open && setLinkingTechId(null)}>
+            <DialogContent className="max-w-md">
+              <DialogHeader>
+                <DialogTitle className="flex items-center gap-2">
+                  <Link2 className="w-5 h-5 text-primary" />
+                  Technician ↔ User Link
+                </DialogTitle>
+              </DialogHeader>
+              <div className="space-y-4">
+                {/* Show technician's own info for cross-checking */}
+                {linkingTech && (
+                  <div className="p-3 bg-muted/50 rounded-lg space-y-1">
+                    <p className="text-sm font-semibold">Technician: {linkingTech.name}</p>
+                    <p className="text-xs text-muted-foreground">📞 Phone: {linkingTech.phone || '—'}</p>
+                    <p className="text-xs text-muted-foreground">📧 Email: {linkingTech.email || '—'}</p>
+                  </div>
+                )}
 
-            {/* Select from registered users */}
-            <div>
-              <Label>Select from registered users</Label>
-              <Select value={selectedUserId} onValueChange={setSelectedUserId}>
-                <SelectTrigger><SelectValue placeholder="Choose a user..." /></SelectTrigger>
-                <SelectContent>
-                  {authUsers?.map(u => (
-                    <SelectItem key={u.id} value={u.id}>{u.label}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
+                <p className="text-xs text-muted-foreground">
+                  यो प्राविधिकलाई कुन Kishan Sathi account सँग link गर्ने हो? Name + Phone राम्रोसँग जाँच गर्नुहोस्।
+                </p>
 
-            {/* Or paste user_id directly */}
-            <div>
-              <Label>Or paste User ID directly</Label>
-              <Input
-                placeholder="e.g. 52f17d40-646f-4bcd-bc16-ab78c933ba11"
-                value={selectedUserId}
-                onChange={e => setSelectedUserId(e.target.value)}
-              />
-            </div>
+                {/* Search to filter users by name or phone */}
+                <div>
+                  <Label>Search users (name / phone)</Label>
+                  <Input
+                    placeholder="Search name or phone..."
+                    value={userSearch}
+                    onChange={e => setUserSearch(e.target.value)}
+                    className="mb-2"
+                  />
+                </div>
 
-            <div className="flex gap-2">
-              <Button
-                className="flex-1"
-                disabled={!selectedUserId || linkMutation.isPending}
-                onClick={() => linkingTechId && linkMutation.mutate({ techId: linkingTechId, userId: selectedUserId })}
-              >
-                Link User
-              </Button>
-              <Button
-                variant="destructive"
-                disabled={linkMutation.isPending}
-                onClick={() => linkingTechId && linkMutation.mutate({ techId: linkingTechId, userId: null })}
-              >
-                Unlink
-              </Button>
-            </div>
-          </div>
-        </DialogContent>
-      </Dialog>
+                {/* Select from registered users */}
+                <div>
+                  <Label>Select from registered users</Label>
+                  <Select value={selectedUserId} onValueChange={setSelectedUserId}>
+                    <SelectTrigger><SelectValue placeholder="Choose a user..." /></SelectTrigger>
+                    <SelectContent>
+                      {(userSearch
+                        ? authUsers?.filter(u => u.label.toLowerCase().includes(userSearch.toLowerCase()))
+                        : authUsers
+                      )?.map(u => (
+                        <SelectItem key={u.id} value={u.id}>{u.label}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                {/* Or paste user_id directly */}
+                <div>
+                  <Label>Or paste User ID directly</Label>
+                  <Input
+                    placeholder="e.g. 52f17d40-646f-4bcd-bc16-ab78c933ba11"
+                    value={selectedUserId}
+                    onChange={e => setSelectedUserId(e.target.value)}
+                  />
+                </div>
+
+                <div className="flex gap-2">
+                  <Button
+                    className="flex-1"
+                    disabled={!selectedUserId || linkMutation.isPending}
+                    onClick={() => linkingTechId && linkMutation.mutate({ techId: linkingTechId, userId: selectedUserId })}
+                  >
+                    Link User
+                  </Button>
+                  <Button
+                    variant="destructive"
+                    disabled={linkMutation.isPending}
+                    onClick={() => linkingTechId && linkMutation.mutate({ techId: linkingTechId, userId: null })}
+                  >
+                    Unlink
+                  </Button>
+                </div>
+              </div>
+            </DialogContent>
+          </Dialog>
+        );
+      })()}
 
       {/* Edit Technician Dialog */}
       <Dialog open={!!editingTech} onOpenChange={open => !open && setEditingTech(null)}>
