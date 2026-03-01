@@ -3893,6 +3893,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      auto_link_technician_by_email: {
+        Args: { p_email: string; p_user_id: string }
+        Returns: Json
+      }
       auto_route_case: { Args: { p_case_id: string }; Returns: undefined }
       auto_route_ticket: { Args: { p_case_id: string }; Returns: undefined }
       can_user_query: { Args: { p_user_id: string }; Returns: boolean }

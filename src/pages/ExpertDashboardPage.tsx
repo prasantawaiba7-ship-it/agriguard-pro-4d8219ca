@@ -7,10 +7,11 @@ import Footer from '@/components/layout/Footer';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { useAuth } from '@/hooks/useAuth';
-import { useIsExpert, useExpertAssignedTickets, type ExpertTicket } from '@/hooks/useExpertTickets';
+import { useCurrentTechnician } from '@/hooks/useCurrentTechnician';
+import { useExpertAssignedTickets, type ExpertTicket } from '@/hooks/useExpertTickets';
 import { ExpertTicketChat } from '@/components/expert/ExpertTicketChat';
 import { supabase } from '@/integrations/supabase/client';
-import { ArrowLeft, Loader2, Clock, CheckCircle2, Eye, XCircle, MessageCircle, Shield, ShieldCheck } from 'lucide-react';
+import { ArrowLeft, Loader2, CheckCircle2, Eye, XCircle, MessageCircle, Shield, ShieldCheck } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 
 const STATUS_FILTERS = [
@@ -21,6 +22,7 @@ const STATUS_FILTERS = [
 ];
 
 const STATUS_MAP: Record<string, { label: string; icon: React.ReactNode; color: string }> = {
+  open: { label: 'नयाँ', icon: <ShieldCheck className="w-3 h-3" />, color: 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300' },
   assigned: { label: 'तोकिएको', icon: <ShieldCheck className="w-3 h-3" />, color: 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300' },
   in_progress: { label: 'हेर्दै', icon: <Eye className="w-3 h-3" />, color: 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-300' },
   answered: { label: 'जवाफ दिइयो', icon: <CheckCircle2 className="w-3 h-3" />, color: 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300' },
@@ -30,15 +32,15 @@ const STATUS_MAP: Record<string, { label: string; icon: React.ReactNode; color: 
 export default function ExpertDashboardPage() {
   const navigate = useNavigate();
   const { user } = useAuth();
-  const { data: expertStatus, isLoading: expertLoading } = useIsExpert();
-  const { data: tickets, isLoading: ticketsLoading } = useExpertAssignedTickets();
+  const { data: currentTech, isLoading: techLoading } = useCurrentTechnician();
+  const { data: tickets, isLoading: ticketsLoading } = useExpertAssignedTickets(currentTech?.id, currentTech?.is_expert);
   const [selectedTicket, setSelectedTicket] = useState<ExpertTicket | null>(null);
   const [statusFilter, setStatusFilter] = useState('all');
 
   if (!user) { navigate('/auth'); return null; }
 
-  // Guard: only experts can access this page
-  if (expertLoading) {
+  // Guard: loading state
+  if (techLoading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <Loader2 className="w-8 h-8 animate-spin text-primary" />
@@ -46,7 +48,8 @@ export default function ExpertDashboardPage() {
     );
   }
 
-  if (!expertStatus?.isExpert) {
+  // Guard: only experts can access
+  if (!currentTech?.is_expert) {
     return (
       <>
         <Helmet><title>Access Denied - Kishan Sathi</title></Helmet>
@@ -138,7 +141,6 @@ export default function ExpertDashboardPage() {
                     <Card
                       className={`cursor-pointer hover:shadow-md transition-all ${ticket.has_unread_technician ? 'ring-2 ring-primary/30 bg-primary/5' : ''}`}
                       onClick={async () => {
-                        // Mark as read and set status to in_progress if assigned
                         if (ticket.has_unread_technician || ticket.status === 'assigned') {
                           await (supabase as any).from('expert_tickets').update({
                             has_unread_technician: false,
