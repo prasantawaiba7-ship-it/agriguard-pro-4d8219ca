@@ -6,6 +6,9 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useAuth } from "@/hooks/useAuth";
 import { useUserRole } from "@/hooks/useUserRole";
 import { useLanguage } from "@/hooks/useLanguage";
+// Notification system start
+import { TechnicianNotificationBell } from "@/components/notifications/TechnicianNotificationBell";
+// Notification system end
 
 const Header = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -68,6 +71,9 @@ const Header = () => {
 
           {/* Desktop Auth + Language */}
           <div className="hidden md:flex items-center gap-2">
+            {/* Notification system start */}
+            <TechnicianNotificationBell />
+            {/* Notification system end */}
             <Button
               variant="ghost"
               size="sm"
@@ -101,6 +107,9 @@ const Header = () => {
 
           {/* Mobile: Language toggle + Menu */}
           <div className="flex md:hidden items-center gap-1.5">
+            {/* Notification system start */}
+            <TechnicianNotificationBell />
+            {/* Notification system end */}
             <Button
               variant="ghost"
               size="sm"
