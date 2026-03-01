@@ -9,25 +9,23 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Textarea } from '@/components/ui/textarea';
-import { useMyExpertCases, useTicketMessages, useSendTicketMessage, type ExpertCase } from '@/hooks/useExpertCases';
+import { useMyExpertTickets, useExpertTicketMessages, useSendExpertTicketMessage, type ExpertTicket } from '@/hooks/useExpertTickets';
 import { useAuth } from '@/hooks/useAuth';
 import { useLanguage } from '@/hooks/useLanguage';
 import { formatDistanceToNow } from 'date-fns';
 
 const STATUS_MAP: Record<string, { label: string; color: string; icon: React.ReactNode }> = {
-  new: { label: 'नयाँ', color: 'bg-blue-100 text-blue-700 border-blue-200', icon: <Clock className="w-3 h-3" /> },
-  in_review: { label: 'हेर्दै', color: 'bg-amber-100 text-amber-700 border-amber-200', icon: <Clock className="w-3 h-3" /> },
+  open: { label: 'नयाँ', color: 'bg-blue-100 text-blue-700 border-blue-200', icon: <Clock className="w-3 h-3" /> },
+  in_progress: { label: 'हेर्दै', color: 'bg-amber-100 text-amber-700 border-amber-200', icon: <Clock className="w-3 h-3" /> },
   answered: { label: 'जवाफ आयो! ✅', color: 'bg-green-100 text-green-700 border-green-200', icon: <CheckCircle className="w-3 h-3" /> },
   closed: { label: 'बन्द', color: 'bg-muted text-muted-foreground border-border', icon: <CheckCircle className="w-3 h-3" /> },
 };
 
-function ExpertCaseCard({ caseData }: { caseData: ExpertCase }) {
+function ExpertCaseCard({ caseData }: { caseData: ExpertTicket }) {
   const [isExpanded, setIsExpanded] = useState(false);
-  const { data: messages, isLoading: msgsLoading } = useTicketMessages(isExpanded ? caseData.id : null);
+  const { data: messages, isLoading: msgsLoading } = useExpertTicketMessages(isExpanded ? caseData.id : null);
 
-  const status = STATUS_MAP[caseData.status || 'new'] || STATUS_MAP.new;
-  const imageUrls: string[] = caseData.ai_summary?.imageUrls || [];
-  const aiSummary = caseData.ai_summary;
+  const status = STATUS_MAP[caseData.status || 'open'] || STATUS_MAP.open;
 
   return (
     <Card className="overflow-hidden border-border/40">
@@ -36,12 +34,6 @@ function ExpertCaseCard({ caseData }: { caseData: ExpertCase }) {
         onClick={() => setIsExpanded(!isExpanded)}
       >
         <div className="flex items-start gap-3">
-          {imageUrls[0] && (
-            <div className="w-14 h-14 rounded-xl overflow-hidden flex-shrink-0 border border-border/30">
-              <img src={imageUrls[0]} alt="" className="w-full h-full object-cover" />
-            </div>
-          )}
-
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2 mb-1 flex-wrap">
               <Badge variant="outline" className={`text-xs ${status.color} border`}>
@@ -53,11 +45,17 @@ function ExpertCaseCard({ caseData }: { caseData: ExpertCase }) {
               </span>
             </div>
             <p className="font-medium text-sm text-foreground">
-              {caseData.crop || 'बाली'}
+              {caseData.crop_name || 'बाली'}
             </p>
-            {caseData.problem_type && (
+            {caseData.problem_title && (
               <p className="text-xs text-muted-foreground truncate mt-0.5">
-                {caseData.problem_type} • {caseData.district || ''}
+                {caseData.problem_title}
+                {caseData.office && ` • ${caseData.office.name}`}
+              </p>
+            )}
+            {caseData.technician && (
+              <p className="text-xs text-muted-foreground mt-0.5">
+                प्राविधिक: {caseData.technician.name}
               </p>
             )}
           </div>
@@ -77,38 +75,15 @@ function ExpertCaseCard({ caseData }: { caseData: ExpertCase }) {
             className="overflow-hidden"
           >
             <CardContent className="pt-0 pb-4 space-y-4 px-4">
-              {/* All photos */}
-              {imageUrls.length > 0 && (
-                <div className="grid grid-cols-3 gap-2">
-                  {imageUrls.map((url, i) => (
-                    <div key={i} className="aspect-square rounded-xl overflow-hidden border border-border/30">
-                      <img src={url} alt="" className="w-full h-full object-cover" />
-                    </div>
-                  ))}
-                </div>
-              )}
-
               {/* Case ID */}
               <p className="text-xs text-muted-foreground">
                 केस: <span className="font-mono">KS-{caseData.id.slice(0, 8).toUpperCase()}</span>
               </p>
 
-              {/* AI Summary */}
-              {aiSummary && (aiSummary.detectedIssue || aiSummary.aiDisease) && (
+              {/* Problem description */}
+              {caseData.problem_description && (
                 <div className="p-3 bg-muted/40 rounded-xl border border-border/30">
-                  <div className="flex items-center gap-2 mb-1">
-                    <Bot className="w-4 h-4 text-muted-foreground" />
-                    <span className="text-xs font-medium text-muted-foreground">AI विश्लेषण</span>
-                  </div>
-                  <p className="text-sm font-medium text-foreground">
-                    {aiSummary.detectedIssue || aiSummary.aiDisease}
-                    {aiSummary.confidence && (
-                      <span className="text-muted-foreground"> ({Math.round(aiSummary.confidence * 100)}%)</span>
-                    )}
-                  </p>
-                  {aiSummary.aiRecommendation && (
-                    <p className="text-xs text-muted-foreground mt-1">{aiSummary.aiRecommendation}</p>
-                  )}
+                  <p className="text-sm text-foreground whitespace-pre-wrap">{caseData.problem_description}</p>
                 </div>
               )}
 
@@ -119,9 +94,9 @@ function ExpertCaseCard({ caseData }: { caseData: ExpertCase }) {
                 </div>
               ) : messages && messages.length > 0 ? (
                 <div className="space-y-2">
-                  {messages.map((msg: any) => {
-                    const isExpert = msg.sender_type === 'expert';
-                    const text = msg.message || '';
+                  {messages.map((msg) => {
+                    const isExpert = msg.sender_type === 'expert' || msg.sender_type === 'technician';
+                    const text = msg.message_text || '';
                     if (msg.sender_type === 'expert_note') return null;
                     return (
                       <div key={msg.id} className={`p-3 rounded-xl ${
@@ -133,7 +108,7 @@ function ExpertCaseCard({ caseData }: { caseData: ExpertCase }) {
                           {isExpert ? (
                             <>
                               <User className="w-3.5 h-3.5 text-green-600" />
-                              <span className="text-xs font-semibold text-green-700">कृषि विज्ञको जवाफ</span>
+                              <span className="text-xs font-semibold text-green-700">कृषि प्राविधिकको जवाफ</span>
                             </>
                           ) : (
                             <>
@@ -142,7 +117,12 @@ function ExpertCaseCard({ caseData }: { caseData: ExpertCase }) {
                             </>
                           )}
                         </div>
-                        <p className="text-sm text-foreground whitespace-pre-wrap">{text}</p>
+                        {text && <p className="text-sm text-foreground whitespace-pre-wrap">{text}</p>}
+                        {msg.image_url && (
+                          <div className="mt-2 w-32 h-32 rounded-xl overflow-hidden border border-border/30">
+                            <img src={msg.image_url} alt="" className="w-full h-full object-cover" />
+                          </div>
+                        )}
                       </div>
                     );
                   })}
@@ -169,11 +149,11 @@ function ExpertCaseCard({ caseData }: { caseData: ExpertCase }) {
 
 function FollowUpReply({ caseId }: { caseId: string }) {
   const [text, setText] = useState('');
-  const sendMessage = useSendTicketMessage();
+  const sendMessage = useSendExpertTicketMessage();
 
   const handleSend = async () => {
     if (!text.trim()) return;
-    await sendMessage.mutateAsync({ caseId, message: text.trim() });
+    await sendMessage.mutateAsync({ ticketId: caseId, message: text.trim() });
     setText('');
   };
 
@@ -200,7 +180,7 @@ function FollowUpReply({ caseId }: { caseId: string }) {
 
 export function ExpertCaseHistory() {
   const { user } = useAuth();
-  const { data: cases, isLoading } = useMyExpertCases();
+  const { data: cases, isLoading } = useMyExpertTickets();
 
   if (!user) {
     return (
