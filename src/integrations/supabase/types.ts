@@ -47,6 +47,33 @@ export type Database = {
         }
         Relationships: []
       }
+      ag_offices: {
+        Row: {
+          contact_email: string | null
+          contact_phone: string | null
+          created_at: string
+          district: string
+          id: string
+          name: string
+        }
+        Insert: {
+          contact_email?: string | null
+          contact_phone?: string | null
+          created_at?: string
+          district: string
+          id?: string
+          name: string
+        }
+        Update: {
+          contact_email?: string | null
+          contact_phone?: string | null
+          created_at?: string
+          district?: string
+          id?: string
+          name?: string
+        }
+        Relationships: []
+      }
       agricultural_officers: {
         Row: {
           alternate_phone: string | null
@@ -1682,6 +1709,104 @@ export type Database = {
         }
         Relationships: []
       }
+      expert_ticket_messages: {
+        Row: {
+          created_at: string
+          id: string
+          image_url: string | null
+          message_text: string | null
+          sender_id: string | null
+          sender_type: string
+          ticket_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          image_url?: string | null
+          message_text?: string | null
+          sender_id?: string | null
+          sender_type?: string
+          ticket_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          image_url?: string | null
+          message_text?: string | null
+          sender_id?: string | null
+          sender_type?: string
+          ticket_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "expert_ticket_messages_ticket_id_fkey"
+            columns: ["ticket_id"]
+            isOneToOne: false
+            referencedRelation: "expert_tickets"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      expert_tickets: {
+        Row: {
+          created_at: string
+          crop_name: string
+          farmer_id: string
+          has_unread_farmer: boolean
+          has_unread_technician: boolean
+          id: string
+          office_id: string
+          problem_description: string
+          problem_title: string
+          status: string
+          technician_id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          crop_name: string
+          farmer_id: string
+          has_unread_farmer?: boolean
+          has_unread_technician?: boolean
+          id?: string
+          office_id: string
+          problem_description: string
+          problem_title: string
+          status?: string
+          technician_id: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          crop_name?: string
+          farmer_id?: string
+          has_unread_farmer?: boolean
+          has_unread_technician?: boolean
+          id?: string
+          office_id?: string
+          problem_description?: string
+          problem_title?: string
+          status?: string
+          technician_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "expert_tickets_office_id_fkey"
+            columns: ["office_id"]
+            isOneToOne: false
+            referencedRelation: "ag_offices"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "expert_tickets_technician_id_fkey"
+            columns: ["technician_id"]
+            isOneToOne: false
+            referencedRelation: "technicians"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       experts: {
         Row: {
           created_at: string | null
@@ -3139,6 +3264,53 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      technicians: {
+        Row: {
+          created_at: string
+          email: string | null
+          id: string
+          is_active: boolean
+          name: string
+          office_id: string
+          phone: string | null
+          role_title: string
+          specialization: string | null
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          email?: string | null
+          id?: string
+          is_active?: boolean
+          name: string
+          office_id: string
+          phone?: string | null
+          role_title?: string
+          specialization?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          email?: string | null
+          id?: string
+          is_active?: boolean
+          name?: string
+          office_id?: string
+          phone?: string | null
+          role_title?: string
+          specialization?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "technicians_office_id_fkey"
+            columns: ["office_id"]
+            isOneToOne: false
+            referencedRelation: "ag_offices"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       ticket_messages: {
         Row: {

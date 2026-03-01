@@ -37,6 +37,9 @@ import NotFound from "./pages/NotFound";
  import CertificatePage from "./pages/CertificatePage";
 import MyQuestionsPage from "./pages/MyQuestionsPage";
 import { ActionFilmPage } from "./features/action-film";
+import AskExpertPage from "./pages/AskExpertPage";
+import ExpertQuestionsPage from "./pages/ExpertQuestionsPage";
+import TechnicianDashboardPage from "./pages/TechnicianDashboardPage";
 
 const queryClient = new QueryClient();
 
@@ -76,6 +79,9 @@ const App = () => (
                  <Route path="/learning/certificate/:certificateId" element={<CertificatePage />} />
                 <Route path="/my-questions" element={<MyQuestionsPage />} />
                 <Route path="/action-film" element={<ActionFilmPage />} />
+                <Route path="/ask-expert" element={<AskExpertPage />} />
+                <Route path="/expert-questions" element={<ExpertQuestionsPage />} />
+                <Route path="/technician-dashboard" element={<TechnicianDashboardPage />} />
                 {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
                 <Route path="*" element={<NotFound />} />
               </Routes>

@@ -1,6 +1,6 @@
 import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
-import { Camera, Cloud, Store, Bot, MapPin, BookOpen, Film } from "lucide-react";
+import { Camera, Cloud, Store, Bot, MapPin, BookOpen, Film, Stethoscope } from "lucide-react";
 import { useLanguage } from "@/hooks/useLanguage";
 
 const QuickActionsGrid = () => {
@@ -68,6 +68,15 @@ const QuickActionsGrid = () => {
       href: "/action-film",
       cardBg: "bg-accent/5",
       iconCircleBg: "bg-accent",
+      iconColor: "text-white",
+    },
+    {
+      icon: Stethoscope,
+      label: "🌾 प्राविधिकसँग सोध्नुहोस्",
+      sublabel: "कृषि विज्ञलाई प्रश्न",
+      href: "/ask-expert",
+      cardBg: "bg-blue-50 dark:bg-blue-950/20",
+      iconCircleBg: "bg-blue-500",
       iconColor: "text-white",
     },
   ];
