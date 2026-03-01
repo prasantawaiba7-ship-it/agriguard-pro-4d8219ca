@@ -158,7 +158,8 @@ export function OnScreenAssistant({ isFullScreen: isEmbeddedFullScreen = false, 
         imageUrl: m.imageUrl
       }));
       setMessages(restoredMessages);
-      setIsLoading(storeIsLoading);
+      // Never restore isLoading — always start fresh to avoid stuck state
+      setIsLoading(false);
       setHasInitialized(true);
     }
   }, [storeMessages, storeIsLoading, hasInitialized]);
@@ -851,24 +852,26 @@ export function OnScreenAssistant({ isFullScreen: isEmbeddedFullScreen = false, 
 </body>
 </html>`;
 
+      // Use download link instead of window.open to avoid popup blocker
       const blob = new Blob([html], { type: 'text/html' });
       const url = URL.createObjectURL(blob);
-      const win = window.open(url, '_blank');
-      if (win) {
-        win.onload = () => {
-          win.print();
-        };
-      }
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `farmer-gpt-chat-${dateStr}.html`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
       
       toast({
-        title: language === 'ne' ? 'PDF तयार' : language === 'hi' ? 'PDF तैयार' : 'PDF Ready',
-        description: language === 'ne' ? 'प्रिन्ट डायलगबाट PDF सेभ गर्नुहोस्' : language === 'hi' ? 'प्रिंट डायलॉग से PDF सेव करें' : 'Save as PDF from print dialog',
+        title: language === 'ne' ? 'डाउनलोड भयो' : language === 'hi' ? 'डाउनलोड हुआ' : 'Downloaded',
+        description: language === 'ne' ? 'HTML फाइल डाउनलोड भयो। ब्राउजरमा खोलेर Print → PDF गर्नुहोस्।' : language === 'hi' ? 'HTML फाइल डाउनलोड हुई। ब्राउज़र में खोलकर Print → PDF करें।' : 'HTML file downloaded. Open in browser and Print → Save as PDF.',
       });
     } catch (error) {
       console.error('Report error:', error);
       toast({
         title: language === 'ne' ? 'त्रुटि' : 'Error',
-        description: language === 'ne' ? 'PDF बनाउन सकिएन' : 'Failed to generate PDF',
+        description: language === 'ne' ? 'डाउनलोड गर्न सकिएन' : 'Failed to download',
         variant: 'destructive'
       });
     } finally {
