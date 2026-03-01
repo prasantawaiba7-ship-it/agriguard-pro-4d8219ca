@@ -264,23 +264,18 @@ export function useCreateExpertTicket() {
   return useMutation({
     mutationFn: async (data: {
       officeId: string;
+      technicianId: string;
       cropName: string;
       problemTitle: string;
       problemDescription: string;
       imageUrls?: string[];
     }) => {
-      // Auto-assign technician
-      const technicianId = await assignTechnicianForOffice(data.officeId);
-      if (!technicianId) {
-        throw new Error('NO_TECHNICIAN');
-      }
-
       const { data: ticket, error } = await (supabase as any)
         .from('expert_tickets')
         .insert({
           farmer_id: user!.id,
           office_id: data.officeId,
-          technician_id: technicianId,
+          technician_id: data.technicianId,
           crop_name: data.cropName,
           problem_title: data.problemTitle,
           problem_description: data.problemDescription,
