@@ -383,6 +383,20 @@ const FarmerDashboard = () => {
                       <p className="text-[10px] sm:text-xs text-muted-foreground hidden lg:block">बालीको कथा हेर्नुहोस्</p>
                     </CardContent>
                   </Card>
+
+                  {/* Ask Expert */}
+                  <Card 
+                    className="border-blue-200 dark:border-blue-800 bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-950/20 dark:to-blue-900/20 cursor-pointer hover:shadow-lg transition-all"
+                    onClick={() => navigate('/ask-expert')}
+                  >
+                    <CardContent className="p-3 sm:p-4 flex flex-col items-center text-center gap-2">
+                      <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-blue-500/10 flex items-center justify-center">
+                        <Stethoscope className="w-5 h-5 sm:w-6 sm:h-6 text-blue-600" />
+                      </div>
+                      <h3 className="font-semibold text-xs sm:text-sm text-foreground">🌾 प्राविधिकसँग सोध्नुहोस्</h3>
+                      <p className="text-[10px] sm:text-xs text-muted-foreground hidden lg:block">कृषि विज्ञलाई प्रश्न गर्नुहोस्</p>
+                    </CardContent>
+                  </Card>
                 </div>
               </motion.div>
             )}
