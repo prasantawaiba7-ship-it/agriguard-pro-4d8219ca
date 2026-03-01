@@ -108,6 +108,14 @@ serve(async (req) => {
     const resendData = await resendRes.json();
 
     if (!resendRes.ok) {
+      // If Resend returns 403 due to unverified domain, return success with warning
+      if (resendRes.status === 403) {
+        console.warn("Resend domain not verified. Email not sent to:", technicianEmail, resendData);
+        return new Response(
+          JSON.stringify({ success: true, warning: "Domain not verified in Resend. Email queued but not delivered. Verify domain at resend.com/domains.", detail: resendData }),
+          { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
       console.error("Resend API error:", resendData);
       return new Response(
         JSON.stringify({ success: false, error: resendData }),
