@@ -41,6 +41,7 @@ export function AskExpertForm({ prefill, onSubmitted }: AskExpertFormProps) {
   const [selectedTechnicianId, setSelectedTechnicianId] = useState<string | null>(null);
   const [cropName, setCropName] = useState(prefill?.cropName || '');
   const [problemTitle, setProblemTitle] = useState(prefill?.aiDisease || '');
+  const [farmerPhone, setFarmerPhone] = useState('');
   const [farmerQuestion, setFarmerQuestion] = useState('');
   const [images, setImages] = useState<{ dataUrl: string; file?: File }[]>(
     prefill?.imageDataUrl ? [{ dataUrl: prefill.imageDataUrl }] : []
@@ -82,7 +83,7 @@ export function AskExpertForm({ prefill, onSubmitted }: AskExpertFormProps) {
 
   const removeImage = (index: number) => setImages(prev => prev.filter((_, i) => i !== index));
 
-  const canProceedFromProblem = problemTitle.trim().length > 0;
+  const canProceedFromProblem = problemTitle.trim().length > 0 && farmerPhone.trim().length >= 7;
 
   const handleSubmit = async () => {
     if (!selectedOfficeId || !selectedTechnicianId || !problemTitle.trim()) return;
@@ -114,6 +115,7 @@ export function AskExpertForm({ prefill, onSubmitted }: AskExpertFormProps) {
         problemTitle: problemTitle.trim(),
         problemDescription: descParts.join(' ') || problemTitle.trim(),
         imageUrls,
+        farmerPhone: farmerPhone.trim(),
       });
 
       setFormStep('done');
@@ -128,6 +130,7 @@ export function AskExpertForm({ prefill, onSubmitted }: AskExpertFormProps) {
   const resetForm = () => {
     setCropName('');
     setProblemTitle('');
+    setFarmerPhone('');
     setFarmerQuestion('');
     setImages([]);
     setSelectedOfficeId(null);
@@ -205,6 +208,10 @@ export function AskExpertForm({ prefill, onSubmitted }: AskExpertFormProps) {
                   </div>
                   <input ref={fileInputRef} type="file" accept="image/*" multiple className="hidden" onChange={handleFileSelect} />
                   <input ref={cameraInputRef} type="file" accept="image/*" capture="environment" className="hidden" onChange={handleFileSelect} />
+                </div>
+                <div>
+                  <label className="text-sm font-medium mb-1 block text-foreground">📞 तपाईंको फोन नम्बर *</label>
+                  <Input placeholder="जस्तै: 98XXXXXXXX" value={farmerPhone} onChange={e => setFarmerPhone(e.target.value)} type="tel" />
                 </div>
                 <div>
                   <label className="text-sm font-medium mb-1 block text-foreground">🌱 बालीको नाम</label>

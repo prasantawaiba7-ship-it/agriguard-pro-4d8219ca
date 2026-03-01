@@ -1752,6 +1752,7 @@ export type Database = {
           created_at: string
           crop_name: string
           farmer_id: string
+          farmer_phone: string | null
           has_unread_farmer: boolean
           has_unread_technician: boolean
           id: string
@@ -1766,6 +1767,7 @@ export type Database = {
           created_at?: string
           crop_name: string
           farmer_id: string
+          farmer_phone?: string | null
           has_unread_farmer?: boolean
           has_unread_technician?: boolean
           id?: string
@@ -1780,6 +1782,7 @@ export type Database = {
           created_at?: string
           crop_name?: string
           farmer_id?: string
+          farmer_phone?: string | null
           has_unread_farmer?: boolean
           has_unread_technician?: boolean
           id?: string

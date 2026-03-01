@@ -65,7 +65,7 @@ export function ExpertTicketsManager() {
     queryFn: async () => {
       let q = (supabase as any)
         .from('expert_tickets')
-        .select('*, technician:technicians(id, name, role_title, is_expert), office:ag_offices(id, name, district)')
+        .select('*, farmer_phone, technician:technicians(id, name, role_title, is_expert), office:ag_offices(id, name, district)')
         .order('updated_at', { ascending: false });
       if (filterStatus !== 'all') q = q.eq('status', filterStatus);
       const { data, error } = await q.limit(200);
@@ -297,8 +297,10 @@ export function ExpertTicketsManager() {
                           <p className="truncate text-sm">{ticket.problem_title}</p>
                           <p className="text-xs text-muted-foreground">
                             किसान: {(ticket as any).farmer_profile?.full_name || ticket.farmer_id.slice(0, 8)}
-                            {(ticket as any).farmer_profile?.phone && (
-                              <span className="ml-1 text-primary">({(ticket as any).farmer_profile.phone})</span>
+                            {((ticket as any).farmer_phone || (ticket as any).farmer_profile?.phone) && (
+                              <span className="ml-1 text-primary font-medium">
+                                📞 {(ticket as any).farmer_phone || (ticket as any).farmer_profile?.phone}
+                              </span>
                             )}
                           </p>
                         </div>
