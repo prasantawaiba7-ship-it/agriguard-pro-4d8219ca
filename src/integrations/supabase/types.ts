@@ -3271,6 +3271,7 @@ export type Database = {
           email: string | null
           id: string
           is_active: boolean
+          is_primary: boolean
           name: string
           office_id: string
           phone: string | null
@@ -3283,6 +3284,7 @@ export type Database = {
           email?: string | null
           id?: string
           is_active?: boolean
+          is_primary?: boolean
           name: string
           office_id: string
           phone?: string | null
@@ -3295,6 +3297,7 @@ export type Database = {
           email?: string | null
           id?: string
           is_active?: boolean
+          is_primary?: boolean
           name?: string
           office_id?: string
           phone?: string | null

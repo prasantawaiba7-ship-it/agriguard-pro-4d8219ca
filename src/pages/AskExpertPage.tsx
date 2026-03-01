@@ -8,19 +8,17 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useAuth } from '@/hooks/useAuth';
-import { useAgOffices, useTechnicians, useCreateExpertTicket, uploadExpertImage, type Technician } from '@/hooks/useExpertTickets';
-import { ArrowLeft, ArrowRight, Building2, UserCheck, Send, ImagePlus, X, Loader2, Phone, Mail, CheckCircle2 } from 'lucide-react';
+import { useAgOffices, useCreateExpertTicket, uploadExpertImage } from '@/hooks/useExpertTickets';
+import { ArrowLeft, ArrowRight, Building2, Send, ImagePlus, X, Loader2, Phone, CheckCircle2, Info } from 'lucide-react';
 
-type Step = 'office' | 'technician' | 'form' | 'done';
+type Step = 'office' | 'form' | 'done';
 
 export default function AskExpertPage() {
   const navigate = useNavigate();
   const { user } = useAuth();
   const [step, setStep] = useState<Step>('office');
   const [selectedOfficeId, setSelectedOfficeId] = useState<string | null>(null);
-  const [selectedTechnician, setSelectedTechnician] = useState<Technician | null>(null);
   const [cropName, setCropName] = useState('');
   const [problemTitle, setProblemTitle] = useState('');
   const [problemDescription, setProblemDescription] = useState('');
@@ -29,7 +27,6 @@ export default function AskExpertPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const { data: offices, isLoading: officesLoading } = useAgOffices();
-  const { data: technicians, isLoading: techLoading } = useTechnicians(selectedOfficeId);
   const createTicket = useCreateExpertTicket();
 
   const selectedOffice = offices?.find(o => o.id === selectedOfficeId);
@@ -53,7 +50,7 @@ export default function AskExpertPage() {
   };
 
   const handleSubmit = async () => {
-    if (!selectedOfficeId || !selectedTechnician || !problemTitle.trim() || !problemDescription.trim()) return;
+    if (!selectedOfficeId || !problemTitle.trim() || !problemDescription.trim()) return;
     setIsSubmitting(true);
     try {
       const imageUrls: string[] = [];
@@ -63,7 +60,6 @@ export default function AskExpertPage() {
       }
       await createTicket.mutateAsync({
         officeId: selectedOfficeId,
-        technicianId: selectedTechnician.id,
         cropName: cropName || 'N/A',
         problemTitle: problemTitle.trim(),
         problemDescription: problemDescription.trim(),
@@ -98,16 +94,16 @@ export default function AskExpertPage() {
             🌾 कृषि प्राविधिकसँग सोध्नुहोस्
           </h1>
 
-          {/* Steps indicator */}
+          {/* Steps indicator - now 2 steps */}
           <div className="flex items-center gap-2 mb-6">
-            {(['office', 'technician', 'form'] as Step[]).map((s, i) => (
+            {(['office', 'form'] as Step[]).map((s, i) => (
               <div key={s} className="flex items-center gap-2">
                 <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold ${
                   step === s ? 'bg-primary text-primary-foreground' :
-                  (['office', 'technician', 'form'].indexOf(step) > i || step === 'done')
+                  (['office', 'form'].indexOf(step) > i || step === 'done')
                     ? 'bg-primary/20 text-primary' : 'bg-muted text-muted-foreground'
                 }`}>{i + 1}</div>
-                {i < 2 && <div className="w-8 h-0.5 bg-border" />}
+                {i < 1 && <div className="w-8 h-0.5 bg-border" />}
               </div>
             ))}
           </div>
@@ -131,7 +127,7 @@ export default function AskExpertPage() {
                         {offices.map(office => (
                           <div
                             key={office.id}
-                            onClick={() => { setSelectedOfficeId(office.id); setSelectedTechnician(null); }}
+                            onClick={() => setSelectedOfficeId(office.id)}
                             className={`p-4 rounded-xl border cursor-pointer transition-all ${
                               selectedOfficeId === office.id
                                 ? 'border-primary bg-primary/5 ring-2 ring-primary/20'
@@ -150,7 +146,7 @@ export default function AskExpertPage() {
                         <Button
                           className="w-full mt-4"
                           disabled={!selectedOfficeId}
-                          onClick={() => setStep('technician')}
+                          onClick={() => setStep('form')}
                         >
                           अर्को <ArrowRight className="w-4 h-4 ml-1" />
                         </Button>
@@ -163,80 +159,21 @@ export default function AskExpertPage() {
               </motion.div>
             )}
 
-            {/* Step 2: Select Technician */}
-            {step === 'technician' && (
-              <motion.div key="technician" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }}>
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="flex items-center gap-2 text-lg">
-                      <UserCheck className="w-5 h-5 text-primary" />
-                      कृषि प्राविधिक छान्नुहोस्
-                    </CardTitle>
-                    <p className="text-sm text-muted-foreground">{selectedOffice?.name}</p>
-                  </CardHeader>
-                  <CardContent>
-                    {techLoading ? (
-                      <div className="flex justify-center py-8"><Loader2 className="w-6 h-6 animate-spin text-muted-foreground" /></div>
-                    ) : technicians && technicians.length > 0 ? (
-                      <div className="space-y-3">
-                        {technicians.map(tech => (
-                          <div
-                            key={tech.id}
-                            onClick={() => setSelectedTechnician(tech)}
-                            className={`p-4 rounded-xl border cursor-pointer transition-all ${
-                              selectedTechnician?.id === tech.id
-                                ? 'border-primary bg-primary/5 ring-2 ring-primary/20'
-                                : 'border-border hover:border-primary/40'
-                            }`}
-                          >
-                            <div className="flex justify-between items-start">
-                              <div>
-                                <p className="font-semibold text-foreground">{tech.name}</p>
-                                <p className="text-sm text-muted-foreground">{tech.role_title}</p>
-                                {tech.specialization && (
-                                  <span className="inline-block mt-1 px-2 py-0.5 text-xs bg-primary/10 text-primary rounded-full">
-                                    {tech.specialization}
-                                  </span>
-                                )}
-                              </div>
-                              <div className="flex gap-2">
-                                {tech.phone && <Phone className="w-4 h-4 text-muted-foreground" />}
-                                {tech.email && <Mail className="w-4 h-4 text-muted-foreground" />}
-                              </div>
-                            </div>
-                          </div>
-                        ))}
-                        <div className="flex gap-2 mt-4">
-                          <Button variant="outline" onClick={() => setStep('office')} className="flex-1">
-                            <ArrowLeft className="w-4 h-4 mr-1" /> पछाडि
-                          </Button>
-                          <Button disabled={!selectedTechnician} onClick={() => setStep('form')} className="flex-1">
-                            अर्को <ArrowRight className="w-4 h-4 ml-1" />
-                          </Button>
-                        </div>
-                      </div>
-                    ) : (
-                      <div className="text-center py-8">
-                        <p className="text-muted-foreground">यस कार्यालयमा कुनै प्राविधिक छैन।</p>
-                        <Button variant="outline" onClick={() => setStep('office')} className="mt-4">
-                          <ArrowLeft className="w-4 h-4 mr-1" /> अर्को कार्यालय छान्नुहोस्
-                        </Button>
-                      </div>
-                    )}
-                  </CardContent>
-                </Card>
-              </motion.div>
-            )}
-
-            {/* Step 3: Question Form */}
+            {/* Step 2: Question Form */}
             {step === 'form' && (
               <motion.div key="form" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }}>
                 <Card>
                   <CardHeader>
                     <CardTitle className="text-lg">📝 समस्या विवरण</CardTitle>
                     <p className="text-sm text-muted-foreground">
-                      पठाउने: <strong>{selectedTechnician?.name}</strong> ({selectedOffice?.name})
+                      कार्यालय: <strong>{selectedOffice?.name}</strong>
                     </p>
+                    <div className="flex items-start gap-2 mt-2 p-3 rounded-lg bg-primary/5 border border-primary/20">
+                      <Info className="w-4 h-4 text-primary mt-0.5 shrink-0" />
+                      <p className="text-xs text-primary">
+                        तपाईंको समस्या सम्बन्धित कृषि प्राविधिकलाई स्वतः पठाइनेछ, जवाफ आएपछि सूचना पाउनुहुनेछ।
+                      </p>
+                    </div>
                   </CardHeader>
                   <CardContent className="space-y-4">
                     <div>
@@ -294,7 +231,7 @@ export default function AskExpertPage() {
                     </div>
 
                     <div className="flex gap-2 pt-2">
-                      <Button variant="outline" onClick={() => setStep('technician')} className="flex-1">
+                      <Button variant="outline" onClick={() => setStep('office')} className="flex-1">
                         <ArrowLeft className="w-4 h-4 mr-1" /> पछाडि
                       </Button>
                       <Button
@@ -314,7 +251,7 @@ export default function AskExpertPage() {
               </motion.div>
             )}
 
-            {/* Step 4: Done */}
+            {/* Step 3: Done */}
             {step === 'done' && (
               <motion.div key="done" initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }}>
                 <Card className="text-center">
@@ -322,7 +259,7 @@ export default function AskExpertPage() {
                     <CheckCircle2 className="w-16 h-16 text-primary mx-auto" />
                     <h2 className="text-xl font-bold text-foreground">प्रश्न पठाइयो!</h2>
                     <p className="text-muted-foreground">
-                      तपाईंको प्रश्न <strong>{selectedTechnician?.name}</strong> ({selectedOffice?.name}) लाई पठाइएको छ।
+                      तपाईंको प्रश्न <strong>{selectedOffice?.name}</strong> को सम्बन्धित कृषि प्राविधिकलाई स्वतः पठाइएको छ।
                       जवाफ आएपछि सूचना पाउनुहुनेछ।
                     </p>
                     <div className="flex flex-col gap-2 pt-4">

@@ -165,6 +165,97 @@ export function useExpertTicketMessages(ticketId: string | null) {
 
 // --- Mutations ---
 
+// --- Auto-assign technician for an office (least-tickets rule) ---
+
+export async function assignTechnicianForOffice(officeId: string): Promise<string | null> {
+  // Get active technicians for this office
+  const { data: techs, error: techErr } = await (supabase as any)
+    .from('technicians')
+    .select('id, is_primary')
+    .eq('office_id', officeId)
+    .eq('is_active', true);
+  if (techErr || !techs || techs.length === 0) return null;
+
+  // If there's a primary technician, use that
+  const primary = techs.find((t: any) => t.is_primary);
+  if (primary) return primary.id;
+
+  // Otherwise, pick the technician with fewest open/in_progress tickets
+  const techIds = techs.map((t: any) => t.id);
+  const { data: tickets } = await (supabase as any)
+    .from('expert_tickets')
+    .select('technician_id')
+    .in('technician_id', techIds)
+    .in('status', ['open', 'in_progress']);
+
+  const countMap: Record<string, number> = {};
+  techIds.forEach((id: string) => { countMap[id] = 0; });
+  (tickets || []).forEach((t: any) => {
+    if (countMap[t.technician_id] !== undefined) countMap[t.technician_id]++;
+  });
+
+  // Pick the one with the least tickets
+  let minId = techIds[0];
+  let minCount = countMap[minId];
+  for (const id of techIds) {
+    if (countMap[id] < minCount) { minId = id; minCount = countMap[id]; }
+  }
+  return minId;
+}
+
+// --- AI escalation stub ---
+
+export async function createExpertTicketFromAI(params: {
+  farmerId: string;
+  officeId: string;
+  cropName: string;
+  problemTitle: string;
+  problemDescription: string;
+  imageUrls?: string[];
+}): Promise<ExpertTicket | null> {
+  const techId = await assignTechnicianForOffice(params.officeId);
+  if (!techId) return null;
+
+  const { data: ticket, error } = await (supabase as any)
+    .from('expert_tickets')
+    .insert({
+      farmer_id: params.farmerId,
+      office_id: params.officeId,
+      technician_id: techId,
+      crop_name: params.cropName,
+      problem_title: params.problemTitle,
+      problem_description: params.problemDescription,
+    })
+    .select()
+    .single();
+  if (error) return null;
+
+  const firstMsg: any = {
+    ticket_id: ticket.id,
+    sender_type: 'farmer',
+    sender_id: params.farmerId,
+    message_text: params.problemDescription,
+  };
+  if (params.imageUrls && params.imageUrls.length > 0) {
+    firstMsg.image_url = params.imageUrls[0];
+  }
+  await (supabase as any).from('expert_ticket_messages').insert(firstMsg);
+
+  if (params.imageUrls && params.imageUrls.length > 1) {
+    for (let i = 1; i < params.imageUrls.length; i++) {
+      await (supabase as any).from('expert_ticket_messages').insert({
+        ticket_id: ticket.id,
+        sender_type: 'farmer',
+        sender_id: params.farmerId,
+        image_url: params.imageUrls[i],
+      });
+    }
+  }
+  return ticket as ExpertTicket;
+}
+
+// --- Mutations ---
+
 export function useCreateExpertTicket() {
   const { user } = useAuth();
   const { toast } = useToast();
@@ -173,18 +264,23 @@ export function useCreateExpertTicket() {
   return useMutation({
     mutationFn: async (data: {
       officeId: string;
-      technicianId: string;
       cropName: string;
       problemTitle: string;
       problemDescription: string;
       imageUrls?: string[];
     }) => {
+      // Auto-assign technician
+      const technicianId = await assignTechnicianForOffice(data.officeId);
+      if (!technicianId) {
+        throw new Error('NO_TECHNICIAN');
+      }
+
       const { data: ticket, error } = await (supabase as any)
         .from('expert_tickets')
         .insert({
           farmer_id: user!.id,
           office_id: data.officeId,
-          technician_id: data.technicianId,
+          technician_id: technicianId,
           crop_name: data.cropName,
           problem_title: data.problemTitle,
           problem_description: data.problemDescription,
@@ -221,10 +317,14 @@ export function useCreateExpertTicket() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['my-expert-tickets'] });
-      toast({ title: '✅ प्रश्न पठाइयो', description: 'कृषि प्राविधिकलाई तपाईंको प्रश्न पठाइएको छ।' });
+      toast({ title: '✅ प्रश्न पठाइयो', description: 'सम्बन्धित कृषि प्राविधिकलाई तपाईंको प्रश्न स्वतः पठाइएको छ।' });
     },
-    onError: () => {
-      toast({ title: 'त्रुटि', description: 'प्रश्न पठाउन सकिएन।', variant: 'destructive' });
+    onError: (err: any) => {
+      if (err?.message === 'NO_TECHNICIAN') {
+        toast({ title: 'प्राविधिक उपलब्ध छैन', description: 'यस कार्यालयमा अहिले सक्रिय कृषि प्राविधिक उपलब्ध छैन।', variant: 'destructive' });
+      } else {
+        toast({ title: 'त्रुटि', description: 'प्रश्न पठाउन सकिएन।', variant: 'destructive' });
+      }
     },
   });
 }
