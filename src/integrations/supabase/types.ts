@@ -1759,7 +1759,7 @@ export type Database = {
           problem_description: string
           problem_title: string
           status: string
-          technician_id: string
+          technician_id: string | null
           updated_at: string
         }
         Insert: {
@@ -1773,7 +1773,7 @@ export type Database = {
           problem_description: string
           problem_title: string
           status?: string
-          technician_id: string
+          technician_id?: string | null
           updated_at?: string
         }
         Update: {
@@ -1787,7 +1787,7 @@ export type Database = {
           problem_description?: string
           problem_title?: string
           status?: string
-          technician_id?: string
+          technician_id?: string | null
           updated_at?: string
         }
         Relationships: [

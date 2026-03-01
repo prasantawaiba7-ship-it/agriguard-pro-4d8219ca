@@ -27,7 +27,7 @@ export interface ExpertTicket {
   id: string;
   farmer_id: string;
   office_id: string;
-  technician_id: string;
+  technician_id: string | null;
   crop_name: string;
   problem_title: string;
   problem_description: string;
@@ -264,22 +264,25 @@ export function useCreateExpertTicket() {
   return useMutation({
     mutationFn: async (data: {
       officeId: string;
-      technicianId: string;
+      technicianId: string | null;
       cropName: string;
       problemTitle: string;
       problemDescription: string;
       imageUrls?: string[];
     }) => {
+      const insertData: any = {
+        farmer_id: user!.id,
+        office_id: data.officeId,
+        crop_name: data.cropName,
+        problem_title: data.problemTitle,
+        problem_description: data.problemDescription,
+        has_unread_technician: !!data.technicianId,
+      };
+      if (data.technicianId) insertData.technician_id = data.technicianId;
+
       const { data: ticket, error } = await (supabase as any)
         .from('expert_tickets')
-        .insert({
-          farmer_id: user!.id,
-          office_id: data.officeId,
-          technician_id: data.technicianId,
-          crop_name: data.cropName,
-          problem_title: data.problemTitle,
-          problem_description: data.problemDescription,
-        })
+        .insert(insertData)
         .select()
         .single();
       if (error) throw error;
@@ -308,47 +311,50 @@ export function useCreateExpertTicket() {
         }
       }
 
-      // Send email notification to technician (non-blocking)
-      try {
-        const { data: techData } = await (supabase as any)
-          .from('technicians')
-          .select('name, email')
-          .eq('id', data.technicianId)
-          .single();
+      // Email notification (non-blocking, only if technician assigned)
+      // Admin triage: skip email if no technician assigned yet
+      if (data.technicianId) {
+        try {
+          const { data: techData } = await (supabase as any)
+            .from('technicians')
+            .select('name, email')
+            .eq('id', data.technicianId)
+            .single();
 
-        const { data: officeData } = await (supabase as any)
-          .from('ag_offices')
-          .select('name')
-          .eq('id', data.officeId)
-          .single();
+          const { data: officeData } = await (supabase as any)
+            .from('ag_offices')
+            .select('name')
+            .eq('id', data.officeId)
+            .single();
 
-        if (techData?.email) {
-          supabase.functions.invoke('expert-email-notify', {
-            body: {
-              technicianEmail: techData.email,
-              technicianName: techData.name,
-              farmerName: user?.user_metadata?.full_name || null,
-              cropName: data.cropName,
-              problemTitle: data.problemTitle,
-              problemDescription: data.problemDescription,
-              ticketId: ticket.id,
-              officeName: officeData?.name || '',
-              imageUrls: data.imageUrls || [],
-            },
-          }).then(res => {
-            if (res.error) console.warn('Email notification failed:', res.error);
-            else console.log('Email notification sent to technician');
-          }).catch(err => console.warn('Email notification error:', err));
+          if (techData?.email) {
+            supabase.functions.invoke('expert-email-notify', {
+              body: {
+                technicianEmail: techData.email,
+                technicianName: techData.name,
+                farmerName: user?.user_metadata?.full_name || null,
+                cropName: data.cropName,
+                problemTitle: data.problemTitle,
+                problemDescription: data.problemDescription,
+                ticketId: ticket.id,
+                officeName: officeData?.name || '',
+                imageUrls: data.imageUrls || [],
+              },
+            }).then(res => {
+              if (res.error) console.warn('Email notification failed:', res.error);
+              else console.log('Email notification sent to technician');
+            }).catch(err => console.warn('Email notification error:', err));
+          }
+        } catch (emailErr) {
+          console.warn('Could not send email notification:', emailErr);
         }
-      } catch (emailErr) {
-        console.warn('Could not send email notification:', emailErr);
       }
 
       return ticket as ExpertTicket;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['my-expert-tickets'] });
-      toast({ title: '✅ प्रश्न पठाइयो', description: 'सम्बन्धित कृषि प्राविधिकको इमेलमा पनि सूचना पठाइएको छ।' });
+      toast({ title: '✅ प्रश्न पठाइयो', description: 'कृषि प्राविधिकले चाँडै हेर्नेछन् र जवाफ दिनेछन्।' });
     },
     onError: (err: any) => {
       if (err?.message === 'NO_TECHNICIAN') {
