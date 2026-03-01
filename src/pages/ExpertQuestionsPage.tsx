@@ -40,7 +40,9 @@ export default function ExpertQuestionsPage() {
             <div className="mb-4">
               <h2 className="text-lg font-bold text-foreground">{selectedTicket.problem_title}</h2>
               <p className="text-sm text-muted-foreground">
-                {selectedTicket.technician?.name} • {selectedTicket.office?.name}
+                {selectedTicket.technician?.name
+                  ? `${selectedTicket.technician.name} • ${selectedTicket.office?.name}`
+                  : `${selectedTicket.office?.name || ''} • समीक्षा हुदैछ`}
               </p>
             </div>
             <Card className="overflow-hidden">
@@ -108,7 +110,7 @@ export default function ExpertQuestionsPage() {
                             </div>
                             <h3 className="font-semibold text-sm text-foreground truncate">{ticket.problem_title}</h3>
                             <p className="text-xs text-muted-foreground truncate">
-                              🌾 {ticket.crop_name} • {ticket.technician?.name}
+                              🌾 {ticket.crop_name} • {ticket.technician?.name || 'प्रश्न समीक्षा हुदैछ'}
                             </p>
                           </div>
                           <div className="text-right flex-shrink-0">

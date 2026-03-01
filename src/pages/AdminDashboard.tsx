@@ -44,6 +44,7 @@ import {
    GraduationCap,
    Award,
 } from "lucide-react";
+import { UserPlus } from "lucide-react";
 import { toast } from "sonner";
 import { SubscriptionAnalytics } from "@/components/admin/SubscriptionAnalytics";
 import { AppSettingsManager } from "@/components/admin/AppSettingsManager";
@@ -72,6 +73,7 @@ import { DiagnosisCasesManager } from "@/components/admin/DiagnosisCasesManager"
  import { CertificateTemplatesManager } from "@/components/admin/CertificateTemplatesManager";
 import { ExpertManager } from "@/components/admin/ExpertManager";
 import { CasesInboxManager } from "@/components/admin/CasesInboxManager";
+import { ExpertTicketsManager } from "@/components/admin/ExpertTicketsManager";
 interface FarmerProfile {
   id: string;
   user_id: string;
@@ -478,6 +480,10 @@ const AdminDashboard = () => {
                   <MessageSquare className="h-4 w-4" />
                   <span className="hidden sm:inline">टिकट केस</span>
                 </TabsTrigger>
+                <TabsTrigger value="expert-tickets" className="flex items-center gap-2">
+                  <UserPlus className="h-4 w-4" />
+                  <span className="hidden sm:inline">विज्ञ टिकट</span>
+                </TabsTrigger>
               </TabsList>
 
               {/* Overview Tab */}
@@ -599,6 +605,11 @@ const AdminDashboard = () => {
               {/* Ticket Cases (Ask Expert) Tab */}
               <TabsContent value="ticket-cases">
                 <CasesInboxManager />
+              </TabsContent>
+
+              {/* Expert Tickets (Admin Triage) Tab */}
+              <TabsContent value="expert-tickets">
+                <ExpertTicketsManager />
               </TabsContent>
 
               {/* Users Tab */}
