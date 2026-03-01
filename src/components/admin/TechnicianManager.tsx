@@ -66,12 +66,12 @@ export function TechnicianManager() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('farmer_profiles')
-        .select('user_id, full_name')
+        .select('user_id, full_name, district')
         .order('full_name');
       if (error) throw error;
       return (data || []).map(p => ({
         id: p.user_id,
-        label: `${p.full_name || 'No name'} – ${p.user_id.slice(0, 6)}…`,
+        label: `${p.full_name}${p.district ? ' (' + p.district + ')' : ''}`,
       }));
     },
   });
