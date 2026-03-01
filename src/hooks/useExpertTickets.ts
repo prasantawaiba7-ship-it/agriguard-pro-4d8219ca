@@ -21,6 +21,7 @@ export interface Technician {
   email: string | null;
   specialization: string | null;
   is_active: boolean;
+  is_expert: boolean;
 }
 
 export interface ExpertTicket {
@@ -36,7 +37,6 @@ export interface ExpertTicket {
   has_unread_technician: boolean;
   created_at: string;
   updated_at: string;
-  // joined
   technician?: Technician;
   office?: AgOffice;
 }
@@ -101,12 +101,40 @@ export function useMyExpertTickets() {
   });
 }
 
+// Expert dashboard: only tickets with status assigned/in_progress/answered
+export function useExpertAssignedTickets() {
+  const { user } = useAuth();
+  return useQuery({
+    queryKey: ['expert-assigned-tickets', user?.id],
+    queryFn: async () => {
+      // Find technician for current user
+      const { data: techData } = await (supabase as any)
+        .from('technicians')
+        .select('id, is_expert')
+        .eq('user_id', user!.id)
+        .eq('is_active', true)
+        .single();
+      if (!techData || !techData.is_expert) return [];
+
+      const { data, error } = await (supabase as any)
+        .from('expert_tickets')
+        .select('*, technician:technicians(*), office:ag_offices(*)')
+        .eq('technician_id', techData.id)
+        .in('status', ['assigned', 'in_progress', 'answered'])
+        .order('updated_at', { ascending: false });
+      if (error) throw error;
+      return (data || []) as ExpertTicket[];
+    },
+    enabled: !!user,
+  });
+}
+
+// Technician dashboard (legacy, kept for backward compatibility)
 export function useTechnicianTickets() {
   const { user } = useAuth();
   return useQuery({
     queryKey: ['technician-tickets', user?.id],
     queryFn: async () => {
-      // First get technician record for this user
       const { data: techData } = await (supabase as any)
         .from('technicians')
         .select('id')
@@ -144,7 +172,6 @@ export function useExpertTicketMessages(ticketId: string | null) {
     enabled: !!ticketId,
   });
 
-  // Realtime subscription
   useEffect(() => {
     if (!ticketId) return;
     const channel = supabase
@@ -163,95 +190,27 @@ export function useExpertTicketMessages(ticketId: string | null) {
   return query;
 }
 
-// --- Mutations ---
-
-// --- Auto-assign technician for an office (least-tickets rule) ---
-
-export async function assignTechnicianForOffice(officeId: string): Promise<string | null> {
-  // Get active technicians for this office
-  const { data: techs, error: techErr } = await (supabase as any)
-    .from('technicians')
-    .select('id, is_primary')
-    .eq('office_id', officeId)
-    .eq('is_active', true);
-  if (techErr || !techs || techs.length === 0) return null;
-
-  // If there's a primary technician, use that
-  const primary = techs.find((t: any) => t.is_primary);
-  if (primary) return primary.id;
-
-  // Otherwise, pick the technician with fewest open/in_progress tickets
-  const techIds = techs.map((t: any) => t.id);
-  const { data: tickets } = await (supabase as any)
-    .from('expert_tickets')
-    .select('technician_id')
-    .in('technician_id', techIds)
-    .in('status', ['open', 'in_progress']);
-
-  const countMap: Record<string, number> = {};
-  techIds.forEach((id: string) => { countMap[id] = 0; });
-  (tickets || []).forEach((t: any) => {
-    if (countMap[t.technician_id] !== undefined) countMap[t.technician_id]++;
+// --- Hook: check if current user is an expert ---
+export function useIsExpert() {
+  const { user } = useAuth();
+  return useQuery({
+    queryKey: ['is-expert', user?.id],
+    queryFn: async () => {
+      if (!user) return { isExpert: false, technicianId: null };
+      const { data } = await (supabase as any)
+        .from('technicians')
+        .select('id, is_expert')
+        .eq('user_id', user.id)
+        .eq('is_active', true)
+        .single();
+      return {
+        isExpert: !!(data?.is_expert),
+        technicianId: data?.id as string | null,
+      };
+    },
+    enabled: !!user,
+    staleTime: 5 * 60 * 1000,
   });
-
-  // Pick the one with the least tickets
-  let minId = techIds[0];
-  let minCount = countMap[minId];
-  for (const id of techIds) {
-    if (countMap[id] < minCount) { minId = id; minCount = countMap[id]; }
-  }
-  return minId;
-}
-
-// --- AI escalation stub ---
-
-export async function createExpertTicketFromAI(params: {
-  farmerId: string;
-  officeId: string;
-  cropName: string;
-  problemTitle: string;
-  problemDescription: string;
-  imageUrls?: string[];
-}): Promise<ExpertTicket | null> {
-  const techId = await assignTechnicianForOffice(params.officeId);
-  if (!techId) return null;
-
-  const { data: ticket, error } = await (supabase as any)
-    .from('expert_tickets')
-    .insert({
-      farmer_id: params.farmerId,
-      office_id: params.officeId,
-      technician_id: techId,
-      crop_name: params.cropName,
-      problem_title: params.problemTitle,
-      problem_description: params.problemDescription,
-    })
-    .select()
-    .single();
-  if (error) return null;
-
-  const firstMsg: any = {
-    ticket_id: ticket.id,
-    sender_type: 'farmer',
-    sender_id: params.farmerId,
-    message_text: params.problemDescription,
-  };
-  if (params.imageUrls && params.imageUrls.length > 0) {
-    firstMsg.image_url = params.imageUrls[0];
-  }
-  await (supabase as any).from('expert_ticket_messages').insert(firstMsg);
-
-  if (params.imageUrls && params.imageUrls.length > 1) {
-    for (let i = 1; i < params.imageUrls.length; i++) {
-      await (supabase as any).from('expert_ticket_messages').insert({
-        ticket_id: ticket.id,
-        sender_type: 'farmer',
-        sender_id: params.farmerId,
-        image_url: params.imageUrls[i],
-      });
-    }
-  }
-  return ticket as ExpertTicket;
 }
 
 // --- Mutations ---
@@ -270,6 +229,7 @@ export function useCreateExpertTicket() {
       problemDescription: string;
       imageUrls?: string[];
     }) => {
+      // New tickets start in 'in_review' — admin must approve before expert sees them
       const insertData: any = {
         farmer_id: user!.id,
         office_id: data.officeId,
@@ -277,7 +237,9 @@ export function useCreateExpertTicket() {
         crop_name: data.cropName,
         problem_title: data.problemTitle,
         problem_description: data.problemDescription,
-        has_unread_technician: true,
+        status: 'in_review',
+        has_unread_technician: false,
+        has_unread_farmer: false,
       };
 
       const { data: ticket, error } = await (supabase as any)
@@ -299,7 +261,7 @@ export function useCreateExpertTicket() {
       }
       await (supabase as any).from('expert_ticket_messages').insert(firstMsg);
 
-      // Insert additional image messages
+      // Additional image messages
       if (data.imageUrls && data.imageUrls.length > 1) {
         for (let i = 1; i < data.imageUrls.length; i++) {
           await (supabase as any).from('expert_ticket_messages').insert({
@@ -311,56 +273,14 @@ export function useCreateExpertTicket() {
         }
       }
 
-      // Email notification (non-blocking)
-      {
-        try {
-          const { data: techData } = await (supabase as any)
-            .from('technicians')
-            .select('name, email')
-            .eq('id', data.technicianId)
-            .single();
-
-          const { data: officeData } = await (supabase as any)
-            .from('ag_offices')
-            .select('name')
-            .eq('id', data.officeId)
-            .single();
-
-          if (techData?.email) {
-            supabase.functions.invoke('expert-email-notify', {
-              body: {
-                technicianEmail: techData.email,
-                technicianName: techData.name,
-                farmerName: user?.user_metadata?.full_name || null,
-                cropName: data.cropName,
-                problemTitle: data.problemTitle,
-                problemDescription: data.problemDescription,
-                ticketId: ticket.id,
-                officeName: officeData?.name || '',
-                imageUrls: data.imageUrls || [],
-              },
-            }).then(res => {
-              if (res.error) console.warn('Email notification failed:', res.error);
-              else console.log('Email notification sent to technician');
-            }).catch(err => console.warn('Email notification error:', err));
-          }
-        } catch (emailErr) {
-          console.warn('Could not send email notification:', emailErr);
-        }
-      }
-
       return ticket as ExpertTicket;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['my-expert-tickets'] });
-      toast({ title: '✅ प्रश्न पठाइयो', description: 'कृषि प्राविधिकले चाँडै हेर्नेछन् र जवाफ दिनेछन्।' });
+      toast({ title: '✅ प्रश्न पठाइयो', description: 'प्रशासनले समीक्षा गरेपछि कृषि विज्ञले जवाफ दिनेछन्।' });
     },
-    onError: (err: any) => {
-      if (err?.message === 'NO_TECHNICIAN') {
-        toast({ title: 'प्राविधिक उपलब्ध छैन', description: 'यस कार्यालयमा अहिले सक्रिय कृषि प्राविधिक उपलब्ध छैन।', variant: 'destructive' });
-      } else {
-        toast({ title: 'त्रुटि', description: 'प्रश्न पठाउन सकिएन।', variant: 'destructive' });
-      }
+    onError: () => {
+      toast({ title: 'त्रुटि', description: 'प्रश्न पठाउन सकिएन।', variant: 'destructive' });
     },
   });
 }
@@ -388,7 +308,6 @@ export function useSendExpertTicketMessage() {
         });
       if (error) throw error;
 
-      // Update unread flags and status
       const updates: any = {};
       if (data.senderType === 'technician') {
         updates.has_unread_farmer = true;
@@ -402,6 +321,7 @@ export function useSendExpertTicketMessage() {
       queryClient.invalidateQueries({ queryKey: ['expert-ticket-messages', vars.ticketId] });
       queryClient.invalidateQueries({ queryKey: ['my-expert-tickets'] });
       queryClient.invalidateQueries({ queryKey: ['technician-tickets'] });
+      queryClient.invalidateQueries({ queryKey: ['expert-assigned-tickets'] });
     },
     onError: () => {
       toast({ title: 'सन्देश पठाउन सकिएन', variant: 'destructive' });

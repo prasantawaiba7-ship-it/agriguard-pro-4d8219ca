@@ -13,6 +13,8 @@ import { ArrowLeft, Plus, MessageCircle, Loader2, Clock, CheckCircle2, Eye, XCir
 import { formatDistanceToNow } from 'date-fns';
 
 const STATUS_MAP: Record<string, { label: string; icon: React.ReactNode; color: string }> = {
+  in_review: { label: 'समीक्षामा', icon: <Clock className="w-3 h-3" />, color: 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300' },
+  assigned: { label: 'तोकिएको', icon: <Eye className="w-3 h-3" />, color: 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300' },
   open: { label: 'नयाँ', icon: <Clock className="w-3 h-3" />, color: 'bg-warning/10 text-warning' },
   in_progress: { label: 'हेर्दै', icon: <Eye className="w-3 h-3" />, color: 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300' },
   answered: { label: 'जवाफ आयो', icon: <CheckCircle2 className="w-3 h-3" />, color: 'bg-primary/10 text-primary' },
@@ -40,7 +42,9 @@ export default function ExpertQuestionsPage() {
             <div className="mb-4">
               <h2 className="text-lg font-bold text-foreground">{selectedTicket.problem_title}</h2>
               <p className="text-sm text-muted-foreground">
-                {selectedTicket.technician?.name} • {selectedTicket.office?.name}
+                {selectedTicket.status === 'in_review'
+                  ? `${selectedTicket.office?.name || ''} • प्रशासनले समीक्षा गरिरहेको छ`
+                  : `${selectedTicket.technician?.name || ''} • ${selectedTicket.office?.name || ''}`}
               </p>
             </div>
             <Card className="overflow-hidden">
@@ -108,7 +112,7 @@ export default function ExpertQuestionsPage() {
                             </div>
                             <h3 className="font-semibold text-sm text-foreground truncate">{ticket.problem_title}</h3>
                             <p className="text-xs text-muted-foreground truncate">
-                              🌾 {ticket.crop_name} • {ticket.technician?.name}
+                              🌾 {ticket.crop_name} • {ticket.status === 'in_review' ? 'प्रशासनले समीक्षा गरिरहेको छ' : ticket.technician?.name}
                             </p>
                           </div>
                           <div className="text-right flex-shrink-0">

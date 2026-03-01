@@ -1,5 +1,5 @@
 // =============================================
-// Admin view: all expert tickets (read + optional reassign)
+// Admin view: all expert tickets with approve/assign/reject
 // =============================================
 
 import { useState, useEffect } from 'react';
@@ -13,7 +13,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Search, RefreshCw, UserPlus, MessageCircle, Clock, Eye, CheckCircle2, XCircle, Loader2 } from 'lucide-react';
+import { Search, RefreshCw, UserPlus, MessageCircle, Loader2, CheckCircle2, XCircle, ShieldCheck } from 'lucide-react';
 import { toast } from 'sonner';
 import { formatDistanceToNow } from 'date-fns';
 import { ExpertTicketChat } from '@/components/expert/ExpertTicketChat';
@@ -31,7 +31,7 @@ interface AdminExpertTicket {
   has_unread_technician: boolean;
   created_at: string;
   updated_at: string;
-  technician?: { id: string; name: string; role_title: string } | null;
+  technician?: { id: string; name: string; role_title: string; is_expert?: boolean } | null;
   office?: { id: string; name: string; district: string } | null;
 }
 
@@ -41,16 +41,17 @@ interface TechnicianOption {
   role_title: string;
   specialization: string | null;
   is_active: boolean;
+  is_expert: boolean;
 }
 
 const STATUS_CONFIG: Record<string, { label: string; color: string }> = {
+  in_review: { label: 'समीक्षा (Review)', color: 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300' },
+  assigned: { label: 'तोकिएको (Assigned)', color: 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300' },
   open: { label: 'नयाँ (Open)', color: 'bg-blue-100 text-blue-700' },
   in_progress: { label: 'हेर्दै', color: 'bg-yellow-100 text-yellow-700' },
   answered: { label: 'जवाफ दिइयो', color: 'bg-green-100 text-green-700' },
   closed: { label: 'बन्द', color: 'bg-muted text-muted-foreground' },
 };
-
-// ── Admin ticket overview start ──
 
 export function ExpertTicketsManager() {
   const queryClient = useQueryClient();
@@ -59,13 +60,12 @@ export function ExpertTicketsManager() {
   const [assigningTicketId, setAssigningTicketId] = useState<string | null>(null);
   const [selectedTicketForChat, setSelectedTicketForChat] = useState<AdminExpertTicket | null>(null);
 
-  // Fetch all expert tickets (admin view)
   const { data: tickets, isLoading } = useQuery({
     queryKey: ['admin-expert-tickets', filterStatus],
     queryFn: async () => {
       let q = (supabase as any)
         .from('expert_tickets')
-        .select('*, technician:technicians(id, name, role_title), office:ag_offices(id, name, district)')
+        .select('*, technician:technicians(id, name, role_title, is_expert), office:ag_offices(id, name, district)')
         .order('updated_at', { ascending: false });
       if (filterStatus !== 'all') q = q.eq('status', filterStatus);
       const { data, error } = await q.limit(200);
@@ -74,14 +74,13 @@ export function ExpertTicketsManager() {
     },
   });
 
-  // Fetch technicians for the office of the ticket being assigned
   const assigningTicket = tickets?.find(t => t.id === assigningTicketId);
   const { data: techsForOffice, isLoading: techsLoading } = useQuery({
     queryKey: ['technicians-for-office', assigningTicket?.office_id],
     queryFn: async () => {
       const { data, error } = await (supabase as any)
         .from('technicians')
-        .select('id, name, role_title, specialization, is_active')
+        .select('id, name, role_title, specialization, is_active, is_expert')
         .eq('office_id', assigningTicket!.office_id)
         .eq('is_active', true)
         .order('name');
@@ -91,35 +90,67 @@ export function ExpertTicketsManager() {
     enabled: !!assigningTicket?.office_id,
   });
 
-  // Realtime for expert_tickets
   useEffect(() => {
     const channel = supabase
       .channel('admin-expert-tickets-rt')
-      .on('postgres_changes', {
-        event: '*', schema: 'public', table: 'expert_tickets',
-      }, () => {
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'expert_tickets' }, () => {
         queryClient.invalidateQueries({ queryKey: ['admin-expert-tickets'] });
       })
       .subscribe();
     return () => { supabase.removeChannel(channel); };
   }, [queryClient]);
 
+  // Approve: keep same technician, set status=assigned
+  const handleApprove = async (ticketId: string) => {
+    try {
+      await (supabase as any)
+        .from('expert_tickets')
+        .update({ status: 'assigned', has_unread_technician: true, updated_at: new Date().toISOString() })
+        .eq('id', ticketId);
+      toast.success('Ticket approved & assigned ✅');
+      queryClient.invalidateQueries({ queryKey: ['admin-expert-tickets'] });
+    } catch {
+      toast.error('Approve गर्न सकिएन');
+    }
+  };
+
+  // Assign to different expert
   const handleAssign = async (ticketId: string, technicianId: string) => {
     try {
-      const { error } = await (supabase as any)
+      await (supabase as any)
         .from('expert_tickets')
         .update({
           technician_id: technicianId,
+          status: 'assigned',
           has_unread_technician: true,
           updated_at: new Date().toISOString(),
         })
         .eq('id', ticketId);
-      if (error) throw error;
       toast.success('प्राविधिक तोकियो ✅');
       setAssigningTicketId(null);
       queryClient.invalidateQueries({ queryKey: ['admin-expert-tickets'] });
     } catch {
       toast.error('Assign गर्न सकिएन');
+    }
+  };
+
+  // Reject/close ticket
+  const handleReject = async (ticketId: string) => {
+    try {
+      await (supabase as any)
+        .from('expert_tickets')
+        .update({ status: 'closed', updated_at: new Date().toISOString() })
+        .eq('id', ticketId);
+      // Insert admin message to farmer
+      await (supabase as any).from('expert_ticket_messages').insert({
+        ticket_id: ticketId,
+        sender_type: 'technician',
+        message_text: 'यो प्रश्न प्रशासनले बन्द गरेको छ।',
+      });
+      toast.success('Ticket rejected / closed');
+      queryClient.invalidateQueries({ queryKey: ['admin-expert-tickets'] });
+    } catch {
+      toast.error('Failed to reject');
     }
   };
 
@@ -143,19 +174,17 @@ export function ExpertTicketsManager() {
       t.problem_title.toLowerCase().includes(s) ||
       t.crop_name.toLowerCase().includes(s) ||
       t.office?.name?.toLowerCase().includes(s) ||
-      t.technician?.name?.toLowerCase().includes(s) ||
-      t.id.toLowerCase().includes(s)
+      t.technician?.name?.toLowerCase().includes(s)
     );
   }) || [];
 
   const stats = {
     total: tickets?.length || 0,
-    unassigned: tickets?.filter(t => !t.technician_id && t.status !== 'closed').length || 0,
-    open: tickets?.filter(t => t.status === 'open').length || 0,
+    inReview: tickets?.filter(t => t.status === 'in_review').length || 0,
+    assigned: tickets?.filter(t => t.status === 'assigned').length || 0,
     answered: tickets?.filter(t => t.status === 'answered').length || 0,
   };
 
-  // Chat view for a specific ticket
   if (selectedTicketForChat) {
     return (
       <div className="space-y-4">
@@ -166,7 +195,7 @@ export function ExpertTicketsManager() {
           <h3 className="text-lg font-bold">{selectedTicketForChat.problem_title}</h3>
           <p className="text-sm text-muted-foreground">
             🌾 {selectedTicketForChat.crop_name} • {selectedTicketForChat.office?.name} •
-            प्राविधिक: {selectedTicketForChat.technician?.name || 'Unassigned'}
+            प्राविधिक: {selectedTicketForChat.technician?.name || '—'}
           </p>
         </div>
         <Card className="overflow-hidden">
@@ -184,9 +213,9 @@ export function ExpertTicketsManager() {
             <CardTitle className="text-xl flex items-center gap-2">
               <MessageCircle className="h-5 w-5 text-primary" />
               विज्ञ टिकट (Expert Tickets)
-              {stats.unassigned > 0 && (
-                <Badge className="bg-destructive text-destructive-foreground ml-2 animate-pulse">
-                  Unassigned ({stats.unassigned})
+              {stats.inReview > 0 && (
+                <Badge className="bg-amber-500 text-white ml-2 animate-pulse">
+                  {stats.inReview} समीक्षामा
                 </Badge>
               )}
             </CardTitle>
@@ -195,32 +224,31 @@ export function ExpertTicketsManager() {
             </Button>
           </div>
 
-          {/* Stats */}
           <div className="grid grid-cols-4 gap-3">
             {[
               { label: 'कुल', value: stats.total },
-              { label: 'Unassigned', value: stats.unassigned, highlight: stats.unassigned > 0 },
-              { label: 'Open', value: stats.open },
-              { label: 'Answered', value: stats.answered },
+              { label: 'समीक्षामा', value: stats.inReview, highlight: stats.inReview > 0 },
+              { label: 'तोकिएको', value: stats.assigned },
+              { label: 'जवाफ', value: stats.answered },
             ].map(s => (
-              <div key={s.label} className={`p-3 rounded-lg text-center ${s.highlight ? 'bg-destructive/10 ring-1 ring-destructive/30' : 'bg-muted/50'}`}>
+              <div key={s.label} className={`p-3 rounded-lg text-center ${s.highlight ? 'bg-amber-50 ring-1 ring-amber-300 dark:bg-amber-900/20' : 'bg-muted/50'}`}>
                 <p className="text-2xl font-bold">{s.value}</p>
                 <p className="text-xs text-muted-foreground">{s.label}</p>
               </div>
             ))}
           </div>
 
-          {/* Filters */}
           <div className="flex flex-wrap gap-2 items-center">
             <div className="relative flex-1 min-w-[200px]">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input placeholder="Search crop, title, office..." value={search} onChange={e => setSearch(e.target.value)} className="pl-9" />
             </div>
             <Select value={filterStatus} onValueChange={setFilterStatus}>
-              <SelectTrigger className="w-[140px]"><SelectValue placeholder="Status" /></SelectTrigger>
+              <SelectTrigger className="w-[160px]"><SelectValue placeholder="Status" /></SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">All Status</SelectItem>
-                <SelectItem value="open">Open</SelectItem>
+                <SelectItem value="in_review">समीक्षामा</SelectItem>
+                <SelectItem value="assigned">तोकिएको</SelectItem>
                 <SelectItem value="in_progress">In Progress</SelectItem>
                 <SelectItem value="answered">Answered</SelectItem>
                 <SelectItem value="closed">Closed</SelectItem>
@@ -252,25 +280,28 @@ export function ExpertTicketsManager() {
               </TableHeader>
               <TableBody>
                 {filtered.map(ticket => {
-                  const st = STATUS_CONFIG[ticket.status] || STATUS_CONFIG.open;
-                  const isUnassigned = !ticket.technician_id;
+                  const st = STATUS_CONFIG[ticket.status] || STATUS_CONFIG.in_review;
+                  const isReview = ticket.status === 'in_review';
                   return (
                     <TableRow
                       key={ticket.id}
-                      className={`${isUnassigned ? 'bg-amber-50 dark:bg-amber-900/10' : ''} cursor-pointer hover:bg-accent/50`}
+                      className={`${isReview ? 'bg-amber-50 dark:bg-amber-900/10' : ''} cursor-pointer hover:bg-accent/50`}
                       onClick={() => setSelectedTicketForChat(ticket)}
                     >
                       <TableCell className="pr-0">
-                        {isUnassigned && <span className="block h-2.5 w-2.5 rounded-full bg-amber-500 animate-pulse" />}
+                        {isReview && <span className="block h-2.5 w-2.5 rounded-full bg-amber-500 animate-pulse" />}
                       </TableCell>
                       <TableCell className="font-medium">{ticket.crop_name}</TableCell>
                       <TableCell className="max-w-[180px] truncate">{ticket.problem_title}</TableCell>
                       <TableCell className="text-sm">{ticket.office?.name || '—'}</TableCell>
                       <TableCell>
                         {ticket.technician?.name ? (
-                          <span className="text-sm">{ticket.technician.name}</span>
+                          <span className="text-sm flex items-center gap-1">
+                            {ticket.technician.name}
+                            {ticket.technician.is_expert && <ShieldCheck className="w-3 h-3 text-primary" />}
+                          </span>
                         ) : (
-                          <Badge variant="outline" className="text-amber-600 border-amber-300">Unassigned</Badge>
+                          <span className="text-xs text-muted-foreground">—</span>
                         )}
                       </TableCell>
                       <TableCell>
@@ -280,7 +311,17 @@ export function ExpertTicketsManager() {
                         {formatDistanceToNow(new Date(ticket.created_at), { addSuffix: true })}
                       </TableCell>
                       <TableCell onClick={e => e.stopPropagation()}>
-                        <div className="flex gap-1">
+                        <div className="flex gap-1 flex-wrap">
+                          {isReview && (
+                            <>
+                              <Button variant="default" size="sm" className="text-xs" onClick={(e) => { e.stopPropagation(); handleApprove(ticket.id); }}>
+                                <CheckCircle2 className="w-3 h-3 mr-1" /> Approve
+                              </Button>
+                              <Button variant="destructive" size="sm" className="text-xs" onClick={(e) => { e.stopPropagation(); handleReject(ticket.id); }}>
+                                <XCircle className="w-3 h-3 mr-1" /> Reject
+                              </Button>
+                            </>
+                          )}
                           <Button
                             variant="outline"
                             size="sm"
@@ -307,7 +348,7 @@ export function ExpertTicketsManager() {
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <UserPlus className="w-5 h-5 text-primary" />
-              प्राविधिक तोक्नुहोस् (Assign Technician)
+              प्राविधिक तोक्नुहोस् (Assign Expert)
             </DialogTitle>
           </DialogHeader>
           {assigningTicket && (
@@ -316,6 +357,9 @@ export function ExpertTicketsManager() {
                 <p className="text-sm font-medium">{assigningTicket.problem_title}</p>
                 <p className="text-xs text-muted-foreground">🌾 {assigningTicket.crop_name} • {assigningTicket.office?.name}</p>
               </div>
+              <p className="text-xs text-muted-foreground">
+                💡 <ShieldCheck className="w-3 h-3 inline text-primary" /> = Expert (can answer from Expert Dashboard)
+              </p>
 
               {techsLoading ? (
                 <div className="flex justify-center py-6"><Loader2 className="w-5 h-5 animate-spin" /></div>
@@ -329,9 +373,13 @@ export function ExpertTicketsManager() {
                       }`}
                       onClick={() => handleAssign(assigningTicket.id, tech.id)}
                     >
-                      <p className="font-semibold text-sm">{tech.name}</p>
+                      <p className="font-semibold text-sm flex items-center gap-1">
+                        {tech.name}
+                        {tech.is_expert && <ShieldCheck className="w-3.5 h-3.5 text-primary" />}
+                      </p>
                       <p className="text-xs text-muted-foreground">{tech.role_title}</p>
                       {tech.specialization && <p className="text-xs text-muted-foreground">विशेषज्ञता: {tech.specialization}</p>}
+                      {!tech.is_expert && <p className="text-xs text-amber-600 mt-1">⚠ Not marked as Expert</p>}
                     </div>
                   ))}
                 </div>
@@ -347,5 +395,3 @@ export function ExpertTicketsManager() {
     </Card>
   );
 }
-
-// ── Admin ticket overview end ──
