@@ -41,11 +41,9 @@ export default function ExpertQuestionsPage() {
             </Button>
             <div className="mb-4">
               <h2 className="text-lg font-bold text-foreground">{selectedTicket.problem_title}</h2>
-              <p className="text-sm text-muted-foreground">
-                {selectedTicket.status === 'in_review'
-                  ? `${selectedTicket.office?.name || ''} • प्रशासनले समीक्षा गरिरहेको छ`
-                  : `${selectedTicket.technician?.name || ''} • ${selectedTicket.office?.name || ''}`}
-              </p>
+                <p className="text-sm text-muted-foreground">
+                  {selectedTicket.technician?.name || ''} • {selectedTicket.office?.name || ''}
+                </p>
             </div>
             <Card className="overflow-hidden">
               <ExpertTicketChat ticketId={selectedTicket.id} senderRole="farmer" />
@@ -112,7 +110,7 @@ export default function ExpertQuestionsPage() {
                             </div>
                             <h3 className="font-semibold text-sm text-foreground truncate">{ticket.problem_title}</h3>
                             <p className="text-xs text-muted-foreground truncate">
-                              🌾 {ticket.crop_name} • {ticket.status === 'in_review' ? 'प्रशासनले समीक्षा गरिरहेको छ' : ticket.technician?.name}
+                              🌾 {ticket.crop_name} • {ticket.technician?.name || ticket.office?.name}
                             </p>
                           </div>
                           <div className="text-right flex-shrink-0">
