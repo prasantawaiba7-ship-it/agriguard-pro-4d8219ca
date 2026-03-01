@@ -308,11 +308,47 @@ export function useCreateExpertTicket() {
         }
       }
 
+      // Send email notification to technician (non-blocking)
+      try {
+        const { data: techData } = await (supabase as any)
+          .from('technicians')
+          .select('name, email')
+          .eq('id', data.technicianId)
+          .single();
+
+        const { data: officeData } = await (supabase as any)
+          .from('ag_offices')
+          .select('name')
+          .eq('id', data.officeId)
+          .single();
+
+        if (techData?.email) {
+          supabase.functions.invoke('expert-email-notify', {
+            body: {
+              technicianEmail: techData.email,
+              technicianName: techData.name,
+              farmerName: user?.user_metadata?.full_name || null,
+              cropName: data.cropName,
+              problemTitle: data.problemTitle,
+              problemDescription: data.problemDescription,
+              ticketId: ticket.id,
+              officeName: officeData?.name || '',
+              imageUrls: data.imageUrls || [],
+            },
+          }).then(res => {
+            if (res.error) console.warn('Email notification failed:', res.error);
+            else console.log('Email notification sent to technician');
+          }).catch(err => console.warn('Email notification error:', err));
+        }
+      } catch (emailErr) {
+        console.warn('Could not send email notification:', emailErr);
+      }
+
       return ticket as ExpertTicket;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['my-expert-tickets'] });
-      toast({ title: '✅ प्रश्न पठाइयो', description: 'सम्बन्धित कृषि प्राविधिकलाई तपाईंको प्रश्न स्वतः पठाइएको छ।' });
+      toast({ title: '✅ प्रश्न पठाइयो', description: 'सम्बन्धित कृषि प्राविधिकको इमेलमा पनि सूचना पठाइएको छ।' });
     },
     onError: (err: any) => {
       if (err?.message === 'NO_TECHNICIAN') {

@@ -51,3 +51,6 @@ verify_jwt = false
 [functions.tomorrow-plan]
 verify_jwt = false
 
+[functions.expert-email-notify]
+verify_jwt = false
+
