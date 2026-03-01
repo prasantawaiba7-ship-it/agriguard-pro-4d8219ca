@@ -370,7 +370,10 @@ export function AskExpertForm({ prefill, onSubmitted }: AskExpertFormProps) {
                 <p className="text-sm text-muted-foreground">
                   पठाइएको: <strong>{selectedTechnician?.name}</strong> ({selectedOffice?.name})
                 </p>
-                <p className="text-xs text-muted-foreground">जवाफ आएपछि सूचना पाउनुहुनेछ।</p>
+                <p className="text-xs text-primary/80 font-medium">
+                  📧 तपाईंले छानेको कृषि प्राविधिकको इमेलमा यो प्रश्न पठाइएको छ।
+                </p>
+                <p className="text-xs text-muted-foreground">जवाफ आएपछि यहाँ पनि देख्न सक्नुहुन्छ।</p>
                 <Button variant="outline" size="sm" onClick={resetForm}>अर्को प्रश्न सोध्नुहोस्</Button>
               </CardContent>
             </Card>
