@@ -324,6 +324,60 @@ export type Database = {
         }
         Relationships: []
       }
+      call_requests: {
+        Row: {
+          created_at: string
+          farmer_id: string
+          farmer_note: string | null
+          id: string
+          preferred_time: string | null
+          status: string
+          technician_id: string
+          technician_note: string | null
+          ticket_id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          farmer_id: string
+          farmer_note?: string | null
+          id?: string
+          preferred_time?: string | null
+          status?: string
+          technician_id: string
+          technician_note?: string | null
+          ticket_id: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          farmer_id?: string
+          farmer_note?: string | null
+          id?: string
+          preferred_time?: string | null
+          status?: string
+          technician_id?: string
+          technician_note?: string | null
+          ticket_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "call_requests_technician_id_fkey"
+            columns: ["technician_id"]
+            isOneToOne: false
+            referencedRelation: "technicians"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "call_requests_ticket_id_fkey"
+            columns: ["ticket_id"]
+            isOneToOne: false
+            referencedRelation: "expert_tickets"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       card_reports: {
         Row: {
           admin_notes: string | null
@@ -4083,6 +4137,10 @@ export type Database = {
         Returns: boolean
       }
       increment_query_count: { Args: { p_user_id: string }; Returns: undefined }
+      is_technician_user: {
+        Args: { p_technician_id: string; p_user_id: string }
+        Returns: boolean
+      }
     }
     Enums: {
       app_role: "admin" | "farmer" | "field_official" | "authority" | "insurer"
