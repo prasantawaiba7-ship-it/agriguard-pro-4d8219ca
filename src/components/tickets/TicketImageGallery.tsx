@@ -6,9 +6,10 @@ import { Loader2, User, Shield } from 'lucide-react';
 interface TicketImageGalleryProps {
   ticketId: string;
   canEditNotes?: boolean; // true for technicians
+  canAnnotate?: boolean;  // true for technicians
 }
 
-export function TicketImageGallery({ ticketId, canEditNotes = false }: TicketImageGalleryProps) {
+export function TicketImageGallery({ ticketId, canEditNotes = false, canAnnotate = false }: TicketImageGalleryProps) {
   const { data: images, isLoading } = useTicketImages(ticketId);
   const [viewerIndex, setViewerIndex] = useState<number | null>(null);
 
@@ -63,6 +64,7 @@ export function TicketImageGallery({ ticketId, canEditNotes = false }: TicketIma
           initialIndex={viewerIndex}
           onClose={() => setViewerIndex(null)}
           canEditNotes={canEditNotes}
+          canAnnotate={canAnnotate}
         />
       )}
     </>
