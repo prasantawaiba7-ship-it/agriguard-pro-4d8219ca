@@ -167,7 +167,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     } catch {
       // If server session is already invalid, clear locally anyway
     }
+    // Force clear auth state even if signOut silently fails
+    setUser(null);
+    setSession(null);
     setProfile(null);
+    // Clear any stale tokens from storage
+    Object.keys(localStorage).forEach(key => {
+      if (key.startsWith('sb-')) localStorage.removeItem(key);
+    });
     toast({
       title: "Signed out",
       description: "You have been signed out successfully.",
