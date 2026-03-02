@@ -11,8 +11,10 @@ import { useCurrentTechnician } from '@/hooks/useCurrentTechnician';
 import { useExpertAssignedTickets, type ExpertTicket } from '@/hooks/useExpertTickets';
 import { ExpertTicketChat } from '@/components/expert/ExpertTicketChat';
 import { TicketImageGallery } from '@/components/tickets/TicketImageGallery';
+import { CallRequestsPanel } from '@/components/call/CallRequestsPanel';
 import { supabase } from '@/integrations/supabase/client';
-import { ArrowLeft, Loader2, CheckCircle2, Eye, XCircle, MessageCircle, Shield, ShieldCheck } from 'lucide-react';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { ArrowLeft, Loader2, CheckCircle2, Eye, XCircle, MessageCircle, Shield, ShieldCheck, Phone } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 
 const STATUS_FILTERS = [
@@ -115,6 +117,20 @@ export default function ExpertDashboardPage() {
           </h1>
           <p className="text-sm text-muted-foreground mb-4">प्रशासनले तोकेका टिकटहरू यहाँ देखिन्छन्।</p>
 
+          <Tabs defaultValue="tickets" className="mb-6">
+            <TabsList>
+              <TabsTrigger value="tickets">टिकटहरू</TabsTrigger>
+              <TabsTrigger value="calls" className="gap-1">
+                <Phone className="w-3.5 h-3.5" /> Call Requests
+              </TabsTrigger>
+            </TabsList>
+
+            <TabsContent value="calls" className="mt-4">
+              <CallRequestsPanel technicianId={currentTech!.id} />
+            </TabsContent>
+
+            <TabsContent value="tickets" className="mt-4">
+
           {/* Filters */}
           <div className="flex gap-2 flex-wrap mb-6">
             {STATUS_FILTERS.map(f => (
@@ -186,6 +202,9 @@ export default function ExpertDashboardPage() {
               </CardContent>
             </Card>
           )}
+
+            </TabsContent>
+          </Tabs>
         </main>
         <Footer />
       </div>
