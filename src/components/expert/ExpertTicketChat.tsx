@@ -139,8 +139,8 @@ export function ExpertTicketChat({ ticketId, cropName, senderRole = 'farmer' }: 
     const file = e.target.files?.[0];
     if (!file || !user) return;
     // Enforce 5MB limit
-    if (file.size > 5 * 1024 * 1024) {
-      toast({ title: 'भिडियो ५MB भन्दा सानो हुनुपर्छ', variant: 'destructive' });
+    if (file.size > 10 * 1024 * 1024) {
+      toast({ title: 'भिडियो १०MB भन्दा सानो हुनुपर्छ', variant: 'destructive' });
       e.target.value = '';
       return;
     }

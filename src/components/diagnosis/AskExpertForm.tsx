@@ -313,8 +313,8 @@ export function AskExpertForm({ prefill, onSubmitted }: AskExpertFormProps) {
                         className="hidden"
                         onChange={(e) => {
                           const f = e.target.files?.[0];
-                          if (f && f.size <= 5 * 1024 * 1024) setVideoFile(f);
-                          else if (f) toast({ title: 'भिडियो ५MB भन्दा सानो हुनुपर्छ', variant: 'destructive' });
+                          if (f && f.size <= 10 * 1024 * 1024) setVideoFile(f);
+                          else if (f) toast({ title: 'भिडियो १०MB भन्दा सानो हुनुपर्छ', variant: 'destructive' });
                           e.target.value = '';
                         }}
                       />
