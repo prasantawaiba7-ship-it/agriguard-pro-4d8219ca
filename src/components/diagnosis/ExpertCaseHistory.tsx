@@ -4,6 +4,7 @@ import {
   Clock, CheckCircle, ChevronDown, ChevronUp, 
   User, Bot, Leaf, AlertCircle, MessageSquare, Loader2, Send
 } from 'lucide-react';
+import { CallRequestBanner } from '@/components/call/CallRequestBanner';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -134,6 +135,13 @@ function ExpertCaseCard({ caseData }: { caseData: ExpertTicket }) {
                   <p className="text-xs text-muted-foreground mt-1">औसत जवाफ समय: लगभग २४ घण्टा</p>
                 </div>
               )}
+
+              {/* Call request banner */}
+              <CallRequestBanner
+                ticketId={caseData.id}
+                technicianId={caseData.technician_id}
+                technicianPhone={caseData.technician?.phone}
+              />
 
               {/* Follow-up reply */}
               {caseData.status !== 'closed' && (
