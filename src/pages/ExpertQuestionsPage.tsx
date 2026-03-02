@@ -47,7 +47,7 @@ export default function ExpertQuestionsPage() {
                 </p>
             </div>
             {/* Multi-photo ticket images start */}
-            <TicketImageGallery ticketId={selectedTicket.id} canEditNotes={false} />
+            <TicketImageGallery ticketId={selectedTicket.id} ticketTechnicianId={selectedTicket.technician_id} />
             {/* Multi-photo ticket images end */}
             <Card className="overflow-hidden mt-4">
               <ExpertTicketChat ticketId={selectedTicket.id} senderRole="farmer" />
