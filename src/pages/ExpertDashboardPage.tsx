@@ -115,7 +115,7 @@ export default function ExpertDashboardPage() {
             <ShieldCheck className="w-5 h-5 text-primary" />
             कृषि विज्ञ Dashboard
           </h1>
-          <p className="text-sm text-muted-foreground mb-4">प्रशासनले तोकेका टिकटहरू यहाँ देखिन्छन्।</p>
+          <p className="text-sm text-muted-foreground mb-4">तपाईंलाई पठाइएका टिकटहरू यहाँ देखिन्छन्।</p>
 
           <Tabs defaultValue="tickets" className="mb-6">
             <TabsList>
