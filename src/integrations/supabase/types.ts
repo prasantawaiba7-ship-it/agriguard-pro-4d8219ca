@@ -1763,6 +1763,47 @@ export type Database = {
         }
         Relationships: []
       }
+      expert_ticket_images: {
+        Row: {
+          annotation_data: Json | null
+          created_at: string
+          id: string
+          image_url: string
+          note: string | null
+          role: string
+          ticket_id: string
+          uploaded_by: string
+        }
+        Insert: {
+          annotation_data?: Json | null
+          created_at?: string
+          id?: string
+          image_url: string
+          note?: string | null
+          role: string
+          ticket_id: string
+          uploaded_by: string
+        }
+        Update: {
+          annotation_data?: Json | null
+          created_at?: string
+          id?: string
+          image_url?: string
+          note?: string | null
+          role?: string
+          ticket_id?: string
+          uploaded_by?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "expert_ticket_images_ticket_id_fkey"
+            columns: ["ticket_id"]
+            isOneToOne: false
+            referencedRelation: "expert_tickets"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       expert_ticket_messages: {
         Row: {
           created_at: string

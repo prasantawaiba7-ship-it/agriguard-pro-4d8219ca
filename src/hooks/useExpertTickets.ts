@@ -220,7 +220,6 @@ export function useCreateExpertTicket() {
       cropName: string;
       problemTitle: string;
       problemDescription: string;
-      imageUrls?: string[];
       farmerPhone?: string;
     }) => {
       // Ticket goes directly to the chosen technician
@@ -244,29 +243,13 @@ export function useCreateExpertTicket() {
         .single();
       if (error) throw error;
 
-      // Insert first message
-      const firstMsg: any = {
+      // Insert first message (text only; images stored in expert_ticket_images)
+      await (supabase as any).from('expert_ticket_messages').insert({
         ticket_id: ticket.id,
         sender_type: 'farmer',
         sender_id: user!.id,
         message_text: data.problemDescription,
-      };
-      if (data.imageUrls && data.imageUrls.length > 0) {
-        firstMsg.image_url = data.imageUrls[0];
-      }
-      await (supabase as any).from('expert_ticket_messages').insert(firstMsg);
-
-      // Additional image messages
-      if (data.imageUrls && data.imageUrls.length > 1) {
-        for (let i = 1; i < data.imageUrls.length; i++) {
-          await (supabase as any).from('expert_ticket_messages').insert({
-            ticket_id: ticket.id,
-            sender_type: 'farmer',
-            sender_id: user!.id,
-            image_url: data.imageUrls[i],
-          });
-        }
-      }
+      });
 
       return ticket as ExpertTicket;
     },

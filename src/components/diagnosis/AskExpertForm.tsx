@@ -12,7 +12,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/hooks/useAuth';
 import { useLanguage } from '@/hooks/useLanguage';
 import { useVoiceInput } from '@/hooks/useVoiceInput';
-import { useAgOffices, useTechnicians, useCreateExpertTicket, uploadExpertImage } from '@/hooks/useExpertTickets';
+import { useAgOffices, useTechnicians, useCreateExpertTicket } from '@/hooks/useExpertTickets';
 
 interface AiPrefill {
   imageDataUrl?: string;
@@ -89,18 +89,6 @@ export function AskExpertForm({ prefill, onSubmitted }: AskExpertFormProps) {
     if (!selectedOfficeId || !selectedTechnicianId || !problemTitle.trim()) return;
     setIsUploading(true);
     try {
-      const imageUrls: string[] = [];
-      for (const img of images) {
-        if (img.file) {
-          imageUrls.push(await uploadExpertImage(img.file));
-        } else if (img.dataUrl) {
-          const res = await fetch(img.dataUrl);
-          const blob = await res.blob();
-          const file = new File([blob], `photo-${Date.now()}.jpg`, { type: 'image/jpeg' });
-          imageUrls.push(await uploadExpertImage(file));
-        }
-      }
-
       const descParts: string[] = [];
       if (farmerQuestion) descParts.push(farmerQuestion);
       if (prefill?.aiDisease) {
@@ -108,14 +96,31 @@ export function AskExpertForm({ prefill, onSubmitted }: AskExpertFormProps) {
         if (prefill.aiRecommendation) descParts.push(`सिफारिस: ${prefill.aiRecommendation}`);
       }
 
-      await createTicket.mutateAsync({
+      const ticket = await createTicket.mutateAsync({
         officeId: selectedOfficeId,
         technicianId: selectedTechnicianId,
         cropName: cropName || 'N/A',
         problemTitle: problemTitle.trim(),
         problemDescription: descParts.join(' ') || problemTitle.trim(),
-        imageUrls,
       });
+
+      // Upload images to expert_ticket_images table
+      if (ticket?.id && user) {
+        const { uploadTicketImage } = await import('@/hooks/useTicketImages');
+        for (const img of images) {
+          let file: File;
+          if (img.file) {
+            file = img.file;
+          } else if (img.dataUrl) {
+            const res = await fetch(img.dataUrl);
+            const blob = await res.blob();
+            file = new File([blob], `photo-${Date.now()}.jpg`, { type: 'image/jpeg' });
+          } else {
+            continue;
+          }
+          await uploadTicketImage(ticket.id, file, user.id, 'farmer');
+        }
+      }
 
       setFormStep('done');
       onSubmitted?.();

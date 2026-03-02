@@ -9,6 +9,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { useAuth } from '@/hooks/useAuth';
 import { useMyExpertTickets, type ExpertTicket } from '@/hooks/useExpertTickets';
 import { ExpertTicketChat } from '@/components/expert/ExpertTicketChat';
+import { TicketImageGallery } from '@/components/tickets/TicketImageGallery';
 import { ArrowLeft, Plus, MessageCircle, Loader2, Clock, CheckCircle2, Eye, XCircle } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 
@@ -45,7 +46,10 @@ export default function ExpertQuestionsPage() {
                   {selectedTicket.technician?.name || ''} • {selectedTicket.office?.name || ''}
                 </p>
             </div>
-            <Card className="overflow-hidden">
+            {/* Multi-photo ticket images start */}
+            <TicketImageGallery ticketId={selectedTicket.id} canEditNotes={false} />
+            {/* Multi-photo ticket images end */}
+            <Card className="overflow-hidden mt-4">
               <ExpertTicketChat ticketId={selectedTicket.id} senderRole="farmer" />
             </Card>
           </main>

@@ -10,6 +10,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { useCurrentTechnician } from '@/hooks/useCurrentTechnician';
 import { useExpertAssignedTickets, type ExpertTicket } from '@/hooks/useExpertTickets';
 import { ExpertTicketChat } from '@/components/expert/ExpertTicketChat';
+import { TicketImageGallery } from '@/components/tickets/TicketImageGallery';
 import { supabase } from '@/integrations/supabase/client';
 import { ArrowLeft, Loader2, CheckCircle2, Eye, XCircle, MessageCircle, Shield, ShieldCheck } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
@@ -86,7 +87,10 @@ export default function ExpertDashboardPage() {
               <h2 className="text-lg font-bold text-foreground">{selectedTicket.problem_title}</h2>
               <p className="text-sm text-muted-foreground">🌾 {selectedTicket.crop_name} • किसान</p>
             </div>
-            <Card className="overflow-hidden">
+            {/* Multi-photo ticket images start */}
+            <TicketImageGallery ticketId={selectedTicket.id} canEditNotes={true} />
+            {/* Multi-photo ticket images end */}
+            <Card className="overflow-hidden mt-4">
               <ExpertTicketChat ticketId={selectedTicket.id} cropName={selectedTicket.crop_name} senderRole="technician" />
             </Card>
           </main>

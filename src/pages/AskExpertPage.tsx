@@ -9,7 +9,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useAuth } from '@/hooks/useAuth';
-import { useAgOffices, useTechnicians, useCreateExpertTicket, uploadExpertImage, type Technician } from '@/hooks/useExpertTickets';
+import { useAgOffices, useTechnicians, useCreateExpertTicket, type Technician } from '@/hooks/useExpertTickets';
 import { ArrowLeft, ArrowRight, Building2, Send, ImagePlus, X, Loader2, Phone, CheckCircle2, User, Mail } from 'lucide-react';
 
 type Step = 'office' | 'technician' | 'form' | 'done';
@@ -36,7 +36,7 @@ export default function AskExpertPage() {
 
   const handleImageAdd = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || []);
-    const remaining = 3 - imageFiles.length;
+    const remaining = 5 - imageFiles.length;
     const toAdd = files.slice(0, remaining);
     setImageFiles(prev => [...prev, ...toAdd]);
     toAdd.forEach(f => {
@@ -56,19 +56,23 @@ export default function AskExpertPage() {
     if (!selectedOfficeId || !selectedTechnicianId || !problemTitle.trim() || !problemDescription.trim()) return;
     setIsSubmitting(true);
     try {
-      const imageUrls: string[] = [];
-      for (const file of imageFiles) {
-        const url = await uploadExpertImage(file);
-        imageUrls.push(url);
-      }
-      await createTicket.mutateAsync({
+      // Create ticket first
+      const ticket = await createTicket.mutateAsync({
         officeId: selectedOfficeId,
         technicianId: selectedTechnicianId,
         cropName: cropName || 'N/A',
         problemTitle: problemTitle.trim(),
         problemDescription: problemDescription.trim(),
-        imageUrls,
       });
+
+      // Upload images to expert_ticket_images table
+      if (imageFiles.length > 0 && ticket?.id && user) {
+        const { uploadTicketImage } = await import('@/hooks/useTicketImages');
+        for (const file of imageFiles) {
+          await uploadTicketImage(ticket.id, file, user.id, 'farmer');
+        }
+      }
+
       setStep('done');
     } catch {
       // error handled in hook
@@ -270,7 +274,7 @@ export default function AskExpertPage() {
 
                     {/* Image upload */}
                     <div>
-                      <label className="text-sm font-medium text-foreground mb-2 block">फोटो जोड्नुहोस् (अधिकतम ३)</label>
+                      <label className="text-sm font-medium text-foreground mb-2 block">फोटो जोड्नुहोस् (अधिकतम ५)</label>
                       <div className="flex gap-2 flex-wrap">
                         {imagePreviews.map((preview, idx) => (
                           <div key={idx} className="relative w-20 h-20 rounded-lg overflow-hidden border border-border">
@@ -280,7 +284,7 @@ export default function AskExpertPage() {
                             </button>
                           </div>
                         ))}
-                        {imageFiles.length < 3 && (
+                        {imageFiles.length < 5 && (
                           <label className="w-20 h-20 rounded-lg border-2 border-dashed border-border flex items-center justify-center cursor-pointer hover:border-primary/40 transition-colors">
                             <ImagePlus className="w-6 h-6 text-muted-foreground" />
                             <input type="file" accept="image/*" className="hidden" onChange={handleImageAdd} />
