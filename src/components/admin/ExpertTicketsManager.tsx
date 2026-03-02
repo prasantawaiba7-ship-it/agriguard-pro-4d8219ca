@@ -199,7 +199,7 @@ export function ExpertTicketsManager() {
           </p>
         </div>
         <Card className="overflow-hidden">
-          <ExpertTicketChat ticketId={selectedTicketForChat.id} senderRole="technician" />
+          <ExpertTicketChat ticketId={selectedTicketForChat.id} cropName={selectedTicketForChat.crop_name} senderRole="technician" />
         </Card>
       </div>
     );

@@ -1709,6 +1709,48 @@ export type Database = {
         }
         Relationships: []
       }
+      expert_templates: {
+        Row: {
+          body: string
+          created_at: string
+          created_by: string | null
+          crop: string
+          disease: string
+          id: string
+          is_active: boolean
+          language: string
+          tags: string[] | null
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          body: string
+          created_at?: string
+          created_by?: string | null
+          crop: string
+          disease: string
+          id?: string
+          is_active?: boolean
+          language?: string
+          tags?: string[] | null
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          body?: string
+          created_at?: string
+          created_by?: string | null
+          crop?: string
+          disease?: string
+          id?: string
+          is_active?: boolean
+          language?: string
+          tags?: string[] | null
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       expert_ticket_messages: {
         Row: {
           created_at: string

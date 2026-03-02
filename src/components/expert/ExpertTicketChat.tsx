@@ -1,23 +1,36 @@
 import { useState, useRef, useEffect } from 'react';
-import { Send, Loader2, ImagePlus, User, Shield } from 'lucide-react';
+import { Send, Loader2, ImagePlus, User, Shield, FileText } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { useAuth } from '@/hooks/useAuth';
 import { useExpertTicketMessages, useSendExpertTicketMessage, uploadExpertImage } from '@/hooks/useExpertTickets';
 import { formatDistanceToNow } from 'date-fns';
+import { TemplatePicker } from './TemplatePicker';
+import { ExpertTemplate } from '@/hooks/useExpertTemplates';
 
 interface ExpertTicketChatProps {
   ticketId: string;
+  cropName?: string;
   senderRole?: 'farmer' | 'technician';
 }
 
-export function ExpertTicketChat({ ticketId, senderRole = 'farmer' }: ExpertTicketChatProps) {
+export function ExpertTicketChat({ ticketId, cropName, senderRole = 'farmer' }: ExpertTicketChatProps) {
   const { user } = useAuth();
   const { data: messages, isLoading } = useExpertTicketMessages(ticketId);
   const sendMessage = useSendExpertTicketMessage();
   const [newMessage, setNewMessage] = useState('');
   const [uploading, setUploading] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
+  // Recommendation templates start
+  const [templatePickerOpen, setTemplatePickerOpen] = useState(false);
+
+  const handleTemplateSelect = (template: ExpertTemplate) => {
+    setNewMessage(prev => {
+      const prefix = prev.trim() ? prev.trim() + '\n\n' : '';
+      return prefix + template.title + '\n\n' + template.body;
+    });
+  };
+  // Recommendation templates end
 
   useEffect(() => {
     if (scrollRef.current) {
@@ -96,6 +109,22 @@ export function ExpertTicketChat({ ticketId, senderRole = 'farmer' }: ExpertTick
       </div>
 
       <div className="border-t border-border/40 p-3">
+        {/* Recommendation templates start */}
+        {senderRole === 'technician' && (
+          <div className="mb-2">
+            <Button variant="outline" size="sm" onClick={() => setTemplatePickerOpen(true)} className="text-xs">
+              <FileText className="w-3.5 h-3.5 mr-1" />
+              Template बाट लेख्ने
+            </Button>
+            <TemplatePicker
+              open={templatePickerOpen}
+              onOpenChange={setTemplatePickerOpen}
+              onSelect={handleTemplateSelect}
+              defaultCrop={cropName}
+            />
+          </div>
+        )}
+        {/* Recommendation templates end */}
         <div className="flex gap-2">
           <Textarea
             placeholder={senderRole === 'farmer' ? 'थप प्रश्न सोध्नुहोस्...' : 'उत्तर लेख्नुहोस्...'}
