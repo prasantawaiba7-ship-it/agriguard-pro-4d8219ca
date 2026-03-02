@@ -1,15 +1,17 @@
 import { useState } from 'react';
 import { useTicketImages, type TicketImage } from '@/hooks/useTicketImages';
 import { TicketImageViewer } from './TicketImageViewer';
+import { useCanAnnotate } from '@/hooks/useCanAnnotate';
 import { Loader2, User, Shield } from 'lucide-react';
 
 interface TicketImageGalleryProps {
   ticketId: string;
-  canEditNotes?: boolean; // true for technicians
-  canAnnotate?: boolean;  // true for technicians
+  /** The technician_id assigned to this ticket, used for permission check */
+  ticketTechnicianId?: string | null;
 }
 
-export function TicketImageGallery({ ticketId, canEditNotes = false, canAnnotate = false }: TicketImageGalleryProps) {
+export function TicketImageGallery({ ticketId, ticketTechnicianId }: TicketImageGalleryProps) {
+  const { canAnnotate, canEditNotes } = useCanAnnotate(ticketTechnicianId);
   const { data: images, isLoading } = useTicketImages(ticketId);
   const [viewerIndex, setViewerIndex] = useState<number | null>(null);
 

@@ -88,7 +88,7 @@ export default function ExpertDashboardPage() {
               <p className="text-sm text-muted-foreground">🌾 {selectedTicket.crop_name} • किसान</p>
             </div>
             {/* Multi-photo ticket images start */}
-            <TicketImageGallery ticketId={selectedTicket.id} canEditNotes={true} canAnnotate={true} />
+            <TicketImageGallery ticketId={selectedTicket.id} ticketTechnicianId={selectedTicket.technician_id} />
             {/* Multi-photo ticket images end */}
             <Card className="overflow-hidden mt-4">
               <ExpertTicketChat ticketId={selectedTicket.id} cropName={selectedTicket.crop_name} senderRole="technician" />
