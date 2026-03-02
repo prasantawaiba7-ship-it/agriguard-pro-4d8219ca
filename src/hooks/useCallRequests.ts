@@ -151,6 +151,37 @@ export function useUpdateCallRequest() {
         })
         .eq('id', data.requestId);
       if (error) throw error;
+
+      // Create notification for farmer on accept/reject
+      if (data.status === 'accepted' || data.status === 'rejected') {
+        try {
+          // Load call request to get farmer_id and ticket info
+          const { data: callReq } = await (supabase as any)
+            .from('call_requests')
+            .select('farmer_id, ticket_id, ticket:expert_tickets(problem_title)')
+            .eq('id', data.requestId)
+            .single();
+
+          if (callReq) {
+            const problemTitle = callReq.ticket?.problem_title || '';
+            const isAccepted = data.status === 'accepted';
+
+            await supabase.from('notifications').insert({
+              user_id: callReq.farmer_id,
+              title: isAccepted
+                ? 'Call request स्वीकार भयो'
+                : 'Call request अस्वीकार गरिएको छ',
+              body: isAccepted
+                ? `तपाईंको call request "${problemTitle}" मा Krishi Bigya ले स्वीकार गर्नुभयो। अब call गर्न सक्नुहुन्छ।${data.technicianNote ? ` सन्देश: "${data.technicianNote}"` : ''}`
+                : `तपाईंको call request "${problemTitle}" अस्वीकार गरिएको छ।${data.technicianNote ? ` कारण: "${data.technicianNote}"` : ''}`,
+              type: isAccepted ? 'call_request_accepted' : 'call_request_rejected',
+              ticket_id: callReq.ticket_id,
+            });
+          }
+        } catch (e) {
+          console.error('Call request notification failed:', e);
+        }
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['technician-call-requests'] });
