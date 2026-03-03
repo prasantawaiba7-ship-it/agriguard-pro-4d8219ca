@@ -295,21 +295,40 @@ export function useSendExpertTicketMessage() {
       }
       await (supabase as any).from('expert_tickets').update(updates).eq('id', data.ticketId);
 
-      // Create in-app notification for farmer when technician replies
-      if (data.senderType === 'technician') {
-        try {
-          const { data: ticket } = await (supabase as any)
-            .from('expert_tickets')
-            .select('farmer_id, problem_title')
-            .eq('id', data.ticketId)
-            .single();
-          if (ticket) {
+      // Create in-app notification for the other party
+      try {
+        const { data: ticket } = await (supabase as any)
+          .from('expert_tickets')
+          .select('farmer_id, problem_title, technician_id')
+          .eq('id', data.ticketId)
+          .single();
+        if (ticket) {
+          if (data.senderType === 'technician') {
+            // Notify farmer
             const { createTicketReplyNotification } = await import('@/hooks/useAppNotifications');
             await createTicketReplyNotification(ticket.farmer_id, data.ticketId, ticket.problem_title);
+          } else {
+            // Notify technician: look up their user_id
+            if (ticket.technician_id) {
+              const { data: tech } = await (supabase as any)
+                .from('technicians')
+                .select('user_id')
+                .eq('id', ticket.technician_id)
+                .single();
+              if (tech?.user_id) {
+                await supabase.from('notifications').insert({
+                  user_id: tech.user_id,
+                  title: 'किसानको नयाँ सन्देश',
+                  body: `"${ticket.problem_title}" मा किसानले नयाँ सन्देश पठाउनुभयो।`,
+                  type: 'ticket_reply',
+                  ticket_id: data.ticketId,
+                });
+              }
+            }
           }
-        } catch (e) {
-          console.error('Notification creation failed:', e);
         }
+      } catch (e) {
+        console.error('Notification creation failed:', e);
       }
     },
     onSuccess: (_, vars) => {
