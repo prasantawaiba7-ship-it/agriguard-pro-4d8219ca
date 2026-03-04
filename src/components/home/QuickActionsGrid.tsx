@@ -1,6 +1,6 @@
 import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
-import { Camera, Cloud, Store, Bot, MapPin, BookOpen, Film, Stethoscope } from "lucide-react";
+import { Camera, Cloud, Store, Bot, MapPin, BookOpen } from "lucide-react";
 import { useLanguage } from "@/hooks/useLanguage";
 
 const QuickActionsGrid = () => {
@@ -14,7 +14,6 @@ const QuickActionsGrid = () => {
       href: "/disease-detection",
       cardBg: "bg-[hsl(var(--card-diagnosis-bg))]",
       iconCircleBg: "bg-[hsl(var(--card-diagnosis-icon))]",
-      iconColor: "text-white",
     },
     {
       icon: Store,
@@ -23,7 +22,6 @@ const QuickActionsGrid = () => {
       href: "/market",
       cardBg: "bg-[hsl(var(--card-market-bg))]",
       iconCircleBg: "bg-[hsl(var(--card-market-icon))]",
-      iconColor: "text-white",
     },
     {
       icon: Cloud,
@@ -32,7 +30,6 @@ const QuickActionsGrid = () => {
       href: "/farmer?tab=weather",
       cardBg: "bg-[hsl(var(--card-weather-bg))]",
       iconCircleBg: "bg-[hsl(var(--card-weather-icon))]",
-      iconColor: "text-white",
     },
     {
       icon: Bot,
@@ -41,7 +38,6 @@ const QuickActionsGrid = () => {
       href: "/krishi-mitra",
       cardBg: "bg-[hsl(var(--card-ai-bg))]",
       iconCircleBg: "bg-[hsl(var(--card-ai-icon))]",
-      iconColor: "text-white",
     },
     {
       icon: MapPin,
@@ -50,7 +46,6 @@ const QuickActionsGrid = () => {
       href: "/fields",
       cardBg: "bg-[hsl(var(--card-field-bg))]",
       iconCircleBg: "bg-[hsl(var(--card-field-icon))]",
-      iconColor: "text-white",
     },
     {
       icon: BookOpen,
@@ -59,67 +54,50 @@ const QuickActionsGrid = () => {
       href: "/guides",
       cardBg: "bg-[hsl(var(--card-guide-bg))]",
       iconCircleBg: "bg-[hsl(var(--card-guide-icon))]",
-      iconColor: "text-white",
-    },
-    {
-      icon: Film,
-      label: "🎬 कृषि यात्रा",
-      sublabel: "बालीको कथा बनाउनुहोस्",
-      href: "/action-film",
-      cardBg: "bg-accent/5",
-      iconCircleBg: "bg-accent",
-      iconColor: "text-white",
-    },
-    {
-      icon: Stethoscope,
-      label: "🌾 प्राविधिकसँग सोध्नुहोस्",
-      sublabel: "कृषि विज्ञलाई प्रश्न",
-      href: "/ask-expert",
-      cardBg: "bg-blue-50 dark:bg-blue-950/20",
-      iconCircleBg: "bg-blue-500",
-      iconColor: "text-white",
     },
   ];
 
   return (
-    <section className="py-8 sm:py-12">
+    <section className="py-12 sm:py-16">
       <div className="container mx-auto px-4">
         <motion.div
           initial={{ opacity: 0, y: 16 }}
-          animate={{ opacity: 1, y: 0 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
           transition={{ duration: 0.4 }}
-          className="text-center mb-6 sm:mb-8"
+          className="text-center mb-8"
         >
           <h2 className="text-xl sm:text-2xl font-bold text-foreground">
             {t('whatToDoToday')}
           </h2>
-          <p className="text-sm text-muted-foreground mt-1">
+          <p className="text-sm text-muted-foreground mt-1.5">
             {t('quickAccessInfo')}
           </p>
         </motion.div>
 
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-7 gap-3 sm:gap-4 max-w-6xl mx-auto">
+        <div className="grid grid-cols-2 md:grid-cols-3 gap-3 sm:gap-4 max-w-3xl mx-auto">
           {quickActions.map((action, index) => (
             <motion.div
               key={action.href}
               initial={{ opacity: 0, y: 16 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.3, delay: index * 0.04 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.3, delay: index * 0.05 }}
             >
               <Link to={action.href}>
                 <div
-                  className={`relative rounded-2xl p-5 sm:p-6 ${action.cardBg} border border-border/40 hover:border-border/60 transition-all duration-200 hover:shadow-sm active:scale-[0.98] cursor-pointer group min-h-[120px] flex flex-col items-center justify-center`}
+                  className={`relative rounded-2xl p-5 sm:p-6 ${action.cardBg} border border-border/30 hover:border-border/60 transition-all duration-300 hover:shadow-md hover:-translate-y-0.5 active:scale-[0.98] cursor-pointer group min-h-[130px] flex flex-col items-center justify-center`}
                 >
                   <div
-                    className={`w-12 h-12 sm:w-14 sm:h-14 rounded-full ${action.iconCircleBg} flex items-center justify-center mb-3 group-hover:scale-105 transition-transform`}
+                    className={`w-12 h-12 sm:w-14 sm:h-14 rounded-2xl ${action.iconCircleBg} flex items-center justify-center mb-3 group-hover:scale-110 transition-transform duration-300`}
                   >
-                    <action.icon className={`w-6 h-6 sm:w-7 sm:h-7 ${action.iconColor}`} />
+                    <action.icon className="w-6 h-6 sm:w-7 sm:h-7 text-white" />
                   </div>
                   <div className="text-center">
-                    <div className="text-body sm:text-body-lg font-medium text-foreground leading-tight">
+                    <div className="text-sm sm:text-base font-semibold text-foreground leading-tight">
                       {action.label}
                     </div>
-                    <div className="text-helper text-muted-foreground mt-1 line-clamp-1">
+                    <div className="text-xs text-muted-foreground mt-1 line-clamp-1">
                       {action.sublabel}
                     </div>
                   </div>

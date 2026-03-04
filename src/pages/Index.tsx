@@ -2,8 +2,10 @@ import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
 import HeroSection from "@/components/home/HeroSection";
 import QuickActionsGrid from "@/components/home/QuickActionsGrid";
-import FeaturesSection from "@/components/home/FeaturesSection";
+import DailyAdviceSection from "@/components/home/DailyAdviceSection";
+import AIHighlightSection from "@/components/home/AIHighlightSection";
 import HowItWorksSection from "@/components/home/HowItWorksSection";
+import TrustSection from "@/components/home/TrustSection";
 import CTASection from "@/components/home/CTASection";
 import { MyMarketShortcut } from "@/components/home/MyMarketShortcut";
 import { PageTransition } from "@/components/layout/PageTransition";
@@ -32,8 +34,10 @@ const Index = () => {
               </div>
             </section>
             
-            <FeaturesSection />
+            <DailyAdviceSection />
+            <AIHighlightSection />
             <HowItWorksSection />
+            <TrustSection />
             <CTASection />
           </main>
         </PageTransition>
