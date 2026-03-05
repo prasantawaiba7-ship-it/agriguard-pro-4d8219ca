@@ -76,6 +76,7 @@ import { CasesInboxManager } from "@/components/admin/CasesInboxManager";
 import { ExpertTicketsManager } from "@/components/admin/ExpertTicketsManager";
 import { TechnicianManager } from "@/components/admin/TechnicianManager";
 import { ExpertTemplatesManager } from "@/components/admin/ExpertTemplatesManager";
+import { PilotMetricsDashboard } from "@/components/admin/PilotMetricsDashboard";
 import { FileText } from "lucide-react";
 interface FarmerProfile {
   id: string;
