@@ -8,13 +8,10 @@ import {
   Download, Leaf, Bug, Shield, Pill, BookOpen, ChevronDown,
   Droplets, ThermometerSun, Wind, Mic, MicOff, Share2, 
   MessageCircle, Phone, History, Calendar, Bell, Image, Grid3X3,
-  MapPin, ImageDown, FileText, User
+  MapPin, ImageDown, FileText, User, Sparkles
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
 import { useTextToSpeech } from '@/hooks/useTextToSpeech';
@@ -359,7 +356,6 @@ interface AnalysisResult {
     trapCrops?: string[];
     culturalPractices?: string[];
   };
-  // New fields from unified prompt
   nepaliReport?: string;
   recommended_chemicals?: Array<{
     name: string;
@@ -451,7 +447,6 @@ export function NepaliDiseaseDetector({ onAskExpert }: NepaliDiseaseDetectorProp
         }
 
         if (data?.value && Array.isArray(data.value)) {
-          // Transform admin-managed crops to the format we need
           const adminCrops = (data.value as Array<{ 
             id: string; 
             name: string; 
@@ -471,7 +466,6 @@ export function NepaliDiseaseDetector({ onAskExpert }: NepaliDiseaseDetectorProp
         }
       } catch (error) {
         console.error('Error fetching crops:', error);
-        // Keep default crops on error
       } finally {
         setCropsLoading(false);
       }
@@ -507,35 +501,23 @@ export function NepaliDiseaseDetector({ onAskExpert }: NepaliDiseaseDetectorProp
   const toggleVoiceInput = useCallback(() => {
     if (isListening) {
       stopListening();
-      toast({
-        title: t('recordingStopped'),
-        description: t('voiceSaved')
-      });
+      toast({ title: t('recordingStopped'), description: t('voiceSaved') });
     } else {
       resetTranscript();
-      setSymptomDescription(''); // Clear previous text when starting new recording
+      setSymptomDescription('');
       startListening();
-      toast({
-        title: t('startSpeaking'),
-        description: t('speakSymptomsNepali')
-      });
+      toast({ title: t('startSpeaking'), description: t('speakSymptomsNepali') });
     }
   }, [isListening, stopListening, startListening, resetTranscript, toast, t]);
 
   const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
-    if (file) {
-      processFile(file);
-    }
+    if (file) processFile(file);
   };
 
   const processFile = (file: File) => {
     if (file.size > 10 * 1024 * 1024) {
-      toast({
-        title: t('fileTooLarge'),
-        description: t('fileSizeLimit'),
-        variant: 'destructive'
-      });
+      toast({ title: t('fileTooLarge'), description: t('fileSizeLimit'), variant: 'destructive' });
       return;
     }
     const reader = new FileReader();
@@ -546,49 +528,29 @@ export function NepaliDiseaseDetector({ onAskExpert }: NepaliDiseaseDetectorProp
     reader.readAsDataURL(file);
   };
 
-  const handleDragOver = useCallback((e: React.DragEvent) => {
-    e.preventDefault();
-    setIsDragging(true);
-  }, []);
-
-  const handleDragLeave = useCallback((e: React.DragEvent) => {
-    e.preventDefault();
-    setIsDragging(false);
-  }, []);
-
+  const handleDragOver = useCallback((e: React.DragEvent) => { e.preventDefault(); setIsDragging(true); }, []);
+  const handleDragLeave = useCallback((e: React.DragEvent) => { e.preventDefault(); setIsDragging(false); }, []);
   const handleDrop = useCallback((e: React.DragEvent) => {
     e.preventDefault();
     setIsDragging(false);
     const file = e.dataTransfer.files[0];
-    if (file && file.type.startsWith('image/')) {
-      processFile(file);
-    }
+    if (file && file.type.startsWith('image/')) processFile(file);
   }, []);
 
   const analyzeImage = async () => {
-     if (!image) {
-       toast({
-         title: t('selectPhotoFirst'),
-         description: t('uploadPhotoFirst'),
-         variant: 'destructive'
-       });
-       return;
-     }
-
-     if (!cropName.trim()) {
-       toast({
-         title: t('selectCropType'),
-         description: t('selectCropPlaceholder'),
-         variant: 'destructive'
-       });
-       return;
-     }
+    if (!image) {
+      toast({ title: t('selectPhotoFirst'), description: t('uploadPhotoFirst'), variant: 'destructive' });
+      return;
+    }
+    if (!cropName.trim()) {
+      toast({ title: t('selectCropType'), description: t('selectCropPlaceholder'), variant: 'destructive' });
+      return;
+    }
 
     setIsAnalyzing(true);
     let uploadedImageUrl: string | null = null;
     
     try {
-      // Upload image to storage first if user is logged in
       if (user) {
         try {
           uploadedImageUrl = await uploadDiseaseImage(image, user.id);
@@ -597,7 +559,6 @@ export function NepaliDiseaseDetector({ onAskExpert }: NepaliDiseaseDetectorProp
         }
       }
       
-      // Use uploaded URL or fallback to data URL for analysis
       const imageForAnalysis = uploadedImageUrl || image;
       
       const response = await fetch(
@@ -609,18 +570,16 @@ export function NepaliDiseaseDetector({ onAskExpert }: NepaliDiseaseDetectorProp
             Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
           },
           body: JSON.stringify({
-             imageUrl: imageForAnalysis,
-             cropType: cropName,
-             description: symptomDescription || undefined,
-             language
-           }),
+            imageUrl: imageForAnalysis,
+            cropType: cropName,
+            description: symptomDescription || undefined,
+            language
+          }),
         }
       );
 
       if (!response.ok) {
-        if (response.status === 429) {
-          throw new Error(t('serviceBusy'));
-        }
+        if (response.status === 429) throw new Error(t('serviceBusy'));
         throw new Error(t('analysisFailed'));
       }
 
@@ -649,10 +608,9 @@ export function NepaliDiseaseDetector({ onAskExpert }: NepaliDiseaseDetectorProp
 
       setResult(analysisResult);
 
-      // Save to database if user is logged in with the permanent storage URL
       if (user && !analysisResult.isHealthy) {
         saveDetection.mutate({
-          imageUrl: uploadedImageUrl || image.substring(0, 500), // Use storage URL or truncated fallback
+          imageUrl: uploadedImageUrl || image.substring(0, 500),
           detectedDisease: analysisResult.detectedIssue,
           severity: analysisResult.severity,
           confidence: analysisResult.confidence,
@@ -662,7 +620,6 @@ export function NepaliDiseaseDetector({ onAskExpert }: NepaliDiseaseDetectorProp
         });
       }
 
-      // Speak the result
       const speechText = analysisResult.isHealthy 
         ? t('cropHealthySpeech')
         : `${t('diseaseDetectedSpeech')} ${analysisResult.detectedIssue}। ${t('treatmentSpeech')} ${analysisResult.treatment}`;
@@ -692,13 +649,10 @@ export function NepaliDiseaseDetector({ onAskExpert }: NepaliDiseaseDetectorProp
   const resultSectionRef = useRef<HTMLDivElement>(null);
 
   const downloadReport = async () => {
-     if (!result) return;
-     
-     setIsDownloading(true);
-     const cropLabel = cropName || 'बाली';
-    
+    if (!result) return;
+    setIsDownloading(true);
+    const cropLabel = cropName || 'बाली';
     try {
-      // Prepare data for the PDF endpoint
       const reportData = {
         crop_name: cropLabel,
         disease_name: result.detectedIssue,
@@ -719,18 +673,10 @@ export function NepaliDiseaseDetector({ onAskExpert }: NepaliDiseaseDetectorProp
         imageUrl: image || '',
         language
       };
-
-      const { data, error } = await supabase.functions.invoke('generate-disease-pdf', {
-        body: reportData
-      });
-
+      const { data, error } = await supabase.functions.invoke('generate-disease-pdf', { body: reportData });
       if (error) throw error;
-
-      // Create HTML blob and download as file
       const blob = new Blob([data], { type: 'text/html; charset=utf-8' });
       const fileName = `crop-report-${cropLabel}-${new Date().toLocaleDateString(language === 'ne' ? 'ne-NP' : 'en-US').replace(/\//g, '-')}.html`;
-      
-      // Create download link
       const url = URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = url;
@@ -739,44 +685,23 @@ export function NepaliDiseaseDetector({ onAskExpert }: NepaliDiseaseDetectorProp
       link.click();
       document.body.removeChild(link);
       URL.revokeObjectURL(url);
-
-      toast({
-        title: t('reportDownloaded'),
-        description: t('fileSaved'),
-      });
+      toast({ title: t('reportDownloaded'), description: t('fileSaved') });
     } catch (error) {
       console.error('PDF generation error:', error);
-      toast({
-        title: t('reportDownloadFailed'),
-        description: t('tryAgain'),
-        variant: 'destructive'
-      });
+      toast({ title: t('reportDownloadFailed'), description: t('tryAgain'), variant: 'destructive' });
     } finally {
       setIsDownloading(false);
     }
   };
 
-  // Download report as image using html2canvas
   const downloadReportAsImage = async () => {
     if (!result || !resultSectionRef.current) return;
-    
     setIsDownloadingImage(true);
     const cropLabel = cropTypes.find(c => c.value === selectedCrop)?.label || 'crop';
-    
     try {
-      const canvas = await html2canvas(resultSectionRef.current, {
-        backgroundColor: '#ffffff',
-        scale: 2, // Higher quality
-        useCORS: true,
-        logging: false,
-      });
-      
-      // Convert canvas to blob
+      const canvas = await html2canvas(resultSectionRef.current, { backgroundColor: '#ffffff', scale: 2, useCORS: true, logging: false });
       canvas.toBlob((blob) => {
-        if (!blob) {
-          throw new Error('Failed to create image');
-        }
-        
+        if (!blob) throw new Error('Failed to create image');
         const fileName = `crop-report-${cropLabel}-${new Date().toLocaleDateString(language === 'ne' ? 'ne-NP' : 'en-US').replace(/\//g, '-')}.png`;
         const url = URL.createObjectURL(blob);
         const link = document.createElement('a');
@@ -786,123 +711,59 @@ export function NepaliDiseaseDetector({ onAskExpert }: NepaliDiseaseDetectorProp
         link.click();
         document.body.removeChild(link);
         URL.revokeObjectURL(url);
-        
-        toast({
-          title: t('imageDownloaded'),
-          description: t('reportSavedAsImage'),
-        });
+        toast({ title: t('imageDownloaded'), description: t('reportSavedAsImage') });
         setIsDownloadingImage(false);
       }, 'image/png', 1.0);
     } catch (error) {
       console.error('Image download error:', error);
-      toast({
-        title: t('imageDownloadFailed'),
-        description: t('tryAgain'),
-        variant: 'destructive'
-      });
+      toast({ title: t('imageDownloadFailed'), description: t('tryAgain'), variant: 'destructive' });
       setIsDownloadingImage(false);
     }
   };
 
-  // Download report as PDF using jsPDF
   const downloadReportAsPdf = async () => {
     if (!result || !resultSectionRef.current) return;
-    
     setIsDownloadingPdf(true);
     const cropLabel = cropTypes.find(c => c.value === selectedCrop)?.label || 'crop';
-    
     try {
-      const canvas = await html2canvas(resultSectionRef.current, {
-        backgroundColor: '#ffffff',
-        scale: 2,
-        useCORS: true,
-        logging: false,
-      });
-      
+      const canvas = await html2canvas(resultSectionRef.current, { backgroundColor: '#ffffff', scale: 2, useCORS: true, logging: false });
       const imgData = canvas.toDataURL('image/png');
-      const pdf = new jsPDF({
-        orientation: 'portrait',
-        unit: 'mm',
-        format: 'a4'
-      });
-      
-      const imgWidth = 190; // A4 width minus margins
+      const pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+      const imgWidth = 190;
       const imgHeight = (canvas.height * imgWidth) / canvas.width;
-      
-      // Add header
       pdf.setFontSize(16);
       pdf.text(t('kisanSathiAI'), 10, 15);
       pdf.setFontSize(10);
       pdf.text(`${t('activeSeason')} ${new Date().toLocaleDateString(language === 'ne' ? 'ne-NP' : 'en-US')}`, 10, 22);
-      if (locationName) {
-        pdf.text(`${t('locationLabel')} ${locationName}`, 10, 28);
-      }
-      
-      // Add image
+      if (locationName) pdf.text(`${t('locationLabel')} ${locationName}`, 10, 28);
       pdf.addImage(imgData, 'PNG', 10, 35, imgWidth, imgHeight);
-      
-      // Add footer
       const pageHeight = pdf.internal.pageSize.getHeight();
       pdf.setFontSize(8);
       pdf.text('⚠️ ' + t('expertAdviceLabel'), 10, pageHeight - 10);
-      
       const fileName = `crop-report-${cropLabel}-${new Date().toLocaleDateString(language === 'ne' ? 'ne-NP' : 'en-US').replace(/\//g, '-')}.pdf`;
       pdf.save(fileName);
-      
-      toast({
-        title: t('pdfDownloaded'),
-        description: t('reportSavedAsPdf'),
-      });
+      toast({ title: t('pdfDownloaded'), description: t('reportSavedAsPdf') });
     } catch (error) {
       console.error('PDF download error:', error);
-      toast({
-        title: t('pdfDownloadFailed'),
-        description: t('tryAgain'),
-        variant: 'destructive'
-      });
+      toast({ title: t('pdfDownloadFailed'), description: t('tryAgain'), variant: 'destructive' });
     } finally {
       setIsDownloadingPdf(false);
     }
   };
 
-  // Share report image directly to WhatsApp
   const shareImageToWhatsApp = async () => {
     if (!result || !resultSectionRef.current) return;
-    
     setIsSharingToWhatsApp(true);
-    
     try {
-      const canvas = await html2canvas(resultSectionRef.current, {
-        backgroundColor: '#ffffff',
-        scale: 2,
-        useCORS: true,
-        logging: false,
-      });
-      
-      // Convert canvas to blob
+      const canvas = await html2canvas(resultSectionRef.current, { backgroundColor: '#ffffff', scale: 2, useCORS: true, logging: false });
       const blob = await new Promise<Blob>((resolve, reject) => {
-        canvas.toBlob((b) => {
-          if (b) resolve(b);
-          else reject(new Error('Failed to create blob'));
-        }, 'image/png', 1.0);
+        canvas.toBlob((b) => { if (b) resolve(b); else reject(new Error('Failed to create blob')); }, 'image/png', 1.0);
       });
-      
-      // Check if Web Share API with files is supported
       if (navigator.canShare && navigator.canShare({ files: [new File([blob], 'report.png', { type: 'image/png' })] })) {
         const file = new File([blob], `crop-report.png`, { type: 'image/png' });
-        
-        await navigator.share({
-          files: [file],
-          title: t('diseaseDetectorTitle'),
-          text: generateReportShareText(),
-        });
-        
-        toast({
-          title: t('shareSuccess'),
-          description: t('reportSharedWithImage'),
-        });
+        await navigator.share({ files: [file], title: t('diseaseDetectorTitle'), text: generateReportShareText() });
+        toast({ title: t('shareSuccess'), description: t('reportSharedWithImage') });
       } else {
-        // Fallback: Download image first, then open WhatsApp
         const url = URL.createObjectURL(blob);
         const link = document.createElement('a');
         link.href = url;
@@ -911,127 +772,64 @@ export function NepaliDiseaseDetector({ onAskExpert }: NepaliDiseaseDetectorProp
         link.click();
         document.body.removeChild(link);
         URL.revokeObjectURL(url);
-        
-        // Then open WhatsApp with text
-        setTimeout(() => {
-          handleShareWhatsApp();
-        }, 500);
-        
-        toast({
-          title: t('imageDownloadedForShare'),
-          description: t('attachToWhatsapp'),
-        });
+        setTimeout(() => { handleShareWhatsApp(); }, 500);
+        toast({ title: t('imageDownloadedForShare'), description: t('attachToWhatsapp') });
       }
     } catch (error) {
       console.error('WhatsApp image share error:', error);
-      // Fallback to text share
       handleShareWhatsApp();
-      toast({
-        title: t('imageShareFailed'),
-        description: t('textReportShared'),
-        variant: 'default'
-      });
+      toast({ title: t('imageShareFailed'), description: t('textReportShared'), variant: 'default' });
     } finally {
       setIsSharingToWhatsApp(false);
     }
   };
 
-
   const generateReportShareText = () => {
-     if (!result) return '';
-     
-     const cropLabel = cropName || 'crop';
+    if (!result) return '';
+    const cropLabel = cropName || 'crop';
     const severityLabel = result.severity === 'high' ? t('severityHigh') : result.severity === 'medium' ? t('severityMedium') : t('severityLow');
     const confidencePercent = Math.round(result.confidence * 100);
-    
-    let text = `🌾 *${t('kisanSathiAI')} - ${t('diseaseDetectorTitle')}*\n`;
-    text += `━━━━━━━━━━━━━━━━━━━━\n\n`;
+    let text = `🌾 *${t('kisanSathiAI')} - ${t('diseaseDetectorTitle')}*\n━━━━━━━━━━━━━━━━━━━━\n\n`;
     text += `📅 ${t('activeSeason')} ${new Date().toLocaleDateString(language === 'ne' ? 'ne-NP' : 'en-US')}\n`;
-    if (locationName) {
-      text += `📍 ${t('locationLabel')} ${locationName}\n`;
-    }
+    if (locationName) text += `📍 ${t('locationLabel')} ${locationName}\n`;
     text += `🌱 ${t('stepCropType')}: ${cropLabel}\n`;
     text += `🦠 ${t('diseaseDetected')}: *${result.detectedIssue}*\n`;
     text += `⚠️ ${t('severityLow')}: ${severityLabel}\n`;
     text += `📊 ${t('confidenceLabel')} ${confidencePercent}%\n\n`;
-    
-    if (result.symptoms && result.symptoms.length > 0) {
-      text += `*🔍 ${t('symptomsLabel')}:*\n`;
-      result.symptoms.slice(0, 3).forEach(s => {
-        text += `• ${s}\n`;
-      });
-      text += `\n`;
-    }
-    
-    if (result.treatment) {
-      text += `*💊 ${t('treatment')}:*\n${result.treatment}\n\n`;
-    }
-    
-    if (result.prevention && result.prevention.length > 0) {
-      text += `*🛡️ ${t('preventionMeasures')}:*\n`;
-      result.prevention.slice(0, 2).forEach(p => {
-        text += `• ${p}\n`;
-      });
-      text += `\n`;
-    }
-    
-    text += `⚠️ *${t('expertAdviceLabel')}* ${t('submitDisclaimer')}\n\n`;
-    text += `━━━━━━━━━━━━━━━━━━━━\n`;
-    text += `🌾 ${t('kisanSathiAI')} - ${t('heroTagline')}`;
-    
+    if (result.symptoms?.length > 0) { text += `*🔍 ${t('symptomsLabel')}:*\n`; result.symptoms.slice(0, 3).forEach(s => { text += `• ${s}\n`; }); text += `\n`; }
+    if (result.treatment) text += `*💊 ${t('treatment')}:*\n${result.treatment}\n\n`;
+    if (result.prevention?.length > 0) { text += `*🛡️ ${t('preventionMeasures')}:*\n`; result.prevention.slice(0, 2).forEach(p => { text += `• ${p}\n`; }); text += `\n`; }
+    text += `⚠️ *${t('expertAdviceLabel')}* ${t('submitDisclaimer')}\n\n━━━━━━━━━━━━━━━━━━━━\n🌾 ${t('kisanSathiAI')} - ${t('heroTagline')}`;
     return text;
   };
 
-  // Share functions with enhanced report - using simple wa.me link (no API)
   const handleShareWhatsApp = () => {
     if (!result) return;
-    
     try {
       const text = generateReportShareText();
       const encodedText = encodeURIComponent(text);
-      
-      // Use simple WhatsApp share URL (works on both mobile and desktop)
       const whatsappUrl = `https://wa.me/?text=${encodedText}`;
-      
-      // Try to open WhatsApp
       const newWindow = window.open(whatsappUrl, '_blank');
-      
-      // Check if popup was blocked
       if (!newWindow || newWindow.closed || typeof newWindow.closed === 'undefined') {
-        // Fallback: try direct location change on mobile
         if (/Android|iPhone|iPad|iPod/i.test(navigator.userAgent)) {
           window.location.href = whatsappUrl;
         } else {
-          toast({
-            title: t('whatsappOpenFailed'),
-            description: t('usePopupBlocker'),
-            variant: 'destructive'
-          });
+          toast({ title: t('whatsappOpenFailed'), description: t('usePopupBlocker'), variant: 'destructive' });
         }
       } else {
-        toast({
-          title: t('whatsappOpened'),
-          description: t('reportReady'),
-        });
+        toast({ title: t('whatsappOpened'), description: t('reportReady') });
       }
     } catch (error) {
       console.error('WhatsApp share error:', error);
-      toast({
-        title: t('whatsappShareFailed'),
-        description: t('downloadAndShare'),
-        variant: 'destructive'
-      });
+      toast({ title: t('whatsappShareFailed'), description: t('downloadAndShare'), variant: 'destructive' });
     }
   };
 
-  // Share to specific WhatsApp contact (for officers)
   const handleShareToOfficer = (phoneNumber?: string) => {
     if (!result) return;
     const text = generateReportShareText();
     const encodedText = encodeURIComponent(text);
-    
     if (phoneNumber) {
-      // Remove any non-numeric characters and ensure country code
       const cleanPhone = phoneNumber.replace(/\D/g, '');
       const fullPhone = cleanPhone.startsWith('977') ? cleanPhone : `977${cleanPhone}`;
       window.open(`https://wa.me/${fullPhone}?text=${encodedText}`, '_blank');
@@ -1071,645 +869,493 @@ export function NepaliDiseaseDetector({ onAskExpert }: NepaliDiseaseDetectorProp
   };
 
   return (
-    <Card className="border-border/50 overflow-hidden">
-      <CardHeader className="bg-gradient-to-r from-primary/10 to-accent/10">
-        <CardTitle className="flex items-center gap-2 text-xl">
-          <Leaf className="w-6 h-6 text-primary" />
-          {t('diseaseDetectorTitle')}
-        </CardTitle>
-        <p className="text-sm text-muted-foreground mt-1">
-          {t('diseaseDetectorSubtitle')}
-        </p>
-      </CardHeader>
-
-      <div className="p-4 pt-0 space-y-4">
-           {/* Crop Selection */}
-           <div className="space-y-3">
-             <label className="text-sm font-medium flex items-center gap-2">
-               <Grid3X3 className="w-4 h-4 text-primary" />
-               {language === 'ne' ? 'बाली छान्नुहोस्' : 'Select Crop'}
-             </label>
-             
-             <div className="grid grid-cols-4 sm:grid-cols-5 gap-2">
-               {cropTypes.map((crop) => (
-                 <motion.button
-                   key={crop.value}
-                   whileHover={{ scale: 1.05 }}
-                   whileTap={{ scale: 0.95 }}
-                   onClick={() => {
-                     setCropName(crop.label);
-                     setShowSuggestions(false);
-                   }}
-                   className={`p-2 rounded-xl border flex flex-col items-center gap-1 transition-all relative ${
-                     cropName === crop.label 
-                       ? 'bg-primary/10 border-primary ring-2 ring-primary/20 shadow-sm' 
-                       : 'bg-muted/20 border-border/50 hover:bg-muted/40'
-                   }`}
-                 >
-                   <span className="text-xl sm:text-2xl">{crop.emoji}</span>
-                   <span className="text-[10px] font-medium truncate w-full text-center leading-tight">
-                     {crop.label}
-                   </span>
-                   {cropName === crop.label && (
-                     <motion.div 
-                       layoutId="selected-crop"
-                       className="absolute -top-1 -right-1"
-                       initial={{ scale: 0 }}
-                       animate={{ scale: 1 }}
-                     >
-                       <CheckCircle2 className="w-4 h-4 text-primary bg-white rounded-full" />
-                     </motion.div>
-                   )}
-                 </motion.button>
-               ))}
-             </div>
-
-             <div className="relative">
-               <input
-                 type="text"
-                 value={cropName}
-                 onChange={(e) => {
-                   const value = e.target.value;
-                   setCropName(value);
-                   setShowSuggestions(value.length > 0);
-                 }}
-                 onFocus={() => cropName && setShowSuggestions(true)}
-                 onBlur={() => {
-                   setTimeout(() => setShowSuggestions(false), 150);
-                 }}
-                 placeholder={t('selectCropPlaceholder') || (language === 'ne' ? "बाली खोज्नुहोस्..." : "Search or enter other crop...")}
-                 className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-               />
-               {showSuggestions && filteredCrops.length > 0 && (
-                 <ul className="absolute z-50 mt-1 max-h-40 w-full overflow-auto rounded-md border bg-popover text-popover-foreground shadow-lg text-sm">
-                   {filteredCrops.map((crop) => (
-                     <li
-                       key={crop}
-                       onMouseDown={() => {
-                         setCropName(crop);
-                         setShowSuggestions(false);
-                       }}
-                       className="cursor-pointer px-3 py-2 hover:bg-muted transition-colors border-b last:border-0"
-                     >
-                       {crop}
-                     </li>
-                   ))}
-                 </ul>
-               )}
-             </div>
-           </div>
-
-          {/* Voice Input for Symptom Description */}
-          <div className="space-y-2">
-            <div className="flex items-center justify-between flex-wrap gap-2">
-              <label className="text-sm font-medium">
-                {t('symptomDescLabel')}
-              </label>
-              {voiceSupported && (
-                <Button
-                  variant={isListening ? "destructive" : "outline"}
-                  size="sm"
-                  onClick={toggleVoiceInput}
-                  className={`gap-2 transition-all ${isListening ? 'animate-pulse ring-2 ring-destructive/50' : ''}`}
+    <div className="space-y-4">
+      {/* Step 1: Select Crop */}
+      <div className="bg-card rounded-2xl border border-border/50 p-4 space-y-3">
+        <div className="flex items-center gap-2 mb-1">
+          <div className="w-6 h-6 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-xs font-bold">1</div>
+          <h3 className="font-semibold text-sm text-foreground">
+            {language === 'ne' ? 'बाली छान्नुहोस्' : 'Select Crop'}
+          </h3>
+        </div>
+        
+        <div className="grid grid-cols-5 gap-2">
+          {cropTypes.map((crop) => (
+            <motion.button
+              key={crop.value}
+              whileTap={{ scale: 0.92 }}
+              onClick={() => { setCropName(crop.label); setShowSuggestions(false); }}
+              className={`p-2.5 rounded-xl border flex flex-col items-center gap-1 transition-all relative ${
+                cropName === crop.label 
+                  ? 'bg-primary/10 border-primary shadow-sm' 
+                  : 'bg-muted/30 border-border/50 active:bg-muted/60'
+              }`}
+            >
+              <span className="text-xl">{crop.emoji}</span>
+              <span className="text-[10px] font-medium truncate w-full text-center leading-tight text-foreground">
+                {crop.label}
+              </span>
+              {cropName === crop.label && (
+                <motion.div 
+                  layoutId="selected-crop"
+                  className="absolute -top-1 -right-1"
+                  initial={{ scale: 0 }}
+                  animate={{ scale: 1 }}
                 >
-                  {isListening ? (
-                    <>
-                      <MicOff className="w-4 h-4" />
-                      <span className="hidden sm:inline">{t('stopRecording')}</span>
-                      <span className="sm:hidden">{t('stop')}</span>
-                    </>
-                  ) : (
-                    <>
-                      <Mic className="w-4 h-4" />
-                      <span className="hidden sm:inline">{t('startRecording')}</span>
-                      <span className="sm:hidden">{t('startRecording')}</span>
-                    </>
-                  )}
-                </Button>
-              )}
-            </div>
-            
-            <div className="relative">
-              <Textarea
-                placeholder={t('symptomDescPlaceholder')}
-                value={symptomDescription || transcript}
-                onChange={(e) => setSymptomDescription(e.target.value)}
-                rows={3}
-                disabled={isListening}
-                className={`resize-none transition-all ${isListening ? 'border-primary ring-2 ring-primary/30 bg-primary/5' : ''}`}
-              />
-              {isListening && (
-                <motion.div
-                  className="absolute top-2 right-2 flex items-center gap-2"
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                >
-                  <motion.div
-                    animate={{ scale: [1, 1.3, 1] }}
-                    transition={{ repeat: Infinity, duration: 0.8 }}
-                  >
-                    <div className="w-3 h-3 rounded-full bg-destructive" />
-                  </motion.div>
-                  <span className="text-xs text-destructive font-medium">{t('listening')}</span>
+                  <CheckCircle2 className="w-4 h-4 text-primary bg-card rounded-full" />
                 </motion.div>
               )}
+            </motion.button>
+          ))}
+        </div>
+
+        <div className="relative">
+          <input
+            type="text"
+            value={cropName}
+            onChange={(e) => { setCropName(e.target.value); setShowSuggestions(e.target.value.length > 0); }}
+            onFocus={() => cropName && setShowSuggestions(true)}
+            onBlur={() => { setTimeout(() => setShowSuggestions(false), 150); }}
+            placeholder={t('selectCropPlaceholder') || (language === 'ne' ? "अन्य बाली खोज्नुहोस्..." : "Search other crop...")}
+            className="flex h-10 w-full rounded-xl border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
+          />
+          {showSuggestions && filteredCrops.length > 0 && (
+            <ul className="absolute z-50 mt-1 max-h-40 w-full overflow-auto rounded-xl border bg-popover text-popover-foreground shadow-lg text-sm">
+              {filteredCrops.map((crop) => (
+                <li
+                  key={crop}
+                  onMouseDown={() => { setCropName(crop); setShowSuggestions(false); }}
+                  className="cursor-pointer px-3 py-2 hover:bg-muted transition-colors border-b last:border-0"
+                >
+                  {crop}
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+      </div>
+
+      {/* Step 2: Upload Photo */}
+      <div className="bg-card rounded-2xl border border-border/50 p-4 space-y-3">
+        <div className="flex items-center gap-2 mb-1">
+          <div className="w-6 h-6 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-xs font-bold">2</div>
+          <h3 className="font-semibold text-sm text-foreground">
+            {language === 'ne' ? 'फोटो अपलोड गर्नुहोस्' : 'Upload Photo'}
+          </h3>
+        </div>
+
+        {!image ? (
+          <div
+            className={`border-2 border-dashed rounded-2xl p-8 text-center transition-all ${
+              isDragging ? 'border-primary bg-primary/5 scale-[1.01]' : 'border-border hover:border-primary/40'
+            }`}
+            onClick={() => fileInputRef.current?.click()}
+            onDragOver={handleDragOver}
+            onDragLeave={handleDragLeave}
+            onDrop={handleDrop}
+          >
+            <div className="w-16 h-16 mx-auto mb-4 rounded-2xl bg-primary/10 flex items-center justify-center">
+              <Camera className="w-8 h-8 text-primary" />
             </div>
-            
-            {/* Live transcript display */}
-            {isListening && (
-              <motion.div 
-                initial={{ opacity: 0, y: -5 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="p-3 bg-primary/10 rounded-lg border border-primary/20"
+            <p className="text-base font-medium text-foreground mb-1">
+              {language === 'ne' ? 'बालीको फोटो अपलोड गर्नुहोस्' : 'Upload crop photo'}
+            </p>
+            <p className="text-xs text-muted-foreground mb-5">
+              {language === 'ne' ? 'रोगग्रस्त पात वा बालीको नजिकको फोटो' : 'Close-up of affected leaf or crop'}
+            </p>
+            <div className="flex gap-3 justify-center">
+              <Button 
+                variant="outline" 
+                size="lg"
+                className="h-12 rounded-xl text-sm font-medium gap-2"
+                onClick={(e) => { e.stopPropagation(); cameraInputRef.current?.click(); }}
               >
-                <div className="flex items-center gap-2 mb-1">
-                  <Mic className="w-4 h-4 text-primary animate-pulse" />
-                  <span className="text-xs font-medium text-primary">{t('liveTranscript')}</span>
-                </div>
-                <p className="text-sm text-muted-foreground min-h-[20px]">
-                  {interimTranscript || transcript || t('speakPrompt')}
-                </p>
-              </motion.div>
-            )}
-            
-            {!voiceSupported && (
-              <p className="text-xs text-muted-foreground flex items-center gap-1">
-                {t('voiceNotSupported')}
-              </p>
-            )}
-          </div>
-
-          {/* Image Upload Area */}
-          {!image ? (
-            <div
-              className={`border-2 border-dashed rounded-xl p-8 text-center transition-all cursor-pointer
-                ${isDragging 
-                  ? 'border-primary bg-primary/10 scale-[1.02]' 
-                  : 'border-muted-foreground/30 hover:border-primary/50 bg-muted/20'
-                }`}
-              onClick={() => fileInputRef.current?.click()}
-              onDragOver={handleDragOver}
-              onDragLeave={handleDragLeave}
-              onDrop={handleDrop}
-            >
-              <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-primary/10 flex items-center justify-center">
-                <Camera className="w-8 h-8 text-primary" />
-              </div>
-              <h3 className="text-lg font-medium mb-2">
-                {t('uploadCropPhoto')}
-              </h3>
-              <p className="text-sm text-muted-foreground mb-4">
-                {t('uploadPhotoSubtext')}
-              </p>
-              <div className="flex gap-3 justify-center flex-wrap">
-                <Button 
-                  variant="outline" 
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    cameraInputRef.current?.click();
-                  }}
-                >
-                  <Camera className="w-4 h-4 mr-2" />
-                  {t('openCamera')}
-                </Button>
-                <Button 
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    fileInputRef.current?.click();
-                  }}
-                >
-                  <Upload className="w-4 h-4 mr-2" />
-                  {t('chooseFromGallery')}
-                </Button>
-              </div>
-              <p className="text-xs text-muted-foreground mt-4">
-                {t('dragDropHint')}
-              </p>
-              <input
-                ref={fileInputRef}
-                type="file"
-                accept="image/*"
-                className="hidden"
-                onChange={handleFileSelect}
-              />
-              <input
-                ref={cameraInputRef}
-                type="file"
-                accept="image/*"
-                capture="environment"
-                className="hidden"
-                onChange={handleFileSelect}
-              />
+                <Camera className="w-5 h-5" />
+                {language === 'ne' ? '📷 फोटो खिच्नुहोस्' : '📷 Take Photo'}
+              </Button>
+              <Button 
+                size="lg"
+                className="h-12 rounded-xl text-sm font-medium gap-2"
+                onClick={(e) => { e.stopPropagation(); fileInputRef.current?.click(); }}
+              >
+                <Upload className="w-5 h-5" />
+                {language === 'ne' ? '🖼 ग्यालरी' : '🖼 Gallery'}
+              </Button>
             </div>
-          ) : (
-            <div className="space-y-4">
-              {/* Preview Image */}
-              <div className="relative rounded-xl overflow-hidden">
-                <img 
-                  src={image} 
-                  alt="बाली फोटो" 
-                  className="w-full h-64 object-cover"
-                />
-                <Button
-                  variant="destructive"
-                  size="icon"
-                  className="absolute top-2 right-2"
-                  onClick={() => {
-                    setImage(null);
-                    setResult(null);
-                  }}
-                >
-                  <X className="w-4 h-4" />
-                </Button>
-              </div>
+            <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handleFileSelect} />
+            <input ref={cameraInputRef} type="file" accept="image/*" capture="environment" className="hidden" onChange={handleFileSelect} />
+          </div>
+        ) : (
+          <div className="space-y-3">
+            <div className="relative rounded-2xl overflow-hidden">
+              <img src={image} alt="बाली फोटो" className="w-full h-56 object-cover" />
+              <Button
+                variant="secondary"
+                size="icon"
+                className="absolute top-3 right-3 rounded-full bg-background/80 backdrop-blur-sm h-9 w-9"
+                onClick={() => { setImage(null); setResult(null); }}
+              >
+                <X className="w-4 h-4" />
+              </Button>
+            </div>
+          </div>
+        )}
+      </div>
 
-              {/* Analyze Button */}
-              {!result && (
-                <Button 
-                  onClick={analyzeImage} 
-                  disabled={isAnalyzing}
-                  className="w-full"
-                  size="lg"
-                >
-                  {isAnalyzing ? (
-                    <>
-                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                      {t('analyzingPhoto')}
-                    </>
+      {/* Step 3: Describe Symptoms (optional) */}
+      <div className="bg-card rounded-2xl border border-border/50 p-4 space-y-3">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <div className="w-6 h-6 rounded-full bg-muted text-muted-foreground flex items-center justify-center text-xs font-bold">3</div>
+            <h3 className="font-semibold text-sm text-foreground">
+              {language === 'ne' ? 'लक्षण वर्णन (ऐच्छिक)' : 'Describe Symptoms (optional)'}
+            </h3>
+          </div>
+          {voiceSupported && (
+            <Button
+              variant={isListening ? "destructive" : "ghost"}
+              size="sm"
+              onClick={toggleVoiceInput}
+              className={`gap-1.5 rounded-xl h-8 ${isListening ? 'animate-pulse' : ''}`}
+            >
+              {isListening ? <MicOff className="w-4 h-4" /> : <Mic className="w-4 h-4" />}
+              <span className="text-xs">{isListening ? t('stop') : '🎤'}</span>
+            </Button>
+          )}
+        </div>
+        
+        <Textarea
+          placeholder={t('symptomDescPlaceholder')}
+          value={symptomDescription || transcript}
+          onChange={(e) => setSymptomDescription(e.target.value)}
+          rows={2}
+          disabled={isListening}
+          className={`resize-none rounded-xl text-sm ${isListening ? 'border-primary ring-2 ring-primary/30 bg-primary/5' : ''}`}
+        />
+        
+        {isListening && (
+          <motion.div 
+            initial={{ opacity: 0, y: -5 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="p-3 bg-primary/10 rounded-xl border border-primary/20"
+          >
+            <div className="flex items-center gap-2">
+              <motion.div animate={{ scale: [1, 1.3, 1] }} transition={{ repeat: Infinity, duration: 0.8 }}>
+                <div className="w-2.5 h-2.5 rounded-full bg-destructive" />
+              </motion.div>
+              <span className="text-xs font-medium text-primary">{t('listening')}</span>
+            </div>
+            <p className="text-xs text-muted-foreground mt-1">{interimTranscript || transcript || t('speakPrompt')}</p>
+          </motion.div>
+        )}
+      </div>
+
+      {/* Analyze Button */}
+      {image && !result && (
+        <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}>
+          <Button 
+            onClick={analyzeImage} 
+            disabled={isAnalyzing}
+            className="w-full h-14 rounded-2xl text-base font-semibold gap-2 shadow-lg"
+            size="lg"
+          >
+            {isAnalyzing ? (
+              <>
+                <Loader2 className="w-5 h-5 animate-spin" />
+                {language === 'ne' ? 'AI विश्लेषण गर्दैछ...' : 'AI Analyzing...'}
+              </>
+            ) : (
+              <>
+                <Sparkles className="w-5 h-5" />
+                {language === 'ne' ? '🔍 रोग पहिचान गर्नुहोस्' : '🔍 Detect Disease'}
+              </>
+            )}
+          </Button>
+        </motion.div>
+      )}
+
+      {/* Loading State */}
+      {isAnalyzing && (
+        <motion.div 
+          initial={{ opacity: 0 }} 
+          animate={{ opacity: 1 }}
+          className="bg-card rounded-2xl border border-primary/20 p-6 text-center space-y-4"
+        >
+          <div className="w-16 h-16 mx-auto rounded-full bg-primary/10 flex items-center justify-center">
+            <Loader2 className="w-8 h-8 text-primary animate-spin" />
+          </div>
+          <div>
+            <p className="font-semibold text-foreground">
+              {language === 'ne' ? 'AI विश्लेषण गर्दैछ...' : 'AI is analyzing...'}
+            </p>
+            <p className="text-sm text-muted-foreground mt-1">
+              {language === 'ne' ? 'कृपया केही सेकेन्ड पर्खनुहोस्' : 'Please wait a few seconds'}
+            </p>
+          </div>
+          <div className="flex justify-center gap-1.5">
+            {[0, 1, 2].map(i => (
+              <motion.div
+                key={i}
+                className="w-2 h-2 rounded-full bg-primary"
+                animate={{ opacity: [0.3, 1, 0.3] }}
+                transition={{ repeat: Infinity, duration: 1.2, delay: i * 0.3 }}
+              />
+            ))}
+          </div>
+        </motion.div>
+      )}
+
+      {/* Results */}
+      <AnimatePresence>
+        {result && (
+          <motion.div
+            ref={resultSectionRef}
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="space-y-3"
+          >
+            {/* Result Header Card */}
+            <div className={`bg-card rounded-2xl border-2 p-5 ${
+              result.isHealthy 
+                ? 'border-success/30' 
+                : result.severity === 'high' ? 'border-destructive/30' : 'border-warning/30'
+            }`}>
+              <div className="flex items-start gap-3">
+                <div className={`w-12 h-12 rounded-xl flex items-center justify-center shrink-0 ${
+                  result.isHealthy ? 'bg-success/10' : result.severity === 'high' ? 'bg-destructive/10' : 'bg-warning/10'
+                }`}>
+                  {result.isHealthy ? (
+                    <CheckCircle2 className="w-6 h-6 text-success" />
+                  ) : result.issueType === 'pest' ? (
+                    <Bug className="w-6 h-6 text-orange-500" />
                   ) : (
-                    <>
-                      <CheckCircle2 className="w-4 h-4 mr-2" />
-                      {t('analyzeBtn')}
-                    </>
+                    <AlertTriangle className={`w-6 h-6 ${result.severity === 'high' ? 'text-destructive' : 'text-warning'}`} />
                   )}
-                </Button>
+                </div>
+                <div className="flex-1 min-w-0">
+                  <h3 className="font-bold text-lg text-foreground leading-tight">
+                    {result.isHealthy ? t('cropHealthy') : result.detectedIssue}
+                  </h3>
+                  {result.detectedIssueEnglish && (
+                    <p className="text-xs text-muted-foreground italic mt-0.5">({result.detectedIssueEnglish})</p>
+                  )}
+                  <div className="flex flex-wrap gap-1.5 mt-2">
+                    <Badge variant="outline" className={`text-xs rounded-lg ${issueTypeLabels[result.issueType]?.color}`}>
+                      {issueTypeLabels[result.issueType]?.icon} {issueTypeLabels[result.issueType]?.label}
+                    </Badge>
+                    <Badge variant="outline" className="text-xs rounded-lg">
+                      📊 {Math.round(result.confidence * 100)}%
+                    </Badge>
+                    <Badge variant="outline" className={`text-xs rounded-lg ${severityColors[result.severity]}`}>
+                      {severityLabels[result.severity]}
+                    </Badge>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Pest Info */}
+            {result.issueType === 'pest' && result.pestInfo && (
+              <div className="bg-card rounded-2xl border border-border/50 p-4">
+                <h4 className="font-semibold text-sm mb-2 flex items-center gap-2">🐛 {t('pestInfoLabel')}</h4>
+                <div className="grid grid-cols-2 gap-3 text-sm">
+                  {result.pestInfo.scientificName && (
+                    <div><span className="text-xs text-muted-foreground">{t('scientificName')}</span><p className="italic text-sm">{result.pestInfo.scientificName}</p></div>
+                  )}
+                  {result.pestInfo.activeSeasons?.length > 0 && (
+                    <div><span className="text-xs text-muted-foreground">{t('activePeriod')}</span><p className="text-sm">{result.pestInfo.activeSeasons.join(', ')}</p></div>
+                  )}
+                  {result.pestInfo.hostCrops?.length > 0 && (
+                    <div className="col-span-2"><span className="text-xs text-muted-foreground">{t('affectedCrops')}</span><p className="text-sm">{result.pestInfo.hostCrops.join(', ')}</p></div>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* Symptoms */}
+            {result.symptoms.length > 0 && (
+              <div className="bg-card rounded-2xl border border-border/50 p-4">
+                <h4 className="font-semibold text-sm mb-2">🔍 {t('symptomsLabel')}</h4>
+                <ul className="text-sm space-y-1.5">
+                  {result.symptoms.map((symptom, i) => (
+                    <li key={i} className="flex items-start gap-2 text-muted-foreground">
+                      <span className="text-primary mt-0.5">•</span>{symptom}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+
+            {/* Treatment Card */}
+            <div className="bg-primary/5 rounded-2xl border border-primary/20 p-4">
+              <h4 className="font-semibold text-sm mb-2 flex items-center gap-2">
+                <Pill className="w-4 h-4 text-primary" /> {t('treatmentMethod')}
+              </h4>
+              <p className="text-sm text-foreground">{result.treatment}</p>
+              {result.organicTreatment && (
+                <div className="mt-3 p-3 bg-success/10 rounded-xl">
+                  <p className="text-xs font-semibold text-success mb-0.5">{t('organicTreatment')}</p>
+                  <p className="text-sm text-muted-foreground">{result.organicTreatment}</p>
+                </div>
+              )}
+            </div>
+
+            {/* Biological Control */}
+            {result.biologicalControl && (
+              <div className="bg-card rounded-2xl border border-border/50 p-4">
+                <h4 className="font-semibold text-sm mb-2">🌿 {t('biologicalControl')}</h4>
+                <div className="space-y-2 text-sm">
+                  {result.biologicalControl.naturalEnemies?.length > 0 && (
+                    <div><span className="text-xs text-muted-foreground font-medium">{t('naturalEnemies')}</span><p className="text-muted-foreground">{result.biologicalControl.naturalEnemies.join(', ')}</p></div>
+                  )}
+                  {result.biologicalControl.trapCrops?.length > 0 && (
+                    <div><span className="text-xs text-muted-foreground font-medium">{t('trapCrops')}</span><p className="text-muted-foreground">{result.biologicalControl.trapCrops.join(', ')}</p></div>
+                  )}
+                  {result.biologicalControl.culturalPractices?.length > 0 && (
+                    <div><span className="text-xs text-muted-foreground font-medium">{t('culturalPractices')}</span><p className="text-muted-foreground">{result.biologicalControl.culturalPractices.join(', ')}</p></div>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* Prevention */}
+            {result.prevention.length > 0 && (
+              <div className="bg-card rounded-2xl border border-border/50 p-4">
+                <h4 className="font-semibold text-sm mb-2 flex items-center gap-2">
+                  <Shield className="w-4 h-4 text-primary" /> {t('preventionMeasures')}
+                </h4>
+                <ul className="text-sm space-y-1.5">
+                  {result.prevention.map((tip, i) => (
+                    <li key={i} className="flex items-start gap-2 text-muted-foreground">
+                      <span className="text-success mt-0.5">✓</span>{tip}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+
+            {/* Treatment Guide from DB */}
+            <TreatmentGuideCard cropName={selectedCrop} diseaseName={result.detectedIssue || ''} autoExpand={true} />
+
+            {/* When to seek help */}
+            {result.whenToSeekHelp && (
+              <div className="p-3 bg-warning/10 rounded-2xl border border-warning/20">
+                <p className="text-sm"><strong>⚠️ {t('expertAdviceLabel')}</strong> {result.whenToSeekHelp}</p>
+              </div>
+            )}
+
+            {/* Action Buttons */}
+            <div className="space-y-2">
+              {/* Primary actions */}
+              {onAskExpert && (
+                <div className="grid grid-cols-2 gap-2">
+                  <Button
+                    onClick={() => onAskExpert({
+                      imageDataUrl: image || undefined,
+                      cropName: selectedCrop,
+                      aiDisease: result.detectedIssue,
+                      aiConfidence: result.confidence,
+                      aiRecommendation: result.treatment,
+                    })}
+                    className="h-12 rounded-xl text-sm font-medium gap-2"
+                    size="lg"
+                  >
+                    <User className="w-4 h-4" />
+                    {language === 'ne' ? '👨‍🌾 विज्ञसँग सोध्नुहोस्' : '👨‍🌾 Ask Expert'}
+                  </Button>
+                  <Button 
+                    onClick={downloadReportAsPdf} 
+                    disabled={isDownloadingPdf}
+                    variant="outline"
+                    className="h-12 rounded-xl text-sm font-medium gap-2"
+                    size="lg"
+                  >
+                    {isDownloadingPdf ? <Loader2 className="w-4 h-4 animate-spin" /> : <FileText className="w-4 h-4" />}
+                    {language === 'ne' ? '📥 रिपोर्ट' : '📥 Report'}
+                  </Button>
+                </div>
               )}
 
-              {/* Results */}
-              <AnimatePresence>
-                {result && (
-                  <motion.div
-                    ref={resultSectionRef}
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    className="space-y-4 bg-background p-4 rounded-xl"
+              {/* Download & Share */}
+              <div className="grid grid-cols-3 gap-2">
+                <Button onClick={downloadReportAsImage} disabled={isDownloadingImage} variant="outline" className="h-10 rounded-xl text-xs gap-1">
+                  {isDownloadingImage ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <ImageDown className="w-3.5 h-3.5" />}
+                  {language === 'ne' ? 'फोटो' : 'Image'}
+                </Button>
+                <Button onClick={downloadReport} disabled={isDownloading} variant="outline" className="h-10 rounded-xl text-xs gap-1">
+                  {isDownloading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Download className="w-3.5 h-3.5" />}
+                  HTML
+                </Button>
+                <Button onClick={shareImageToWhatsApp} disabled={isSharingToWhatsApp} variant="outline" className="h-10 rounded-xl text-xs gap-1 bg-[#25D366]/5 hover:bg-[#25D366]/10 border-[#25D366]/20">
+                  {isSharingToWhatsApp ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <MessageCircle className="w-3.5 h-3.5 text-[#25D366]" />}
+                  WhatsApp
+                </Button>
+              </div>
+
+              {/* More Share */}
+              <div className="grid grid-cols-3 gap-2">
+                <Button onClick={handleShareWhatsApp} variant="ghost" className="h-9 rounded-xl text-xs gap-1">
+                  <MessageCircle className="w-3.5 h-3.5" /> Text
+                </Button>
+                <Button onClick={handleShareSMS} variant="ghost" className="h-9 rounded-xl text-xs gap-1">
+                  <Phone className="w-3.5 h-3.5" /> SMS
+                </Button>
+                <Button 
+                  onClick={() => {
+                    if (navigator.share) {
+                      navigator.share({ title: t('diseaseDetectorTitle'), text: generateReportShareText() }).catch(() => handleShareWhatsApp());
+                    } else {
+                      handleShareWhatsApp();
+                    }
+                  }} 
+                  variant="ghost" 
+                  className="h-9 rounded-xl text-xs gap-1"
+                >
+                  <Share2 className="w-3.5 h-3.5" /> {t('shareOther')}
+                </Button>
+              </div>
+
+              {/* Send to officer */}
+              <Button onClick={() => handleShareToOfficer()} variant="outline" className="w-full h-10 rounded-xl text-xs gap-1.5 bg-primary/5 hover:bg-primary/10 border-primary/20">
+                <Share2 className="w-3.5 h-3.5 text-primary" />
+                {language === 'ne' ? 'कृषि अधिकारीलाई पठाउनुहोस्' : 'Send to Officer'}
+              </Button>
+
+              {/* Expert CTA for low confidence */}
+              {onAskExpert && result.confidence < 0.6 && (
+                <div className="p-4 rounded-2xl bg-warning/10 border border-warning/30">
+                  <p className="text-sm text-foreground font-medium mb-2">
+                    {language === 'ne' ? '⚠️ AI पूर्ण निश्चिन्त छैन। मानव विज्ञसँग सोध्नुहोस्।' : '⚠️ AI is not fully confident. Ask a human expert.'}
+                  </p>
+                  <Button
+                    onClick={() => onAskExpert({
+                      imageDataUrl: image || undefined,
+                      cropName: selectedCrop,
+                      aiDisease: result.detectedIssue,
+                      aiConfidence: result.confidence,
+                      aiRecommendation: result.treatment,
+                    })}
+                    className="w-full h-11 rounded-xl font-semibold"
+                    size="lg"
                   >
-                    {/* Result Header */}
-                    <div className={`p-4 rounded-xl border ${
-                      result.isHealthy 
-                        ? 'bg-success/10 border-success/20' 
-                        : result.issueType === 'pest'
-                          ? 'bg-orange-500/10 border-orange-500/20'
-                          : 'bg-destructive/10 border-destructive/20'
-                    }`}>
-                      <div className="flex items-center gap-3">
-                        {result.isHealthy ? (
-                          <CheckCircle2 className="w-8 h-8 text-success" />
-                        ) : result.issueType === 'pest' ? (
-                          <Bug className="w-8 h-8 text-orange-500" />
-                        ) : (
-                          <AlertTriangle className="w-8 h-8 text-destructive" />
-                        )}
-                        <div>
-                          <h3 className="font-semibold text-lg">
-                            {result.isHealthy 
-                              ? t('cropHealthy') 
-                              : result.issueType === 'pest'
-                                ? t('pestDetected')
-                                : result.issueType === 'deficiency'
-                                  ? t('nutrientDeficiency')
-                                  : t('diseaseIdentified')
-                            }
-                          </h3>
-                          <p className="text-sm text-muted-foreground">{result.detectedIssue}</p>
-                          {result.detectedIssueEnglish && (
-                            <p className="text-xs text-muted-foreground italic">({result.detectedIssueEnglish})</p>
-                          )}
-                        </div>
-                      </div>
-                      
-                      <div className="flex gap-2 mt-3 flex-wrap">
-                        <Badge variant="outline" className={issueTypeLabels[result.issueType]?.color}>
-                          {issueTypeLabels[result.issueType]?.icon} {issueTypeLabels[result.issueType]?.label}
-                        </Badge>
-                        <Badge variant="outline">
-                          {t('confidenceLabel')} {Math.round(result.confidence * 100)}%
-                        </Badge>
-                        <Badge variant="outline" className={severityColors[result.severity]}>
-                          {severityLabels[result.severity]}
-                        </Badge>
-                        {result.affectedPart && (
-                          <Badge variant="outline">{result.affectedPart}</Badge>
-                        )}
-                      </div>
-                    </div>
+                    <User className="w-4 h-4 mr-2" />
+                    {language === 'ne' ? 'विज्ञसँग सोध्नुहोस्' : 'Ask an Expert'}
+                  </Button>
+                </div>
+              )}
 
-                    {/* Pest-specific information */}
-                    {result.issueType === 'pest' && result.pestInfo && (
-                      <div className="p-4 bg-orange-500/5 rounded-xl border border-orange-500/20">
-                        <h4 className="font-semibold mb-2 flex items-center gap-2">
-                          {t('pestInfoLabel')}
-                        </h4>
-                        <div className="grid grid-cols-2 gap-3 text-sm">
-                          {result.pestInfo.scientificName && (
-                            <div>
-                              <span className="text-muted-foreground">{t('scientificName')}</span>
-                              <p className="italic">{result.pestInfo.scientificName}</p>
-                            </div>
-                          )}
-                          {result.pestInfo.activeSeasons && result.pestInfo.activeSeasons.length > 0 && (
-                            <div>
-                              <span className="text-muted-foreground">{t('activePeriod')}</span>
-                              <p>{result.pestInfo.activeSeasons.join(', ')}</p>
-                            </div>
-                          )}
-                          {result.pestInfo.hostCrops && result.pestInfo.hostCrops.length > 0 && (
-                            <div className="col-span-2">
-                              <span className="text-muted-foreground">{t('affectedCrops')}</span>
-                              <p>{result.pestInfo.hostCrops.join(', ')}</p>
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                    )}
-
-                    {/* Symptoms */}
-                    {result.symptoms.length > 0 && (
-                      <div className="p-4 bg-muted/50 rounded-xl">
-                        <h4 className="font-semibold mb-2 flex items-center gap-2">
-                          {t('symptomsLabel')}
-                        </h4>
-                        <ul className="text-sm space-y-1">
-                          {result.symptoms.map((symptom, i) => (
-                            <li key={i} className="flex items-start gap-2 text-muted-foreground">
-                              <span className="text-primary">•</span>
-                              {symptom}
-                            </li>
-                          ))}
-                        </ul>
-                      </div>
-                    )}
-
-                    {/* Treatment */}
-                    <div className="p-4 bg-primary/5 rounded-xl border border-primary/20">
-                      <h4 className="font-semibold mb-2 flex items-center gap-2">
-                        <Pill className="w-4 h-4 text-primary" />
-                        {t('treatmentMethod')}
-                      </h4>
-                      <p className="text-sm">{result.treatment}</p>
-                      {result.organicTreatment && (
-                        <div className="mt-3 p-3 bg-success/10 rounded-lg">
-                          <p className="text-sm font-medium text-success">{t('organicTreatment')}</p>
-                          <p className="text-sm text-muted-foreground">{result.organicTreatment}</p>
-                        </div>
-                      )}
-                    </div>
-
-                    {/* Biological Control (for pests) */}
-                    {result.biologicalControl && (
-                      <div className="p-4 bg-green-500/5 rounded-xl border border-green-500/20">
-                        <h4 className="font-semibold mb-2 flex items-center gap-2">
-                          {t('biologicalControl')}
-                        </h4>
-                        <div className="space-y-2 text-sm">
-                          {result.biologicalControl.naturalEnemies && result.biologicalControl.naturalEnemies.length > 0 && (
-                            <div>
-                              <span className="text-muted-foreground font-medium">{t('naturalEnemies')}</span>
-                              <p className="text-muted-foreground">{result.biologicalControl.naturalEnemies.join(', ')}</p>
-                            </div>
-                          )}
-                          {result.biologicalControl.trapCrops && result.biologicalControl.trapCrops.length > 0 && (
-                            <div>
-                              <span className="text-muted-foreground font-medium">{t('trapCrops')}</span>
-                              <p className="text-muted-foreground">{result.biologicalControl.trapCrops.join(', ')}</p>
-                            </div>
-                          )}
-                          {result.biologicalControl.culturalPractices && result.biologicalControl.culturalPractices.length > 0 && (
-                            <div>
-                              <span className="text-muted-foreground font-medium">{t('culturalPractices')}</span>
-                              <p className="text-muted-foreground">{result.biologicalControl.culturalPractices.join(', ')}</p>
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                    )}
-
-                    {/* Prevention */}
-                    {result.prevention.length > 0 && (
-                      <div className="p-4 bg-muted/50 rounded-xl">
-                        <h4 className="font-semibold mb-2 flex items-center gap-2">
-                          <Shield className="w-4 h-4 text-primary" />
-                          {t('preventionMeasures')}
-                        </h4>
-                        <ul className="text-sm space-y-1">
-                          {result.prevention.map((tip, i) => (
-                            <li key={i} className="flex items-start gap-2 text-muted-foreground">
-                              <span className="text-success">✓</span>
-                              {tip}
-                            </li>
-                          ))}
-                        </ul>
-                      </div>
-                    )}
-
-                    {/* Treatment Guide from Admin Database */}
-                    <TreatmentGuideCard 
-                      cropName={selectedCrop} 
-                      diseaseName={result.detectedIssue || ''} 
-                      autoExpand={true}
-                    />
-
-                    {/* When to seek help */}
-                    {result.whenToSeekHelp && (
-                      <div className="p-3 bg-warning/10 rounded-lg border border-warning/20">
-                        <p className="text-sm">
-                          <strong>{t('expertAdviceLabel')}</strong> {result.whenToSeekHelp}
-                        </p>
-                      </div>
-                    )}
-
-                    {/* Action Buttons */}
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-4">
-                      {/* PDF Report Download */}
-                      <Button 
-                        onClick={downloadReportAsPdf} 
-                        disabled={isDownloadingPdf}
-                        variant="outline"
-                        className="h-12 text-base border-2 border-primary/30 hover:bg-primary/10"
-                        size="lg"
-                      >
-                        {isDownloadingPdf ? (
-                          <>
-                            <Loader2 className="w-5 h-5 mr-2 animate-spin" />
-                            {t('creatingPdf')}
-                          </>
-                        ) : (
-                          <>
-                            <FileText className="w-5 h-5 mr-2" />
-                            {t('pdfReport')}
-                          </>
-                        )}
-                      </Button>
-
-                      {/* Image Download Button */}
-                      <Button 
-                        onClick={downloadReportAsImage} 
-                        disabled={isDownloadingImage}
-                        variant="outline"
-                        className="h-12 text-base border-2 border-primary/30 hover:bg-primary/10"
-                        size="lg"
-                      >
-                        {isDownloadingImage ? (
-                          <>
-                            <Loader2 className="w-5 h-5 mr-2 animate-spin" />
-                            {t('creatingImage')}
-                          </>
-                        ) : (
-                          <>
-                            <ImageDown className="w-5 h-5 mr-2" />
-                            {t('saveAsPhoto')}
-                          </>
-                        )}
-                      </Button>
-
-                      {/* HTML Report Download */}
-                      <Button 
-                        onClick={downloadReport} 
-                        disabled={isDownloading}
-                        variant="outline"
-                        className="h-12 text-base border-2 border-muted-foreground/30 hover:bg-muted/50"
-                        size="lg"
-                      >
-                        {isDownloading ? (
-                          <>
-                            <Loader2 className="w-5 h-5 mr-2 animate-spin" />
-                            {t('downloadingLabel')}
-                          </>
-                        ) : (
-                          <>
-                            <Download className="w-5 h-5 mr-2" />
-                            HTML
-                          </>
-                        )}
-                      </Button>
-                    </div>
-
-                    {/* Share buttons - Responsive Grid */}
-                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-                      {/* WhatsApp with Image */}
-                      <Button 
-                        onClick={shareImageToWhatsApp} 
-                        disabled={isSharingToWhatsApp}
-                        variant="outline" 
-                        className="h-11 bg-[#25D366]/10 hover:bg-[#25D366]/20 border-[#25D366]/30 col-span-2 sm:col-span-1"
-                      >
-                        {isSharingToWhatsApp ? (
-                          <Loader2 className="w-4 h-4 mr-1.5 animate-spin" />
-                        ) : (
-                          <MessageCircle className="w-4 h-4 mr-1.5 text-[#25D366]" />
-                        )}
-                        <span className="text-sm">{t('whatsappWithPhoto')}</span>
-                      </Button>
-
-                      {/* WhatsApp text only */}
-                      <Button 
-                        onClick={handleShareWhatsApp} 
-                        variant="outline" 
-                        className="h-11 bg-[#25D366]/5 hover:bg-[#25D366]/10 border-[#25D366]/20"
-                      >
-                        <MessageCircle className="w-4 h-4 mr-1.5 text-[#25D366]" />
-                        <span className="text-sm">Text</span>
-                      </Button>
-
-                      <Button 
-                        onClick={handleShareSMS}
-                        variant="outline" 
-                        className="h-11"
-                      >
-                        <Phone className="w-4 h-4 mr-1.5" />
-                        <span className="text-sm">SMS</span>
-                      </Button>
-                      <Button 
-                        onClick={() => {
-                          // Native share API for mobile
-                          if (navigator.share) {
-                            navigator.share({
-                              title: t('diseaseDetectorTitle'),
-                              text: generateReportShareText(),
-                            }).catch(() => {
-                              // Fallback to WhatsApp
-                              handleShareWhatsApp();
-                            });
-                          } else {
-                            handleShareWhatsApp();
-                          }
-                        }} 
-                        variant="outline"
-                        className="h-11 col-span-2 sm:col-span-1"
-                      >
-                        <Share2 className="w-4 h-4 mr-1.5" />
-                        <span className="text-sm">{t('shareOther')}</span>
-                      </Button>
-                    </div>
-                    
-                    {/* Share to officer button */}
-                    <Button 
-                      onClick={() => handleShareToOfficer()} 
-                      variant="outline"
-                      className="w-full h-11 bg-primary/5 hover:bg-primary/10 border-primary/20"
-                    >
-                      <Share2 className="w-4 h-4 mr-2 text-primary" />
-                      <span className="hidden sm:inline">{t('sendToOfficer')}</span>
-                      <span className="sm:hidden">{t('sendToOfficerShort')}</span>
-                    </Button>
-
-                    {/* Ask Expert CTA - shown prominently when confidence is low or always available */}
-                    {onAskExpert && (
-                      <div className={`p-4 rounded-xl border-2 ${
-                        result.confidence < 0.6 
-                          ? 'bg-warning/10 border-warning/30' 
-                          : 'bg-muted/30 border-border/40'
-                      }`}>
-                        <p className="text-sm text-foreground mb-2.5 font-medium">
-                          {result.confidence < 0.6 
-                            ? (language === 'ne' ? 'AI पूर्ण निश्चिन्त छैन। मानव कृषि विज्ञसँग सोध्न सक्नुहुन्छ।' : 'AI is not fully confident. You can ask a human expert.')
-                            : (language === 'ne' ? 'थप पुष्टि चाहनुहुन्छ? विज्ञसँग सोध्नुहोस्।' : 'Want confirmation? Ask an expert.')}
-                        </p>
-                        <Button
-                          onClick={() => onAskExpert({
-                            imageDataUrl: image || undefined,
-                            cropName: selectedCrop,
-                            aiDisease: result.detectedIssue,
-                            aiConfidence: result.confidence,
-                            aiRecommendation: result.treatment,
-                          })}
-                          className="w-full h-12 text-base font-semibold"
-                          size="lg"
-                        >
-                          <User className="w-5 h-5 mr-2" />
-                          {language === 'ne' ? 'विज्ञसँग सोध्नुहोस्' : 'Ask an Expert'}
-                        </Button>
-                      </div>
-                    )}
-
-                    {/* New analysis button */}
-                    <Button 
-                      variant="secondary" 
-                      className="w-full"
-                      onClick={() => {
-                        setImage(null);
-                        setResult(null);
-                        setSymptomDescription('');
-                      }}
-                    >
-                      {t('newAnalysis')}
-                    </Button>
-                  </motion.div>
-                )}
-              </AnimatePresence>
+              {/* New Analysis */}
+              <Button 
+                variant="secondary" 
+                className="w-full h-11 rounded-xl"
+                onClick={() => { setImage(null); setResult(null); setSymptomDescription(''); }}
+              >
+                {t('newAnalysis')}
+              </Button>
             </div>
-          )}
-      </div>
-    </Card>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
   );
 }
