@@ -210,14 +210,22 @@ export function EmbeddedProfileTab() {
           </div>
           <div className="flex gap-2 mt-4">
             {!isEditing ? (
-              <Button size="sm" onClick={() => setIsEditing(true)} className="gap-1.5 rounded-full">
+              <Button size="sm" onClick={() => setIsEditing(true)} className="gap-1.5 rounded-xl flex-1 sm:flex-none">
                 <Edit3 className="w-3.5 h-3.5" /> Edit Profile
               </Button>
             ) : (
-              <Button size="sm" variant="outline" onClick={() => setIsEditing(false)} className="gap-1.5 rounded-full">
+              <Button size="sm" variant="outline" onClick={() => setIsEditing(false)} className="gap-1.5 rounded-xl flex-1 sm:flex-none">
                 <X className="w-3.5 h-3.5" /> Cancel
               </Button>
             )}
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => setShowLogoutDialog(true)}
+              className="gap-1.5 rounded-xl flex-1 sm:flex-none border-destructive/30 bg-background text-destructive hover:bg-destructive/5 hover:shadow-sm active:scale-[0.97] transition-all"
+            >
+              <LogOut className="w-3.5 h-3.5" /> Logout
+            </Button>
           </div>
         </div>
       </Card>
@@ -372,16 +380,6 @@ export function EmbeddedProfileTab() {
         <GeneralFeedbackForm />
       </div>
 
-      {/* Logout Button — clean, non-intrusive */}
-      <div className="mt-8 mb-6">
-        <button
-          onClick={() => setShowLogoutDialog(true)}
-          className="w-full flex items-center justify-center gap-2.5 h-[52px] rounded-xl border border-destructive/25 bg-card text-destructive text-sm font-medium hover:bg-destructive/5 active:scale-[0.98] transition-all"
-        >
-          <LogOut className="w-4 h-4" />
-          🚪 Logout
-        </button>
-      </div>
 
       {/* Logout Dialog */}
       <AlertDialog open={showLogoutDialog} onOpenChange={setShowLogoutDialog}>
