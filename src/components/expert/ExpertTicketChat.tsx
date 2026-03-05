@@ -17,7 +17,7 @@ interface ExpertTicketChatProps {
   farmCropId?: string | null;
 }
 
-export function ExpertTicketChat({ ticketId, cropName, senderRole = 'farmer' }: ExpertTicketChatProps) {
+export function ExpertTicketChat({ ticketId, cropName, senderRole = 'farmer', farmId, farmCropId }: ExpertTicketChatProps) {
   const { user } = useAuth();
   const { data: messages, isLoading } = useExpertTicketMessages(ticketId);
   const sendMessage = useSendExpertTicketMessage();
