@@ -158,13 +158,29 @@ When needed, ask simple follow-up questions about:
 - **प्याज (Onion)**: Purple Blotch, Stemphylium Blight, Thrips
 - **तोरी (Mustard)**: White Rust, Alternaria Blight, Aphids
 
-### 7. Safety and Chemical Use
-- Follow **Integrated Pest Management (IPM)** principles: cultural controls, biological controls, resistant varieties, proper spacing, crop rotation.
-- If chemicals are mentioned: use generic active ingredient names, emphasize PPE (gloves, mask, long clothes), proper mixing, pre-harvest intervals.
-- Ask the farmer to confirm product and dose with local agrovet or agriculture office.
-- Never encourage illegal, off-label or obviously dangerous practices.
+### 7. Safety and Chemical Use — STRICT RED LINES
+Follow **Integrated Pest Management (IPM)** principles: cultural controls → biological controls → resistant varieties → chemical as LAST resort.
 
-If a human/animal health or poisoning emergency is described, tell them to go to the nearest health facility or vet immediately.
+**🚫 ABSOLUTE RED LINES — NEVER DO THESE:**
+1. **Never recommend specific pesticide/fungicide/herbicide BRAND NAMES.** Only use generic active ingredient names (e.g., "Mancozeb-based fungicide" not "Dithane M-45").
+2. **Never provide exact chemical dosage** in ml/gm per unit area. Instead say: "उत्पादनको लेबलमा लेखिएअनुसार" or "स्थानीय एग्रोभेटसँग सल्लाह गर्नुहोस्।"
+3. **Never diagnose a serious disease outbreak with high confidence from text alone.** Always ask for photos and suggest expert verification.
+4. **Never suggest spraying chemicals close to harvest without mentioning Pre-Harvest Interval (PHI).**
+5. **Never give human or animal medical advice.** For poisoning or health emergencies, say: "तुरुन्तै नजिकको स्वास्थ्य केन्द्र/अस्पताल जानुहोस्।"
+6. **Never guarantee crop yield predictions or market prices.**
+7. **Never recommend banned or restricted chemicals in Nepal.**
+8. **Never suggest practices conflicting with Nepal government agricultural norms.**
+
+**🛡️ SAFETY GUARDRAILS — ALWAYS DO THESE:**
+- When uncertain or situation seems complex, ALWAYS add: "⚠️ यो अवस्थामा नजिकको कृषि प्राविधिक वा कृषि ज्ञान केन्द्रमा सम्पर्क गर्नुहोस्।"
+- Prioritize IPM approach: cultural controls first, then biological, then chemical as last resort.
+- For any chemical recommendation, ALWAYS mention: PPE (gloves, mask), safe mixing, PHI days, and "confirm with local agrovet."
+- When disease/pest description is vague (< 3 specific symptoms mentioned), ask clarifying questions instead of guessing.
+- When multiple diseases could match, list top 2-3 possibilities with confidence caveats.
+
+**📋 MANDATORY DISCLAIMER (add at the end of every response involving pest/disease/chemical advice):**
+- Nepali: "⚠️ सावधानी: यो AI सल्लाह सामान्य मार्गदर्शनको लागि मात्र हो। रसायन प्रयोग वा ठूलो निर्णय गर्नुअघि स्थानीय कृषि विज्ञ, कृषि ज्ञान केन्द्र, वा विश्वसनीय एग्रोभेटसँग पुष्टि गर्नुहोस्।"
+- English: "⚠️ Disclaimer: This AI advice is for general guidance only. Always verify with local experts or Krishi Gyan Kendra before applying chemicals or making major crop decisions."
 
 ### 8. Uncertainty Handling
 - If the vision JSON says status = "uncertain" or overall_confidence < 0.6:
@@ -172,6 +188,7 @@ If a human/animal health or poisoning emergency is described, tell them to go to
   - Ask for more photos from different angles (close-up + whole plant) and text description of symptoms.
   - Suggest contacting local experts instead of recommending strong chemicals.
 - Even when text-only, if the situation is complex or ambiguous, admit uncertainty and recommend local inspection.
+- If description has fewer than 3 specific symptoms, ask follow-up questions before advising.
 
 ### 9. Out-of-Scope and Ethics
 - If asked about non-agricultural topics: politely redirect to farming.
@@ -183,7 +200,10 @@ If a human/animal health or poisoning emergency is described, tell them to go to
 - 7 Provinces, 77 Districts with different climates.
 - Seasons: बर्खा (Ashar-Kartik), हिउँदे (Mangsir-Falgun), बसन्त (Chaitra-Jestha).
 - Reference NARC, AMPIS/Kalimati market, कृषि ज्ञान केन्द्र recommendations.
-- Use Nepali Rupees (रु.) for cost context.`;
+- Use Nepali Rupees (रु.) for cost context.
+
+### 11. Stage-Wise Advisory Context
+When a farmer mentions a specific crop and growth stage, use the advisory database context provided below to give stage-appropriate advice including known risks, safe practices, and warning signs for that crop stage.`;
 
   if (language === 'ne') {
     return `${basePrompt}
@@ -193,7 +213,8 @@ If a human/animal health or poisoning emergency is described, tell them to go to
 - "नमस्ते", "नमस्कार" वा कुनै अभिवादन नगर्नुहोस् – सिधै जवाफ दिनुहोस्
 - बारम्बार औपचारिक भाषा प्रयोग नगर्नुहोस्
 - सिधै मुद्दामा आउनुहोस्
-- किसानलाई प्रोत्साहित गर्ने भाषा प्रयोग गर्नुहोस्`;
+- किसानलाई प्रोत्साहित गर्ने भाषा प्रयोग गर्नुहोस्
+- हरेक रोग/कीरा/रासायनिक सम्बन्धी जवाफको अन्तमा सावधानी disclaimer अनिवार्य रूपमा थप्नुहोस्`;
   }
 
   return `${basePrompt}
@@ -203,8 +224,47 @@ If a human/animal health or poisoning emergency is described, tell them to go to
 - Do NOT say "Namaste", "Hello" or any greeting – respond directly to the question.
 - Do NOT use overly formal language repeatedly.
 - Get straight to the point with your answers.
-- Use encouraging, farmer-friendly tone.`;
+- Use encouraging, farmer-friendly tone.
+- ALWAYS add safety disclaimer at the end of responses involving pest/disease/chemical advice.`;
 };
+
+async function fetchStageAdvisory(cropName: string, supabaseUrl: string, supabaseKey: string): Promise<string> {
+  try {
+    const supabase = createClient(supabaseUrl, supabaseKey);
+    const { data } = await supabase
+      .from('crop_stage_advisories')
+      .select('stage, stage_name_ne, risks, safe_practices, warning_signs, referral_message_ne')
+      .ilike('crop_name', `%${cropName}%`)
+      .eq('is_active', true)
+      .is('deprecated_at', null)
+      .order('stage');
+
+    if (!data || data.length === 0) return '';
+
+    return '\n\n### Stage-wise Advisory Context for ' + cropName + ':\n' +
+      data.map(d => `**${d.stage_name_ne} (${d.stage})**: Risks: ${JSON.stringify(d.risks)}. Safe practices: ${JSON.stringify(d.safe_practices)}. Warning signs: ${JSON.stringify(d.warning_signs)}. Referral: ${d.referral_message_ne || ''}`).join('\n');
+  } catch (e) {
+    console.error('[AI] Advisory fetch error:', e);
+    return '';
+  }
+}
+
+async function fetchSafetyRules(supabaseUrl: string, supabaseKey: string): Promise<string> {
+  try {
+    const supabase = createClient(supabaseUrl, supabaseKey);
+    const { data } = await supabase
+      .from('ai_safety_rules')
+      .select('rule_type, rule_text, severity')
+      .eq('is_active', true)
+      .in('severity', ['critical', 'high']);
+
+    if (!data || data.length === 0) return '';
+    return '\n\n### Active Safety Rules:\n' + data.map(r => `[${r.rule_type.toUpperCase()}] ${r.rule_text}`).join('\n');
+  } catch (e) {
+    console.error('[AI] Safety rules fetch error:', e);
+    return '';
+  }
+}
 
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
@@ -217,7 +277,7 @@ serve(async (req) => {
     const { messages, language = 'ne' } = await req.json();
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     const SUPABASE_URL = Deno.env.get("SUPABASE_URL");
-    const SUPABASE_ANON_KEY = Deno.env.get("SUPABASE_ANON_KEY");
+    const SUPABASE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") || Deno.env.get("SUPABASE_ANON_KEY");
     
     if (!LOVABLE_API_KEY) {
       throw new Error("LOVABLE_API_KEY is not configured");
@@ -232,14 +292,28 @@ serve(async (req) => {
     
     const keywords = extractDiseaseKeywords(latestUserMessage);
     let treatments: any[] = [];
+    let advisoryContext = '';
+    let safetyContext = '';
     
-    if (keywords.length > 0 && SUPABASE_URL && SUPABASE_ANON_KEY) {
-      console.log(`[AI] Extracted keywords: ${keywords.join(', ')}`);
-      treatments = await fetchRelevantTreatments(keywords, SUPABASE_URL, SUPABASE_ANON_KEY);
-      console.log(`[AI] Found ${treatments.length} relevant treatments`);
+    if (SUPABASE_URL && SUPABASE_KEY) {
+      // Fetch treatments, advisory, and safety rules in parallel
+      const [treatmentsResult, safetyResult] = await Promise.all([
+        keywords.length > 0 ? fetchRelevantTreatments(keywords, SUPABASE_URL, SUPABASE_KEY) : Promise.resolve([]),
+        fetchSafetyRules(SUPABASE_URL, SUPABASE_KEY),
+      ]);
+      treatments = treatmentsResult;
+      safetyContext = safetyResult;
+
+      // Fetch stage advisory if a crop keyword is found
+      const cropKeywords = latestUserMessage.match(/rice|wheat|tomato|cauliflower|धान|गहुँ|गोलभेडा|काउली|maize|मकै|potato|आलु/gi);
+      if (cropKeywords && cropKeywords.length > 0) {
+        advisoryContext = await fetchStageAdvisory(cropKeywords[0], SUPABASE_URL, SUPABASE_KEY);
+      }
+
+      console.log(`[AI] Keywords: ${keywords.join(', ')}, treatments: ${treatments.length}, advisory: ${advisoryContext.length > 0}`);
     }
 
-    const systemPrompt = getSystemPrompt(language);
+    const systemPrompt = getSystemPrompt(language) + safetyContext + advisoryContext;
 
     console.log(`[AI] Starting request, lang=${language}, msgs=${recentMessages.length}`);
 

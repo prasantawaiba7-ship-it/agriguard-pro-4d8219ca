@@ -294,6 +294,45 @@ export type Database = {
           },
         ]
       }
+      ai_safety_rules: {
+        Row: {
+          created_at: string
+          crop_name: string | null
+          id: string
+          is_active: boolean
+          rule_text: string
+          rule_text_ne: string | null
+          rule_type: string
+          scope: string
+          severity: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          crop_name?: string | null
+          id?: string
+          is_active?: boolean
+          rule_text: string
+          rule_text_ne?: string | null
+          rule_type: string
+          scope?: string
+          severity?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          crop_name?: string | null
+          id?: string
+          is_active?: boolean
+          rule_text?: string
+          rule_text_ne?: string | null
+          rule_type?: string
+          scope?: string
+          severity?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       app_settings: {
         Row: {
           category: string
@@ -1018,6 +1057,72 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      crop_stage_advisories: {
+        Row: {
+          created_at: string
+          crop_name: string
+          crop_name_ne: string
+          deprecated_at: string | null
+          id: string
+          is_active: boolean
+          red_lines: Json
+          referral_message: string | null
+          referral_message_ne: string | null
+          reviewed_at: string | null
+          reviewed_by: string | null
+          risks: Json
+          safe_practices: Json
+          season_applicability: string[] | null
+          stage: string
+          stage_name_ne: string
+          updated_at: string
+          version: number
+          warning_signs: Json
+        }
+        Insert: {
+          created_at?: string
+          crop_name: string
+          crop_name_ne: string
+          deprecated_at?: string | null
+          id?: string
+          is_active?: boolean
+          red_lines?: Json
+          referral_message?: string | null
+          referral_message_ne?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          risks?: Json
+          safe_practices?: Json
+          season_applicability?: string[] | null
+          stage: string
+          stage_name_ne: string
+          updated_at?: string
+          version?: number
+          warning_signs?: Json
+        }
+        Update: {
+          created_at?: string
+          crop_name?: string
+          crop_name_ne?: string
+          deprecated_at?: string | null
+          id?: string
+          is_active?: boolean
+          red_lines?: Json
+          referral_message?: string | null
+          referral_message_ne?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          risks?: Json
+          safe_practices?: Json
+          season_applicability?: string[] | null
+          stage?: string
+          stage_name_ne?: string
+          updated_at?: string
+          version?: number
+          warning_signs?: Json
+        }
+        Relationships: []
       }
       crop_treatments: {
         Row: {
