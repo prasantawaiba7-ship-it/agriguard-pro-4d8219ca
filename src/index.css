@@ -110,6 +110,10 @@
     --card-field-icon: 175 55% 35%;
     --card-guide-bg: 45 70% 95%;
     --card-guide-icon: 25 75% 50%;
+    --card-journey-bg: 280 50% 96%;
+    --card-journey-icon: 280 55% 45%;
+    --card-expert-bg: 15 60% 95%;
+    --card-expert-icon: 15 65% 45%;
   }
 
   .dark {
