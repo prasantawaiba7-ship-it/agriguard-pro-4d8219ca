@@ -7,14 +7,17 @@ import { useExpertTicketMessages, useSendExpertTicketMessage, uploadExpertImage 
 import { formatDistanceToNow } from 'date-fns';
 import { TemplatePicker } from './TemplatePicker';
 import { ExpertTemplate } from '@/hooks/useExpertTemplates';
+import { FarmContextLine } from '@/components/farm/FarmContextLine';
 
 interface ExpertTicketChatProps {
   ticketId: string;
   cropName?: string;
   senderRole?: 'farmer' | 'technician';
+  farmId?: string | null;
+  farmCropId?: string | null;
 }
 
-export function ExpertTicketChat({ ticketId, cropName, senderRole = 'farmer' }: ExpertTicketChatProps) {
+export function ExpertTicketChat({ ticketId, cropName, senderRole = 'farmer', farmId, farmCropId }: ExpertTicketChatProps) {
   const { user } = useAuth();
   const { data: messages, isLoading } = useExpertTicketMessages(ticketId);
   const sendMessage = useSendExpertTicketMessage();
@@ -74,6 +77,11 @@ export function ExpertTicketChat({ ticketId, cropName, senderRole = 'farmer' }: 
 
   return (
     <div className="flex flex-col h-full">
+      {(farmId || farmCropId) && (
+        <div className="px-4 pt-3">
+          <FarmContextLine farmId={farmId} farmCropId={farmCropId} />
+        </div>
+      )}
       <div ref={scrollRef} className="flex-1 overflow-y-auto space-y-3 p-4 max-h-[450px]">
         {messages && messages.length > 0 ? messages.map(msg => {
           const isOwn = msg.sender_id === user?.id;

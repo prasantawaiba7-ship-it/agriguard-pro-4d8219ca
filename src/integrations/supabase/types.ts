@@ -1944,6 +1944,8 @@ export type Database = {
         Row: {
           created_at: string
           crop_name: string
+          farm_crop_id: string | null
+          farm_id: string | null
           farmer_id: string
           farmer_phone: string | null
           has_unread_farmer: boolean
@@ -1959,6 +1961,8 @@ export type Database = {
         Insert: {
           created_at?: string
           crop_name: string
+          farm_crop_id?: string | null
+          farm_id?: string | null
           farmer_id: string
           farmer_phone?: string | null
           has_unread_farmer?: boolean
@@ -1974,6 +1978,8 @@ export type Database = {
         Update: {
           created_at?: string
           crop_name?: string
+          farm_crop_id?: string | null
+          farm_id?: string | null
           farmer_id?: string
           farmer_phone?: string | null
           has_unread_farmer?: boolean
@@ -1987,6 +1993,20 @@ export type Database = {
           updated_at?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "expert_tickets_farm_crop_id_fkey"
+            columns: ["farm_crop_id"]
+            isOneToOne: false
+            referencedRelation: "farm_crops"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "expert_tickets_farm_id_fkey"
+            columns: ["farm_id"]
+            isOneToOne: false
+            referencedRelation: "farms"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "expert_tickets_office_id_fkey"
             columns: ["office_id"]
@@ -2047,6 +2067,56 @@ export type Database = {
           user_id?: string | null
         }
         Relationships: []
+      }
+      farm_crops: {
+        Row: {
+          area: number | null
+          created_at: string
+          crop_type: string
+          farm_id: string
+          harvest_date_estimated: string | null
+          id: string
+          season: string | null
+          sowing_date: string | null
+          status: string
+          transplant_date: string | null
+          updated_at: string
+        }
+        Insert: {
+          area?: number | null
+          created_at?: string
+          crop_type: string
+          farm_id: string
+          harvest_date_estimated?: string | null
+          id?: string
+          season?: string | null
+          sowing_date?: string | null
+          status?: string
+          transplant_date?: string | null
+          updated_at?: string
+        }
+        Update: {
+          area?: number | null
+          created_at?: string
+          crop_type?: string
+          farm_id?: string
+          harvest_date_estimated?: string | null
+          id?: string
+          season?: string | null
+          sowing_date?: string | null
+          status?: string
+          transplant_date?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "farm_crops_farm_id_fkey"
+            columns: ["farm_id"]
+            isOneToOne: false
+            referencedRelation: "farms"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       farmer_notification_preferences: {
         Row: {
@@ -2192,6 +2262,48 @@ export type Database = {
           state?: string | null
           updated_at?: string
           user_id?: string
+          village?: string | null
+        }
+        Relationships: []
+      }
+      farms: {
+        Row: {
+          area_unit: string | null
+          created_at: string
+          district: string | null
+          farm_name: string
+          farmer_id: string
+          id: string
+          irrigation_type: string | null
+          main_crops: string[] | null
+          total_area: number | null
+          updated_at: string
+          village: string | null
+        }
+        Insert: {
+          area_unit?: string | null
+          created_at?: string
+          district?: string | null
+          farm_name: string
+          farmer_id: string
+          id?: string
+          irrigation_type?: string | null
+          main_crops?: string[] | null
+          total_area?: number | null
+          updated_at?: string
+          village?: string | null
+        }
+        Update: {
+          area_unit?: string | null
+          created_at?: string
+          district?: string | null
+          farm_name?: string
+          farmer_id?: string
+          id?: string
+          irrigation_type?: string | null
+          main_crops?: string[] | null
+          total_area?: number | null
+          updated_at?: string
           village?: string | null
         }
         Relationships: []
@@ -4144,6 +4256,7 @@ export type Database = {
     }
     Enums: {
       app_role: "admin" | "farmer" | "field_official" | "authority" | "insurer"
+      area_unit: "ropani" | "bigha" | "kattha" | "hectare" | "acre"
       crop_image_source: "ai" | "admin_upload" | "external" | "none"
       crop_stage:
         | "sowing"
@@ -4186,6 +4299,7 @@ export type Database = {
         | "expert_answered"
         | "closed"
       diagnosis_source_type: "rule_engine" | "ai_model" | "human_expert"
+      farm_crop_status: "active" | "completed"
       feedback_status:
         | "pending"
         | "seen"
@@ -4351,6 +4465,7 @@ export const Constants = {
   public: {
     Enums: {
       app_role: ["admin", "farmer", "field_official", "authority", "insurer"],
+      area_unit: ["ropani", "bigha", "kattha", "hectare", "acre"],
       crop_image_source: ["ai", "admin_upload", "external", "none"],
       crop_stage: [
         "sowing",
@@ -4398,6 +4513,7 @@ export const Constants = {
         "closed",
       ],
       diagnosis_source_type: ["rule_engine", "ai_model", "human_expert"],
+      farm_crop_status: ["active", "completed"],
       feedback_status: [
         "pending",
         "seen",

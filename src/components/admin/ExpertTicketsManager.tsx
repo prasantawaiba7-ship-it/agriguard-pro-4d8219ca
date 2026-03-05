@@ -199,7 +199,7 @@ export function ExpertTicketsManager() {
           </p>
         </div>
         <Card className="overflow-hidden">
-          <ExpertTicketChat ticketId={selectedTicketForChat.id} cropName={selectedTicketForChat.crop_name} senderRole="technician" />
+          <ExpertTicketChat ticketId={selectedTicketForChat.id} cropName={selectedTicketForChat.crop_name} senderRole="technician" farmId={(selectedTicketForChat as any).farm_id} farmCropId={(selectedTicketForChat as any).farm_crop_id} />
         </Card>
       </div>
     );

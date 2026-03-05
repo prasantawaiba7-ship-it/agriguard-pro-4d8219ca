@@ -2,17 +2,19 @@ import { useState, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   Camera, Upload, X, Loader2, Send, Mic, MicOff, 
-  Bot, Building2, User, Phone, Mail, ArrowRight, ArrowLeft, Leaf, CheckCircle2
+  Bot, Building2, User, Phone, Mail, ArrowRight, ArrowLeft, Leaf, CheckCircle2, Home
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent } from '@/components/ui/card';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/hooks/useAuth';
 import { useLanguage } from '@/hooks/useLanguage';
 import { useVoiceInput } from '@/hooks/useVoiceInput';
 import { useAgOffices, useTechnicians, useCreateExpertTicket, uploadExpertImage } from '@/hooks/useExpertTickets';
+import { useFarms, useActiveFarmCrops } from '@/hooks/useFarms';
 
 interface AiPrefill {
   imageDataUrl?: string;
@@ -39,6 +41,8 @@ export function AskExpertForm({ prefill, onSubmitted }: AskExpertFormProps) {
   const [formStep, setFormStep] = useState<FormStep>('problem');
   const [selectedOfficeId, setSelectedOfficeId] = useState<string | null>(null);
   const [selectedTechnicianId, setSelectedTechnicianId] = useState<string | null>(null);
+  const [selectedFarmId, setSelectedFarmId] = useState<string | null>(null);
+  const [selectedFarmCropId, setSelectedFarmCropId] = useState<string | null>(null);
   const [cropName, setCropName] = useState(prefill?.cropName || '');
   const [problemTitle, setProblemTitle] = useState(prefill?.aiDisease || '');
   
@@ -50,6 +54,8 @@ export function AskExpertForm({ prefill, onSubmitted }: AskExpertFormProps) {
 
   const { data: offices, isLoading: officesLoading } = useAgOffices();
   const { data: technicians, isLoading: techsLoading } = useTechnicians(selectedOfficeId);
+  const { data: farms } = useFarms();
+  const { data: farmCrops } = useActiveFarmCrops(selectedFarmId);
 
   const selectedOffice = offices?.find(o => o.id === selectedOfficeId);
   const selectedTechnician = technicians?.find(t => t.id === selectedTechnicianId);
@@ -115,6 +121,8 @@ export function AskExpertForm({ prefill, onSubmitted }: AskExpertFormProps) {
         problemTitle: problemTitle.trim(),
         problemDescription: descParts.join(' ') || problemTitle.trim(),
         imageUrls,
+        farmId: selectedFarmId || undefined,
+        farmCropId: selectedFarmCropId || undefined,
       });
 
       setFormStep('done');
@@ -133,6 +141,8 @@ export function AskExpertForm({ prefill, onSubmitted }: AskExpertFormProps) {
     setImages([]);
     setSelectedOfficeId(null);
     setSelectedTechnicianId(null);
+    setSelectedFarmId(null);
+    setSelectedFarmCropId(null);
     setFormStep('problem');
   };
 
@@ -211,6 +221,26 @@ export function AskExpertForm({ prefill, onSubmitted }: AskExpertFormProps) {
                   <label className="text-sm font-medium mb-1 block text-foreground">🌱 बालीको नाम</label>
                   <Input placeholder="जस्तै: धान, गहुँ, तरकारी..." value={cropName} onChange={e => setCropName(e.target.value)} />
                 </div>
+                {/* Farm & Crop context selectors */}
+                {farms && farms.length > 0 && (
+                  <div className="space-y-2 p-3 bg-muted/40 rounded-xl border border-border/40">
+                    <p className="text-xs font-medium text-muted-foreground flex items-center gap-1"><Home className="w-3 h-3" /> खेत सन्दर्भ (वैकल्पिक)</p>
+                    <Select value={selectedFarmId || ''} onValueChange={(v) => { setSelectedFarmId(v || null); setSelectedFarmCropId(null); }}>
+                      <SelectTrigger className="h-9"><SelectValue placeholder="खेत छान्नुहोस्" /></SelectTrigger>
+                      <SelectContent>
+                        {farms.map(f => <SelectItem key={f.id} value={f.id}>{f.farm_name}</SelectItem>)}
+                      </SelectContent>
+                    </Select>
+                    {farmCrops && farmCrops.length > 0 && (
+                      <Select value={selectedFarmCropId || ''} onValueChange={(v) => setSelectedFarmCropId(v || null)}>
+                        <SelectTrigger className="h-9"><SelectValue placeholder="बाली छान्नुहोस्" /></SelectTrigger>
+                        <SelectContent>
+                          {farmCrops.map(c => <SelectItem key={c.id} value={c.id}>{c.crop_type} {c.season ? `(${c.season})` : ''}</SelectItem>)}
+                        </SelectContent>
+                      </Select>
+                    )}
+                  </div>
+                )}
                 <div>
                   <label className="text-sm font-medium mb-1 block text-foreground">समस्याको शीर्षक *</label>
                   <Input placeholder="जस्तै: पातमा पहेंलो दाग" value={problemTitle} onChange={e => setProblemTitle(e.target.value)} />

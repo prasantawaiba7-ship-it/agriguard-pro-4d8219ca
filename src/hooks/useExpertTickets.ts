@@ -37,6 +37,8 @@ export interface ExpertTicket {
   has_unread_technician: boolean;
   created_at: string;
   updated_at: string;
+  farm_id?: string | null;
+  farm_crop_id?: string | null;
   technician?: Technician;
   office?: AgOffice;
 }
@@ -222,6 +224,8 @@ export function useCreateExpertTicket() {
       problemDescription: string;
       imageUrls?: string[];
       farmerPhone?: string;
+      farmId?: string;
+      farmCropId?: string;
     }) => {
       // Ticket goes directly to the chosen technician
       const insertData: any = {
@@ -235,6 +239,8 @@ export function useCreateExpertTicket() {
         status: 'open',
         has_unread_technician: true,
         has_unread_farmer: false,
+        farm_id: data.farmId || null,
+        farm_crop_id: data.farmCropId || null,
       };
 
       const { data: ticket, error } = await (supabase as any)
