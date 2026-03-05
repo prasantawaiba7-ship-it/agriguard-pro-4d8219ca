@@ -1,16 +1,7 @@
-import { Bell, CheckCheck } from 'lucide-react';
+import { Bell } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover';
-import { ScrollArea } from '@/components/ui/scroll-area';
-import {
-  useAppNotifications,
-  useAppNotificationCount,
-  useMarkNotificationRead,
-  useMarkAllNotificationsRead,
-  type AppNotification,
-} from '@/hooks/useAppNotifications';
+import { useAppNotificationCount } from '@/hooks/useAppNotifications';
 import { useNavigate } from 'react-router-dom';
-import { formatDistanceToNow } from 'date-fns';
 
 export function NotificationBell() {
   const { data: unreadCount } = useAppNotificationCount();
