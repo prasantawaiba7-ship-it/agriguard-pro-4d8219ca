@@ -14,6 +14,8 @@ import { DiseaseGuideTab } from '@/components/disease/DiseaseGuideTab';
 import { useAuth } from '@/hooks/useAuth';
 import { useLanguage } from '@/hooks/useLanguage';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Camera, BookOpen, MessageCircleQuestion, ShieldCheck, Sparkles } from 'lucide-react';
+import { motion } from 'framer-motion';
 
 interface AiPrefill {
   imageDataUrl?: string;
@@ -30,7 +32,6 @@ export default function DiseaseDetection() {
   const [activeTab, setActiveTab] = useState('ai');
   const [expertPrefill, setExpertPrefill] = useState<AiPrefill | undefined>();
   
-  // Called when farmer clicks "विज्ञसँग सोध्नुहोस्" from AI result
   const handleAskExpert = useCallback((prefill: {
     imageDataUrl?: string;
     cropName?: string;
@@ -43,11 +44,18 @@ export default function DiseaseDetection() {
   }, []);
 
   const steps = [
-    { step: '१', title: t('stepSelectCrop'), desc: t('stepCropType') },
-    { step: '२', title: t('stepTakePhoto'), desc: t('stepDiseased') },
-    { step: '३', title: t('stepUpload'), desc: t('stepUploadPhoto') },
-    { step: '४', title: t('stepAnalysis'), desc: t('stepAICheck') },
-    { step: '५', title: t('stepTreatment'), desc: t('stepGetAdvice') },
+    { step: '१', title: t('stepSelectCrop'), desc: t('stepCropType'), icon: '🌾' },
+    { step: '२', title: t('stepTakePhoto'), desc: t('stepDiseased'), icon: '📷' },
+    { step: '३', title: t('stepUpload'), desc: t('stepUploadPhoto'), icon: '📤' },
+    { step: '४', title: t('stepAnalysis'), desc: t('stepAICheck'), icon: '🤖' },
+    { step: '५', title: t('stepTreatment'), desc: t('stepGetAdvice'), icon: '💊' },
+  ];
+
+  const tabConfig = [
+    { value: 'ai', label: t('aiInstantCheck'), icon: Camera },
+    { value: 'guide', label: language === 'ne' ? 'रोग गाइड' : 'Disease Guide', icon: BookOpen },
+    { value: 'expert', label: t('askExpert'), icon: MessageCircleQuestion },
+    { value: 'prevention', label: t('preventionTips') || 'रोकथाम', icon: ShieldCheck },
   ];
 
   return (
@@ -61,26 +69,38 @@ export default function DiseaseDetection() {
         <Header />
         
         <main className="container mx-auto px-4 pt-20 sm:pt-24 pb-32 max-w-4xl">
-          <div className="text-center mb-8">
-            <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-primary/8 border border-primary/15 mb-4">
-              <span className="text-sm font-medium text-primary">🌿 {t('diseasePageTitle')}</span>
+          {/* Hero Header */}
+          <motion.div 
+            initial={{ opacity: 0, y: 16 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="text-center mb-10"
+          >
+            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/8 border border-primary/15 mb-5">
+              <Sparkles className="w-3.5 h-3.5 text-primary" />
+              <span className="text-sm font-semibold text-primary">🌿 AI-Powered Detection</span>
             </div>
-            <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold mb-3 text-foreground">
+            <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold mb-4 text-foreground leading-tight">
               {t('diseasePageTitle')}
             </h1>
-            <p className="text-sm sm:text-base text-muted-foreground max-w-xl mx-auto leading-relaxed">
+            <p className="text-base sm:text-lg text-muted-foreground max-w-xl mx-auto leading-relaxed">
               {t('diseasePageSubtitle')}
             </p>
-          </div>
+          </motion.div>
 
           <OutbreakAlertsBanner />
 
-          <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-            <TabsList className="grid w-full grid-cols-2 sm:grid-cols-4 h-auto gap-1 p-1 bg-muted/50 rounded-xl">
-              <TabsTrigger value="ai" className="rounded-lg data-[state=active]:bg-primary data-[state=active]:text-primary-foreground text-sm py-2.5">{t('aiInstantCheck')}</TabsTrigger>
-              <TabsTrigger value="guide" className="rounded-lg data-[state=active]:bg-primary data-[state=active]:text-primary-foreground text-sm py-2.5">{language === 'ne' ? 'रोग गाइड' : 'Disease Guide'}</TabsTrigger>
-              <TabsTrigger value="expert" className="rounded-lg data-[state=active]:bg-primary data-[state=active]:text-primary-foreground text-sm py-2.5">{t('askExpert')}</TabsTrigger>
-              <TabsTrigger value="prevention" className="rounded-lg data-[state=active]:bg-primary data-[state=active]:text-primary-foreground text-sm py-2.5">{t('preventionTips') || 'रोकथाम'}</TabsTrigger>
+          <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-8">
+            <TabsList className="grid w-full grid-cols-2 sm:grid-cols-4 h-auto gap-1.5 p-1.5 bg-muted/50 rounded-2xl">
+              {tabConfig.map((tab) => (
+                <TabsTrigger
+                  key={tab.value}
+                  value={tab.value}
+                  className="rounded-xl data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-md text-sm py-3 gap-2 font-medium transition-all"
+                >
+                  <tab.icon className="w-4 h-4" />
+                  <span>{tab.label}</span>
+                </TabsTrigger>
+              ))}
             </TabsList>
 
             <TabsContent value="ai" className="space-y-6">
@@ -97,10 +117,7 @@ export default function DiseaseDetection() {
             </TabsContent>
 
             <TabsContent value="expert" className="space-y-6">
-              {/* Multi-channel contact hub */}
               <ContactExpertHub onOpenAppForm={() => {}} />
-
-              {/* In-app form */}
               <AskExpertForm 
                 prefill={expertPrefill} 
                 onSubmitted={() => setExpertPrefill(undefined)} 
@@ -117,32 +134,46 @@ export default function DiseaseDetection() {
             </TabsContent>
           </Tabs>
 
-          <div className="mt-12 p-5 sm:p-8 bg-card rounded-2xl border border-border/50 shadow-sm">
-            <h2 className="text-lg sm:text-xl font-semibold mb-5 text-center text-foreground">
+          {/* How to Use Section */}
+          <motion.div 
+            initial={{ opacity: 0, y: 16 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            className="mt-14 p-6 sm:p-10 bg-card rounded-3xl border border-border/50 shadow-sm"
+          >
+            <h2 className="text-xl sm:text-2xl font-bold mb-8 text-center text-foreground">
               {t('howToUse')}
             </h2>
-            <div className="grid grid-cols-3 sm:grid-cols-5 gap-4 sm:gap-5">
+            <div className="grid grid-cols-3 sm:grid-cols-5 gap-5 sm:gap-6">
               {steps.map((item, i) => (
-                <div key={i} className="text-center">
-                  <div className="w-10 h-10 sm:w-12 sm:h-12 mx-auto mb-2.5 rounded-xl bg-primary/10 text-primary flex items-center justify-center font-bold text-sm sm:text-base border border-primary/15">
+                <motion.div 
+                  key={i} 
+                  initial={{ opacity: 0, y: 12 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ delay: i * 0.08 }}
+                  className="text-center"
+                >
+                  <div className="w-14 h-14 sm:w-16 sm:h-16 mx-auto mb-3 rounded-2xl bg-primary/10 text-primary flex items-center justify-center font-bold text-lg border border-primary/15">
                     {item.step}
                   </div>
-                  <h3 className="font-medium text-xs sm:text-sm mb-0.5 text-foreground">{item.title}</h3>
+                  <div className="text-xl mb-1">{item.icon}</div>
+                  <h3 className="font-bold text-xs sm:text-sm mb-0.5 text-foreground">{item.title}</h3>
                   <p className="text-[10px] sm:text-xs text-muted-foreground hidden sm:block">{item.desc}</p>
-                </div>
+                </motion.div>
               ))}
             </div>
 
-            <div className="mt-5 sm:mt-7 p-4 sm:p-5 bg-accent/8 rounded-xl border border-accent/15">
-              <h3 className="font-medium mb-2 flex items-center gap-2 text-sm sm:text-base text-foreground">
+            <div className="mt-8 p-5 sm:p-6 bg-accent/8 rounded-2xl border border-accent/15">
+              <h3 className="font-bold mb-2.5 flex items-center gap-2 text-sm sm:text-base text-foreground">
                 💡 {t('photoTipsTitle')}
               </h3>
-              <ul className="text-xs sm:text-sm text-muted-foreground space-y-1.5">
+              <ul className="text-xs sm:text-sm text-muted-foreground space-y-2">
                 <li>• {t('photoTip1')}</li>
                 <li>• {t('photoTip2')}</li>
               </ul>
             </div>
-          </div>
+          </motion.div>
         </main>
 
         <Footer />
