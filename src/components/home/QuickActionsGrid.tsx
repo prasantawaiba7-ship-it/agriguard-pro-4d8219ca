@@ -1,6 +1,6 @@
 import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
-import { Camera, Cloud, Store, Bot, MapPin, BookOpen } from "lucide-react";
+import { Camera, Cloud, Store, Bot, MapPin, BookOpen, Route, MessageCircleQuestion } from "lucide-react";
 import { useLanguage } from "@/hooks/useLanguage";
 
 const QuickActionsGrid = () => {
@@ -55,49 +55,65 @@ const QuickActionsGrid = () => {
       cardBg: "bg-[hsl(var(--card-guide-bg))]",
       iconCircleBg: "bg-[hsl(var(--card-guide-icon))]",
     },
+    {
+      icon: Route,
+      label: "कृषि यात्रा",
+      sublabel: "तपाईंको खेती कथा",
+      href: "/action-film",
+      cardBg: "bg-[hsl(var(--card-journey-bg))]",
+      iconCircleBg: "bg-[hsl(var(--card-journey-icon))]",
+    },
+    {
+      icon: MessageCircleQuestion,
+      label: "प्राविधिकसँग सोध्नुहोस्",
+      sublabel: "विशेषज्ञ सल्लाह",
+      href: "/ask-expert",
+      cardBg: "bg-[hsl(var(--card-expert-bg))]",
+      iconCircleBg: "bg-[hsl(var(--card-expert-icon))]",
+    },
   ];
 
   return (
-    <section className="py-12 sm:py-16">
+    <section className="py-14 sm:py-20">
       <div className="container mx-auto px-4">
         <motion.div
           initial={{ opacity: 0, y: 16 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
           transition={{ duration: 0.4 }}
-          className="text-center mb-8"
+          className="text-center mb-10"
         >
-          <h2 className="text-xl sm:text-2xl font-bold text-foreground">
+          <h2 className="text-2xl sm:text-3xl font-bold text-foreground">
             {t('whatToDoToday')}
           </h2>
-          <p className="text-sm text-muted-foreground mt-1.5">
+          <p className="text-sm sm:text-base text-muted-foreground mt-2 max-w-md mx-auto">
             {t('quickAccessInfo')}
           </p>
         </motion.div>
 
-        <div className="grid grid-cols-2 md:grid-cols-3 gap-3 sm:gap-4 max-w-3xl mx-auto">
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-5 max-w-5xl mx-auto">
           {quickActions.map((action, index) => (
             <motion.div
               key={action.href}
-              initial={{ opacity: 0, y: 16 }}
+              initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
-              transition={{ duration: 0.3, delay: index * 0.05 }}
+              transition={{ duration: 0.3, delay: index * 0.04 }}
             >
               <Link to={action.href}>
                 <div
-                  className={`relative rounded-2xl p-5 sm:p-6 ${action.cardBg} border border-border/30 hover:border-border/60 transition-all duration-300 hover:shadow-md hover:-translate-y-0.5 active:scale-[0.98] cursor-pointer group min-h-[130px] flex flex-col items-center justify-center`}
+                  className={`relative rounded-2xl p-5 sm:p-7 ${action.cardBg} border border-border/30 hover:border-border/60 transition-all duration-300 hover:shadow-lg hover:-translate-y-1 active:scale-[0.97] cursor-pointer group min-h-[140px] sm:min-h-[160px] flex flex-col items-center justify-center`}
                 >
                   <div
-                    className={`w-12 h-12 sm:w-14 sm:h-14 rounded-2xl ${action.iconCircleBg} flex items-center justify-center mb-3 group-hover:scale-110 transition-transform duration-300`}
+                    className={`w-14 h-14 sm:w-16 sm:h-16 rounded-2xl ${action.iconCircleBg} flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-300 shadow-sm`}
                   >
-                    <action.icon className="w-6 h-6 sm:w-7 sm:h-7 text-white" />
+                    <action.icon className="w-7 h-7 sm:w-8 sm:h-8 text-white" />
                   </div>
                   <div className="text-center">
-                    <div className="text-sm sm:text-base font-semibold text-foreground leading-tight">
+                    <div className="text-sm sm:text-base font-bold text-foreground leading-tight">
                       {action.label}
                     </div>
-                    <div className="text-xs text-muted-foreground mt-1 line-clamp-1">
+                    <div className="text-xs text-muted-foreground mt-1.5 line-clamp-1">
                       {action.sublabel}
                     </div>
                   </div>

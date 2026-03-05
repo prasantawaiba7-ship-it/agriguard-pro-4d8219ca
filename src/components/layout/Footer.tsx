@@ -6,15 +6,15 @@ const Footer = () => {
   const { t } = useLanguage();
 
   return (
-    <footer className="bg-card border-t border-border/40 py-10 sm:py-14">
+    <footer className="bg-card border-t border-border/40 py-12 sm:py-16">
       <div className="container mx-auto px-4">
-        <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-8 sm:gap-10 mb-10">
+        <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-10 sm:gap-12 mb-12">
           <div className="sm:col-span-2 lg:col-span-2">
-            <Link to="/" className="inline-flex items-center gap-2.5 mb-3">
-              <div className="w-9 h-9 rounded-xl bg-primary flex items-center justify-center">
-                <Leaf className="w-4.5 h-4.5 text-primary-foreground" />
+            <Link to="/" className="inline-flex items-center gap-2.5 mb-4">
+              <div className="w-10 h-10 rounded-xl bg-primary flex items-center justify-center shadow-sm">
+                <Leaf className="w-5 h-5 text-primary-foreground" />
               </div>
-              <span className="font-bold text-lg text-foreground">{t('kisanSathi')}</span>
+              <span className="font-bold text-xl text-foreground">{t('kisanSathi')}</span>
             </Link>
             <p className="text-muted-foreground max-w-sm leading-relaxed text-sm">
               {t('footerDescription')}
@@ -22,12 +22,13 @@ const Footer = () => {
           </div>
 
           <div>
-            <h4 className="font-semibold mb-3 text-foreground text-sm">{t('platform')}</h4>
-            <ul className="space-y-2">
+            <h4 className="font-bold mb-4 text-foreground text-sm uppercase tracking-wider">{t('platform')}</h4>
+            <ul className="space-y-3">
               {[
                 { to: "/farmer", label: t('farmerPortal') },
                 { to: "/market", label: t('krishiBazar') },
                 { to: "/krishi-mitra", label: t('kisanSathiAI') },
+                { to: "/action-film", label: "कृषि यात्रा" },
               ].map(link => (
                 <li key={link.to}>
                   <Link to={link.to} className="text-muted-foreground hover:text-foreground transition-colors text-sm">
@@ -39,12 +40,13 @@ const Footer = () => {
           </div>
 
           <div>
-            <h4 className="font-semibold mb-3 text-foreground text-sm">{t('resources')}</h4>
-            <ul className="space-y-2">
+            <h4 className="font-bold mb-4 text-foreground text-sm uppercase tracking-wider">{t('resources')}</h4>
+            <ul className="space-y-3">
               {[
                 { to: "/disease-detection", label: t('diseaseDetection') },
                 { to: "/guides", label: t('farmingGuide') || 'Crop Guides' },
                 { to: "/expert-directory", label: t('contactSupport') },
+                { to: "/ask-expert", label: "प्राविधिकसँग सोध्नुहोस्" },
               ].map(link => (
                 <li key={link.to}>
                   <Link to={link.to} className="text-muted-foreground hover:text-foreground transition-colors text-sm">
@@ -56,8 +58,8 @@ const Footer = () => {
           </div>
         </div>
 
-        <div className="border-t border-border/30 pt-6">
-          <div className="flex flex-col sm:flex-row justify-between items-center gap-3">
+        <div className="border-t border-border/30 pt-8">
+          <div className="flex flex-col sm:flex-row justify-between items-center gap-4">
             <p className="text-xs text-muted-foreground">
               {t('copyright')}
             </p>

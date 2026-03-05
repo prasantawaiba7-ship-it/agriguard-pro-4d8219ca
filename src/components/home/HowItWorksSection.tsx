@@ -7,58 +7,68 @@ const HowItWorksSection = () => {
   const steps = [
     {
       number: "१",
+      emoji: "📷",
       icon: Camera,
       title: "फोटो खिच्नुहोस्",
       desc: "बालीको बिरामी भागको फोटो खिच्नुहोस्",
+      color: "bg-[hsl(var(--card-diagnosis-icon))]",
     },
     {
       number: "२",
+      emoji: "🤖",
       icon: Cpu,
       title: "AI विश्लेषण",
       desc: "AI ले सेकेन्डमा रोग पहिचान गर्छ",
+      color: "bg-primary",
     },
     {
       number: "३",
+      emoji: "📄",
       icon: FileCheck,
       title: "रिपोर्ट पाउनुहोस्",
       desc: "उपचार सहित विस्तृत रिपोर्ट पाउनुहोस्",
+      color: "bg-[hsl(var(--card-market-icon))]",
     },
   ];
 
   return (
-    <section className="py-12 sm:py-16 relative">
-      <div className="container mx-auto px-4">
+    <section className="py-14 sm:py-20 relative">
+      <div className="absolute inset-0 bg-muted/30 pointer-events-none" />
+      <div className="container mx-auto px-4 relative">
         <motion.div
           initial={{ opacity: 0, y: 16 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
           transition={{ duration: 0.4 }}
-          className="text-center mb-10"
+          className="text-center mb-12"
         >
-          <h2 className="text-xl sm:text-2xl font-bold text-foreground">
+          <h2 className="text-2xl sm:text-3xl font-bold text-foreground">
             कसरी काम गर्छ?
           </h2>
-          <p className="text-sm text-muted-foreground mt-1.5">तीन सजिलो चरणमा</p>
+          <p className="text-sm sm:text-base text-muted-foreground mt-2">तीन सजिलो चरणमा</p>
         </motion.div>
 
-        <div className="max-w-3xl mx-auto grid md:grid-cols-3 gap-4 sm:gap-5">
+        <div className="max-w-4xl mx-auto grid md:grid-cols-3 gap-5 sm:gap-6">
           {steps.map((step, index) => (
             <motion.div
               key={step.title}
-              initial={{ opacity: 0, y: 20 }}
+              initial={{ opacity: 0, y: 24 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
-              transition={{ duration: 0.4, delay: index * 0.1 }}
+              transition={{ duration: 0.4, delay: index * 0.12 }}
               className="relative"
             >
-              <div className="bg-card rounded-2xl p-6 h-full border border-border/40 hover:border-primary/20 transition-all duration-300 hover:shadow-md text-center">
-                <div className="w-10 h-10 rounded-full bg-primary text-primary-foreground flex items-center justify-center mx-auto mb-4 text-lg font-bold shadow-md">
+              {/* Connector line between steps */}
+              {index < steps.length - 1 && (
+                <div className="hidden md:block absolute top-16 left-[calc(50%+40px)] w-[calc(100%-40px)] h-[2px] bg-border/50 z-0" />
+              )}
+              
+              <div className="bg-card rounded-2xl p-7 h-full border border-border/40 hover:border-primary/20 transition-all duration-300 hover:shadow-lg text-center relative z-10">
+                <div className={`w-12 h-12 rounded-full ${step.color} text-white flex items-center justify-center mx-auto mb-5 text-xl font-bold shadow-md`}>
                   {step.number}
                 </div>
-                <div className="w-14 h-14 rounded-2xl bg-primary/8 flex items-center justify-center mx-auto mb-4">
-                  <step.icon className="w-7 h-7 text-primary" />
-                </div>
-                <h3 className="text-base font-bold text-foreground mb-1.5">{step.title}</h3>
+                <div className="text-3xl mb-3">{step.emoji}</div>
+                <h3 className="text-lg font-bold text-foreground mb-2">{step.title}</h3>
                 <p className="text-sm text-muted-foreground leading-relaxed">{step.desc}</p>
               </div>
             </motion.div>
@@ -69,12 +79,11 @@ const HowItWorksSection = () => {
           initial={{ opacity: 0 }}
           whileInView={{ opacity: 1 }}
           viewport={{ once: true }}
-          transition={{ duration: 0.4, delay: 0.3 }}
-          className="text-center mt-8"
+          transition={{ duration: 0.4, delay: 0.4 }}
+          className="text-center mt-10"
         >
           <Link to="/disease-detection">
-            <Button size="lg" className="group rounded-full px-8 py-6 text-base font-semibold shadow-md">
-              <Camera className="w-5 h-5 mr-2" />
+            <Button size="lg" className="group rounded-full px-10 py-7 text-base font-semibold shadow-lg">
               अहिले प्रयोग गर्नुहोस्
               <ArrowRight className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform" />
             </Button>
