@@ -143,8 +143,18 @@ export function FarmerSidebar({ onTabChange }: FarmerSidebarProps) {
                 </div>
               </div>
 
-              {/* Logout at bottom */}
-              <div className="p-3 border-t border-border/30">
+              {/* Profile + Logout at bottom */}
+              <div className="p-3 border-t border-border/30 space-y-0.5">
+                <button
+                  onClick={() => {
+                    onTabChange("profile");
+                    setIsOpen(false);
+                  }}
+                  className="flex items-center gap-3 w-full px-3 py-2.5 rounded-xl text-sm font-medium text-foreground hover:bg-muted transition-colors"
+                >
+                  <User className="w-4.5 h-4.5 text-muted-foreground" />
+                  👤 प्रोफाइल
+                </button>
                 <button
                   onClick={() => setShowLogoutDialog(true)}
                   className="flex items-center gap-3 w-full px-3 py-2.5 rounded-xl text-sm font-medium text-destructive hover:bg-destructive/10 transition-colors"
