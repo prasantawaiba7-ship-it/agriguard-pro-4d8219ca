@@ -386,119 +386,119 @@ const AdminDashboard = () => {
               <TabsList className="flex flex-wrap w-full gap-1 h-auto p-2">
                 <TabsTrigger value="overview" className="flex items-center gap-2">
                   <BarChart3 className="h-4 w-4" />
-                  <span className="hidden sm:inline">Overview</span>
+                  <span className="hidden sm:inline">Overview / अवलोकन</span>
                 </TabsTrigger>
                 <TabsTrigger value="disease" className="flex items-center gap-2">
                   <Bug className="h-4 w-4" />
-                  <span className="hidden sm:inline">Disease</span>
+                  <span className="hidden sm:inline">Disease / रोग</span>
                 </TabsTrigger>
                 <TabsTrigger value="users" className="flex items-center gap-2">
                   <Users className="h-4 w-4" />
-                  <span className="hidden sm:inline">Users</span>
+                  <span className="hidden sm:inline">Users / प्रयोगकर्ता</span>
                 </TabsTrigger>
                 <TabsTrigger value="subscriptions" className="flex items-center gap-2">
                   <Crown className="h-4 w-4" />
-                  <span className="hidden sm:inline">Subscriptions</span>
+                  <span className="hidden sm:inline">Subscriptions / सदस्यता</span>
                 </TabsTrigger>
                 <TabsTrigger value="plans" className="flex items-center gap-2">
                   <Star className="h-4 w-4" />
-                  <span className="hidden sm:inline">Plans</span>
+                  <span className="hidden sm:inline">Plans / योजना</span>
                 </TabsTrigger>
                 <TabsTrigger value="reports" className="flex items-center gap-2">
                   <Database className="h-4 w-4" />
-                  <span className="hidden sm:inline">Reports</span>
+                  <span className="hidden sm:inline">Reports / प्रतिवेदन</span>
                 </TabsTrigger>
                 <TabsTrigger value="content" className="flex items-center gap-2">
                   <MessageSquare className="h-4 w-4" />
-                  <span className="hidden sm:inline">Content</span>
+                  <span className="hidden sm:inline">Content / सामग्री</span>
                 </TabsTrigger>
                 <TabsTrigger value="email" className="flex items-center gap-2">
                   <Bell className="h-4 w-4" />
-                  <span className="hidden sm:inline">Email</span>
+                  <span className="hidden sm:inline">Email / इमेल</span>
                 </TabsTrigger>
                 <TabsTrigger value="settings" className="flex items-center gap-2">
                   <Settings className="h-4 w-4" />
-                  <span className="hidden sm:inline">Settings</span>
+                  <span className="hidden sm:inline">Settings / सेटिङ</span>
                 </TabsTrigger>
                 <TabsTrigger value="crops" className="flex items-center gap-2">
                   <Leaf className="h-4 w-4" />
-                  <span className="hidden sm:inline">बाली</span>
+                  <span className="hidden sm:inline">Crops / बाली</span>
                 </TabsTrigger>
                 <TabsTrigger value="activity" className="flex items-center gap-2">
                   <RefreshCw className="h-4 w-4" />
-                  <span className="hidden sm:inline">Activity</span>
+                  <span className="hidden sm:inline">Activity / गतिविधि</span>
                 </TabsTrigger>
                 <TabsTrigger value="officers" className="flex items-center gap-2">
                   <Users className="h-4 w-4" />
-                  <span className="hidden sm:inline">Officers</span>
+                  <span className="hidden sm:inline">Officers / अधिकारी</span>
                 </TabsTrigger>
                 <TabsTrigger value="experts" className="flex items-center gap-2">
                   <Shield className="h-4 w-4" />
-                  <span className="hidden sm:inline">कृषि विज्ञ</span>
+                  <span className="hidden sm:inline">Experts / कृषि विज्ञ</span>
                 </TabsTrigger>
                 <TabsTrigger value="treatments" className="flex items-center gap-2">
                   <PlayCircle className="h-4 w-4" />
-                  <span className="hidden sm:inline">उपचार</span>
+                  <span className="hidden sm:inline">Treatments / उपचार</span>
                 </TabsTrigger>
                 <TabsTrigger value="guides" className="flex items-center gap-2">
                   <Leaf className="h-4 w-4" />
-                  <span className="hidden sm:inline">Guides</span>
+                  <span className="hidden sm:inline">Guides / गाइड</span>
                 </TabsTrigger>
                 <TabsTrigger value="market" className="flex items-center gap-2">
                   <TrendingUp className="h-4 w-4" />
-                  <span className="hidden sm:inline">बजार भाउ</span>
+                  <span className="hidden sm:inline">Market Price / बजार भाउ</span>
                 </TabsTrigger>
                 <TabsTrigger value="daily-market" className="flex items-center gap-2">
                   <Store className="h-4 w-4" />
-                  <span className="hidden sm:inline">दैनिक मूल्य</span>
+                  <span className="hidden sm:inline">Daily Price / दैनिक मूल्य</span>
                 </TabsTrigger>
                 <TabsTrigger value="crops-master" className="flex items-center gap-2">
                   <LeafyGreen className="h-4 w-4" />
-                  <span className="hidden sm:inline">बाली Master</span>
+                  <span className="hidden sm:inline">Crops Master / बाली Master</span>
                 </TabsTrigger>
                 <TabsTrigger value="locations" className="flex items-center gap-2">
                   <MapPin className="h-4 w-4" />
-                  <span className="hidden sm:inline">स्थान</span>
+                  <span className="hidden sm:inline">Locations / स्थान</span>
                 </TabsTrigger>
                 <TabsTrigger value="markets" className="flex items-center gap-2">
                   <Store className="h-4 w-4" />
-                  <span className="hidden sm:inline">बजारहरू</span>
+                  <span className="hidden sm:inline">Markets / बजारहरू</span>
                 </TabsTrigger>
                 <TabsTrigger value="crop-photos" className="flex items-center gap-2">
                   <ImageIcon className="h-4 w-4" />
-                  <span className="hidden sm:inline">बाली फोटो</span>
+                  <span className="hidden sm:inline">Crop Photos / बाली फोटो</span>
                 </TabsTrigger>
                 <TabsTrigger value="coverage" className="flex items-center gap-2">
                   <BarChart3 className="h-4 w-4" />
-                  <span className="hidden sm:inline">कभरेज</span>
+                  <span className="hidden sm:inline">Coverage / कभरेज</span>
                 </TabsTrigger>
                 <TabsTrigger value="feedback" className="flex items-center gap-2">
                   <MessageSquare className="h-4 w-4" />
-                  <span className="hidden sm:inline">Feedback</span>
+                  <span className="hidden sm:inline">Feedback / प्रतिक्रिया</span>
                 </TabsTrigger>
                 <TabsTrigger value="diagnosis-cases" className="flex items-center gap-2">
                   <Bug className="h-4 w-4" />
-                  <span className="hidden sm:inline">रोग केस</span>
+                  <span className="hidden sm:inline">Disease Cases / रोग केस</span>
                 </TabsTrigger>
                 <TabsTrigger value="ticket-cases" className="flex items-center gap-2">
                   <MessageSquare className="h-4 w-4" />
-                  <span className="hidden sm:inline">टिकट केस</span>
+                  <span className="hidden sm:inline">Ticket Cases / टिकट केस</span>
                 </TabsTrigger>
                 <TabsTrigger value="expert-tickets" className="flex items-center gap-2">
                   <UserPlus className="h-4 w-4" />
-                  <span className="hidden sm:inline">विज्ञ टिकट</span>
+                  <span className="hidden sm:inline">Expert Tickets / विज्ञ टिकट</span>
                 </TabsTrigger>
                 <TabsTrigger value="technician-mgmt" className="flex items-center gap-2">
                   <Users className="h-4 w-4" />
-                  <span className="hidden sm:inline">प्राविधिक</span>
+                  <span className="hidden sm:inline">Technicians / प्राविधिक</span>
                 </TabsTrigger>
                 <TabsTrigger value="expert-templates" className="flex items-center gap-2">
                   <FileText className="h-4 w-4" />
-                  <span className="hidden sm:inline">सिफारिश Templates</span>
+                  <span className="hidden sm:inline">Templates / सिफारिश</span>
                 </TabsTrigger>
                 <TabsTrigger value="pilot-metrics" className="flex items-center gap-2">
                   <TrendingUp className="h-4 w-4" />
-                  <span className="hidden sm:inline">📊 Metrics</span>
+                  <span className="hidden sm:inline">📊 Metrics / मेट्रिक्स</span>
                 </TabsTrigger>
               </TabsList>
 
