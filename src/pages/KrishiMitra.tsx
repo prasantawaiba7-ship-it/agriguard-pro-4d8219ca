@@ -1,12 +1,19 @@
 import { Helmet } from "react-helmet-async";
 import { useRef } from "react";
+import { useNavigate } from "react-router-dom";
 import { OnScreenAssistant } from "@/components/ai/OnScreenAssistant";
-import { FarmerBottomNav } from "@/components/layout/FarmerBottomNav";
+import { FarmerBottomNav, type MainTab } from "@/components/layout/FarmerBottomNav";
 import { useLanguage } from "@/hooks/useLanguage";
 
 const KrishiMitra = () => {
   const inputRef = useRef<HTMLInputElement>(null);
   const { t } = useLanguage();
+  const navigate = useNavigate();
+
+  const handleTabChange = (tab: MainTab) => {
+    // Navigate to farmer dashboard with the selected tab
+    navigate(`/farmer?tab=${tab}`);
+  };
 
   return (
     <>
@@ -22,7 +29,7 @@ const KrishiMitra = () => {
             inputRef={inputRef}
           />
         </main>
-        <FarmerBottomNav />
+        <FarmerBottomNav activeTab="ai" onTabChange={handleTabChange} />
       </div>
     </>
   );
