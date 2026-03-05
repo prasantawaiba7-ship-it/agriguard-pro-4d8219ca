@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
@@ -13,7 +13,7 @@ import { TreatmentCalendar } from "@/components/farmer/TreatmentCalendar";
 import WeatherPlantingAlerts from "@/components/farmer/WeatherPlantingAlerts";
 import { LanguageSelector } from "@/components/farmer/LanguageSelector";
 import { SoilAdvisoryCard } from "@/components/soil/SoilAdvisoryCard";
-import { WeatherWidget } from "@/components/farmer/WeatherWidget";
+import { NotificationBell } from "@/components/notifications/NotificationBell";
 import { useAuth } from "@/hooks/useAuth";
 import { useLanguage } from "@/hooks/useLanguage";
 import { usePlots, useCropPhotos, useCreatePlot, useUploadPhoto, useDashboardStats } from "@/hooks/useFarmerData";
@@ -21,9 +21,10 @@ import { useFields } from "@/hooks/useFields";
 import { Helmet } from "react-helmet-async";
 import {
   Camera, MapPin, Calendar, Leaf, Upload, History, CheckCircle2,
-  AlertTriangle, Plus, Loader2, Cloud, LogOut, User, Sparkles,
-  WifiOff, Bug, CloudSun, Stethoscope, ArrowRight, Store, Bot,
-  BookOpen, ChevronRight, Bell, Sun, Droplets,
+  AlertTriangle, Plus, Loader2, User, Sparkles,
+  Bug, CloudSun, Stethoscope, Store, Bot,
+  BookOpen, ChevronRight, Bell, Sun, Droplets, CloudRain,
+  Sprout, TrendingUp, MessageSquare,
 } from "lucide-react";
 import { RadioModePanel } from "@/components/radio/RadioModePanel";
 import { Database } from "@/integrations/supabase/types";
@@ -145,18 +146,14 @@ const FarmerDashboard = () => {
 
   if (!user) return null;
 
-  const quickActions = [
-    { icon: Camera, label: "रोग पहिचान", desc: "बालीको फोटो स्क्यान", href: "/disease-detection", color: "bg-[hsl(var(--card-diagnosis-bg))]", iconColor: "text-[hsl(var(--card-diagnosis-icon))]" },
-    { icon: Bot, label: "AI सहायक", desc: "AI सँग सोध्नुहोस्", href: "/krishi-mitra", color: "bg-[hsl(var(--card-ai-bg))]", iconColor: "text-[hsl(var(--card-ai-icon))]" },
-    { icon: CloudSun, label: "मौसम", desc: "आजको मौसम हेर्नुहोस्", onClick: () => setActiveTab("weather"), color: "bg-[hsl(var(--card-weather-bg))]", iconColor: "text-[hsl(var(--card-weather-icon))]" },
-    { icon: Store, label: "बजार भाउ", desc: "कृषि बजार मूल्य", href: "/market", color: "bg-[hsl(var(--card-market-bg))]", iconColor: "text-[hsl(var(--card-market-icon))]" },
-  ];
+  const firstName = profile?.full_name?.split(' ')[0] || 'किसान';
+  const location_ = profile?.district || profile?.state || 'Nepal';
 
-  const farmTools = [
-    { icon: MapPin, label: "मेरो खेत", desc: `${stats?.plots || 0} plots`, onClick: () => setActiveTab("plots") },
-    { icon: Calendar, label: "कृषि कार्य", desc: "गतिविधि लग", href: "/activities" },
-    { icon: Stethoscope, label: "उपचार", desc: "क्यालेन्डर", onClick: () => setActiveTab("treatments") },
-    { icon: BookOpen, label: "खेती गाइड", desc: "बाली सुझाव", href: "/guides" },
+  const quickActions = [
+    { icon: Camera, label: "📷 रोग पहिचान", desc: "बालीको फोटो स्क्यान", href: "/disease-detection", bg: "bg-[hsl(var(--card-diagnosis-bg))]", iconColor: "text-[hsl(var(--card-diagnosis-icon))]" },
+    { icon: Bot, label: "🤖 AI सहायक", desc: "AI सँग सोध्नुहोस्", href: "/krishi-mitra", bg: "bg-[hsl(var(--card-ai-bg))]", iconColor: "text-[hsl(var(--card-ai-icon))]" },
+    { icon: Store, label: "📊 बजार भाउ", desc: "कृषि बजार मूल्य", href: "/market", bg: "bg-[hsl(var(--card-market-bg))]", iconColor: "text-[hsl(var(--card-market-icon))]" },
+    { icon: CloudSun, label: "🌦 मौसम", desc: "आजको मौसम हेर्नुहोस्", onClick: () => setActiveTab("weather"), bg: "bg-[hsl(var(--card-weather-bg))]", iconColor: "text-[hsl(var(--card-weather-icon))]" },
   ];
 
   const tabItems = [
@@ -178,12 +175,13 @@ const FarmerDashboard = () => {
       </Helmet>
 
       <div className="min-h-screen bg-background">
-        {/* Minimal Top Bar */}
+        {/* ── Simplified Header ── */}
         <div className="sticky top-0 z-40 bg-card/95 backdrop-blur-xl border-b border-border/30">
-          <div className="flex items-center justify-between px-4 h-14">
-            <div className="flex items-center gap-3">
+          <div className="flex items-center justify-between px-4 h-16">
+            {/* Avatar + Greeting + Location */}
+            <div className="flex items-center gap-3 min-w-0">
               <div
-                className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center cursor-pointer overflow-hidden"
+                className="w-11 h-11 rounded-full bg-primary/10 flex items-center justify-center cursor-pointer overflow-hidden flex-shrink-0 ring-2 ring-primary/20"
                 onClick={() => navigate('/farmer/profile')}
               >
                 {profile?.avatar_url ? (
@@ -192,21 +190,26 @@ const FarmerDashboard = () => {
                   <User className="w-5 h-5 text-primary" />
                 )}
               </div>
-              <div>
-                <h1 className="text-base font-bold text-foreground leading-tight">
-                  नमस्ते, {profile?.full_name?.split(' ')[0] || 'किसान'} 👋
+              <div className="min-w-0">
+                <h1 className="text-[15px] font-bold text-foreground leading-tight truncate">
+                  नमस्ते {firstName} 👋
                 </h1>
-                <p className="text-xs text-muted-foreground flex items-center gap-1">
-                  <MapPin className="w-3 h-3" />
-                  {profile?.district || profile?.state || 'Nepal'}
-                </p>
+                <div className="flex items-center gap-2 text-xs text-muted-foreground mt-0.5">
+                  <span className="flex items-center gap-0.5">
+                    <MapPin className="w-3 h-3" /> {location_}
+                  </span>
+                  <span className="text-border">•</span>
+                  <span className="flex items-center gap-0.5">
+                    <Sun className="w-3 h-3 text-amber-500" /> 27°C
+                  </span>
+                </div>
               </div>
             </div>
-            <div className="flex items-center gap-2">
+
+            {/* Right actions */}
+            <div className="flex items-center gap-1 flex-shrink-0">
+              <NotificationBell />
               <LanguageSelector />
-              <Button variant="ghost" size="icon" className="rounded-full w-9 h-9" onClick={() => navigate('/farmer?tab=weather')}>
-                <Bell className="w-4.5 h-4.5 text-muted-foreground" />
-              </Button>
             </div>
           </div>
         </div>
@@ -214,7 +217,7 @@ const FarmerDashboard = () => {
         <main className="pb-24">
           {/* Scrollable Tab Bar (only show when not on home) */}
           {activeTab !== "home" && (
-            <div className="sticky top-14 z-30 bg-background/95 backdrop-blur-sm border-b border-border/20 px-3 py-2">
+            <div className="sticky top-16 z-30 bg-background/95 backdrop-blur-sm border-b border-border/20 px-3 py-2">
               <div className="flex gap-1.5 overflow-x-auto no-scrollbar">
                 {tabItems.map((tab) => (
                   <button
@@ -234,7 +237,7 @@ const FarmerDashboard = () => {
             </div>
           )}
 
-          <div className="px-4 pt-5">
+          <div className="px-4 pt-4">
             <AnimatePresence mode="wait">
               <motion.div
                 key={activeTab}
@@ -245,154 +248,171 @@ const FarmerDashboard = () => {
               >
                 {/* ===== HOME TAB ===== */}
                 {activeTab === "home" && (
-                  <div className="space-y-6">
-                    {/* Weather Mini Card */}
-                    <Card className="border-border/30 overflow-hidden">
-                      <CardContent className="p-4">
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center gap-3">
-                            <div className="w-12 h-12 rounded-2xl bg-[hsl(var(--card-weather-bg))] flex items-center justify-center">
-                              <Sun className="w-6 h-6 text-[hsl(var(--card-weather-icon))]" />
-                            </div>
-                            <div>
-                              <p className="text-sm font-semibold text-foreground">आजको मौसम</p>
-                              <p className="text-xs text-muted-foreground">
-                                🌤️ 27°C • वर्षा 30%
-                              </p>
-                            </div>
-                          </div>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            className="rounded-full text-xs text-primary"
-                            onClick={() => setActiveTab("weather")}
-                          >
-                            विवरण
-                            <ChevronRight className="w-3.5 h-3.5 ml-0.5" />
-                          </Button>
-                        </div>
-                      </CardContent>
-                    </Card>
+                  <div className="space-y-5">
 
-                    {/* Smart Alert */}
-                    <motion.div
-                      initial={{ opacity: 0, scale: 0.98 }}
-                      animate={{ opacity: 1, scale: 1 }}
-                      className="bg-warning/8 border border-warning/20 rounded-2xl p-4 flex items-start gap-3"
-                    >
-                      <div className="w-9 h-9 rounded-xl bg-warning/15 flex items-center justify-center flex-shrink-0 mt-0.5">
-                        <AlertTriangle className="w-4.5 h-4.5 text-warning" />
-                      </div>
-                      <div>
-                        <p className="text-sm font-semibold text-foreground">⚠️ आज वर्षा सम्भावना छ</p>
-                        <p className="text-xs text-muted-foreground mt-0.5">
-                          आज pesticide spray नगर्नुहोस्। मौसम सफा भएपछि गर्नुहोस्।
-                        </p>
-                      </div>
-                    </motion.div>
-
-                    {/* Quick Actions - 2x2 Grid */}
-                    <div>
-                      <h2 className="text-base font-bold text-foreground mb-3">⚡ छिटो कार्य</h2>
-                      <div className="grid grid-cols-2 gap-3">
+                    {/* ── Section 1: Quick Actions ── */}
+                    <section>
+                      <h2 className="text-sm font-bold text-foreground mb-2.5 flex items-center gap-1.5">
+                        <span className="text-base">⚡</span> छिटो कार्य
+                      </h2>
+                      <div className="grid grid-cols-2 gap-2.5">
                         {quickActions.map((action, i) => (
                           <motion.div
                             key={action.label}
-                            initial={{ opacity: 0, y: 8 }}
+                            initial={{ opacity: 0, y: 10 }}
                             animate={{ opacity: 1, y: 0 }}
                             transition={{ delay: i * 0.05 }}
                           >
                             <Card
-                              className={`${action.color} border-0 cursor-pointer active:scale-[0.97] transition-transform`}
+                              className={`${action.bg} border-0 cursor-pointer active:scale-[0.97] transition-transform shadow-sm`}
                               onClick={() => action.href ? navigate(action.href) : action.onClick?.()}
                             >
-                              <CardContent className="p-4 flex flex-col gap-3">
-                                <div className={`w-11 h-11 rounded-xl bg-card/80 flex items-center justify-center`}>
-                                  <action.icon className={`w-5.5 h-5.5 ${action.iconColor}`} />
+                              <CardContent className="p-3.5">
+                                <div className={`w-10 h-10 rounded-xl bg-card/80 backdrop-blur-sm flex items-center justify-center mb-2.5`}>
+                                  <action.icon className={`w-5 h-5 ${action.iconColor}`} />
                                 </div>
-                                <div>
-                                  <h3 className="text-sm font-bold text-foreground">{action.label}</h3>
-                                  <p className="text-[11px] text-muted-foreground">{action.desc}</p>
-                                </div>
+                                <h3 className="text-[13px] font-bold text-foreground leading-tight">{action.label}</h3>
+                                <p className="text-[11px] text-muted-foreground mt-0.5">{action.desc}</p>
                               </CardContent>
                             </Card>
                           </motion.div>
                         ))}
                       </div>
-                    </div>
+                    </section>
 
-                    {/* Quick Stats Row */}
-                    <div className="grid grid-cols-4 gap-2">
-                      {[
-                        { label: "Plots", value: stats?.plots || 0, icon: Leaf },
-                        { label: "फोटो", value: stats?.photos || 0, icon: Camera },
-                        { label: "स्वस्थ", value: stats?.healthyCrops || 0, icon: CheckCircle2 },
-                        { label: "अलर्ट", value: stats?.alerts || 0, icon: AlertTriangle },
-                      ].map((s) => (
-                        <Card key={s.label} className="border-border/30">
-                          <CardContent className="p-3 text-center">
-                            <s.icon className="w-4 h-4 mx-auto text-muted-foreground mb-1" />
-                            <p className="text-lg font-bold text-foreground">{s.value}</p>
-                            <p className="text-[10px] text-muted-foreground">{s.label}</p>
+                    {/* ── Section 2: My Farm ── */}
+                    <section>
+                      <div className="flex items-center justify-between mb-2.5">
+                        <h2 className="text-sm font-bold text-foreground flex items-center gap-1.5">
+                          <span className="text-base">🌱</span> मेरो खेत
+                        </h2>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="text-xs text-primary h-7 px-2"
+                          onClick={() => navigate('/fields')}
+                        >
+                          सबै हेर्नुहोस् <ChevronRight className="w-3.5 h-3.5 ml-0.5" />
+                        </Button>
+                      </div>
+
+                      {fields.length > 0 || (plots && plots.length > 0) ? (
+                        <div className="space-y-2">
+                          {/* Show first 2 fields/plots as summary cards */}
+                          {(fields.length > 0 ? fields.slice(0, 2) : plots?.slice(0, 2))?.map((item: any) => (
+                            <Card key={item.id} className="border-border/30 shadow-sm">
+                              <CardContent className="p-3 flex items-center gap-3">
+                                <div className="w-10 h-10 rounded-xl bg-primary/8 flex items-center justify-center flex-shrink-0">
+                                  <Sprout className="w-5 h-5 text-primary" />
+                                </div>
+                                <div className="flex-1 min-w-0">
+                                  <h3 className="text-sm font-semibold text-foreground truncate">
+                                    {item.field_name || item.plot_name || 'खेत'}
+                                  </h3>
+                                  <p className="text-[11px] text-muted-foreground">
+                                    {item.crop_type ? String(item.crop_type).replace('_', ' ') : ''} 
+                                    {item.area_hectares ? ` • ${item.area_hectares} ha` : item.size_value ? ` • ${item.size_value} ${item.size_unit || ''}` : ''}
+                                  </p>
+                                </div>
+                                <ChevronRight className="w-4 h-4 text-muted-foreground flex-shrink-0" />
+                              </CardContent>
+                            </Card>
+                          ))}
+                        </div>
+                      ) : (
+                        <Card className="border-dashed border-2 border-border/40 shadow-none">
+                          <CardContent className="flex flex-col items-center py-8">
+                            <div className="w-14 h-14 rounded-2xl bg-primary/8 flex items-center justify-center mb-3">
+                              <Sprout className="w-7 h-7 text-primary" />
+                            </div>
+                            <p className="text-sm text-muted-foreground mb-3 text-center">
+                              अहिले तपाईंको खेत जानकारी छैन।
+                            </p>
+                            <Button
+                              size="sm"
+                              className="rounded-full px-5"
+                              onClick={() => navigate('/fields')}
+                            >
+                              <Plus className="w-4 h-4 mr-1" />
+                              नयाँ खेत थप्नुहोस्
+                            </Button>
                           </CardContent>
                         </Card>
-                      ))}
-                    </div>
+                      )}
+                    </section>
 
-                    {/* Farm Management Section */}
-                    <div>
-                      <h2 className="text-base font-bold text-foreground mb-3">🌱 खेत व्यवस्थापन</h2>
+                    {/* ── Section 3: Alerts ── */}
+                    <section>
+                      <h2 className="text-sm font-bold text-foreground mb-2.5 flex items-center gap-1.5">
+                        <span className="text-base">🔔</span> अलर्ट
+                      </h2>
                       <div className="space-y-2">
-                        {farmTools.map((tool) => (
-                          <Card
-                            key={tool.label}
-                            className="border-border/30 cursor-pointer active:scale-[0.99] transition-transform"
-                            onClick={() => tool.href ? navigate(tool.href) : tool.onClick?.()}
+                        {[
+                          { icon: CloudRain, label: "🌧️ वर्षा चेतावनी", desc: "भोलि भारी वर्षा हुने सम्भावना छ। आज spray नगर्नुहोस्।", bg: "bg-blue-50 dark:bg-blue-950/30", border: "border-blue-200/60 dark:border-blue-800/40", iconColor: "text-blue-500" },
+                          { icon: Bug, label: "⚠️ रोग चेतावनी", desc: "तपाईंको क्षेत्रमा Late Blight रिपोर्ट भएको छ।", bg: "bg-amber-50 dark:bg-amber-950/30", border: "border-amber-200/60 dark:border-amber-800/40", iconColor: "text-amber-500" },
+                          { icon: TrendingUp, label: "📈 बजार मूल्य सूचना", desc: "टमाटरको भाउ बढेको छ — रु. ४५/kg", bg: "bg-emerald-50 dark:bg-emerald-950/30", border: "border-emerald-200/60 dark:border-emerald-800/40", iconColor: "text-emerald-500" },
+                        ].map((alert, i) => (
+                          <motion.div
+                            key={alert.label}
+                            initial={{ opacity: 0, x: -8 }}
+                            animate={{ opacity: 1, x: 0 }}
+                            transition={{ delay: i * 0.06 }}
                           >
-                            <CardContent className="p-3.5 flex items-center gap-3">
-                              <div className="w-10 h-10 rounded-xl bg-primary/8 flex items-center justify-center">
-                                <tool.icon className="w-5 h-5 text-primary" />
-                              </div>
-                              <div className="flex-1 min-w-0">
-                                <h3 className="text-sm font-semibold text-foreground">{tool.label}</h3>
-                                <p className="text-[11px] text-muted-foreground">{tool.desc}</p>
-                              </div>
-                              <ChevronRight className="w-4 h-4 text-muted-foreground flex-shrink-0" />
+                            <Card className={`${alert.bg} ${alert.border} border shadow-none`}>
+                              <CardContent className="p-3 flex items-start gap-3">
+                                <div className="w-9 h-9 rounded-lg bg-card/80 flex items-center justify-center flex-shrink-0 mt-0.5">
+                                  <alert.icon className={`w-4.5 h-4.5 ${alert.iconColor}`} />
+                                </div>
+                                <div className="min-w-0 flex-1">
+                                  <p className="text-[13px] font-semibold text-foreground">{alert.label}</p>
+                                  <p className="text-[11px] text-muted-foreground mt-0.5 leading-relaxed">{alert.desc}</p>
+                                </div>
+                              </CardContent>
+                            </Card>
+                          </motion.div>
+                        ))}
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="w-full text-xs text-primary h-8"
+                          onClick={() => navigate('/notifications')}
+                        >
+                          सबै सूचना हेर्नुहोस् <ChevronRight className="w-3.5 h-3.5 ml-0.5" />
+                        </Button>
+                      </div>
+                    </section>
+
+                    {/* ── Section 4: Quick Stats ── */}
+                    <section>
+                      <div className="grid grid-cols-4 gap-2">
+                        {[
+                          { label: "खेत", value: stats?.plots || fields.length || 0, icon: Leaf },
+                          { label: "फोटो", value: stats?.photos || 0, icon: Camera },
+                          { label: "स्वस्थ", value: stats?.healthyCrops || 0, icon: CheckCircle2 },
+                          { label: "अलर्ट", value: stats?.alerts || 0, icon: AlertTriangle },
+                        ].map((s) => (
+                          <Card key={s.label} className="border-border/30 shadow-sm">
+                            <CardContent className="p-2.5 text-center">
+                              <s.icon className="w-4 h-4 mx-auto text-muted-foreground mb-1" />
+                              <p className="text-lg font-bold text-foreground leading-none">{s.value}</p>
+                              <p className="text-[10px] text-muted-foreground mt-1">{s.label}</p>
                             </CardContent>
                           </Card>
                         ))}
                       </div>
-                    </div>
+                    </section>
 
-                    {/* More Tools */}
-                    <div className="grid grid-cols-3 gap-2">
-                      {[
-                        { label: "कृषि यात्रा", icon: "📸", href: "/action-film" },
-                        { label: "विज्ञ सोध्नुहोस्", icon: "👨‍⚕️", href: "/ask-expert" },
-                        { label: "सिक्नुहोस्", icon: "📚", href: "/learning" },
-                      ].map((item) => (
-                        <Card
-                          key={item.label}
-                          className="border-border/30 cursor-pointer active:scale-[0.97] transition-transform"
-                          onClick={() => navigate(item.href)}
-                        >
-                          <CardContent className="p-3 text-center">
-                            <span className="text-2xl">{item.icon}</span>
-                            <p className="text-[11px] font-medium text-foreground mt-1.5">{item.label}</p>
-                          </CardContent>
-                        </Card>
-                      ))}
-                    </div>
-
-                    {/* Recent Activity */}
-                    <div>
-                      <h2 className="text-base font-bold text-foreground mb-3">📋 हालको गतिविधि</h2>
+                    {/* ── Section 5: Recent Activity ── */}
+                    <section>
+                      <h2 className="text-sm font-bold text-foreground mb-2.5 flex items-center gap-1.5">
+                        <span className="text-base">📋</span> हालको गतिविधि
+                      </h2>
                       {photos && photos.length > 0 ? (
                         <div className="space-y-2">
                           {photos.slice(0, 3).map((photo: any) => (
-                            <Card key={photo.id} className="border-border/30">
+                            <Card key={photo.id} className="border-border/30 shadow-sm">
                               <CardContent className="p-3 flex items-center gap-3">
-                                <div className="w-12 h-12 rounded-xl overflow-hidden bg-muted flex-shrink-0">
+                                <div className="w-11 h-11 rounded-xl overflow-hidden bg-muted flex-shrink-0">
                                   <img src={photo.image_url} alt="" className="w-full h-full object-cover" />
                                 </div>
                                 <div className="flex-1 min-w-0">
@@ -404,12 +424,12 @@ const FarmerDashboard = () => {
                                   </p>
                                 </div>
                                 {photo.ai_analysis_results?.[0] && (
-                                  <div className={`px-2.5 py-1 rounded-full text-[10px] font-semibold ${
+                                  <div className={`px-2 py-0.5 rounded-full text-[10px] font-semibold ${
                                     photo.ai_analysis_results[0].health_status === 'healthy'
                                       ? "bg-primary/10 text-primary"
                                       : "bg-warning/10 text-warning"
                                   }`}>
-                                    {photo.ai_analysis_results[0].health_status === 'healthy' ? "स्वस्थ" : "ध्यान"}
+                                    {photo.ai_analysis_results[0].health_status === 'healthy' ? "✓ स्वस्थ" : "⚠ ध्यान"}
                                   </div>
                                 )}
                               </CardContent>
@@ -418,20 +438,20 @@ const FarmerDashboard = () => {
                           <Button
                             variant="ghost"
                             size="sm"
-                            className="w-full text-xs text-primary"
+                            className="w-full text-xs text-primary h-8"
                             onClick={() => setActiveTab("history")}
                           >
                             सबै हेर्नुहोस् <ChevronRight className="w-3.5 h-3.5 ml-1" />
                           </Button>
                         </div>
                       ) : (
-                        <Card className="border-dashed border-border/40">
-                          <CardContent className="p-6 text-center">
-                            <History className="w-8 h-8 mx-auto text-muted-foreground mb-2" />
-                            <p className="text-sm text-muted-foreground">अझै कुनै गतिविधि छैन</p>
+                        <Card className="border-dashed border-border/40 shadow-none">
+                          <CardContent className="py-8 text-center">
+                            <History className="w-7 h-7 mx-auto text-muted-foreground mb-2" />
+                            <p className="text-sm text-muted-foreground mb-3">अझै कुनै गतिविधि छैन</p>
                             <Button
                               size="sm"
-                              className="mt-3 rounded-full text-xs"
+                              className="rounded-full text-xs px-5"
                               onClick={() => navigate('/disease-detection')}
                             >
                               <Camera className="w-3.5 h-3.5 mr-1" />
@@ -440,7 +460,35 @@ const FarmerDashboard = () => {
                           </CardContent>
                         </Card>
                       )}
-                    </div>
+                    </section>
+
+                    {/* ── Section 6: More Tools (compact row) ── */}
+                    <section>
+                      <h2 className="text-sm font-bold text-foreground mb-2.5 flex items-center gap-1.5">
+                        <span className="text-base">🛠️</span> थप उपकरण
+                      </h2>
+                      <div className="grid grid-cols-4 gap-2">
+                        {[
+                          { label: "खेती गाइड", icon: BookOpen, href: "/guides" },
+                          { label: "विज्ञ सोध्नुहोस्", icon: MessageSquare, href: "/ask-expert" },
+                          { label: "सिक्नुहोस्", icon: Sparkles, href: "/learning" },
+                          { label: "उपचार", icon: Stethoscope, onClick: () => setActiveTab("treatments") },
+                        ].map((item) => (
+                          <Card
+                            key={item.label}
+                            className="border-border/30 cursor-pointer active:scale-[0.97] transition-transform shadow-sm"
+                            onClick={() => item.href ? navigate(item.href) : item.onClick?.()}
+                          >
+                            <CardContent className="p-2.5 flex flex-col items-center text-center">
+                              <div className="w-9 h-9 rounded-xl bg-primary/8 flex items-center justify-center mb-1.5">
+                                <item.icon className="w-4.5 h-4.5 text-primary" />
+                              </div>
+                              <p className="text-[10px] font-medium text-foreground leading-tight">{item.label}</p>
+                            </CardContent>
+                          </Card>
+                        ))}
+                      </div>
+                    </section>
 
                     {/* Radio Mode */}
                     <RadioModePanel />
