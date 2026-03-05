@@ -228,6 +228,44 @@ When a farmer mentions a specific crop and growth stage, use the advisory databa
 - ALWAYS add safety disclaimer at the end of responses involving pest/disease/chemical advice.`;
 };
 
+async function fetchStageAdvisory(cropName: string, supabaseUrl: string, supabaseKey: string): Promise<string> {
+  try {
+    const supabase = createClient(supabaseUrl, supabaseKey);
+    const { data } = await supabase
+      .from('crop_stage_advisories')
+      .select('stage, stage_name_ne, risks, safe_practices, warning_signs, referral_message_ne')
+      .ilike('crop_name', `%${cropName}%`)
+      .eq('is_active', true)
+      .is('deprecated_at', null)
+      .order('stage');
+
+    if (!data || data.length === 0) return '';
+
+    return '\n\n### Stage-wise Advisory Context for ' + cropName + ':\n' +
+      data.map(d => `**${d.stage_name_ne} (${d.stage})**: Risks: ${JSON.stringify(d.risks)}. Safe practices: ${JSON.stringify(d.safe_practices)}. Warning signs: ${JSON.stringify(d.warning_signs)}. Referral: ${d.referral_message_ne || ''}`).join('\n');
+  } catch (e) {
+    console.error('[AI] Advisory fetch error:', e);
+    return '';
+  }
+}
+
+async function fetchSafetyRules(supabaseUrl: string, supabaseKey: string): Promise<string> {
+  try {
+    const supabase = createClient(supabaseUrl, supabaseKey);
+    const { data } = await supabase
+      .from('ai_safety_rules')
+      .select('rule_type, rule_text, severity')
+      .eq('is_active', true)
+      .in('severity', ['critical', 'high']);
+
+    if (!data || data.length === 0) return '';
+    return '\n\n### Active Safety Rules:\n' + data.map(r => `[${r.rule_type.toUpperCase()}] ${r.rule_text}`).join('\n');
+  } catch (e) {
+    console.error('[AI] Safety rules fetch error:', e);
+    return '';
+  }
+}
+
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
@@ -239,7 +277,7 @@ serve(async (req) => {
     const { messages, language = 'ne' } = await req.json();
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     const SUPABASE_URL = Deno.env.get("SUPABASE_URL");
-    const SUPABASE_ANON_KEY = Deno.env.get("SUPABASE_ANON_KEY");
+    const SUPABASE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") || Deno.env.get("SUPABASE_ANON_KEY");
     
     if (!LOVABLE_API_KEY) {
       throw new Error("LOVABLE_API_KEY is not configured");
@@ -254,14 +292,28 @@ serve(async (req) => {
     
     const keywords = extractDiseaseKeywords(latestUserMessage);
     let treatments: any[] = [];
+    let advisoryContext = '';
+    let safetyContext = '';
     
-    if (keywords.length > 0 && SUPABASE_URL && SUPABASE_ANON_KEY) {
-      console.log(`[AI] Extracted keywords: ${keywords.join(', ')}`);
-      treatments = await fetchRelevantTreatments(keywords, SUPABASE_URL, SUPABASE_ANON_KEY);
-      console.log(`[AI] Found ${treatments.length} relevant treatments`);
+    if (SUPABASE_URL && SUPABASE_KEY) {
+      // Fetch treatments, advisory, and safety rules in parallel
+      const [treatmentsResult, safetyResult] = await Promise.all([
+        keywords.length > 0 ? fetchRelevantTreatments(keywords, SUPABASE_URL, SUPABASE_KEY) : Promise.resolve([]),
+        fetchSafetyRules(SUPABASE_URL, SUPABASE_KEY),
+      ]);
+      treatments = treatmentsResult;
+      safetyContext = safetyResult;
+
+      // Fetch stage advisory if a crop keyword is found
+      const cropKeywords = latestUserMessage.match(/rice|wheat|tomato|cauliflower|धान|गहुँ|गोलभेडा|काउली|maize|मकै|potato|आलु/gi);
+      if (cropKeywords && cropKeywords.length > 0) {
+        advisoryContext = await fetchStageAdvisory(cropKeywords[0], SUPABASE_URL, SUPABASE_KEY);
+      }
+
+      console.log(`[AI] Keywords: ${keywords.join(', ')}, treatments: ${treatments.length}, advisory: ${advisoryContext.length > 0}`);
     }
 
-    const systemPrompt = getSystemPrompt(language);
+    const systemPrompt = getSystemPrompt(language) + safetyContext + advisoryContext;
 
     console.log(`[AI] Starting request, lang=${language}, msgs=${recentMessages.length}`);
 
