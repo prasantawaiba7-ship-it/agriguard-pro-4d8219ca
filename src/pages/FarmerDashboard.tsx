@@ -42,6 +42,10 @@ import {
   Bug,
   CloudSun,
   Stethoscope,
+  ArrowRight,
+  Store,
+  Bot,
+  BookOpen,
 } from "lucide-react";
 import { RadioModePanel } from "@/components/radio/RadioModePanel";
 import { Database } from "@/integrations/supabase/types";
@@ -72,7 +76,6 @@ const cropStages: { value: CropStage; label: string }[] = [
 ];
 
 const FarmerDashboard = () => {
-  // Get tab from URL params
   const getInitialTab = () => {
     const params = new URLSearchParams(window.location.search);
     const tab = params.get("tab");
@@ -108,11 +111,8 @@ const FarmerDashboard = () => {
 
   const handleCreatePlot = async () => {
     if (!newPlot.name) return;
-
-    // Get current location
     let latitude: number | undefined;
     let longitude: number | undefined;
-
     if (navigator.geolocation) {
       try {
         const position = await new Promise<GeolocationPosition>((resolve, reject) => {
@@ -124,18 +124,15 @@ const FarmerDashboard = () => {
         console.log('Location not available');
       }
     }
-
     await createPlot.mutateAsync({
       plot_name: newPlot.name,
       crop_type: newPlot.cropType,
       area_hectares: newPlot.area ? parseFloat(newPlot.area) : undefined,
-      latitude,
-      longitude,
+      latitude, longitude,
       state: profile?.state || undefined,
       district: profile?.district || undefined,
       village: profile?.village || undefined,
     });
-
     setNewPlot({ name: '', cropType: 'wheat', area: '' });
     setIsAddPlotOpen(false);
   };
@@ -143,11 +140,8 @@ const FarmerDashboard = () => {
   const handlePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file || !selectedPlot) return;
-
-    // Get current location
     let latitude: number | undefined;
     let longitude: number | undefined;
-
     if (navigator.geolocation) {
       try {
         const position = await new Promise<GeolocationPosition>((resolve, reject) => {
@@ -159,23 +153,13 @@ const FarmerDashboard = () => {
         console.log('Location not available');
       }
     }
-
-    await uploadPhoto.mutateAsync({
-      plotId: selectedPlot,
-      file,
-      stage: selectedStage,
-      latitude,
-      longitude,
-    });
-
-    if (fileInputRef.current) {
-      fileInputRef.current.value = '';
-    }
+    await uploadPhoto.mutateAsync({ plotId: selectedPlot, file, stage: selectedStage, latitude, longitude });
+    if (fileInputRef.current) fileInputRef.current.value = '';
   };
 
   if (authLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
+      <div className="min-h-screen flex items-center justify-center bg-background">
         <Loader2 className="w-8 h-8 animate-spin text-primary" />
       </div>
     );
@@ -183,91 +167,108 @@ const FarmerDashboard = () => {
 
   if (!user) return null;
 
+  const quickTools = [
+    { icon: Bug, label: t('cropDiagnosis'), desc: t('askPhoto'), href: '/disease-detection', bg: 'bg-[hsl(var(--card-diagnosis-bg))]', iconBg: 'bg-[hsl(var(--card-diagnosis-icon))]' },
+    { icon: Store, label: t('market'), desc: t('buySell'), href: '/market', bg: 'bg-[hsl(var(--card-market-bg))]', iconBg: 'bg-[hsl(var(--card-market-icon))]' },
+    { icon: BookOpen, label: t('agriKnowledgeGuide'), desc: t('cropGuide'), href: '/guides', bg: 'bg-[hsl(var(--card-guide-bg))]', iconBg: 'bg-[hsl(var(--card-guide-icon))]' },
+    { icon: Calendar, label: t('farmWork'), desc: t('activitiesLog'), href: '/activities', bg: 'bg-[hsl(var(--card-ai-bg))]', iconBg: 'bg-[hsl(var(--card-ai-icon))]' },
+    { icon: MapPin, label: t('myFieldLabel'), desc: t('fields'), href: '/fields', bg: 'bg-[hsl(var(--card-field-bg))]', iconBg: 'bg-[hsl(var(--card-field-icon))]' },
+    { icon: Bot, label: t('aiHelper'), desc: t('kisanSathi'), href: '/krishi-mitra', bg: 'bg-[hsl(var(--card-weather-bg))]', iconBg: 'bg-[hsl(var(--card-weather-icon))]' },
+    { icon: Stethoscope, label: 'प्राविधिकसँग सोध्नुहोस्', desc: 'कृषि विज्ञलाई प्रश्न गर्नुहोस्', href: '/ask-expert', bg: 'bg-[hsl(var(--card-expert-bg))]', iconBg: 'bg-[hsl(var(--card-expert-icon))]' },
+    { icon: Camera, label: 'मेरो कृषि यात्रा', desc: 'बालीको कथा हेर्नुहोस्', href: '/action-film', bg: 'bg-[hsl(var(--card-journey-bg))]', iconBg: 'bg-[hsl(var(--card-journey-icon))]' },
+  ];
+
+  const tabItems = [
+    { id: "plots", label: t('myPlots'), emoji: "🌾", icon: MapPin },
+    { id: "capture", label: t('capture'), emoji: "📷", icon: Camera },
+    { id: "treatments", label: t('treatments'), emoji: "💊", icon: Stethoscope },
+    { id: "weather", label: t('weatherForecast'), emoji: "🌤️", icon: CloudSun },
+    { id: "calendar", label: t('calendar'), emoji: "📅", icon: Calendar },
+    { id: "history", label: t('history'), emoji: "📜", icon: History },
+    { id: "offline", label: t('offlineData'), emoji: "📴", icon: WifiOff },
+  ];
+
   return (
     <>
       <Helmet>
-        <title>Farmer Dashboard - CROPIC</title>
-        <meta name="description" content="Manage your crop plots, capture photos, and track crop health with CROPIC's farmer dashboard." />
+        <title>किसान ड्यासबोर्ड | Kisan Sathi</title>
+        <meta name="description" content="Manage your crop plots, capture photos, and track crop health." />
       </Helmet>
 
       <div className="min-h-screen bg-background">
         <Header />
 
         <main className="pt-20 sm:pt-24 pb-28">
-          {/* Container with max-width for large screens */}
           <div className="container mx-auto px-4 max-w-7xl">
-            {/* Welcome Section - Hidden on weather tab */}
+            {/* Welcome Section */}
             {activeTab !== "weather" && (
               <motion.div
-                initial={{ opacity: 0, y: 20 }}
+                initial={{ opacity: 0, y: 16 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="mb-6 sm:mb-8"
+                className="mb-8"
               >
-                <div className="flex flex-col gap-4">
-                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 sm:gap-4">
+                <div className="bg-gradient-to-br from-primary/[0.06] via-card to-accent/[0.03] rounded-3xl p-6 sm:p-8 border border-border/40">
+                  <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                     <div 
-                      className="flex items-center gap-3 cursor-pointer hover:opacity-80 transition-opacity"
+                      className="flex items-center gap-4 cursor-pointer hover:opacity-80 transition-opacity"
                       onClick={() => navigate('/farmer/profile')}
                     >
-                      <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-primary flex items-center justify-center flex-shrink-0 overflow-hidden">
+                      <div className="w-14 h-14 rounded-2xl bg-primary flex items-center justify-center flex-shrink-0 overflow-hidden shadow-md">
                         {profile?.avatar_url ? (
                           <img src={profile.avatar_url} alt="Profile" className="w-full h-full object-cover" />
                         ) : (
-                          <User className="w-5 h-5 sm:w-6 sm:h-6 text-primary-foreground" />
+                          <User className="w-7 h-7 text-primary-foreground" />
                         )}
                       </div>
                       <div className="min-w-0">
-                        <h1 className="text-lg sm:text-2xl font-bold text-foreground truncate">
-                          🙏 {t('home')}, {profile?.full_name || 'Farmer'}
+                        <h1 className="text-xl sm:text-2xl font-bold text-foreground truncate">
+                          🙏 नमस्ते, {profile?.full_name || 'किसान'}!
                         </h1>
-                        <p className="text-muted-foreground text-xs sm:text-sm truncate">
-                          {user?.email}
+                        <p className="text-muted-foreground text-sm truncate">
+                          {profile?.village && `${profile.village}, `}
+                          {profile?.district && `${profile.district}, `}
+                          {profile?.state || 'Nepal'}
                         </p>
                       </div>
                     </div>
                     <div className="flex items-center gap-2 w-full sm:w-auto">
                       <LanguageSelector />
-                      <Button variant="outline" size="sm" onClick={() => navigate('/farmer/profile')} className="flex-1 sm:flex-initial">
+                      <Button variant="outline" size="sm" onClick={() => navigate('/farmer/profile')} className="rounded-full flex-1 sm:flex-initial">
                         <User className="w-4 h-4" />
                         <span className="ml-2 hidden md:inline">Profile</span>
                       </Button>
-                      <Button variant="outline" size="sm" onClick={signOut} className="flex-1 sm:flex-initial">
+                      <Button variant="outline" size="sm" onClick={signOut} className="rounded-full flex-1 sm:flex-initial">
                         <LogOut className="w-4 h-4" />
                         <span className="ml-2 sm:hidden md:inline">Sign Out</span>
                       </Button>
                     </div>
                   </div>
-                  <p className="text-muted-foreground text-xs sm:text-sm">
-                    {profile?.village && `${profile.village}, `}
-                    {profile?.district && `${profile.district}, `}
-                    {profile?.state || 'Nepal'}
-                  </p>
                 </div>
               </motion.div>
             )}
 
-            {/* Quick Stats - Hidden on weather tab */}
+            {/* Quick Stats */}
             {activeTab !== "weather" && (
               <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4 mb-8">
                 {[
-                  { icon: Leaf, label: t('myPlots'), value: stats?.plots || 0, color: "bg-primary" },
-                  { icon: Camera, label: t('photos'), value: stats?.photos || 0, color: "bg-secondary" },
-                  { icon: CheckCircle2, label: t('healthy'), value: stats?.healthyCrops || 0, color: "bg-success" },
-                  { icon: AlertTriangle, label: t('alerts'), value: stats?.alerts || 0, color: "bg-warning" },
+                  { icon: Leaf, label: t('myPlots'), value: stats?.plots || 0, iconBg: "bg-[hsl(var(--card-market-icon))]" },
+                  { icon: Camera, label: t('photos'), value: stats?.photos || 0, iconBg: "bg-[hsl(var(--card-weather-icon))]" },
+                  { icon: CheckCircle2, label: t('healthy'), value: stats?.healthyCrops || 0, iconBg: "bg-primary" },
+                  { icon: AlertTriangle, label: t('alerts'), value: stats?.alerts || 0, iconBg: "bg-[hsl(var(--card-diagnosis-icon))]" },
                 ].map((stat, i) => (
                   <motion.div
                     key={stat.label}
-                    initial={{ opacity: 0, y: 20 }}
+                    initial={{ opacity: 0, y: 16 }}
                     animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: i * 0.1 }}
+                    transition={{ delay: i * 0.06 }}
                   >
-                    <Card className="border-border/50">
-                      <CardContent className="p-3 sm:p-4 flex items-center gap-3 sm:gap-4">
-                        <div className={`w-10 h-10 sm:w-12 sm:h-12 rounded-xl ${stat.color} flex items-center justify-center`}>
-                          <stat.icon className="w-5 h-5 sm:w-6 sm:h-6 text-primary-foreground" />
+                    <Card className="border-border/40 hover:shadow-md transition-shadow">
+                      <CardContent className="p-4 sm:p-5 flex items-center gap-4">
+                        <div className={`w-12 h-12 sm:w-14 sm:h-14 rounded-2xl ${stat.iconBg} flex items-center justify-center shadow-sm`}>
+                          <stat.icon className="w-6 h-6 sm:w-7 sm:h-7 text-white" />
                         </div>
                         <div>
-                          <div className="text-xl sm:text-2xl font-bold text-foreground">{stat.value}</div>
+                          <div className="text-2xl sm:text-3xl font-bold text-foreground">{stat.value}</div>
                           <div className="text-xs sm:text-sm text-muted-foreground">{stat.label}</div>
                         </div>
                       </CardContent>
@@ -277,126 +278,39 @@ const FarmerDashboard = () => {
               </div>
             )}
 
-            {/* Quick Access Cards - Hidden on weather tab */}
+            {/* Quick Access Tools */}
             {activeTab !== "weather" && (
               <motion.div
-                initial={{ opacity: 0, y: 20 }}
+                initial={{ opacity: 0, y: 16 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.5 }}
+                transition={{ delay: 0.3 }}
                 className="mb-8"
               >
-                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-3 sm:gap-4">
-                  {/* Disease Detection */}
-                  <Card 
-                    className="border-primary/20 bg-gradient-to-br from-primary/5 to-primary/10 cursor-pointer hover:shadow-lg transition-all"
-                    onClick={() => navigate('/disease-detection')}
-                  >
-                    <CardContent className="p-3 sm:p-4 flex flex-col items-center text-center gap-2">
-                      <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-primary/10 flex items-center justify-center">
-                        <Bug className="w-5 h-5 sm:w-6 sm:h-6 text-primary" />
-                      </div>
-                      <h3 className="font-semibold text-xs sm:text-sm text-foreground">🌿 {t('cropDiagnosis')}</h3>
-                      <p className="text-[10px] sm:text-xs text-muted-foreground hidden lg:block">{t('askPhoto')}</p>
-                    </CardContent>
-                  </Card>
-
-                  {/* Market */}
-                  <Card 
-                    className="border-success/20 bg-gradient-to-br from-success/5 to-success/10 cursor-pointer hover:shadow-lg transition-all"
-                    onClick={() => navigate('/market')}
-                  >
-                    <CardContent className="p-3 sm:p-4 flex flex-col items-center text-center gap-2">
-                      <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-success/10 flex items-center justify-center">
-                        <Sparkles className="w-5 h-5 sm:w-6 sm:h-6 text-success" />
-                      </div>
-                      <h3 className="font-semibold text-xs sm:text-sm text-foreground">🛒 {t('market')}</h3>
-                      <p className="text-[10px] sm:text-xs text-muted-foreground hidden lg:block">{t('buySell')}</p>
-                    </CardContent>
-                  </Card>
-
-                  {/* Crop Guides */}
-                  <Card 
-                    className="border-secondary/20 bg-gradient-to-br from-secondary/5 to-secondary/10 cursor-pointer hover:shadow-lg transition-all"
-                    onClick={() => navigate('/guides')}
-                  >
-                    <CardContent className="p-3 sm:p-4 flex flex-col items-center text-center gap-2">
-                      <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-secondary/10 flex items-center justify-center">
-                        <Leaf className="w-5 h-5 sm:w-6 sm:h-6 text-secondary" />
-                      </div>
-                      <h3 className="font-semibold text-xs sm:text-sm text-foreground">📚 {t('agriKnowledgeGuide')}</h3>
-                      <p className="text-[10px] sm:text-xs text-muted-foreground hidden lg:block">{t('cropGuide')}</p>
-                    </CardContent>
-                  </Card>
-
-                  {/* Activities */}
-                  <Card 
-                    className="border-warning/20 bg-gradient-to-br from-warning/5 to-warning/10 cursor-pointer hover:shadow-lg transition-all"
-                    onClick={() => navigate('/activities')}
-                  >
-                    <CardContent className="p-3 sm:p-4 flex flex-col items-center text-center gap-2">
-                      <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-warning/10 flex items-center justify-center">
-                        <Calendar className="w-5 h-5 sm:w-6 sm:h-6 text-warning" />
-                      </div>
-                      <h3 className="font-semibold text-xs sm:text-sm text-foreground">📝 {t('farmWork')}</h3>
-                      <p className="text-[10px] sm:text-xs text-muted-foreground hidden lg:block">{t('activitiesLog')}</p>
-                    </CardContent>
-                  </Card>
-
-                  {/* Fields */}
-                  <Card 
-                    className="border-accent/20 bg-gradient-to-br from-accent/5 to-accent/10 cursor-pointer hover:shadow-lg transition-all hidden sm:block"
-                    onClick={() => navigate('/fields')}
-                  >
-                    <CardContent className="p-3 sm:p-4 flex flex-col items-center text-center gap-2">
-                      <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-accent/10 flex items-center justify-center">
-                        <MapPin className="w-5 h-5 sm:w-6 sm:h-6 text-accent" />
-                      </div>
-                      <h3 className="font-semibold text-xs sm:text-sm text-foreground">🗺️ {t('myFieldLabel')}</h3>
-                      <p className="text-[10px] sm:text-xs text-muted-foreground hidden lg:block">{t('fields')}</p>
-                    </CardContent>
-                  </Card>
-
-                  {/* AI Assistant */}
-                  <Card 
-                    className="border-primary/20 bg-gradient-to-br from-primary/5 to-secondary/10 cursor-pointer hover:shadow-lg transition-all hidden sm:block"
-                    onClick={() => navigate('/krishi-mitra')}
-                  >
-                    <CardContent className="p-3 sm:p-4 flex flex-col items-center text-center gap-2">
-                      <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-primary/10 flex items-center justify-center">
-                        <Cloud className="w-5 h-5 sm:w-6 sm:h-6 text-primary" />
-                      </div>
-                      <h3 className="font-semibold text-xs sm:text-sm text-foreground">🤖 {t('aiHelper')}</h3>
-                      <p className="text-[10px] sm:text-xs text-muted-foreground hidden lg:block">{t('kisanSathi')}</p>
-                    </CardContent>
-                  </Card>
-
-                  {/* Farmer Action Film */}
-                  <Card 
-                    className="border-accent/20 bg-gradient-to-br from-accent/5 to-primary/5 cursor-pointer hover:shadow-lg transition-all"
-                    onClick={() => navigate('/action-film')}
-                  >
-                    <CardContent className="p-3 sm:p-4 flex flex-col items-center text-center gap-2">
-                      <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-accent/10 flex items-center justify-center">
-                        <span className="text-xl">🎬</span>
-                      </div>
-                      <h3 className="font-semibold text-xs sm:text-sm text-foreground">🎬 मेरो कृषि यात्रा</h3>
-                      <p className="text-[10px] sm:text-xs text-muted-foreground hidden lg:block">बालीको कथा हेर्नुहोस्</p>
-                    </CardContent>
-                  </Card>
-
-                  {/* Ask Expert */}
-                  <Card 
-                    className="border-blue-200 dark:border-blue-800 bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-950/20 dark:to-blue-900/20 cursor-pointer hover:shadow-lg transition-all"
-                    onClick={() => navigate('/ask-expert')}
-                  >
-                    <CardContent className="p-3 sm:p-4 flex flex-col items-center text-center gap-2">
-                      <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-blue-500/10 flex items-center justify-center">
-                        <Stethoscope className="w-5 h-5 sm:w-6 sm:h-6 text-blue-600" />
-                      </div>
-                      <h3 className="font-semibold text-xs sm:text-sm text-foreground">🌾 प्राविधिकसँग सोध्नुहोस्</h3>
-                      <p className="text-[10px] sm:text-xs text-muted-foreground hidden lg:block">कृषि विज्ञलाई प्रश्न गर्नुहोस्</p>
-                    </CardContent>
-                  </Card>
+                <h2 className="text-lg font-bold text-foreground mb-4">⚡ छिटो पहुँच</h2>
+                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4">
+                  {quickTools.map((tool, i) => (
+                    <motion.div
+                      key={tool.href}
+                      initial={{ opacity: 0, y: 12 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: 0.3 + i * 0.03 }}
+                    >
+                      <Card 
+                        className={`${tool.bg} border-border/30 cursor-pointer hover:shadow-lg hover:-translate-y-0.5 transition-all duration-300 active:scale-[0.97]`}
+                        onClick={() => navigate(tool.href)}
+                      >
+                        <CardContent className="p-4 sm:p-5 flex flex-col items-center text-center gap-3">
+                          <div className={`w-12 h-12 sm:w-14 sm:h-14 rounded-2xl ${tool.iconBg} flex items-center justify-center shadow-sm`}>
+                            <tool.icon className="w-6 h-6 sm:w-7 sm:h-7 text-white" />
+                          </div>
+                          <div>
+                            <h3 className="font-bold text-sm text-foreground">{tool.label}</h3>
+                            <p className="text-[10px] sm:text-xs text-muted-foreground mt-0.5 hidden sm:block">{tool.desc}</p>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    </motion.div>
+                  ))}
                 </div>
               </motion.div>
             )}
@@ -404,36 +318,28 @@ const FarmerDashboard = () => {
             {/* Radio Mode */}
             {activeTab !== "weather" && (
               <motion.div
-                initial={{ opacity: 0, y: 20 }}
+                initial={{ opacity: 0, y: 16 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.6 }}
+                transition={{ delay: 0.5 }}
                 className="mb-8"
               >
                 <RadioModePanel />
               </motion.div>
             )}
 
-            {/* Tab Navigation - Responsive */}
+            {/* Tab Navigation */}
             <div className="flex flex-wrap gap-2 mb-6 pb-2">
-              {[
-                { id: "plots", label: t('myPlots'), shortLabel: "🌾", icon: MapPin },
-                { id: "capture", label: t('capture'), shortLabel: "📷", icon: Camera },
-                { id: "treatments", label: t('treatments'), shortLabel: "💊", icon: Stethoscope },
-                { id: "weather", label: t('weatherForecast'), shortLabel: "🌤️", icon: CloudSun },
-                { id: "calendar", label: t('calendar'), shortLabel: "📅", icon: Calendar },
-                { id: "history", label: t('history'), shortLabel: "📜", icon: History },
-                { id: "offline", label: t('offlineData'), shortLabel: "📴", icon: WifiOff },
-              ].map((tab) => (
+              {tabItems.map((tab) => (
                 <Button
                   key={tab.id}
                   variant={activeTab === tab.id ? "default" : "outline"}
                   onClick={() => setActiveTab(tab.id as typeof activeTab)}
-                  className="flex-shrink-0 gap-1 sm:gap-2"
+                  className={`flex-shrink-0 gap-1.5 sm:gap-2 rounded-full ${activeTab === tab.id ? 'shadow-md' : ''}`}
                   size="sm"
                 >
                   <tab.icon className="w-4 h-4" />
                   <span className="hidden sm:inline">{tab.label}</span>
-                  <span className="sm:hidden">{tab.shortLabel}</span>
+                  <span className="sm:hidden">{tab.emoji}</span>
                 </Button>
               ))}
             </div>
@@ -442,25 +348,25 @@ const FarmerDashboard = () => {
             <AnimatePresence mode="wait">
               <motion.div
                 key={activeTab}
-                initial={{ opacity: 0, x: 10 }}
-                animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: -10 }}
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -8 }}
                 transition={{ duration: 0.2 }}
               >
                 {activeTab === "plots" && (
                   <div className="space-y-4">
                     <div className="flex justify-between items-center">
-                      <h2 className="text-xl font-semibold text-foreground">{t('myPlots')}</h2>
+                      <h2 className="text-xl font-bold text-foreground">{t('myPlots')}</h2>
                       <Dialog open={isAddPlotOpen} onOpenChange={setIsAddPlotOpen}>
                         <DialogTrigger asChild>
-                          <Button variant="outline" size="sm">
-                            <Plus className="w-4 h-4" />
-                            Add Plot
+                          <Button variant="outline" size="sm" className="rounded-full">
+                            <Plus className="w-4 h-4 mr-1" />
+                            नयाँ Plot
                           </Button>
                         </DialogTrigger>
-                        <DialogContent>
+                        <DialogContent className="rounded-2xl">
                           <DialogHeader>
-                            <DialogTitle>Add New Plot</DialogTitle>
+                            <DialogTitle>नयाँ Plot थप्नुहोस्</DialogTitle>
                           </DialogHeader>
                           <div className="space-y-4 pt-4">
                             <div>
@@ -469,12 +375,13 @@ const FarmerDashboard = () => {
                                 placeholder="e.g., North Field"
                                 value={newPlot.name}
                                 onChange={(e) => setNewPlot({ ...newPlot, name: e.target.value })}
+                                className="rounded-xl"
                               />
                             </div>
                             <div>
                               <Label>Crop Type</Label>
                               <select
-                                className="w-full h-10 px-3 rounded-md border border-input bg-background"
+                                className="w-full h-11 px-3 rounded-xl border border-input bg-background"
                                 value={newPlot.cropType}
                                 onChange={(e) => setNewPlot({ ...newPlot, cropType: e.target.value as CropType })}
                               >
@@ -490,10 +397,11 @@ const FarmerDashboard = () => {
                                 placeholder="e.g., 2.5"
                                 value={newPlot.area}
                                 onChange={(e) => setNewPlot({ ...newPlot, area: e.target.value })}
+                                className="rounded-xl"
                               />
                             </div>
                             <Button
-                              className="w-full"
+                              className="w-full rounded-xl"
                               onClick={handleCreatePlot}
                               disabled={createPlot.isPending || !newPlot.name}
                             >
@@ -515,22 +423,22 @@ const FarmerDashboard = () => {
                     ) : plots && plots.length > 0 ? (
                       <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
                         {plots.map((plot) => (
-                          <Card key={plot.id} className="border-border/50 hover:shadow-md transition-shadow">
+                          <Card key={plot.id} className="border-border/40 hover:shadow-lg transition-all duration-300 hover:-translate-y-0.5">
                             <CardHeader className="pb-3">
                               <div className="flex justify-between items-start">
                                 <CardTitle className="text-lg">{plot.plot_name}</CardTitle>
                                 <div
-                                  className={`px-2 py-1 rounded-full text-xs font-medium ${
+                                  className={`px-3 py-1 rounded-full text-xs font-semibold ${
                                     plot.healthScore && plot.healthScore > 70
-                                      ? "bg-success/10 text-success"
+                                      ? "bg-primary/10 text-primary"
                                       : plot.healthScore
                                       ? "bg-warning/10 text-warning"
                                       : "bg-muted text-muted-foreground"
                                   }`}
                                 >
                                   {plot.healthScore 
-                                    ? plot.healthScore > 70 ? "Healthy" : "Needs Attention"
-                                    : "No Data"}
+                                    ? plot.healthScore > 70 ? "स्वस्थ" : "ध्यान दिनुहोस्"
+                                    : "डाटा छैन"}
                                 </div>
                               </div>
                             </CardHeader>
@@ -552,15 +460,15 @@ const FarmerDashboard = () => {
                                 </div>
                               )}
                               {plot.healthScore && (
-                                <div className="space-y-1">
+                                <div className="space-y-1.5">
                                   <div className="flex justify-between text-sm">
                                     <span className="text-muted-foreground">Health Score</span>
-                                    <span className="font-medium text-foreground">{Math.round(plot.healthScore)}%</span>
+                                    <span className="font-bold text-foreground">{Math.round(plot.healthScore)}%</span>
                                   </div>
-                                  <div className="h-2 bg-muted rounded-full overflow-hidden">
+                                  <div className="h-2.5 bg-muted rounded-full overflow-hidden">
                                     <div
-                                      className={`h-full rounded-full ${
-                                        plot.healthScore > 70 ? "bg-success" : "bg-warning"
+                                      className={`h-full rounded-full transition-all ${
+                                        plot.healthScore > 70 ? "bg-primary" : "bg-warning"
                                       }`}
                                       style={{ width: `${plot.healthScore}%` }}
                                     />
@@ -569,15 +477,15 @@ const FarmerDashboard = () => {
                               )}
                               <div className="pt-2">
                                 <Button
-                                  className="w-full"
+                                  className="w-full rounded-xl"
                                   size="sm"
                                   onClick={() => {
                                     setSelectedPlot(plot.id);
                                     setActiveTab("capture");
                                   }}
                                 >
-                                  <Camera className="w-4 h-4" />
-                                  Capture Now
+                                  <Camera className="w-4 h-4 mr-1" />
+                                  फोटो खिच्नुहोस्
                                 </Button>
                               </div>
                             </CardContent>
@@ -586,21 +494,22 @@ const FarmerDashboard = () => {
                       </div>
                     ) : (
                       <Card className="border-dashed border-2">
-                        <CardContent className="flex flex-col items-center justify-center py-12">
-                          <MapPin className="w-12 h-12 text-muted-foreground mb-4" />
-                          <h3 className="font-semibold text-lg mb-2">No plots yet</h3>
-                          <p className="text-muted-foreground text-center mb-4">
-                            Add your first plot to start monitoring your crops
+                        <CardContent className="flex flex-col items-center justify-center py-16">
+                          <div className="w-20 h-20 rounded-3xl bg-primary/8 flex items-center justify-center mb-5">
+                            <MapPin className="w-10 h-10 text-primary" />
+                          </div>
+                          <h3 className="font-bold text-lg mb-2 text-foreground">अझै Plot छैन</h3>
+                          <p className="text-muted-foreground text-center mb-5 text-sm max-w-xs">
+                            तपाईंको पहिलो Plot थप्नुहोस् र बालीको अवस्था ट्र्याक गर्नुहोस्
                           </p>
-                          <Button onClick={() => setIsAddPlotOpen(true)}>
-                            <Plus className="w-4 h-4" />
-                            Add Your First Plot
+                          <Button onClick={() => setIsAddPlotOpen(true)} className="rounded-full px-6">
+                            <Plus className="w-4 h-4 mr-1" />
+                            पहिलो Plot थप्नुहोस्
                           </Button>
                         </CardContent>
                       </Card>
                     )}
 
-                    {/* Soil & Fertilizer Advisory */}
                     {fields.length > 0 && (
                       <div className="mt-6">
                         <SoilAdvisoryCard fields={fields} />
@@ -611,22 +520,22 @@ const FarmerDashboard = () => {
 
                 {activeTab === "capture" && (
                   <div className="max-w-2xl mx-auto">
-                    <Card className="border-border/50">
+                    <Card className="border-border/40">
                       <CardHeader>
                         <CardTitle className="flex items-center gap-2">
                           <Camera className="w-5 h-5 text-primary" />
-                          Capture Crop Photo
+                          बाली फोटो खिच्नुहोस्
                         </CardTitle>
                       </CardHeader>
                       <CardContent className="space-y-6">
                         <div className="space-y-2">
-                          <Label>Select Plot</Label>
+                          <Label>Plot छान्नुहोस्</Label>
                           <select
-                            className="w-full h-11 px-3 rounded-lg border border-input bg-background text-foreground"
+                            className="w-full h-12 px-4 rounded-xl border border-input bg-background text-foreground"
                             value={selectedPlot}
                             onChange={(e) => setSelectedPlot(e.target.value)}
                           >
-                            <option value="">Choose a plot...</option>
+                            <option value="">Plot छान्नुहोस्...</option>
                             {plots?.map((plot) => (
                               <option key={plot.id} value={plot.id}>
                                 {plot.plot_name} - {plot.crop_type}
@@ -636,9 +545,9 @@ const FarmerDashboard = () => {
                         </div>
 
                         <div className="space-y-2">
-                          <Label>Growth Stage</Label>
+                          <Label>बिरुवाको चरण</Label>
                           <select
-                            className="w-full h-11 px-3 rounded-lg border border-input bg-background text-foreground"
+                            className="w-full h-12 px-4 rounded-xl border border-input bg-background text-foreground"
                             value={selectedStage}
                             onChange={(e) => setSelectedStage(e.target.value as CropStage)}
                           >
@@ -658,44 +567,43 @@ const FarmerDashboard = () => {
                         />
 
                         <div
-                          className={`border-2 border-dashed rounded-2xl p-8 text-center transition-colors cursor-pointer ${
+                          className={`border-2 border-dashed rounded-2xl p-10 text-center transition-all cursor-pointer ${
                             selectedPlot
-                              ? "border-primary/50 hover:border-primary bg-primary/5"
+                              ? "border-primary/50 hover:border-primary bg-primary/5 hover:bg-primary/8"
                               : "border-border opacity-50 cursor-not-allowed"
                           }`}
                           onClick={() => selectedPlot && fileInputRef.current?.click()}
                         >
-                          <div className="w-16 h-16 mx-auto mb-4 rounded-2xl bg-primary/10 flex items-center justify-center">
+                          <div className="w-20 h-20 mx-auto mb-5 rounded-3xl bg-primary/10 flex items-center justify-center">
                             {uploadPhoto.isPending ? (
-                              <Loader2 className="w-8 h-8 text-primary animate-spin" />
+                              <Loader2 className="w-10 h-10 text-primary animate-spin" />
                             ) : (
-                              <Upload className="w-8 h-8 text-primary" />
+                              <Upload className="w-10 h-10 text-primary" />
                             )}
                           </div>
-                          <h3 className="text-lg font-medium text-foreground mb-2">
-                            {uploadPhoto.isPending ? "Uploading..." : "Capture or Upload Photo"}
+                          <h3 className="text-lg font-bold text-foreground mb-2">
+                            {uploadPhoto.isPending ? "अपलोड हुँदैछ..." : "फोटो खिच्नुहोस् वा अपलोड गर्नुहोस्"}
                           </h3>
-                          <p className="text-sm text-muted-foreground mb-4">
+                          <p className="text-sm text-muted-foreground mb-5">
                             {selectedPlot
-                              ? "Take a photo of your crop field. GPS location will be recorded automatically."
-                              : "Please select a plot first"}
+                              ? "बालीको फोटो खिच्नुहोस्। GPS स्थान स्वतः रेकर्ड हुनेछ।"
+                              : "कृपया पहिले Plot छान्नुहोस्"}
                           </p>
-                          <Button variant="hero" disabled={!selectedPlot || uploadPhoto.isPending}>
-                            <Camera className="w-4 h-4" />
-                            {uploadPhoto.isPending ? "Processing..." : "Open Camera"}
+                          <Button variant="default" disabled={!selectedPlot || uploadPhoto.isPending} className="rounded-full px-6">
+                            <Camera className="w-4 h-4 mr-1" />
+                            {uploadPhoto.isPending ? "प्रक्रियामा..." : "क्यामेरा खोल्नुहोस्"}
                           </Button>
                         </div>
 
-                        <div className="bg-muted/50 rounded-xl p-4">
-                          <h4 className="font-medium text-foreground mb-2 flex items-center gap-2">
-                            <Sparkles className="w-4 h-4 text-primary" />
-                            Photo Guidelines
+                        <div className="bg-accent/8 rounded-2xl p-5 border border-accent/15">
+                          <h4 className="font-bold text-foreground mb-3 flex items-center gap-2">
+                            <Sparkles className="w-4 h-4 text-accent" />
+                            💡 फोटो सुझाव
                           </h4>
-                          <ul className="text-sm text-muted-foreground space-y-1">
-                            <li>• Hold phone at chest height, pointing towards crop</li>
-                            <li>• Include at least 50% crop and 30% sky in frame</li>
-                            <li>• Ensure good lighting (avoid harsh shadows)</li>
-                            <li>• Stand at the edge of your plot boundary</li>
+                          <ul className="text-sm text-muted-foreground space-y-1.5">
+                            <li>• छातीको उचाइमा फोन राख्नुहोस्</li>
+                            <li>• राम्रो उज्यालोमा फोटो खिच्नुहोस्</li>
+                            <li>• बालीको ५०% र आकाशको ३०% समावेश गर्नुहोस्</li>
                           </ul>
                         </div>
                       </CardContent>
@@ -705,7 +613,7 @@ const FarmerDashboard = () => {
 
                 {activeTab === "history" && (
                   <div className="space-y-4">
-                    <h2 className="text-xl font-semibold text-foreground">{t('history')}</h2>
+                    <h2 className="text-xl font-bold text-foreground">{t('history')}</h2>
                     
                     {photosLoading ? (
                       <div className="flex justify-center py-12">
@@ -714,17 +622,13 @@ const FarmerDashboard = () => {
                     ) : photos && photos.length > 0 ? (
                       <div className="space-y-3">
                         {photos.map((photo: any) => (
-                          <Card key={photo.id} className="border-border/50">
+                          <Card key={photo.id} className="border-border/40 hover:shadow-md transition-shadow">
                             <CardContent className="p-4 flex items-center gap-4">
                               <div className="w-16 h-16 rounded-xl overflow-hidden bg-muted flex-shrink-0">
-                                <img
-                                  src={photo.image_url}
-                                  alt="Crop photo"
-                                  className="w-full h-full object-cover"
-                                />
+                                <img src={photo.image_url} alt="Crop photo" className="w-full h-full object-cover" />
                               </div>
                               <div className="flex-1 min-w-0">
-                                <h4 className="font-medium text-foreground truncate">
+                                <h4 className="font-bold text-foreground truncate">
                                   {photo.plots?.plot_name || 'Unknown Plot'}
                                 </h4>
                                 <p className="text-sm text-muted-foreground">
@@ -734,9 +638,9 @@ const FarmerDashboard = () => {
                               <div className="text-right flex-shrink-0">
                                 {photo.ai_analysis_results?.[0] ? (
                                   <div
-                                    className={`inline-flex items-center gap-1 px-3 py-1 rounded-full text-sm font-medium ${
+                                    className={`inline-flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-semibold ${
                                       photo.ai_analysis_results[0].health_status === 'healthy'
-                                        ? "bg-success/10 text-success"
+                                        ? "bg-primary/10 text-primary"
                                         : photo.ai_analysis_results[0].health_status === 'pending'
                                         ? "bg-muted text-muted-foreground"
                                         : "bg-warning/10 text-warning"
@@ -752,7 +656,7 @@ const FarmerDashboard = () => {
                                     </span>
                                   </div>
                                 ) : (
-                                  <span className="text-sm text-muted-foreground">Pending analysis</span>
+                                  <span className="text-sm text-muted-foreground">विश्लेषण हुँदैछ</span>
                                 )}
                               </div>
                             </CardContent>
@@ -761,15 +665,17 @@ const FarmerDashboard = () => {
                       </div>
                     ) : (
                       <Card className="border-dashed border-2">
-                        <CardContent className="flex flex-col items-center justify-center py-12">
-                          <History className="w-12 h-12 text-muted-foreground mb-4" />
-                          <h3 className="font-semibold text-lg mb-2">No photos yet</h3>
-                          <p className="text-muted-foreground text-center mb-4">
-                            Start capturing photos to track your crop health
+                        <CardContent className="flex flex-col items-center justify-center py-16">
+                          <div className="w-20 h-20 rounded-3xl bg-primary/8 flex items-center justify-center mb-5">
+                            <History className="w-10 h-10 text-primary" />
+                          </div>
+                          <h3 className="font-bold text-lg mb-2">अझै फोटो छैन</h3>
+                          <p className="text-muted-foreground text-center mb-5 text-sm">
+                            बालीको स्वास्थ्य ट्र्याक गर्न फोटो खिच्न सुरु गर्नुहोस्
                           </p>
-                          <Button onClick={() => setActiveTab("capture")}>
-                            <Camera className="w-4 h-4" />
-                            Capture First Photo
+                          <Button onClick={() => setActiveTab("capture")} className="rounded-full px-6">
+                            <Camera className="w-4 h-4 mr-1" />
+                            पहिलो फोटो खिच्नुहोस्
                           </Button>
                         </CardContent>
                       </Card>
@@ -785,7 +691,7 @@ const FarmerDashboard = () => {
 
                 {activeTab === "treatments" && (
                   <div className="space-y-4">
-                    <h2 className="text-xl font-semibold text-foreground flex items-center gap-2">
+                    <h2 className="text-xl font-bold text-foreground flex items-center gap-2">
                       <Stethoscope className="w-5 h-5 text-primary" />
                       उपचार क्यालेन्डर
                     </h2>
@@ -811,8 +717,6 @@ const FarmerDashboard = () => {
         </main>
 
         <Footer />
-        
-        {/* Floating Krishi Mitra Bar */}
         <KrishiMitraBar />
       </div>
     </>
