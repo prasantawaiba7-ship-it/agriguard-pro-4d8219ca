@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
 import { useLanguage } from "@/hooks/useLanguage";
 import {
-  Menu, X, Home, Camera, Sprout, Store, Bot, BookOpen,
+  Menu, X, Home, Camera, Sprout, Store, Bot, BookOpen, User,
   MessageSquare, GraduationCap, Stethoscope, LogOut, Settings,
   Shield,
 } from "lucide-react";
