@@ -403,6 +403,53 @@ export function useSendExpertTicketMessage() {
   });
 }
 
+// --- Feedback mutation ---
+export function useSubmitTicketFeedback() {
+  const { user } = useAuth();
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (data: {
+      ticketId: string;
+      satisfactionScore: number;
+      feedback?: string;
+      resolutionStatus: 'resolved' | 'unresolved' | 'followup_needed';
+    }) => {
+      const { error } = await (supabase as any)
+        .from('expert_tickets')
+        .update({
+          satisfaction_score: data.satisfactionScore,
+          farmer_feedback: data.feedback || null,
+          resolution_status: data.resolutionStatus,
+          feedback_at: new Date().toISOString(),
+        })
+        .eq('id', data.ticketId)
+        .eq('farmer_id', user!.id);
+      if (error) throw error;
+
+      // Log feedback event
+      await (supabase as any).from('ticket_events').insert({
+        ticket_id: data.ticketId,
+        event_type: 'feedback_received',
+        actor_id: user!.id,
+        actor_type: 'farmer',
+        metadata: {
+          satisfaction_score: data.satisfactionScore,
+          resolution_status: data.resolutionStatus,
+        },
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['my-expert-tickets'] });
+      toast({ title: '✅ प्रतिक्रिया दिइयो', description: 'धन्यवाद! तपाईंको प्रतिक्रिया दर्ता भयो।' });
+    },
+    onError: () => {
+      toast({ title: 'त्रुटि', description: 'प्रतिक्रिया पठाउन सकिएन।', variant: 'destructive' });
+    },
+  });
+}
+
 export async function uploadExpertImage(file: File): Promise<string> {
   const fileName = `${Date.now()}-${Math.random().toString(36).slice(2)}.${file.name.split('.').pop()}`;
   const { error } = await supabase.storage.from('expert-images').upload(fileName, file);
