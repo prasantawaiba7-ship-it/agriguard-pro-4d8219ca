@@ -57,7 +57,7 @@ const App = () => (
                 <Route path="/" element={<Index />} />
                 <Route path="/auth" element={<Auth />} />
                 <Route path="/farmer" element={<FarmerDashboard />} />
-                <Route path="/farmer/profile" element={<ProfileSettings />} />
+                <Route path="/farmer/profile" element={<FarmerDashboard />} />
                 <Route path="/krishi-mitra" element={<KrishiMitra />} />
                 <Route path="/device" element={<KrishiMitraDevice />} />
                 <Route path="/device/settings" element={<DeviceSettings />} />
