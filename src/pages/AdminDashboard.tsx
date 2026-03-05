@@ -76,6 +76,7 @@ import { CasesInboxManager } from "@/components/admin/CasesInboxManager";
 import { ExpertTicketsManager } from "@/components/admin/ExpertTicketsManager";
 import { TechnicianManager } from "@/components/admin/TechnicianManager";
 import { ExpertTemplatesManager } from "@/components/admin/ExpertTemplatesManager";
+import { PilotMetricsDashboard } from "@/components/admin/PilotMetricsDashboard";
 import { FileText } from "lucide-react";
 interface FarmerProfile {
   id: string;
@@ -495,6 +496,10 @@ const AdminDashboard = () => {
                   <FileText className="h-4 w-4" />
                   <span className="hidden sm:inline">सिफारिश Templates</span>
                 </TabsTrigger>
+                <TabsTrigger value="pilot-metrics" className="flex items-center gap-2">
+                  <TrendingUp className="h-4 w-4" />
+                  <span className="hidden sm:inline">📊 Metrics</span>
+                </TabsTrigger>
               </TabsList>
 
               {/* Overview Tab */}
@@ -844,6 +849,11 @@ const AdminDashboard = () => {
               {/* Recommendation Templates Tab */}
               <TabsContent value="expert-templates">
                 <ExpertTemplatesManager />
+              </TabsContent>
+
+              {/* Pilot Metrics Tab */}
+              <TabsContent value="pilot-metrics">
+                <PilotMetricsDashboard />
               </TabsContent>
             </Tabs>
           </div>
