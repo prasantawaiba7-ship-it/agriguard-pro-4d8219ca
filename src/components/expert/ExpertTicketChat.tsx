@@ -77,6 +77,11 @@ export function ExpertTicketChat({ ticketId, cropName, senderRole = 'farmer', fa
 
   return (
     <div className="flex flex-col h-full">
+      {(farmId || farmCropId) && (
+        <div className="px-4 pt-3">
+          <FarmContextLine farmId={farmId} farmCropId={farmCropId} />
+        </div>
+      )}
       <div ref={scrollRef} className="flex-1 overflow-y-auto space-y-3 p-4 max-h-[450px]">
         {messages && messages.length > 0 ? messages.map(msg => {
           const isOwn = msg.sender_id === user?.id;
