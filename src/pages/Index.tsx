@@ -1,3 +1,4 @@
+import { useState, useEffect } from "react";
 import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
 import HeroSection from "@/components/home/HeroSection";
@@ -8,8 +9,29 @@ import CTASection from "@/components/home/CTASection";
 import { MyMarketShortcut } from "@/components/home/MyMarketShortcut";
 import { PageTransition } from "@/components/layout/PageTransition";
 import { Helmet } from "react-helmet-async";
+import WelcomeOnboarding from "@/components/onboarding/WelcomeOnboarding";
+
+const ONBOARDING_KEY = "kisan_sathi_onboarding_done";
 
 const Index = () => {
+  const [showOnboarding, setShowOnboarding] = useState(false);
+
+  useEffect(() => {
+    const done = localStorage.getItem(ONBOARDING_KEY);
+    if (!done) {
+      setShowOnboarding(true);
+    }
+  }, []);
+
+  const handleOnboardingComplete = () => {
+    localStorage.setItem(ONBOARDING_KEY, "true");
+    setShowOnboarding(false);
+  };
+
+  if (showOnboarding) {
+    return <WelcomeOnboarding onComplete={handleOnboardingComplete} />;
+  }
+
   return (
     <>
       <Helmet>
