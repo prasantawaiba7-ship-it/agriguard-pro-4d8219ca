@@ -120,6 +120,17 @@ export function ExpertTicketChat({ ticketId, cropName, senderRole = 'farmer', fa
         )}
       </div>
 
+      {/* Feedback card: show when ticket is answered and farmer hasn't given feedback yet */}
+      {senderRole === 'farmer' && ticketStatus === 'answered' && (
+        <div className="px-4 pb-2">
+          <TicketFeedbackCard
+            ticketId={ticketId}
+            alreadySubmitted={!!feedbackAt}
+            existingScore={satisfactionScore || undefined}
+          />
+        </div>
+      )}
+
       <div className="border-t border-border/40 p-3">
         {/* Recommendation templates start */}
         {senderRole === 'technician' && (
