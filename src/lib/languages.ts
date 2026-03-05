@@ -386,6 +386,16 @@ export const translations: Record<Language, Record<string, string>> = {
     farmingKnowledge: 'Farming knowledge',
     todayPrice: "Today's price",
 
+    // Simple Home 3-button
+    homeAskQuestion: 'Ask Question',
+    homeAskQuestionHelper: 'Ask by text or photo — get answer fast',
+    homeViewAnswers: 'My Questions',
+    homeViewAnswersHelper: 'See your past questions and answers',
+    homeCallExpert: 'Call Krishi Expert',
+    homeCallExpertHelper: 'Request a call with an agriculture expert',
+    homeGreetingLine: 'How can I help you today?',
+    homeSimpleTip: 'Ask in simple words. Send a clear photo for disease detection.',
+
     // User Bar
     settingsLabel: 'Settings',
     dashboardLabel: 'Dashboard',
@@ -999,6 +1009,16 @@ export const translations: Record<Language, Record<string, string>> = {
     farmingGuide: 'खेती गाइड',
     farmingKnowledge: 'खेती ज्ञान',
     todayPrice: 'आजको भाउ',
+
+    // Simple Home 3-button
+    homeAskQuestion: 'प्रश्न सोध्नुहोस्',
+    homeAskQuestionHelper: 'लेखेर वा फोटो पठाएर — छिटो जवाफ पाउनुहोस्',
+    homeViewAnswers: 'मेरा प्रश्नहरू',
+    homeViewAnswersHelper: 'तपाईँका पुराना प्रश्न र जवाफहरू हेर्नुहोस्',
+    homeCallExpert: 'कृषि विज्ञलाई कल गर्नुहोस्',
+    homeCallExpertHelper: 'कृषि विज्ञसँग कल अनुरोध गर्नुहोस्',
+    homeGreetingLine: 'आज तपाईँलाई के सहायोग चाहियो?',
+    homeSimpleTip: 'सजिलो शब्दमा प्रश्न सोध्नुहोस्। रोग पहिचानको लागि स्पष्ट फोटो पठाउनुहोस्।',
 
     // User Bar
     settingsLabel: 'सेटिङ',
