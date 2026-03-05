@@ -121,6 +121,8 @@ export function AskExpertForm({ prefill, onSubmitted }: AskExpertFormProps) {
         problemTitle: problemTitle.trim(),
         problemDescription: descParts.join(' ') || problemTitle.trim(),
         imageUrls,
+        farmId: selectedFarmId || undefined,
+        farmCropId: selectedFarmCropId || undefined,
       });
 
       setFormStep('done');
