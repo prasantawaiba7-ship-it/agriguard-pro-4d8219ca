@@ -141,6 +141,8 @@ export function AskExpertForm({ prefill, onSubmitted }: AskExpertFormProps) {
     setImages([]);
     setSelectedOfficeId(null);
     setSelectedTechnicianId(null);
+    setSelectedFarmId(null);
+    setSelectedFarmCropId(null);
     setFormStep('problem');
   };
 
