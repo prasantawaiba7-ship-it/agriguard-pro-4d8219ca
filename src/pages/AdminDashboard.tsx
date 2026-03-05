@@ -850,6 +850,11 @@ const AdminDashboard = () => {
               <TabsContent value="expert-templates">
                 <ExpertTemplatesManager />
               </TabsContent>
+
+              {/* Pilot Metrics Tab */}
+              <TabsContent value="pilot-metrics">
+                <PilotMetricsDashboard />
+              </TabsContent>
             </Tabs>
           </div>
         </main>
