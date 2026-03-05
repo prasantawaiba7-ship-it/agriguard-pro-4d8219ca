@@ -324,6 +324,60 @@ export type Database = {
         }
         Relationships: []
       }
+      call_requests: {
+        Row: {
+          created_at: string
+          farmer_id: string
+          farmer_note: string | null
+          id: string
+          preferred_time: string | null
+          status: string
+          technician_id: string
+          technician_note: string | null
+          ticket_id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          farmer_id: string
+          farmer_note?: string | null
+          id?: string
+          preferred_time?: string | null
+          status?: string
+          technician_id: string
+          technician_note?: string | null
+          ticket_id: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          farmer_id?: string
+          farmer_note?: string | null
+          id?: string
+          preferred_time?: string | null
+          status?: string
+          technician_id?: string
+          technician_note?: string | null
+          ticket_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "call_requests_technician_id_fkey"
+            columns: ["technician_id"]
+            isOneToOne: false
+            referencedRelation: "technicians"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "call_requests_ticket_id_fkey"
+            columns: ["ticket_id"]
+            isOneToOne: false
+            referencedRelation: "expert_tickets"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       card_reports: {
         Row: {
           admin_notes: string | null
@@ -1709,9 +1763,55 @@ export type Database = {
         }
         Relationships: []
       }
+      expert_message_attachments: {
+        Row: {
+          created_at: string
+          duration_seconds: number | null
+          file_url: string
+          id: string
+          message_id: string
+          role: string
+          ticket_id: string
+          type: string
+          uploaded_by: string
+        }
+        Insert: {
+          created_at?: string
+          duration_seconds?: number | null
+          file_url: string
+          id?: string
+          message_id: string
+          role: string
+          ticket_id: string
+          type: string
+          uploaded_by: string
+        }
+        Update: {
+          created_at?: string
+          duration_seconds?: number | null
+          file_url?: string
+          id?: string
+          message_id?: string
+          role?: string
+          ticket_id?: string
+          type?: string
+          uploaded_by?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "expert_message_attachments_message_id_fkey"
+            columns: ["message_id"]
+            isOneToOne: false
+            referencedRelation: "expert_ticket_messages"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       expert_templates: {
         Row: {
           body: string
+          body_en: string | null
+          body_ne: string | null
           created_at: string
           created_by: string | null
           crop: string
@@ -1721,10 +1821,14 @@ export type Database = {
           language: string
           tags: string[] | null
           title: string
+          title_en: string | null
+          title_ne: string | null
           updated_at: string
         }
         Insert: {
           body: string
+          body_en?: string | null
+          body_ne?: string | null
           created_at?: string
           created_by?: string | null
           crop: string
@@ -1734,10 +1838,14 @@ export type Database = {
           language?: string
           tags?: string[] | null
           title: string
+          title_en?: string | null
+          title_ne?: string | null
           updated_at?: string
         }
         Update: {
           body?: string
+          body_en?: string | null
+          body_ne?: string | null
           created_at?: string
           created_by?: string | null
           crop?: string
@@ -1747,9 +1855,52 @@ export type Database = {
           language?: string
           tags?: string[] | null
           title?: string
+          title_en?: string | null
+          title_ne?: string | null
           updated_at?: string
         }
         Relationships: []
+      }
+      expert_ticket_images: {
+        Row: {
+          annotation_data: Json | null
+          created_at: string
+          id: string
+          image_url: string
+          note: string | null
+          role: string
+          ticket_id: string
+          uploaded_by: string
+        }
+        Insert: {
+          annotation_data?: Json | null
+          created_at?: string
+          id?: string
+          image_url: string
+          note?: string | null
+          role: string
+          ticket_id: string
+          uploaded_by: string
+        }
+        Update: {
+          annotation_data?: Json | null
+          created_at?: string
+          id?: string
+          image_url?: string
+          note?: string | null
+          role?: string
+          ticket_id?: string
+          uploaded_by?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "expert_ticket_images_ticket_id_fkey"
+            columns: ["ticket_id"]
+            isOneToOne: false
+            referencedRelation: "expert_tickets"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       expert_ticket_messages: {
         Row: {
@@ -2595,6 +2746,42 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      notifications: {
+        Row: {
+          body: string
+          created_at: string
+          data: Json | null
+          id: string
+          is_read: boolean
+          ticket_id: string | null
+          title: string
+          type: string
+          user_id: string
+        }
+        Insert: {
+          body: string
+          created_at?: string
+          data?: Json | null
+          id?: string
+          is_read?: boolean
+          ticket_id?: string | null
+          title: string
+          type: string
+          user_id: string
+        }
+        Update: {
+          body?: string
+          created_at?: string
+          data?: Json | null
+          id?: string
+          is_read?: boolean
+          ticket_id?: string | null
+          title?: string
+          type?: string
+          user_id?: string
+        }
+        Relationships: []
       }
       officer_appointments: {
         Row: {
@@ -3950,6 +4137,10 @@ export type Database = {
         Returns: boolean
       }
       increment_query_count: { Args: { p_user_id: string }; Returns: undefined }
+      is_technician_user: {
+        Args: { p_technician_id: string; p_user_id: string }
+        Returns: boolean
+      }
     }
     Enums: {
       app_role: "admin" | "farmer" | "field_official" | "authority" | "insurer"
