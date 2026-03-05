@@ -496,6 +496,10 @@ const AdminDashboard = () => {
                   <FileText className="h-4 w-4" />
                   <span className="hidden sm:inline">सिफारिश Templates</span>
                 </TabsTrigger>
+                <TabsTrigger value="pilot-metrics" className="flex items-center gap-2">
+                  <TrendingUp className="h-4 w-4" />
+                  <span className="hidden sm:inline">📊 Metrics</span>
+                </TabsTrigger>
               </TabsList>
 
               {/* Overview Tab */}
