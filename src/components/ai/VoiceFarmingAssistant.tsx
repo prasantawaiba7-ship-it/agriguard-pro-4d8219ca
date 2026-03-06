@@ -1,6 +1,6 @@
 import { useState, useRef, useCallback, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Mic, MicOff, X, Volume2, VolumeX, Loader2, Leaf } from 'lucide-react';
+import { Mic, MicOff, X, Volume2, VolumeX, Loader2, Leaf, Eye, EyeOff } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { useTextToSpeech } from '@/hooks/useTextToSpeech';
@@ -38,6 +38,7 @@ export function VoiceFarmingAssistant({ language, onClose, onSendMessage }: Voic
   const [aiResponse, setAiResponse] = useState('');
   const [showWelcome, setShowWelcome] = useState(true);
   const [errorMsg, setErrorMsg] = useState('');
+  const [voiceOnly, setVoiceOnly] = useState(true);
 
   const recognitionRef = useRef<any>(null);
 
@@ -48,14 +49,10 @@ export function VoiceFarmingAssistant({ language, onClose, onSendMessage }: Voic
     onError: () => setPhase('idle'),
   });
 
-  // Update phase when TTS starts/stops
   useEffect(() => {
-    if (isSpeaking && phase === 'speaking') {
-      // Already in speaking phase
-    }
+    if (isSpeaking && phase === 'speaking') {}
   }, [isSpeaking, phase]);
 
-  // Initialize speech recognition
   useEffect(() => {
     const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
     if (!SpeechRecognition) return;
@@ -86,7 +83,6 @@ export function VoiceFarmingAssistant({ language, onClose, onSendMessage }: Voic
 
     recognition.onend = () => {
       if (phase === 'listening') {
-        // If ended without final result
         if (!transcript.trim()) {
           setPhase('idle');
         }
@@ -245,13 +241,28 @@ export function VoiceFarmingAssistant({ language, onClose, onSendMessage }: Voic
               {lang === 'ne' ? 'आवाज सहायक' : 'Voice Assistant'}
             </h2>
             <p className="text-[11px] text-muted-foreground">
-              {lang === 'ne' ? 'बोलेर सोध्नुहोस्' : 'Ask by speaking'}
+              {voiceOnly
+                ? (lang === 'ne' ? 'आवाज मात्र मोड' : 'Voice-only mode')
+                : (lang === 'ne' ? 'बोलेर सोध्नुहोस्' : 'Ask by speaking')}
             </p>
           </div>
         </div>
-        <Button variant="ghost" size="icon" onClick={onClose} className="h-9 w-9 rounded-xl">
-          <X className="w-5 h-5" />
-        </Button>
+        <div className="flex items-center gap-1">
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => setVoiceOnly(!voiceOnly)}
+            className="h-9 w-9 rounded-xl"
+            title={voiceOnly
+              ? (lang === 'ne' ? 'Text देखाउनुहोस्' : 'Show text')
+              : (lang === 'ne' ? 'Text लुकाउनुहोस्' : 'Hide text')}
+          >
+            {voiceOnly ? <Eye className="w-4 h-4 text-muted-foreground" /> : <EyeOff className="w-4 h-4 text-muted-foreground" />}
+          </Button>
+          <Button variant="ghost" size="icon" onClick={onClose} className="h-9 w-9 rounded-xl">
+            <X className="w-5 h-5" />
+          </Button>
+        </div>
       </div>
 
       {/* Main content */}
@@ -272,6 +283,13 @@ export function VoiceFarmingAssistant({ language, onClose, onSendMessage }: Voic
               <p className="text-foreground text-base whitespace-pre-line leading-relaxed">
                 {welcomeText[lang]}
               </p>
+              {voiceOnly && (
+                <p className="text-[11px] text-muted-foreground mt-3 px-4">
+                  {lang === 'ne'
+                    ? 'आवाज मात्र मोड: AI ले बोलेर जवाफ दिनेछ।'
+                    : 'Voice-only mode: AI will answer by speaking.'}
+                </p>
+              )}
             </motion.div>
           )}
         </AnimatePresence>
@@ -294,7 +312,6 @@ export function VoiceFarmingAssistant({ language, onClose, onSendMessage }: Voic
 
         {/* Mic button */}
         <div className="relative">
-          {/* Pulse rings for listening */}
           <AnimatePresence>
             {phase === 'listening' && (
               <>
@@ -344,55 +361,105 @@ export function VoiceFarmingAssistant({ language, onClose, onSendMessage }: Voic
           </motion.button>
         </div>
 
-        {/* Live transcript */}
-        <AnimatePresence>
-          {transcript && (phase === 'listening' || phase === 'processing') && (
-            <motion.div
-              initial={{ opacity: 0, height: 0 }}
-              animate={{ opacity: 1, height: 'auto' }}
-              exit={{ opacity: 0, height: 0 }}
-              className="w-full max-w-md"
-            >
-              <div className="bg-card border border-border rounded-2xl px-5 py-4 shadow-sm">
-                <p className="text-xs text-muted-foreground mb-1 flex items-center gap-1.5">
+        {/* Voice-only mode: minimal status indicators */}
+        {voiceOnly ? (
+          <>
+            <AnimatePresence>
+              {transcript && (phase === 'listening' || phase === 'processing') && (
+                <motion.p
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  className="text-xs text-muted-foreground flex items-center gap-1.5"
+                >
                   <Mic className="w-3 h-3" />
-                  {lang === 'ne' ? 'तपाईंले भन्नुभयो:' : 'You said:'}
-                </p>
-                <p className="text-foreground text-base leading-relaxed">{transcript}</p>
-              </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
+                  {lang === 'ne' ? 'तपाईंले बोल्नुभयो ✓' : 'You spoke ✓'}
+                </motion.p>
+              )}
+            </AnimatePresence>
 
-        {/* AI response */}
-        <AnimatePresence>
-          {aiResponse && (phase === 'speaking' || phase === 'idle') && (
-            <motion.div
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0 }}
-              className="w-full max-w-md"
-            >
-              <div className="bg-primary/5 border border-primary/15 rounded-2xl px-5 py-4">
-                <div className="flex items-center justify-between mb-2">
-                  <p className="text-xs text-primary font-medium flex items-center gap-1.5">
-                    <Leaf className="w-3 h-3" />
-                    {lang === 'ne' ? 'किसान साथीको जवाफ:' : "Kisan Sathi's answer:"}
+            <AnimatePresence>
+              {aiResponse && (phase === 'speaking' || phase === 'idle') && (
+                <motion.div
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  className="flex flex-col items-center gap-2"
+                >
+                  <p className="text-xs text-muted-foreground flex items-center gap-1.5">
+                    <Leaf className="w-3 h-3 text-primary" />
+                    {phase === 'speaking'
+                      ? (lang === 'ne' ? 'AI बोल्दैछ...' : 'AI is speaking...')
+                      : (lang === 'ne' ? 'AI ले जवाफ दियो ✓' : 'AI answered ✓')}
                   </p>
                   {phase === 'idle' && (
-                    <button onClick={handleReplay} className="text-xs text-primary hover:text-primary/80 flex items-center gap-1 transition-colors">
-                      <Volume2 className="w-3 h-3" />
-                      {lang === 'ne' ? 'फेरि सुन्नुहोस्' : 'Replay'}
-                    </button>
+                    <div className="flex items-center gap-3">
+                      <button onClick={handleReplay} className="text-xs text-primary hover:text-primary/80 flex items-center gap-1 transition-colors">
+                        <Volume2 className="w-3.5 h-3.5" />
+                        {lang === 'ne' ? 'फेरि सुन्नुहोस्' : 'Replay'}
+                      </button>
+                      <button onClick={() => setVoiceOnly(false)} className="text-xs text-muted-foreground hover:text-foreground flex items-center gap-1 transition-colors">
+                        <Eye className="w-3.5 h-3.5" />
+                        {lang === 'ne' ? 'Text हेर्नुहोस्' : 'Show text'}
+                      </button>
+                    </div>
                   )}
-                </div>
-                <p className="text-foreground text-sm leading-relaxed whitespace-pre-wrap max-h-52 overflow-y-auto">
-                  {aiResponse}
-                </p>
-              </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </>
+        ) : (
+          <>
+            {/* Full text mode */}
+            <AnimatePresence>
+              {transcript && (phase === 'listening' || phase === 'processing') && (
+                <motion.div
+                  initial={{ opacity: 0, height: 0 }}
+                  animate={{ opacity: 1, height: 'auto' }}
+                  exit={{ opacity: 0, height: 0 }}
+                  className="w-full max-w-md"
+                >
+                  <div className="bg-card border border-border rounded-2xl px-5 py-4 shadow-sm">
+                    <p className="text-xs text-muted-foreground mb-1 flex items-center gap-1.5">
+                      <Mic className="w-3 h-3" />
+                      {lang === 'ne' ? 'तपाईंले भन्नुभयो:' : 'You said:'}
+                    </p>
+                    <p className="text-foreground text-base leading-relaxed">{transcript}</p>
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
+
+            <AnimatePresence>
+              {aiResponse && (phase === 'speaking' || phase === 'idle') && (
+                <motion.div
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0 }}
+                  className="w-full max-w-md"
+                >
+                  <div className="bg-primary/5 border border-primary/15 rounded-2xl px-5 py-4">
+                    <div className="flex items-center justify-between mb-2">
+                      <p className="text-xs text-primary font-medium flex items-center gap-1.5">
+                        <Leaf className="w-3 h-3" />
+                        {lang === 'ne' ? 'किसान साथीको जवाफ:' : "Kisan Sathi's answer:"}
+                      </p>
+                      {phase === 'idle' && (
+                        <button onClick={handleReplay} className="text-xs text-primary hover:text-primary/80 flex items-center gap-1 transition-colors">
+                          <Volume2 className="w-3 h-3" />
+                          {lang === 'ne' ? 'फेरि सुन्नुहोस्' : 'Replay'}
+                        </button>
+                      )}
+                    </div>
+                    <p className="text-foreground text-sm leading-relaxed whitespace-pre-wrap max-h-52 overflow-y-auto">
+                      {aiResponse}
+                    </p>
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </>
+        )}
 
         {/* Error message */}
         <AnimatePresence>
