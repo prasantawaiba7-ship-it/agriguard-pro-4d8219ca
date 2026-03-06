@@ -37,13 +37,15 @@ const SCHEDULE_OPTIONS = [
   { value: 'custom', label: 'आफ्नो समय लेख्ने...' },
 ];
 
-function TechnicianCallRequestPanel({ callRequest, updateCallStatus }: { callRequest: CallRequest; updateCallStatus: ReturnType<typeof useUpdateCallRequestStatus> }) {
+function TechnicianCallRequestPanel({ callRequest, updateCallStatus, farmerPhone }: { callRequest: CallRequest; updateCallStatus: ReturnType<typeof useUpdateCallRequestStatus>; farmerPhone?: string | null }) {
   const [acceptDialogOpen, setAcceptDialogOpen] = useState(false);
   const [declineDialogOpen, setDeclineDialogOpen] = useState(false);
   const [scheduleOption, setScheduleOption] = useState('now');
   const [customTime, setCustomTime] = useState('');
   const [declineReason, setDeclineReason] = useState('busy');
   const [declineNote, setDeclineNote] = useState('');
+  const [callSummary, setCallSummary] = useState('');
+  const [showSummaryInput, setShowSummaryInput] = useState(false);
 
   const handleAccept = () => {
     const window = scheduleOption === 'custom' ? customTime.trim() : SCHEDULE_OPTIONS.find(o => o.value === scheduleOption)?.label || '';
@@ -65,23 +67,64 @@ function TechnicianCallRequestPanel({ callRequest, updateCallStatus }: { callReq
     }, { onSuccess: () => setDeclineDialogOpen(false) });
   };
 
+  const handleStartCall = () => {
+    // Mark as in_progress then open phone dialer
+    updateCallStatus.mutate({
+      requestId: callRequest.id,
+      status: 'in_progress',
+      ticketId: callRequest.ticket_id,
+    }, {
+      onSuccess: () => {
+        if (farmerPhone) {
+          window.open(`tel:${farmerPhone}`, '_self');
+        }
+      }
+    });
+  };
+
+  const handleCompleteCall = () => {
+    updateCallStatus.mutate({
+      requestId: callRequest.id,
+      status: 'completed',
+      technicianNote: callSummary.trim() || undefined,
+      ticketId: callRequest.ticket_id,
+    }, {
+      onSuccess: () => {
+        setShowSummaryInput(false);
+        setCallSummary('');
+      }
+    });
+  };
+
   return (
     <div className="px-4 pb-2">
       <div className="rounded-lg border-2 border-primary/30 bg-primary/5 p-3 space-y-2">
+        {/* Header */}
         <div className="flex items-center gap-2 text-sm font-medium text-foreground">
           <Phone className="w-4 h-4 text-primary" />
-          📞 किसानले Call अनुरोध गरेको छ
+          {callRequest.status === 'requested' && '📞 किसानले Call अनुरोध गरेको छ'}
+          {callRequest.status === 'accepted' && '✅ Call स्वीकार भएको छ'}
+          {callRequest.status === 'in_progress' && '📞 Call हुँदैछ...'}
         </div>
+
+        {/* Farmer phone display for expert */}
+        {farmerPhone && callRequest.status !== 'requested' && (
+          <p className="text-xs text-muted-foreground pl-6">
+            📱 किसानको नम्बर: <span className="font-mono font-medium text-foreground">{farmerPhone}</span>
+          </p>
+        )}
+
         {callRequest.preferred_time && (
-          <p className="text-xs text-muted-foreground">
+          <p className="text-xs text-muted-foreground pl-6">
             <Clock className="w-3 h-3 inline mr-1" />
             समय: {PREFERRED_TIME_LABELS[callRequest.preferred_time] || callRequest.preferred_time}
           </p>
         )}
         {callRequest.farmer_note && (
-          <p className="text-xs text-muted-foreground">नोट: {callRequest.farmer_note}</p>
+          <p className="text-xs text-muted-foreground pl-6">💬 नोट: {callRequest.farmer_note}</p>
         )}
 
+        {/* --- STATE: requested --- */}
         {callRequest.status === 'requested' && (
           <div className="flex gap-2">
             <Button size="sm" className="flex-1 text-xs" onClick={() => setAcceptDialogOpen(true)}>
@@ -93,32 +136,87 @@ function TechnicianCallRequestPanel({ callRequest, updateCallStatus }: { callReq
           </div>
         )}
 
+        {/* --- STATE: accepted — show Call Now button --- */}
         {callRequest.status === 'accepted' && (
           <div className="space-y-2">
             {callRequest.scheduled_window && (
-              <p className="text-xs text-green-700 dark:text-green-400 font-medium">
+              <p className="text-xs font-medium text-green-700 dark:text-green-400 pl-6">
                 <Clock className="w-3 h-3 inline mr-1" />
                 {callRequest.scheduled_window}
               </p>
             )}
-            <div className="flex gap-2">
-              <Button size="sm" variant="outline" className="flex-1 text-xs" disabled={updateCallStatus.isPending}
-                onClick={() => updateCallStatus.mutate({ requestId: callRequest.id, status: 'in_progress', ticketId: callRequest.ticket_id })}>
-                📞 Call गर्दैछु
-              </Button>
-              <Button size="sm" variant="outline" className="text-xs" disabled={updateCallStatus.isPending}
-                onClick={() => updateCallStatus.mutate({ requestId: callRequest.id, status: 'completed', ticketId: callRequest.ticket_id })}>
-                Call सकियो
-              </Button>
-            </div>
+            <Button
+              size="sm"
+              className="w-full bg-green-600 hover:bg-green-700 text-white text-sm font-semibold"
+              disabled={updateCallStatus.isPending}
+              onClick={handleStartCall}
+            >
+              {updateCallStatus.isPending ? <Loader2 className="w-4 h-4 animate-spin mr-1" /> : <PhoneCall className="w-4 h-4 mr-1.5" />}
+              📞 Call सुरु गर्नुहोस् (Call now)
+            </Button>
+            <p className="text-[10px] text-muted-foreground text-center">
+              ⚠️ Call गर्नु अघि किसानको पहिचान पुष्टि गर्नुहोस्
+            </p>
           </div>
         )}
 
+        {/* --- STATE: in_progress — Call ongoing --- */}
         {callRequest.status === 'in_progress' && (
-          <Button size="sm" className="w-full text-xs" disabled={updateCallStatus.isPending}
-            onClick={() => updateCallStatus.mutate({ requestId: callRequest.id, status: 'completed', ticketId: callRequest.ticket_id })}>
-            <CheckCircle2 className="w-3.5 h-3.5 mr-1" /> Call सकियो
-          </Button>
+          <div className="space-y-2">
+            <div className="flex items-center gap-2 text-xs text-blue-600 dark:text-blue-400 font-medium pl-6 animate-pulse">
+              <PhoneCall className="w-3.5 h-3.5" />
+              Call चलिरहेको छ...
+            </div>
+            {!showSummaryInput ? (
+              <div className="flex gap-2">
+                <Button
+                  size="sm"
+                  className="flex-1 text-xs"
+                  disabled={updateCallStatus.isPending}
+                  onClick={() => setShowSummaryInput(true)}
+                >
+                  <CheckCircle2 className="w-3.5 h-3.5 mr-1" /> Call सकियो (Call finished)
+                </Button>
+                {farmerPhone && (
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="text-xs"
+                    onClick={() => window.open(`tel:${farmerPhone}`, '_self')}
+                  >
+                    <Phone className="w-3 h-3 mr-1" /> पुन: Call
+                  </Button>
+                )}
+              </div>
+            ) : (
+              <div className="space-y-2">
+                <Textarea
+                  placeholder="Call को संक्षिप्त सारांश लेख्नुहोस् (optional)..."
+                  value={callSummary}
+                  onChange={e => setCallSummary(e.target.value)}
+                  rows={2}
+                  className="text-sm resize-none"
+                />
+                <div className="flex gap-2">
+                  <Button variant="outline" size="sm" className="flex-1 text-xs" onClick={() => setShowSummaryInput(false)}>
+                    रद्द
+                  </Button>
+                  <Button size="sm" className="flex-1 text-xs" disabled={updateCallStatus.isPending} onClick={handleCompleteCall}>
+                    {updateCallStatus.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : '✅ सकियो, save गर्नुहोस्'}
+                  </Button>
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Safety tips for expert */}
+        {['accepted', 'in_progress'].includes(callRequest.status) && (
+          <div className="rounded bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-800 p-2 text-[10px] text-amber-800 dark:text-amber-300 space-y-0.5">
+            <p>💡 <strong>सुझाव:</strong></p>
+            <p>• छोटो र स्पष्ट कुरा गर्नुहोस्, जटिल विषय chat मा लेख्नुहोस्</p>
+            <p>• Network कमजोर भए voice note वा chat fallback प्रयोग गर्नुहोस्</p>
+          </div>
         )}
       </div>
 
@@ -188,6 +286,134 @@ function TechnicianCallRequestPanel({ callRequest, updateCallStatus }: { callReq
           </div>
         </DialogContent>
       </Dialog>
+    </div>
+  );
+}
+
+/* ─── Farmer Call Status Panel ─── */
+function FarmerCallStatusPanel({ callRequest, technicianPhone, technicianName }: { callRequest: CallRequest; technicianPhone?: string | null; technicianName?: string }) {
+  const status = callRequest.status;
+
+  if (status === 'completed') {
+    return (
+      <div className="px-4 pb-2">
+        <div className="rounded-lg border border-border bg-muted/30 p-3 text-xs text-muted-foreground flex items-center gap-2">
+          <CheckCircle2 className="w-4 h-4 text-green-600 shrink-0" />
+          <span>✅ Call सम्पन्न भयो।</span>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="px-4 pb-2">
+      <div className={`rounded-lg border-2 p-3 space-y-2 ${
+        status === 'requested' ? 'border-amber-300 bg-amber-50 dark:bg-amber-950/20 dark:border-amber-700' :
+        status === 'accepted' ? 'border-green-300 bg-green-50 dark:bg-green-950/20 dark:border-green-700' :
+        status === 'in_progress' ? 'border-blue-300 bg-blue-50 dark:bg-blue-950/20 dark:border-blue-700' :
+        status === 'declined' ? 'border-destructive/30 bg-destructive/5' :
+        'border-border bg-muted/50'
+      }`}>
+        {/* Status header */}
+        <div className="flex items-center gap-2 text-sm font-medium">
+          {status === 'requested' && (
+            <>
+              <Clock className="w-4 h-4 text-amber-600" />
+              <span className="text-amber-700 dark:text-amber-300">⏳ Call अनुरोध प्रतीक्षामा छ</span>
+            </>
+          )}
+          {status === 'accepted' && (
+            <>
+              <PhoneIncoming className="w-4 h-4 text-green-600" />
+              <span className="text-green-700 dark:text-green-300">✅ Call स्वीकार भएको छ!</span>
+            </>
+          )}
+          {status === 'in_progress' && (
+            <>
+              <PhoneCall className="w-4 h-4 text-blue-600 animate-pulse" />
+              <span className="text-blue-700 dark:text-blue-300">📞 Call हुँदैछ...</span>
+            </>
+          )}
+          {status === 'declined' && (
+            <>
+              <PhoneOff className="w-4 h-4 text-destructive" />
+              <span className="text-destructive">❌ Call अस्वीकार गरिएको छ</span>
+            </>
+          )}
+        </div>
+
+        {/* Status-specific content */}
+        {status === 'requested' && (
+          <div className="space-y-1 pl-6">
+            <p className="text-xs text-muted-foreground">कृषि विज्ञले तपाईंको अनुरोध हेर्दै हुनुहुन्छ।</p>
+            {callRequest.preferred_time && (
+              <p className="text-xs text-muted-foreground">
+                🕐 समय: {PREFERRED_TIME_LABELS[callRequest.preferred_time] || callRequest.preferred_time}
+              </p>
+            )}
+          </div>
+        )}
+
+        {status === 'accepted' && (
+          <div className="space-y-2 pl-6">
+            {callRequest.scheduled_window && (
+              <p className="text-xs font-medium text-green-700 dark:text-green-400">
+                🕐 {callRequest.scheduled_window} मा call आउँछ।
+              </p>
+            )}
+            <p className="text-xs text-muted-foreground">
+              📱 कृपया आफ्नो फोन नजिकै राख्नुस्। कृषि विज्ञले चाँडै call गर्नुहुनेछ।
+            </p>
+            {technicianPhone && (
+              <div className="pt-1">
+                <a
+                  href={`tel:${technicianPhone}`}
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-green-600 hover:bg-green-700 text-white text-xs font-medium transition-colors"
+                >
+                  <PhoneCall className="w-3.5 h-3.5" />
+                  📞 विज्ञलाई Call गर्नुहोस्
+                </a>
+                <p className="text-[10px] text-muted-foreground mt-1">
+                  {technicianName && <span>{technicianName} • </span>}
+                  {technicianPhone}
+                </p>
+              </div>
+            )}
+            <div className="rounded bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-800 p-1.5 text-[10px] text-amber-800 dark:text-amber-300">
+              💡 नेटवर्क कमजोर भए घाम लागेको खुला ठाउँमा जानुस्।
+            </div>
+          </div>
+        )}
+
+        {status === 'in_progress' && (
+          <div className="space-y-1 pl-6">
+            <p className="text-xs text-muted-foreground">कृषि विज्ञसँग कुरा भइरहेको छ।</p>
+            {technicianPhone && (
+              <a
+                href={`tel:${technicianPhone}`}
+                className="inline-flex items-center gap-1 text-xs text-blue-600 hover:text-blue-700 font-medium"
+              >
+                <Phone className="w-3 h-3" /> पुन: Call गर्नुहोस्
+              </a>
+            )}
+          </div>
+        )}
+
+        {status === 'declined' && (
+          <div className="space-y-1 pl-6">
+            <p className="text-xs text-muted-foreground">
+              {callRequest.decline_reason === 'busy' && 'अहिले व्यस्त हुनुहुन्छ, कृपया पछि अनुरोध गर्नुस्।'}
+              {callRequest.decline_reason === 'wrong_expert' && 'यो विषय अर्को विज्ञको क्षेत्र हो, अर्को विज्ञ छान्नुस्।'}
+              {callRequest.decline_reason === 'use_chat' && 'Chat मा लेख्नुस्, जवाफ दिइनेछ।'}
+              {callRequest.decline_reason === 'network' && 'Network समस्या छ, पछि प्रयास गर्नुस्।'}
+              {!callRequest.decline_reason && 'कृपया chat मा लेख्नुस् वा पछि प्रयास गर्नुस्।'}
+            </p>
+            {callRequest.decline_note && (
+              <p className="text-xs text-muted-foreground italic">"{callRequest.decline_note}"</p>
+            )}
+          </div>
+        )}
+      </div>
     </div>
   );
 }
