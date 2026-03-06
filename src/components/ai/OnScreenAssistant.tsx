@@ -8,6 +8,7 @@ import {
 } from 'lucide-react';
 import { WeatherAdvisoryCard } from '@/components/ai/WeatherAdvisoryCard';
 import { RealtimeVoiceChat } from '@/components/ai/RealtimeVoiceChat';
+import { VoiceFarmingAssistant } from '@/components/ai/VoiceFarmingAssistant';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
@@ -1332,7 +1333,18 @@ export function OnScreenAssistant({ isFullScreen: isEmbeddedFullScreen = false, 
 
         <AnimatePresence>
           {showVoiceCall && (
-            <RealtimeVoiceChat language={assistantLang as 'ne' | 'hi' | 'en'} onClose={() => setShowVoiceCall(false)} onShowPremium={() => { setShowVoiceCall(false); setShowSubscriptionModal(true); }} />
+            <VoiceFarmingAssistant
+              language={assistantLang as 'ne' | 'hi' | 'en'}
+              onClose={() => setShowVoiceCall(false)}
+              onSendMessage={(question, aiResp) => {
+                // Add to chat history
+                const userMsg: Message = { role: 'user', content: question, timestamp: new Date() };
+                const assistantMsg: Message = { role: 'assistant', content: aiResp, timestamp: new Date() };
+                setMessages(prev => [...prev, userMsg, assistantMsg]);
+                saveMessageToDb('user', question);
+                saveMessageToDb('assistant', aiResp);
+              }}
+            />
           )}
         </AnimatePresence>
 
