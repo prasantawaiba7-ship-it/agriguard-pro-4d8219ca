@@ -1712,6 +1712,29 @@ export function OnScreenAssistant({ isFullScreen: isEmbeddedFullScreen = false, 
               )}
             </div>
 
+            {/* Voice Note Recorder Overlay */}
+            {showVoiceNoteRecorder && (
+              <VoiceNoteRecorder
+                onSend={async (audioUrl, durationSeconds) => {
+                  setShowVoiceNoteRecorder(false);
+                  // Add as a user voice message
+                  const voiceMsg: Message = {
+                    role: 'user',
+                    content: `🎤 आवाज सन्देश (${Math.floor(durationSeconds / 60)}:${(durationSeconds % 60).toString().padStart(2, '0')})`,
+                    timestamp: new Date(),
+                  };
+                  setMessages(prev => [...prev, voiceMsg]);
+                  // Save to DB
+                  saveMessageToDb('user', voiceMsg.content);
+                  // Send to AI as text prompt
+                  handleSendMessage(language === 'ne' 
+                    ? 'मैले आवाज सन्देश पठाएँ। कृपया मलाई सहयोग गर्नुहोस्।' 
+                    : 'I sent a voice note. Please help me.');
+                }}
+                onCancel={() => setShowVoiceNoteRecorder(false)}
+              />
+            )}
+
             {/* Footer Actions */}
             <div className="px-3 sm:px-4 pb-3 space-y-2 shrink-0">
               {/* Quick Actions */}
