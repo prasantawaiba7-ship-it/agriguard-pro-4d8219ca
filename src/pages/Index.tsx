@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
 import { PageTransition } from "@/components/layout/PageTransition";
@@ -7,23 +8,40 @@ import WelcomeOnboarding from "@/components/onboarding/WelcomeOnboarding";
 import HeroSection from "@/components/home/HeroSection";
 import HomeScreen from "@/components/home/HomeScreen";
 import HowItWorksSection from "@/components/home/HowItWorksSection";
+import { useAuth } from "@/hooks/useAuth";
 
 const ONBOARDING_KEY = "kisan_sathi_onboarding_done";
 
 const Index = () => {
   const [showOnboarding, setShowOnboarding] = useState(false);
+  const { user, isLoading } = useAuth();
+  const navigate = useNavigate();
+
+  // Redirect unauthenticated users to login
+  useEffect(() => {
+    if (!isLoading && !user) {
+      navigate('/auth', { replace: true });
+    }
+  }, [isLoading, user, navigate]);
 
   useEffect(() => {
-    const done = localStorage.getItem(ONBOARDING_KEY);
-    if (!done) {
-      setShowOnboarding(true);
+    if (user) {
+      const done = localStorage.getItem(ONBOARDING_KEY);
+      if (!done) {
+        setShowOnboarding(true);
+      }
     }
-  }, []);
+  }, [user]);
 
   const handleOnboardingComplete = () => {
     localStorage.setItem(ONBOARDING_KEY, "true");
     setShowOnboarding(false);
   };
+
+  // Show nothing while checking auth
+  if (isLoading || !user) {
+    return null;
+  }
 
   if (showOnboarding) {
     return <WelcomeOnboarding onComplete={handleOnboardingComplete} />;
