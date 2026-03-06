@@ -25,13 +25,18 @@ interface ExpertTicketChatProps {
   technicianId?: string | null;
 }
 
-export function ExpertTicketChat({ ticketId, cropName, senderRole = 'farmer', farmId, farmCropId, ticketStatus, satisfactionScore, feedbackAt }: ExpertTicketChatProps) {
+export function ExpertTicketChat({ ticketId, cropName, senderRole = 'farmer', farmId, farmCropId, ticketStatus, satisfactionScore, feedbackAt, technicianId }: ExpertTicketChatProps) {
   const { user } = useAuth();
   const { data: messages, isLoading } = useExpertTicketMessages(ticketId);
   const sendMessage = useSendExpertTicketMessage();
   const [newMessage, setNewMessage] = useState('');
   const [uploading, setUploading] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
+  const [callDialogOpen, setCallDialogOpen] = useState(false);
+  const [preferredTime, setPreferredTime] = useState('');
+  const [farmerNote, setFarmerNote] = useState('');
+  const { data: existingCallRequest } = useTicketCallRequest(ticketId);
+  const createCallRequest = useCreateCallRequest();
   // Recommendation templates start
   const [templatePickerOpen, setTemplatePickerOpen] = useState(false);
 
