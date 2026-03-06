@@ -74,6 +74,7 @@ const Header = () => {
           {/* Desktop Auth + Language */}
           <div className="hidden md:flex items-center gap-2">
             {/* Notification system start */}
+            <AdminNotificationBell />
             <TechnicianNotificationBell />
             {/* Notification system end */}
             <Button
@@ -110,6 +111,7 @@ const Header = () => {
           {/* Mobile: Language toggle + Menu */}
           <div className="flex md:hidden items-center gap-1.5">
             {/* Notification system start */}
+            <AdminNotificationBell />
             <TechnicianNotificationBell />
             {/* Notification system end */}
             <Button
