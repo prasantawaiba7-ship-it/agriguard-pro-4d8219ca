@@ -9,6 +9,7 @@ import { useLanguage } from "@/hooks/useLanguage";
 import { useCurrentTechnician } from "@/hooks/useCurrentTechnician";
 import { TechnicianNotificationBell } from "@/components/notifications/TechnicianNotificationBell";
 import { AdminNotificationBell } from "@/components/notifications/AdminNotificationBell";
+import { FarmerNotificationBell } from "@/components/notifications/FarmerNotificationBell";
 
 const Header = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -76,6 +77,7 @@ const Header = () => {
             {/* Notification system start */}
             <AdminNotificationBell />
             <TechnicianNotificationBell />
+            {!isAdmin() && !currentTech && <FarmerNotificationBell />}
             {/* Notification system end */}
             <Button
               variant="ghost"
@@ -113,6 +115,7 @@ const Header = () => {
             {/* Notification system start */}
             <AdminNotificationBell />
             <TechnicianNotificationBell />
+            {!isAdmin() && !currentTech && <FarmerNotificationBell />}
             {/* Notification system end */}
             <Button
               variant="ghost"
