@@ -476,6 +476,17 @@ export function ExpertTicketChat({ ticketId, cropName, senderRole = 'farmer', fa
     setNewMessage('');
   };
 
+  const handleVoiceNoteSend = (audioUrl: string, durationSeconds: number) => {
+    sendMessage.mutate({
+      ticketId,
+      message: '',
+      senderType: senderRole,
+      audioUrl,
+      audioDurationSeconds: durationSeconds,
+    });
+    setShowVoiceRecorder(false);
+  };
+
   const handleImageSend = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
