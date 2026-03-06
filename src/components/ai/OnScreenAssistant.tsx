@@ -894,17 +894,17 @@ export function OnScreenAssistant({ isFullScreen: isEmbeddedFullScreen = false, 
     return (
       <>
         <div className="flex flex-col h-full bg-background">
-          {/* Modern Sticky Header */}
-          <div className="sticky top-0 z-20 backdrop-blur-xl bg-primary/95 border-b border-primary/20 shrink-0">
-            <div className="max-w-3xl mx-auto flex items-center justify-between px-4 py-3 sm:px-6">
+          {/* ========== KRISHI MITRA HEADER ========== */}
+          <div className="sticky top-0 z-20 shrink-0" style={{ background: 'linear-gradient(135deg, hsl(150 60% 28%) 0%, hsl(150 50% 36%) 50%, hsl(150 45% 32%) 100%)' }}>
+            <div className="max-w-3xl mx-auto flex items-center justify-between px-4 py-3.5 sm:px-6">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-2xl bg-white/15 backdrop-blur-sm flex items-center justify-center">
-                  <Leaf className="w-5 h-5 text-white" />
+                <div className="w-11 h-11 rounded-2xl bg-white/15 backdrop-blur-sm flex items-center justify-center shadow-sm">
+                  <Leaf className="w-5.5 h-5.5 text-white" />
                 </div>
                 <div>
-                  <h1 className="font-bold text-base sm:text-lg text-white leading-tight">Farmer GPT</h1>
-                  <p className="text-[11px] sm:text-xs text-white/70">
-                    {language === 'ne' ? 'नेपाली वा English मा सोध्नुहोस्' : language === 'hi' ? 'हिन्दी या English में पूछें' : 'Ask in Nepali or English'}
+                  <h1 className="font-bold text-[20px] text-white leading-tight tracking-tight">Krishi Mitra AI</h1>
+                  <p className="text-[11px] sm:text-xs text-white/60 font-medium">
+                    {language === 'ne' ? 'स्मार्ट कृषि सहायक' : language === 'hi' ? 'स्मार्ट कृषि सहायक' : 'Smart Farming Assistant'}
                   </p>
                 </div>
                 {subscribed && (
@@ -913,19 +913,19 @@ export function OnScreenAssistant({ isFullScreen: isEmbeddedFullScreen = false, 
                   </span>
                 )}
               </div>
-              <div className="flex items-center gap-1">
+              <div className="flex items-center gap-0.5">
                 {!isOnline && (
-                  <span className="text-[10px] bg-white/15 text-white px-2 py-1 rounded-full flex items-center gap-1">
+                  <span className="text-[10px] bg-white/15 text-white px-2 py-1 rounded-full flex items-center gap-1 mr-1">
                     <WifiOff className="w-3 h-3" />
                     {pendingCount > 0 && <span className="font-bold">{pendingCount}</span>}
                   </span>
                 )}
                 
-                {/* Language */}
+                {/* Language Switch */}
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
                     <Button variant="ghost" size="icon" className="h-9 w-9 text-white/80 hover:text-white hover:bg-white/10 rounded-xl">
-                      <Globe className="w-4 h-4" />
+                      <Globe className="w-[22px] h-[22px]" />
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end" className="min-w-[140px]">
@@ -943,57 +943,58 @@ export function OnScreenAssistant({ isFullScreen: isEmbeddedFullScreen = false, 
                   </DropdownMenuContent>
                 </DropdownMenu>
 
-                {/* Voice mode */}
-                <Button variant="ghost" size="icon" className="h-9 w-9 text-white/80 hover:text-white hover:bg-white/10 rounded-xl" onClick={() => setAutoSpeak(!autoSpeak)}>
-                  {autoSpeak ? <Volume2 className="w-4 h-4" /> : <VolumeX className="w-4 h-4" />}
+                {/* Voice Mode */}
+                <Button variant="ghost" size="icon" className="h-9 w-9 text-white/80 hover:text-white hover:bg-white/10 rounded-xl" onClick={() => setShowVoiceCall(true)}>
+                  <Mic className="w-[22px] h-[22px]" />
                 </Button>
 
                 {/* History */}
                 {profile && (
                   <Button variant="ghost" size="icon" className="h-9 w-9 text-white/80 hover:text-white hover:bg-white/10 rounded-xl" onClick={() => setShowChatHistory(true)}>
-                    <History className="w-4 h-4" />
+                    <History className="w-[22px] h-[22px]" />
                   </Button>
                 )}
 
                 {/* Export */}
                 {messages.length > 0 && (
                   <Button variant="ghost" size="icon" className="h-9 w-9 text-white/80 hover:text-white hover:bg-white/10 rounded-xl" onClick={downloadReport} disabled={isExportingPdf}>
-                    {isExportingPdf ? <Loader2 className="w-4 h-4 animate-spin" /> : <FileDown className="w-4 h-4" />}
+                    {isExportingPdf ? <Loader2 className="w-4 h-4 animate-spin" /> : <FileDown className="w-[22px] h-[22px]" />}
                   </Button>
                 )}
               </div>
             </div>
           </div>
 
-          {/* Messages Area */}
+          {/* ========== MESSAGES AREA ========== */}
           <div className="flex-1 overflow-y-auto">
             {messages.length === 0 ? (
               /* ========== WELCOME SCREEN ========== */
-              <div className="flex flex-col items-center justify-center min-h-full px-4 py-8 sm:py-12">
+              <div className="flex flex-col items-center justify-center min-h-full px-5 py-10 sm:py-14">
                 <motion.div
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.5 }}
-                  className="w-full max-w-lg text-center"
+                  className="w-full max-w-md text-center"
                 >
-                  {/* AI Icon */}
+                  {/* Large Leaf Icon */}
                   <motion.div
-                    initial={{ scale: 0.8 }}
+                    initial={{ scale: 0.7 }}
                     animate={{ scale: 1 }}
-                    transition={{ delay: 0.1, type: 'spring', stiffness: 200 }}
-                    className="w-20 h-20 sm:w-24 sm:h-24 rounded-3xl bg-primary/10 flex items-center justify-center mx-auto mb-6 shadow-sm"
+                    transition={{ delay: 0.1, type: 'spring', stiffness: 180 }}
+                    className="w-24 h-24 sm:w-28 sm:h-28 rounded-[28px] bg-primary/10 flex items-center justify-center mx-auto mb-7"
+                    style={{ boxShadow: '0 8px 30px hsl(150 67% 38% / 0.12)' }}
                   >
-                    <Leaf className="w-10 h-10 sm:w-12 sm:h-12 text-primary" />
+                    <Leaf className="w-12 h-12 sm:w-14 sm:h-14 text-primary" />
                   </motion.div>
 
                   <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.2 }}>
-                    <h2 className="text-2xl sm:text-3xl font-bold text-foreground mb-1">
+                    <h2 className="text-[26px] sm:text-3xl font-bold text-foreground mb-1.5">
                       {language === 'ne' ? 'नमस्ते 👋' : 'Namaste 👋'}
                     </h2>
-                    <p className="text-lg sm:text-xl font-semibold text-primary mb-1">
-                      {language === 'ne' ? 'म Farmer GPT' : "I am Farmer GPT"}
+                    <p className="text-[20px] sm:text-[22px] font-bold text-primary mb-1.5">
+                      {language === 'ne' ? 'म Krishi Mitra AI' : "I am Krishi Mitra AI"}
                     </p>
-                    <p className="text-sm sm:text-base text-muted-foreground mb-8">
+                    <p className="text-[16px] text-muted-foreground mb-8 leading-relaxed">
                       {language === 'ne' 
                         ? 'कृषिसम्बन्धी कुनै पनि प्रश्न सोध्नुहोस्।' 
                         : language === 'hi' ? 'खेती से जुड़ा कोई भी सवाल पूछें।' 
@@ -1001,12 +1002,12 @@ export function OnScreenAssistant({ isFullScreen: isEmbeddedFullScreen = false, 
                     </p>
                   </motion.div>
 
-                  {/* Suggestion Chips */}
-                  <div className="grid grid-cols-1 gap-2.5 mb-6">
+                  {/* Suggestion Cards */}
+                  <div className="grid grid-cols-1 gap-3 mb-8">
                     {quickQuestions[getQuickQuestionsLang()].map((q, idx) => (
                       <motion.button
                         key={idx}
-                        initial={{ opacity: 0, x: -10 }}
+                        initial={{ opacity: 0, x: -12 }}
                         animate={{ opacity: 1, x: 0 }}
                         transition={{ delay: 0.3 + idx * 0.08 }}
                         onClick={() => {
@@ -1018,24 +1019,25 @@ export function OnScreenAssistant({ isFullScreen: isEmbeddedFullScreen = false, 
                         }}
                         disabled={isLoading}
                         className={cn(
-                          "flex items-center gap-3 px-4 py-3.5 rounded-2xl border border-border bg-card",
-                          "hover:border-primary/40 hover:shadow-md transition-all text-left",
-                          "text-sm sm:text-base touch-manipulation active:scale-[0.98]",
+                          "flex items-center gap-3.5 px-4 py-4 rounded-2xl border border-border/70 bg-card",
+                          "hover:border-primary/40 transition-all text-left",
+                          "text-[15px] sm:text-base touch-manipulation active:scale-[0.98]",
                           'isPhotoAction' in q && q.isPhotoAction && "border-destructive/20 hover:border-destructive/40"
                         )}
+                        style={{ boxShadow: '0 2px 8px hsl(221 39% 11% / 0.04)' }}
                       >
-                        <div className={cn("w-9 h-9 rounded-xl flex items-center justify-center shrink-0",
+                        <div className={cn("w-10 h-10 rounded-xl flex items-center justify-center shrink-0",
                           'isPhotoAction' in q && q.isPhotoAction ? "bg-destructive/10" : "bg-primary/10"
                         )}>
-                          <q.icon className={cn("w-4.5 h-4.5", q.color)} />
+                          <q.icon className={cn("w-5 h-5", q.color)} />
                         </div>
-                        <span className="font-medium text-foreground">{q.text}</span>
+                        <span className="font-medium text-foreground leading-snug">{q.text}</span>
                       </motion.button>
                     ))}
                   </div>
 
                   {/* Weather Advisory */}
-                  <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.6 }} className="mb-4">
+                  <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.6 }} className="mb-5">
                     <WeatherAdvisoryCard language={language as 'ne' | 'hi' | 'en'} />
                   </motion.div>
 
@@ -1045,7 +1047,8 @@ export function OnScreenAssistant({ isFullScreen: isEmbeddedFullScreen = false, 
                     animate={{ opacity: 1 }}
                     transition={{ delay: 0.7 }}
                     onClick={() => setShowVoiceCall(true)}
-                    className="flex items-center justify-center gap-2 w-full py-3 px-4 rounded-2xl bg-primary text-primary-foreground font-medium hover:bg-primary/90 transition-colors touch-manipulation active:scale-[0.98]"
+                    className="flex items-center justify-center gap-2.5 w-full py-3.5 px-4 rounded-2xl bg-primary text-primary-foreground font-semibold text-[16px] hover:bg-primary/90 transition-colors touch-manipulation active:scale-[0.98]"
+                    style={{ boxShadow: '0 4px 14px hsl(150 67% 38% / 0.2)' }}
                   >
                     <Phone className="w-5 h-5" />
                     {language === 'ne' ? 'AI सँग बोल्नुहोस्' : language === 'hi' ? 'AI से बात करें' : 'Talk with AI'}
@@ -1056,7 +1059,7 @@ export function OnScreenAssistant({ isFullScreen: isEmbeddedFullScreen = false, 
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
                     transition={{ delay: 0.8 }}
-                    className="flex flex-wrap items-center justify-center gap-x-4 gap-y-1.5 mt-6 text-xs text-muted-foreground"
+                    className="flex flex-wrap items-center justify-center gap-x-4 gap-y-1.5 mt-7 text-xs text-muted-foreground"
                   >
                     <span className="flex items-center gap-1">🌾 {language === 'ne' ? 'नेपाली किसानको भरोसा' : 'Trusted by Nepali Farmers'}</span>
                     <span className="flex items-center gap-1">📡 {language === 'ne' ? 'AI रोग पहिचान' : 'AI Crop Disease Detection'}</span>
@@ -1070,7 +1073,7 @@ export function OnScreenAssistant({ isFullScreen: isEmbeddedFullScreen = false, 
                       animate={{ opacity: 1 }}
                       transition={{ delay: 0.9 }}
                       onClick={() => setShowChatHistory(true)}
-                      className="flex items-center justify-center gap-2 text-sm text-primary hover:text-primary/80 mt-4 py-2 transition-colors"
+                      className="flex items-center justify-center gap-2 text-sm text-primary hover:text-primary/80 mt-5 py-2 transition-colors"
                     >
                       <History className="w-4 h-4" />
                       {language === 'ne' ? 'पुरानो कुराकानी हेर्नुहोस्' : language === 'hi' ? 'पुरानी बातचीत देखें' : 'View previous conversations'}
@@ -1080,14 +1083,14 @@ export function OnScreenAssistant({ isFullScreen: isEmbeddedFullScreen = false, 
               </div>
             ) : (
               /* ========== CHAT MESSAGES ========== */
-              <div className="max-w-3xl mx-auto px-4 sm:px-6 py-4 sm:py-6 space-y-5">
+              <div className="max-w-3xl mx-auto px-4 sm:px-6 py-5 sm:py-7 space-y-6">
                 {messages.map((msg, i) => {
                   // Disease detection result
                   if (msg.diseaseResult) {
                     const userMsgWithImage = messages.slice(0, i).reverse().find(m => m.role === 'user' && m.imageUrl);
                     const imageUrl = userMsgWithImage?.imageUrl || '';
                     return (
-                      <motion.div key={i} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="max-w-[90%]">
+                      <motion.div key={i} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="max-w-[92%]">
                         <DiseaseDetectionResult 
                           result={msg.diseaseResult} language={language}
                           onSpeak={ttsSupported ? (text) => speak(text) : undefined} isSpeaking={isSpeaking}
@@ -1102,19 +1105,19 @@ export function OnScreenAssistant({ isFullScreen: isEmbeddedFullScreen = false, 
                   if (msg.isAnalyzing) {
                     return (
                       <motion.div key={i} initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex items-start gap-3">
-                        <div className="w-8 h-8 rounded-xl bg-primary/10 flex items-center justify-center shrink-0 mt-0.5">
-                          <Leaf className="w-4 h-4 text-primary" />
+                        <div className="w-9 h-9 rounded-xl bg-primary/10 flex items-center justify-center shrink-0 mt-0.5">
+                          <Leaf className="w-4.5 h-4.5 text-primary" />
                         </div>
-                        <div className="bg-card border border-border rounded-2xl rounded-tl-md px-4 py-3 flex items-center gap-3 shadow-sm">
+                        <div className="bg-card border border-border rounded-2xl rounded-tl-md px-4 py-3.5 flex items-center gap-3" style={{ boxShadow: '0 2px 8px hsl(221 39% 11% / 0.04)' }}>
                           <div className="relative">
                             <Scan className="w-5 h-5 text-primary" />
                             <motion.div className="absolute inset-0 border-2 border-primary/40 rounded" animate={{ scale: [1, 1.3, 1], opacity: [1, 0, 1] }} transition={{ repeat: Infinity, duration: 1.5 }} />
                           </div>
                           <div>
-                            <span className="text-sm font-medium text-foreground">
+                            <span className="text-[15px] font-medium text-foreground">
                               {language === 'ne' ? '🔬 फोटो विश्लेषण गर्दैछु...' : language === 'hi' ? '🔬 फोटो विश्लेषण...' : '🔬 Analyzing photo...'}
                             </span>
-                            <p className="text-xs text-muted-foreground">
+                            <p className="text-xs text-muted-foreground mt-0.5">
                               {language === 'ne' ? 'रोग र कीरा खोज्दैछु' : language === 'hi' ? 'रोग खोज रहा हूँ' : 'Detecting diseases'}
                             </p>
                           </div>
@@ -1123,44 +1126,47 @@ export function OnScreenAssistant({ isFullScreen: isEmbeddedFullScreen = false, 
                     );
                   }
 
-                  // Regular messages - ChatGPT style
+                  // Regular messages
                   const isUser = msg.role === 'user';
                   return (
                     <motion.div
                       key={i}
-                      initial={{ opacity: 0, y: 8 }}
+                      initial={{ opacity: 0, y: 10 }}
                       animate={{ opacity: 1, y: 0 }}
+                      transition={{ duration: 0.3 }}
                       className={cn("flex gap-3", isUser ? "justify-end" : "justify-start")}
                     >
                       {/* AI avatar */}
                       {!isUser && (
-                        <div className="w-8 h-8 rounded-xl bg-primary/10 flex items-center justify-center shrink-0 mt-0.5">
-                          <Leaf className="w-4 h-4 text-primary" />
+                        <div className="w-9 h-9 rounded-xl bg-primary/10 flex items-center justify-center shrink-0 mt-1">
+                          <Leaf className="w-4.5 h-4.5 text-primary" />
                         </div>
                       )}
 
                       <div className={cn(
-                        "max-w-[80%] sm:max-w-[75%] rounded-2xl px-4 py-3 text-sm sm:text-[15px] leading-relaxed",
+                        "max-w-[82%] sm:max-w-[75%] rounded-2xl px-4 py-3.5 leading-relaxed",
                         isUser 
-                          ? "bg-primary text-primary-foreground rounded-br-md" 
-                          : "bg-card border border-border rounded-tl-md shadow-sm"
-                      )}>
+                          ? "bg-primary text-primary-foreground rounded-br-md text-[16px]" 
+                          : "bg-card border border-border rounded-tl-md text-[17px]"
+                      )}
+                        style={!isUser ? { boxShadow: '0 2px 10px hsl(221 39% 11% / 0.05)' } : undefined}
+                      >
                         {/* Offline indicator */}
                         {msg.role === 'user' && msg.isOffline && (
-                          <div className="flex items-center gap-1 mb-1.5 text-[11px] opacity-80">
+                          <div className="flex items-center gap-1 mb-2 text-[11px] opacity-80">
                             <WifiOff className="w-3 h-3" />
                             <span>{language === 'ne' ? '📤 पठाउन बाँकी' : '📤 Queued'}</span>
                           </div>
                         )}
                         {/* Image */}
                         {msg.imageUrl && (
-                          <div className="mb-2.5 rounded-xl overflow-hidden">
-                            <img src={msg.imageUrl} alt="Crop photo" className="max-w-full max-h-48 object-contain rounded-xl" />
+                          <div className="mb-3 rounded-xl overflow-hidden">
+                            <img src={msg.imageUrl} alt="Crop photo" className="max-w-full max-h-52 object-contain rounded-xl" />
                           </div>
                         )}
                         <p className="whitespace-pre-wrap">{msg.content}</p>
                         {msg.isOffline && !isUser && (
-                          <div className="flex items-center gap-1 mt-2 text-[11px] opacity-60">
+                          <div className="flex items-center gap-1 mt-2.5 text-[11px] opacity-60">
                             <WifiOff className="w-3 h-3" />
                             <span>{language === 'ne' ? 'अफलाइन जवाफ' : 'Offline response'}</span>
                           </div>
@@ -1170,17 +1176,17 @@ export function OnScreenAssistant({ isFullScreen: isEmbeddedFullScreen = false, 
                           <Button
                             variant="ghost"
                             size="sm"
-                            className="mt-2.5 h-7 px-2.5 text-xs text-muted-foreground hover:text-foreground rounded-lg"
+                            className="mt-3 h-7 px-2.5 text-xs text-muted-foreground hover:text-foreground rounded-lg gap-1.5"
                             onClick={() => isSpeaking ? stop() : speak(msg.content)}
                           >
-                            {isSpeaking ? <VolumeX className="w-3.5 h-3.5 mr-1" /> : <Volume2 className="w-3.5 h-3.5 mr-1" />}
+                            {isSpeaking ? <VolumeX className="w-3.5 h-3.5" /> : <Volume2 className="w-3.5 h-3.5" />}
                             {isSpeaking ? (language === 'ne' ? 'रोक्नुहोस्' : 'Stop') : (language === 'ne' ? 'सुन्नुहोस्' : 'Listen')}
                           </Button>
                         )}
                       </div>
 
                       {/* User avatar placeholder for spacing */}
-                      {isUser && <div className="w-8 shrink-0" />}
+                      {isUser && <div className="w-9 shrink-0" />}
                     </motion.div>
                   );
                 })}
@@ -1188,14 +1194,14 @@ export function OnScreenAssistant({ isFullScreen: isEmbeddedFullScreen = false, 
                 {/* Typing indicator */}
                 {isLoading && messages[messages.length - 1]?.role === 'user' && (
                   <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex items-start gap-3">
-                    <div className="w-8 h-8 rounded-xl bg-primary/10 flex items-center justify-center shrink-0">
-                      <Leaf className="w-4 h-4 text-primary" />
+                    <div className="w-9 h-9 rounded-xl bg-primary/10 flex items-center justify-center shrink-0">
+                      <Leaf className="w-4.5 h-4.5 text-primary" />
                     </div>
-                    <div className="bg-card border border-border rounded-2xl rounded-tl-md px-5 py-3.5 shadow-sm">
+                    <div className="bg-card border border-border rounded-2xl rounded-tl-md px-5 py-4" style={{ boxShadow: '0 2px 8px hsl(221 39% 11% / 0.04)' }}>
                       <div className="flex gap-1.5">
-                        <motion.div className="w-2 h-2 rounded-full bg-muted-foreground/50" animate={{ y: [0, -6, 0] }} transition={{ repeat: Infinity, duration: 0.6, delay: 0 }} />
-                        <motion.div className="w-2 h-2 rounded-full bg-muted-foreground/50" animate={{ y: [0, -6, 0] }} transition={{ repeat: Infinity, duration: 0.6, delay: 0.15 }} />
-                        <motion.div className="w-2 h-2 rounded-full bg-muted-foreground/50" animate={{ y: [0, -6, 0] }} transition={{ repeat: Infinity, duration: 0.6, delay: 0.3 }} />
+                        <motion.div className="w-2.5 h-2.5 rounded-full bg-primary/40" animate={{ y: [0, -7, 0] }} transition={{ repeat: Infinity, duration: 0.6, delay: 0 }} />
+                        <motion.div className="w-2.5 h-2.5 rounded-full bg-primary/40" animate={{ y: [0, -7, 0] }} transition={{ repeat: Infinity, duration: 0.6, delay: 0.15 }} />
+                        <motion.div className="w-2.5 h-2.5 rounded-full bg-primary/40" animate={{ y: [0, -7, 0] }} transition={{ repeat: Infinity, duration: 0.6, delay: 0.3 }} />
                       </div>
                     </div>
                   </motion.div>
@@ -1206,31 +1212,27 @@ export function OnScreenAssistant({ isFullScreen: isEmbeddedFullScreen = false, 
           </div>
 
           {/* ========== INPUT AREA ========== */}
-          <div className="shrink-0 border-t border-border/50 bg-background/80 backdrop-blur-sm">
-            <div className="max-w-3xl mx-auto px-4 sm:px-6 py-3 sm:py-4 pb-14 sm:pb-16 space-y-2.5">
+          <div className="shrink-0 border-t border-border/40 bg-background/90 backdrop-blur-md">
+            <div className="max-w-3xl mx-auto px-4 sm:px-6 py-3.5 sm:py-4 pb-14 sm:pb-16 space-y-3">
               {/* Scan crop disease quick action */}
               {messages.length > 0 && (
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2 flex-wrap">
                   <button
                     onClick={() => imageInputRef.current?.click()}
                     disabled={isLoading || !!selectedImage}
-                    className="flex items-center gap-1.5 text-xs text-primary hover:text-primary/80 px-3 py-1.5 rounded-full border border-primary/20 bg-primary/5 hover:bg-primary/10 transition-all touch-manipulation"
+                    className="flex items-center gap-1.5 text-[13px] text-primary hover:text-primary/80 px-3.5 py-2 rounded-full border border-primary/20 bg-primary/5 hover:bg-primary/10 transition-all touch-manipulation font-medium"
                   >
-                    <Camera className="w-3.5 h-3.5" />
+                    <Camera className="w-4 h-4" />
                     {language === 'ne' ? '📷 बाली रोग स्क्यान' : '📷 Scan crop disease'}
                   </button>
-                  {messages.length > 0 && (
-                    <>
-                      <button onClick={retryLastMessage} className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground px-2.5 py-1.5 rounded-full border border-border hover:border-border/80 transition-all touch-manipulation">
-                        <RefreshCw className="w-3 h-3" />
-                        {language === 'ne' ? 'फेरि' : 'Retry'}
-                      </button>
-                      <button onClick={clearChat} className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground px-2.5 py-1.5 rounded-full border border-border hover:border-border/80 transition-all touch-manipulation">
-                        <X className="w-3 h-3" />
-                        {language === 'ne' ? 'मेटाउनुहोस्' : 'Clear'}
-                      </button>
-                    </>
-                  )}
+                  <button onClick={retryLastMessage} className="flex items-center gap-1 text-[13px] text-muted-foreground hover:text-foreground px-3 py-2 rounded-full border border-border hover:border-border/80 transition-all touch-manipulation">
+                    <RefreshCw className="w-3.5 h-3.5" />
+                    {language === 'ne' ? 'फेरि' : 'Retry'}
+                  </button>
+                  <button onClick={clearChat} className="flex items-center gap-1 text-[13px] text-muted-foreground hover:text-foreground px-3 py-2 rounded-full border border-border hover:border-border/80 transition-all touch-manipulation">
+                    <X className="w-3.5 h-3.5" />
+                    {language === 'ne' ? 'मेटाउनुहोस्' : 'Clear'}
+                  </button>
                 </div>
               )}
 
@@ -1244,15 +1246,20 @@ export function OnScreenAssistant({ isFullScreen: isEmbeddedFullScreen = false, 
                 </motion.div>
               )}
 
-              {/* Input row */}
-              <div className="flex items-end gap-2">
+              {/* Input row - modern floating bar */}
+              <div className="flex items-center gap-2 bg-muted/40 border border-border/60 rounded-2xl px-2 py-1.5 transition-all focus-within:border-primary/40 focus-within:bg-background" style={{ boxShadow: '0 2px 12px hsl(221 39% 11% / 0.04)' }}>
                 <input ref={imageInputRef} type="file" accept="image/*" capture="environment" onChange={handleImageSelect} className="hidden" />
                 
-                {/* Photo button */}
-                <Button variant="ghost" size="icon" onClick={() => imageInputRef.current?.click()} disabled={isLoading || !!selectedImage}
-                  className="shrink-0 h-11 w-11 rounded-xl text-muted-foreground hover:text-foreground hover:bg-muted touch-manipulation"
+                {/* Gallery button */}
+                <Button 
+                  variant="ghost" 
+                  size="icon" 
+                  onClick={() => imageInputRef.current?.click()} 
+                  disabled={isLoading || !!selectedImage}
+                  className="shrink-0 h-10 w-10 rounded-xl text-muted-foreground hover:text-primary hover:bg-primary/10 touch-manipulation"
+                  title={language === 'ne' ? 'बाली फोटो अपलोड' : 'Upload crop photo'}
                 >
-                  <ImagePlus className="w-5 h-5" />
+                  <ImagePlus className="w-[22px] h-[22px]" />
                 </Button>
 
                 {/* Mic button */}
@@ -1261,43 +1268,46 @@ export function OnScreenAssistant({ isFullScreen: isEmbeddedFullScreen = false, 
                   size="icon"
                   onClick={toggleListening}
                   disabled={isLoading}
-                  className={cn("shrink-0 h-11 w-11 rounded-xl touch-manipulation", !isListening && "text-muted-foreground hover:text-foreground hover:bg-muted")}
+                  className={cn("shrink-0 h-10 w-10 rounded-xl touch-manipulation", !isListening && "text-muted-foreground hover:text-primary hover:bg-primary/10")}
                 >
                   {isListening ? (
-                    <motion.div animate={{ scale: [1, 1.15, 1] }} transition={{ repeat: Infinity, duration: 0.5 }}>
-                      <MicOff className="w-5 h-5" />
+                    <motion.div animate={{ scale: [1, 1.2, 1] }} transition={{ repeat: Infinity, duration: 0.5 }}>
+                      <MicOff className="w-[22px] h-[22px]" />
                     </motion.div>
                   ) : (
-                    <Mic className="w-5 h-5" />
+                    <Mic className="w-[22px] h-[22px]" />
                   )}
                 </Button>
 
                 {/* Text input */}
-                <div className="flex-1 relative">
-                  <Input
-                    ref={inputRefToUse as RefObject<HTMLInputElement>}
-                    value={inputText}
-                    onChange={(e) => setInputText(e.target.value)}
-                    placeholder={
-                      selectedImage
+                <Input
+                  ref={inputRefToUse as RefObject<HTMLInputElement>}
+                  value={inputText}
+                  onChange={(e) => setInputText(e.target.value)}
+                  placeholder={
+                    isListening 
+                      ? (language === 'ne' ? '🎤 सुन्दैछ...' : '🎤 Listening...')
+                      : selectedImage
                         ? (language === 'ne' ? 'फोटोको बारेमा सोध्नुहोस्...' : 'Ask about the photo...')
                         : (language === 'ne' ? 'तपाईंको प्रश्न लेख्नुहोस्...' : 'Type your question...')
-                    }
-                    onKeyPress={(e) => e.key === 'Enter' && handleSendMessage()}
-                    disabled={isLoading || isListening}
-                    className="h-11 text-sm sm:text-base rounded-2xl px-4 border-2 border-border focus:border-primary bg-muted/30 focus:bg-background transition-colors"
-                  />
-                </div>
+                  }
+                  onKeyPress={(e) => e.key === 'Enter' && handleSendMessage()}
+                  disabled={isLoading || isListening}
+                  className="flex-1 h-10 text-[16px] border-0 bg-transparent shadow-none focus-visible:ring-0 focus-visible:ring-offset-0 px-1"
+                />
 
                 {/* Send button */}
-                <Button
-                  onClick={() => handleSendMessage()}
-                  disabled={(!inputText.trim() && !selectedImage) || isLoading}
-                  size="icon"
-                  className="shrink-0 h-11 w-11 rounded-xl shadow-sm touch-manipulation"
-                >
-                  <Send className="w-5 h-5" />
-                </Button>
+                <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+                  <Button
+                    onClick={() => handleSendMessage()}
+                    disabled={(!inputText.trim() && !selectedImage) || isLoading}
+                    size="icon"
+                    className="shrink-0 h-10 w-10 rounded-xl touch-manipulation"
+                    style={{ boxShadow: '0 2px 8px hsl(150 67% 38% / 0.2)' }}
+                  >
+                    <Send className="w-[22px] h-[22px]" />
+                  </Button>
+                </motion.div>
               </div>
 
               {/* Listening indicator */}
