@@ -6,8 +6,10 @@ import { useToast } from '@/hooks/use-toast';
 import { useQueryClient } from '@tanstack/react-query';
 
 /**
- * Global listener that subscribes to farmer_notifications via realtime.
- * Shows a toast when an expert replies to the farmer's question.
+ * Global listener that subscribes to:
+ * 1. farmer_notifications via realtime
+ * 2. expert_tickets changes (has_unread_farmer) for call request updates
+ * Shows a toast when an expert replies or updates call status.
  */
 export function ExpertReplyListener() {
   const { user, profile } = useAuth();
@@ -18,7 +20,6 @@ export function ExpertReplyListener() {
   useEffect(() => {
     if (!user || !profile) return;
 
-    // We need farmer_profiles.id to filter notifications
     let farmerProfileId: string | null = null;
 
     const setup = async () => {
@@ -50,7 +51,6 @@ export function ExpertReplyListener() {
                 description: notif.message || 'मेरा प्रश्नहरू पृष्ठमा गएर हेर्नुहोस्।',
                 duration: 8000,
               });
-              // Invalidate notifications + my-expert-cases queries
               queryClient.invalidateQueries({ queryKey: ['notifications'] });
               queryClient.invalidateQueries({ queryKey: ['my-expert-cases'] });
               if (caseId) {
@@ -61,8 +61,38 @@ export function ExpertReplyListener() {
         )
         .subscribe();
 
+      // Listen for expert_tickets updates (has_unread_farmer = true means new activity)
+      const ticketChannel = supabase
+        .channel(`farmer-ticket-updates-${user.id}`)
+        .on(
+          'postgres_changes',
+          {
+            event: 'UPDATE',
+            schema: 'public',
+            table: 'expert_tickets',
+            filter: `farmer_id=eq.${user.id}`,
+          },
+          (payload: any) => {
+            const newRow = payload.new;
+            const oldRow = payload.old;
+            // Show toast when has_unread_farmer flips to true
+            if (newRow?.has_unread_farmer === true && oldRow?.has_unread_farmer === false) {
+              toast({
+                title: '🔔 कृषि विज्ञबाट अपडेट आयो',
+                description: 'मेरा प्रश्नहरू मा गएर हेर्नुहोस्।',
+                duration: 6000,
+              });
+              queryClient.invalidateQueries({ queryKey: ['my-expert-tickets'] });
+              queryClient.invalidateQueries({ queryKey: ['call-request'] });
+              queryClient.invalidateQueries({ queryKey: ['expert-ticket-messages'] });
+            }
+          }
+        )
+        .subscribe();
+
       return () => {
         supabase.removeChannel(channel);
+        supabase.removeChannel(ticketChannel);
       };
     };
 

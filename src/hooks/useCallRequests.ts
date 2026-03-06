@@ -2,6 +2,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
+import { useEffect } from 'react';
 
 export interface CallRequest {
   id: string;
@@ -20,7 +21,9 @@ export interface CallRequest {
 }
 
 export function useTicketCallRequest(ticketId: string | null) {
-  return useQuery({
+  const queryClient = useQueryClient();
+
+  const query = useQuery({
     queryKey: ['call-request', ticketId],
     queryFn: async () => {
       if (!ticketId) return null;
@@ -36,6 +39,24 @@ export function useTicketCallRequest(ticketId: string | null) {
     },
     enabled: !!ticketId,
   });
+
+  // Realtime subscription for call_requests changes
+  useEffect(() => {
+    if (!ticketId) return;
+    const channel = supabase
+      .channel(`call-req-${ticketId}`)
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'call_requests', filter: `ticket_id=eq.${ticketId}` },
+        () => {
+          queryClient.invalidateQueries({ queryKey: ['call-request', ticketId] });
+        }
+      )
+      .subscribe();
+    return () => { supabase.removeChannel(channel); };
+  }, [ticketId, queryClient]);
+
+  return query;
 }
 
 export function useCreateCallRequest() {
