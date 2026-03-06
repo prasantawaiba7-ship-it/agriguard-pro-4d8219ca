@@ -4,6 +4,7 @@ import Footer from "@/components/layout/Footer";
 import { PageTransition } from "@/components/layout/PageTransition";
 import { Helmet } from "react-helmet-async";
 import WelcomeOnboarding from "@/components/onboarding/WelcomeOnboarding";
+import HeroSection from "@/components/home/HeroSection";
 import HomeScreen from "@/components/home/HomeScreen";
 import HowItWorksSection from "@/components/home/HowItWorksSection";
 
@@ -41,6 +42,7 @@ const Index = () => {
         <Header />
         <PageTransition>
           <main>
+            <HeroSection />
             <HomeScreen />
             <HowItWorksSection />
           </main>

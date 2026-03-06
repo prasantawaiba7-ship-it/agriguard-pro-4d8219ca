@@ -9,7 +9,6 @@ import {
   BookOpen,
   MessageCircle,
 } from "lucide-react";
-import { useAuth } from "@/hooks/useAuth";
 import { useLanguage } from "@/hooks/useLanguage";
 
 const cards = [
@@ -70,46 +69,38 @@ const cards = [
 ];
 
 const HomeScreen = () => {
-  const { profile, user } = useAuth();
   const { language } = useLanguage();
   const navigate = useNavigate();
-  const displayName = profile?.full_name || user?.email?.split("@")[0] || "";
 
   return (
-    <section className="pt-20 sm:pt-24 pb-24 min-h-[85vh]">
+    <section className="py-12 sm:py-16">
       <div className="container mx-auto px-4 max-w-xl">
-        {/* ── Heading ── */}
+        {/* Section heading */}
         <motion.div
           initial={{ opacity: 0, y: 8 }}
-          animate={{ opacity: 1, y: 0 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
           transition={{ duration: 0.35 }}
           className="text-center mb-6"
         >
-          <h1 className="text-xl sm:text-2xl font-bold text-foreground">
-            {language === "ne"
-              ? "आज के गर्ने?"
-              : "What to do today?"}
-          </h1>
+          <h2 className="text-xl sm:text-2xl font-bold text-foreground">
+            {language === "ne" ? "आज के गर्ने?" : "What to do today?"}
+          </h2>
           <p className="text-sm text-muted-foreground mt-1">
             {language === "ne"
               ? "छिटो पहुँचको लागि तलको कार्ड छान्नुस्"
               : "Choose a card below for quick access"}
           </p>
-          {displayName && (
-            <p className="text-sm text-foreground mt-2">
-              🙏 {language === "ne" ? "नमस्ते" : "Namaste"},{" "}
-              <span className="font-semibold">{displayName}</span>!
-            </p>
-          )}
         </motion.div>
 
-        {/* ── 2×3 Card Grid ── */}
+        {/* 2×3 Card Grid */}
         <div className="grid grid-cols-2 gap-3 sm:gap-4">
           {cards.map((card, i) => (
             <motion.div
               key={card.href}
               initial={{ opacity: 0, y: 16 }}
-              animate={{ opacity: 1, y: 0 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
               transition={{ duration: 0.3, delay: i * 0.05 }}
             >
               <Link to={card.href}>
@@ -134,7 +125,7 @@ const HomeScreen = () => {
         </div>
       </div>
 
-      {/* ── Floating Chat Bubble ── */}
+      {/* Floating Chat Bubble */}
       <motion.button
         initial={{ opacity: 0, scale: 0.8 }}
         animate={{ opacity: 1, scale: 1 }}
