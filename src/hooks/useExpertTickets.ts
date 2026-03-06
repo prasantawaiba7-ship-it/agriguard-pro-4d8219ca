@@ -32,6 +32,7 @@ export interface ExpertTicket {
   crop_name: string;
   problem_title: string;
   problem_description: string;
+  farmer_phone?: string | null;
   status: string;
   has_unread_farmer: boolean;
   has_unread_technician: boolean;

@@ -75,7 +75,7 @@ export default function TechnicianDashboardPage() {
               <p className="text-sm text-muted-foreground">🌾 {selectedTicket.crop_name} • किसान</p>
             </div>
             <Card className="overflow-hidden">
-              <ExpertTicketChat ticketId={selectedTicket.id} cropName={selectedTicket.crop_name} senderRole="technician" farmId={selectedTicket.farm_id} farmCropId={selectedTicket.farm_crop_id} />
+              <ExpertTicketChat ticketId={selectedTicket.id} cropName={selectedTicket.crop_name} senderRole="technician" farmId={selectedTicket.farm_id} farmCropId={selectedTicket.farm_crop_id} farmerPhone={(selectedTicket as any).farmer_phone} />
             </Card>
           </main>
           <Footer />
