@@ -109,8 +109,8 @@ export default function ExpertQuestionsPage() {
                               .filter('data->>case_id', 'eq', ticket.id);
                           }
                         } catch {}
-                        // Refresh notification counts
-                        const { useQueryClient } = await import('@tanstack/react-query');
+                        queryClient.invalidateQueries({ queryKey: ['farmer-notification-count'] });
+                        queryClient.invalidateQueries({ queryKey: ['my-expert-tickets'] });
                         setSelectedTicket(ticket);
                       }}
                     >
