@@ -63,6 +63,7 @@ function NotificationItem({ notif, onRead }: { notif: AdminNotification; onRead:
   );
 }
 
+// Force remount after hook refactor
 export function AdminNotificationBell() {
   const { notifications, unreadCount, isAdmin, markAsRead, markAllAsRead } = useAdminNotifications();
   const [open, setOpen] = useState(false);
