@@ -11,7 +11,8 @@ import { useCurrentTechnician } from '@/hooks/useCurrentTechnician';
 import { useExpertAssignedTickets, type ExpertTicket } from '@/hooks/useExpertTickets';
 import { ExpertTicketChat } from '@/components/expert/ExpertTicketChat';
 import { supabase } from '@/integrations/supabase/client';
-import { ArrowLeft, Loader2, CheckCircle2, Eye, XCircle, MessageCircle, Shield, ShieldCheck } from 'lucide-react';
+import { useQuery } from '@tanstack/react-query';
+import { ArrowLeft, Loader2, CheckCircle2, Eye, XCircle, MessageCircle, Shield, ShieldCheck, Phone } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 
 const STATUS_FILTERS = [

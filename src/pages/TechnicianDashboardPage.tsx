@@ -9,7 +9,9 @@ import { Card, CardContent } from '@/components/ui/card';
 import { useAuth } from '@/hooks/useAuth';
 import { useTechnicianTickets, type ExpertTicket } from '@/hooks/useExpertTickets';
 import { ExpertTicketChat } from '@/components/expert/ExpertTicketChat';
-import { ArrowLeft, Loader2, Clock, CheckCircle2, Eye, XCircle, MessageCircle, Filter } from 'lucide-react';
+import { useQuery } from '@tanstack/react-query';
+import { supabase } from '@/integrations/supabase/client';
+import { ArrowLeft, Loader2, Clock, CheckCircle2, Eye, XCircle, MessageCircle, Filter, Phone } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 
 const STATUS_FILTERS = [
