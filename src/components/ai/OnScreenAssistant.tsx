@@ -126,6 +126,7 @@ export function OnScreenAssistant({ isFullScreen: isEmbeddedFullScreen = false, 
   const [showVoiceCall, setShowVoiceCall] = useState(false);
   const [showOfflinePremiumPrompt, setShowOfflinePremiumPrompt] = useState(false);
   const [hasInitialized, setHasInitialized] = useState(false);
+  const [showVoiceNoteRecorder, setShowVoiceNoteRecorder] = useState(false);
 
   // ===== REF HOOKS (keep together) =====
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
