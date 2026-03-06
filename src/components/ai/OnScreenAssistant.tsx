@@ -1027,42 +1027,42 @@ export function OnScreenAssistant({ isFullScreen: isEmbeddedFullScreen = false, 
                     ))}
                   </div>
 
-                  {/* Voice CTA for low-literacy users */}
+                  {/* Hero "Talk to AI" voice CTA */}
                   <motion.button
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    transition={{ delay: 0.4 }}
+                    initial={{ opacity: 0, y: 6 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.35 }}
                     onClick={toggleListening}
                     disabled={isLoading}
                     className={cn(
-                      "flex items-center gap-3 px-5 py-3 rounded-2xl w-full max-w-xs mx-auto",
-                      "border-2 border-dashed border-primary/30 bg-primary/[0.03]",
-                      "hover:border-primary/50 hover:bg-primary/[0.06] transition-all touch-manipulation active:scale-[0.97]",
-                      isListening && "border-destructive/50 bg-destructive/5"
+                      "flex items-center gap-4 px-5 py-4 rounded-2xl w-full max-w-sm mx-auto",
+                      "bg-gradient-to-r from-primary to-primary/85 text-primary-foreground",
+                      "shadow-lg hover:shadow-xl active:scale-[0.97] transition-all touch-manipulation",
+                      isListening && "from-destructive to-destructive/85"
                     )}
                   >
                     <div className={cn(
-                      "w-10 h-10 rounded-full flex items-center justify-center shrink-0",
-                      isListening ? "bg-destructive text-destructive-foreground" : "bg-primary text-primary-foreground"
+                      "w-12 h-12 rounded-full flex items-center justify-center shrink-0",
+                      "bg-white/20 backdrop-blur-sm"
                     )}>
                       {isListening ? (
                         <motion.div animate={{ scale: [1, 1.15, 1] }} transition={{ repeat: Infinity, duration: 0.5 }}>
-                          <MicOff className="w-5 h-5" />
+                          <MicOff className="w-6 h-6" />
                         </motion.div>
                       ) : (
-                        <Mic className="w-5 h-5" />
+                        <Mic className="w-6 h-6" />
                       )}
                     </div>
                     <div className="text-left">
-                      <span className="text-[14px] font-semibold text-foreground block">
+                      <span className="text-[15px] font-bold block">
                         {isListening 
                           ? (language === 'ne' ? 'सुन्दैछु... बोल्नुहोस्' : 'Listening... speak now')
-                          : (language === 'ne' ? '🎤 बोलेर सोध्नुहोस्' : '🎤 Ask by speaking')}
+                          : (language === 'ne' ? '🎤 AI सँग बोल्नुहोस्' : '🎤 Talk to AI')}
                       </span>
-                      <span className="text-[11px] text-muted-foreground block">
+                      <span className="text-[12px] opacity-85 block mt-0.5">
                         {isListening 
                           ? (language === 'ne' ? 'बोलिसक्दा फेरि थिच्नुहोस्' : 'Tap again when done')
-                          : (language === 'ne' ? 'नेपाली वा English मा' : 'In Nepali or English')}
+                          : (language === 'ne' ? 'नेपाली वा English मा बोल्नुहोस्' : 'Speak in Nepali or English')}
                       </span>
                     </div>
                   </motion.button>
