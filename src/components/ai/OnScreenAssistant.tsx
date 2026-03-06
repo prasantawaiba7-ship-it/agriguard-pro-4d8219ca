@@ -28,6 +28,8 @@ import { DiseaseDetectionResult, DiseaseResult } from '@/components/ai/DiseaseDe
 import { ChatHistoryModal } from '@/components/ai/ChatHistoryModal';
 import { offlineStorage } from '@/lib/offlineStorage';
 import { format } from 'date-fns';
+import { VoiceNoteRecorder } from '@/components/voice/VoiceNoteRecorder';
+import { VoiceNoteBubble } from '@/components/voice/VoiceNoteBubble';
 import {
   DropdownMenu,
   DropdownMenuContent,
