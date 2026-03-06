@@ -428,9 +428,12 @@ interface ExpertTicketChatProps {
   satisfactionScore?: number | null;
   feedbackAt?: string | null;
   technicianId?: string | null;
+  farmerPhone?: string | null;
+  technicianPhone?: string | null;
+  technicianName?: string | null;
 }
 
-export function ExpertTicketChat({ ticketId, cropName, senderRole = 'farmer', farmId, farmCropId, ticketStatus, satisfactionScore, feedbackAt, technicianId }: ExpertTicketChatProps) {
+export function ExpertTicketChat({ ticketId, cropName, senderRole = 'farmer', farmId, farmCropId, ticketStatus, satisfactionScore, feedbackAt, technicianId, farmerPhone, technicianPhone, technicianName }: ExpertTicketChatProps) {
   const { user } = useAuth();
   const { data: messages, isLoading } = useExpertTicketMessages(ticketId);
   const sendMessage = useSendExpertTicketMessage();
