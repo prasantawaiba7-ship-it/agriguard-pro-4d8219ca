@@ -188,8 +188,8 @@ export function useUpdateCallRequestStatus() {
       queryClient.invalidateQueries({ queryKey: ['expert-ticket-messages'] });
       toast({ title: '✅ Status अपडेट भयो' });
     },
-    onError: () => {
-      toast({ title: 'त्रुटि', variant: 'destructive' });
+    onError: (error: any) => {
+      toast({ title: 'त्रुटि', description: error?.message || 'Call update save गर्न सकिएन', variant: 'destructive' });
     },
   });
 }
