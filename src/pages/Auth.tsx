@@ -22,9 +22,10 @@ const authSchema = z.object({
 
 type AuthFormData = z.infer<typeof authSchema>;
 
-const FloatingOrb = ({ className, delay = 0 }: { className?: string; delay?: number }) => (
+const FloatingOrb = ({ className, delay = 0, style }: { className?: string; delay?: number; style?: React.CSSProperties }) => (
   <motion.div
     className={`absolute rounded-full pointer-events-none ${className}`}
+    style={style}
     animate={{
       y: [0, -30, 0, 20, 0],
       x: [0, 15, -10, 5, 0],
