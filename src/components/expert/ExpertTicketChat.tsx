@@ -1,14 +1,17 @@
 import { useState, useRef, useEffect } from 'react';
-import { Send, Loader2, ImagePlus, User, Shield, FileText } from 'lucide-react';
+import { Send, Loader2, ImagePlus, User, Shield, FileText, Phone, Clock, CheckCircle2, XCircle } from 'lucide-react';
 import { TicketFeedbackCard } from '@/components/feedback/TicketFeedbackCard';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { useAuth } from '@/hooks/useAuth';
 import { useExpertTicketMessages, useSendExpertTicketMessage, uploadExpertImage } from '@/hooks/useExpertTickets';
+import { useTicketCallRequest, useCreateCallRequest } from '@/hooks/useCallRequests';
 import { formatDistanceToNow } from 'date-fns';
 import { TemplatePicker } from './TemplatePicker';
 import { ExpertTemplate } from '@/hooks/useExpertTemplates';
 import { FarmContextLine } from '@/components/farm/FarmContextLine';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 interface ExpertTicketChatProps {
   ticketId: string;
@@ -19,6 +22,7 @@ interface ExpertTicketChatProps {
   ticketStatus?: string;
   satisfactionScore?: number | null;
   feedbackAt?: string | null;
+  technicianId?: string | null;
 }
 
 export function ExpertTicketChat({ ticketId, cropName, senderRole = 'farmer', farmId, farmCropId, ticketStatus, satisfactionScore, feedbackAt }: ExpertTicketChatProps) {
