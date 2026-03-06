@@ -159,21 +159,27 @@ export function useUpdateCallRequestStatus() {
         notifMessage = '✅ Call सम्पन्न भयो।';
       }
 
-      // Insert system message into ticket chat so farmer sees it
+      // Insert message into ticket chat so farmer sees it
       if (notifMessage) {
-        await (supabase as any).from('expert_ticket_messages').insert({
-          ticket_id: ticketId,
-          sender_type: 'technician',
-          sender_id: user?.id || null,
-          message_text: notifMessage,
-        });
+        const { error: messageError } = await (supabase as any)
+          .from('expert_ticket_messages')
+          .insert({
+            ticket_id: ticketId,
+            sender_type: 'technician',
+            sender_id: user?.id || null,
+            message_text: notifMessage,
+          });
+
+        if (messageError) throw messageError;
       }
 
       // Mark ticket as unread for farmer
-      await (supabase as any)
+      const { error: unreadError } = await (supabase as any)
         .from('expert_tickets')
         .update({ has_unread_farmer: true })
         .eq('id', ticketId);
+
+      if (unreadError) throw unreadError;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['call-request'] });
@@ -182,8 +188,8 @@ export function useUpdateCallRequestStatus() {
       queryClient.invalidateQueries({ queryKey: ['expert-ticket-messages'] });
       toast({ title: '✅ Status अपडेट भयो' });
     },
-    onError: () => {
-      toast({ title: 'त्रुटि', variant: 'destructive' });
+    onError: (error: any) => {
+      toast({ title: 'त्रुटि', description: error?.message || 'Call update save गर्न सकिएन', variant: 'destructive' });
     },
   });
 }
