@@ -173,13 +173,12 @@ export function useUpdateCallRequestStatus() {
         if (messageError) throw messageError;
       }
 
-      // Mark ticket as unread for farmer
-      const { error: unreadError } = await (supabase as any)
+      // Mark ticket as unread for farmer only if not already unread (avoid duplicate triggers)
+      await (supabase as any)
         .from('expert_tickets')
         .update({ has_unread_farmer: true })
-        .eq('id', ticketId);
-
-      if (unreadError) throw unreadError;
+        .eq('id', ticketId)
+        .eq('has_unread_farmer', false);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['call-request'] });

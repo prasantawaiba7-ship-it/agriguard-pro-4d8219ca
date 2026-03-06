@@ -382,14 +382,25 @@ export function useSendExpertTicketMessage() {
         });
       if (error) throw error;
 
-      const updates: any = {};
+      // Only set unread flag if it's currently false to avoid duplicate realtime triggers
       if (data.senderType === 'technician') {
-        updates.has_unread_farmer = true;
-        updates.status = 'answered';
+        await (supabase as any)
+          .from('expert_tickets')
+          .update({ has_unread_farmer: true, status: 'answered' })
+          .eq('id', data.ticketId)
+          .eq('has_unread_farmer', false);
+        // Still update status even if unread flag was already true
+        await (supabase as any)
+          .from('expert_tickets')
+          .update({ status: 'answered' })
+          .eq('id', data.ticketId);
       } else {
-        updates.has_unread_technician = true;
+        await (supabase as any)
+          .from('expert_tickets')
+          .update({ has_unread_technician: true })
+          .eq('id', data.ticketId)
+          .eq('has_unread_technician', false);
       }
-      await (supabase as any).from('expert_tickets').update(updates).eq('id', data.ticketId);
     },
     onSuccess: (_, vars) => {
       queryClient.invalidateQueries({ queryKey: ['expert-ticket-messages', vars.ticketId] });
