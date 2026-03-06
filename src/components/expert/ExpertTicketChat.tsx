@@ -103,11 +103,11 @@ function TechnicianCallRequestPanel({ callRequest, updateCallStatus }: { callReq
             )}
             <div className="flex gap-2">
               <Button size="sm" variant="outline" className="flex-1 text-xs" disabled={updateCallStatus.isPending}
-                onClick={() => updateCallStatus.mutate({ requestId: callRequest.id, status: 'in_progress' })}>
+                onClick={() => updateCallStatus.mutate({ requestId: callRequest.id, status: 'in_progress', ticketId: callRequest.ticket_id })}>
                 📞 Call गर्दैछु
               </Button>
               <Button size="sm" variant="outline" className="text-xs" disabled={updateCallStatus.isPending}
-                onClick={() => updateCallStatus.mutate({ requestId: callRequest.id, status: 'completed' })}>
+                onClick={() => updateCallStatus.mutate({ requestId: callRequest.id, status: 'completed', ticketId: callRequest.ticket_id })}>
                 Call सकियो
               </Button>
             </div>
@@ -116,7 +116,7 @@ function TechnicianCallRequestPanel({ callRequest, updateCallStatus }: { callReq
 
         {callRequest.status === 'in_progress' && (
           <Button size="sm" className="w-full text-xs" disabled={updateCallStatus.isPending}
-            onClick={() => updateCallStatus.mutate({ requestId: callRequest.id, status: 'completed' })}>
+            onClick={() => updateCallStatus.mutate({ requestId: callRequest.id, status: 'completed', ticketId: callRequest.ticket_id })}>
             <CheckCircle2 className="w-3.5 h-3.5 mr-1" /> Call सकियो
           </Button>
         )}
