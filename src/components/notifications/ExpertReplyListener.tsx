@@ -1,10 +1,8 @@
 import { useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
 import { useQueryClient } from '@tanstack/react-query';
-
 /**
  * Global listener that subscribes to:
  * 1. farmer_notifications via realtime
@@ -61,7 +59,7 @@ export function ExpertReplyListener() {
         )
         .subscribe();
 
-      // Listen for expert_tickets updates (has_unread_farmer = true means new activity)
+      // Listen for expert_tickets updates (fallback)
       const ticketChannel = supabase
         .channel(`farmer-ticket-updates-${user.id}`)
         .on(
@@ -74,9 +72,7 @@ export function ExpertReplyListener() {
           },
           (payload: any) => {
             const newRow = payload.new;
-            const oldRow = payload.old;
-            // Show toast when has_unread_farmer flips to true
-            if (newRow?.has_unread_farmer === true && oldRow?.has_unread_farmer === false) {
+            if (newRow?.has_unread_farmer === true) {
               toast({
                 title: '🔔 कृषि विज्ञबाट अपडेट आयो',
                 description: 'मेरा प्रश्नहरू मा गएर हेर्नुहोस्।',
@@ -90,9 +86,46 @@ export function ExpertReplyListener() {
         )
         .subscribe();
 
+      // Listen directly for call status updates for this farmer
+      const callChannel = supabase
+        .channel(`farmer-call-updates-${user.id}`)
+        .on(
+          'postgres_changes',
+          {
+            event: 'UPDATE',
+            schema: 'public',
+            table: 'call_requests',
+            filter: `farmer_id=eq.${user.id}`,
+          },
+          (payload: any) => {
+            const nextStatus = payload?.new?.status;
+            if (!nextStatus) return;
+
+            if (['accepted', 'declined', 'in_progress', 'completed'].includes(nextStatus)) {
+              toast({
+                title: '📞 Call update',
+                description:
+                  nextStatus === 'accepted'
+                    ? 'कृषि विज्ञले call स्वीकार गर्नुभयो।'
+                    : nextStatus === 'declined'
+                    ? 'कृषि विज्ञले call अस्वीकार गर्नुभयो।'
+                    : nextStatus === 'in_progress'
+                    ? 'कृषि विज्ञले अहिले call गर्दै हुनुहुन्छ।'
+                    : 'Call सम्पन्न भयो।',
+                duration: 7000,
+              });
+              queryClient.invalidateQueries({ queryKey: ['my-expert-tickets'] });
+              queryClient.invalidateQueries({ queryKey: ['call-request'] });
+              queryClient.invalidateQueries({ queryKey: ['expert-ticket-messages'] });
+            }
+          }
+        )
+        .subscribe();
+
       return () => {
         supabase.removeChannel(channel);
         supabase.removeChannel(ticketChannel);
+        supabase.removeChannel(callChannel);
       };
     };
 
@@ -104,7 +137,7 @@ export function ExpertReplyListener() {
     return () => {
       cleanup?.();
     };
-  }, [user, profile, toast, queryClient, navigate]);
+  }, [user, profile, toast, queryClient]);
 
   return null;
 }
