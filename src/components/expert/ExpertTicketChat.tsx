@@ -322,15 +322,30 @@ export function ExpertTicketChat({ ticketId, cropName, senderRole = 'farmer', fa
       {senderRole === 'farmer' && technicianId && (
         <div className="px-4 pb-2">
           {existingCallRequest ? (
-            <div className="flex items-center gap-2 rounded-lg border border-border bg-muted/50 p-2.5 text-xs">
-              <Phone className="w-4 h-4 text-primary shrink-0" />
-              <div className="flex-1">
-                <span className="font-medium">Call अनुरोध:</span>{' '}
+            <div className="rounded-lg border border-border bg-muted/50 p-2.5 text-xs space-y-1">
+              <div className="flex items-center gap-2">
+                <Phone className="w-4 h-4 text-primary shrink-0" />
+                <span className="font-medium">Call अनुरोध:</span>
                 {existingCallRequest.status === 'requested' && <span className="text-amber-600">प्रतीक्षामा <Clock className="w-3 h-3 inline" /></span>}
                 {existingCallRequest.status === 'accepted' && <span className="text-green-600">स्वीकृत <CheckCircle2 className="w-3 h-3 inline" /></span>}
+                {existingCallRequest.status === 'in_progress' && <span className="text-blue-600">Call हुँदैछ 📞</span>}
                 {existingCallRequest.status === 'completed' && <span className="text-muted-foreground">सकियो <CheckCircle2 className="w-3 h-3 inline" /></span>}
+                {existingCallRequest.status === 'declined' && <span className="text-destructive">अस्वीकार <XCircle className="w-3 h-3 inline" /></span>}
                 {existingCallRequest.status === 'missed' && <span className="text-destructive">छुटेको <XCircle className="w-3 h-3 inline" /></span>}
               </div>
+              {existingCallRequest.status === 'accepted' && existingCallRequest.scheduled_window && (
+                <p className="text-green-700 dark:text-green-400 text-xs pl-6">
+                  🕐 {existingCallRequest.scheduled_window} मा call आउँछ।
+                </p>
+              )}
+              {existingCallRequest.status === 'declined' && (
+                <p className="text-muted-foreground text-xs pl-6">
+                  {existingCallRequest.decline_reason === 'busy' && 'अहिले व्यस्त, कृपया पछि अनुरोध गर्नुस्।'}
+                  {existingCallRequest.decline_reason === 'wrong_expert' && 'अर्को विज्ञ छान्नुस्।'}
+                  {existingCallRequest.decline_reason === 'use_chat' && 'Chat मा लेख्नुस्, जवाफ दिइनेछ।'}
+                  {existingCallRequest.decline_reason === 'network' && 'Network समस्या, पछि प्रयास गर्नुस्।'}
+                </p>
+              )}
             </div>
           ) : (
             <Button variant="outline" size="sm" className="w-full text-xs" onClick={() => setCallDialogOpen(true)}>
