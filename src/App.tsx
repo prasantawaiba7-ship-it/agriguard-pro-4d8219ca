@@ -6,7 +6,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { HelmetProvider } from "react-helmet-async";
 import { AuthProvider } from "@/hooks/useAuth";
 import { LanguageProvider } from "@/hooks/useLanguage";
-import { OnScreenAssistant } from "@/components/ai/OnScreenAssistant";
+
 import { UserBar } from "@/components/layout/UserBar";
 import { ExpertReplyListener } from "@/components/notifications/ExpertReplyListener";
 
@@ -89,7 +89,7 @@ const App = () => (
                 <Route path="*" element={<NotFound />} />
               </Routes>
               <ExpertReplyListener />
-              <OnScreenAssistant />
+              
             </BrowserRouter>
           </TooltipProvider>
         </LanguageProvider>
