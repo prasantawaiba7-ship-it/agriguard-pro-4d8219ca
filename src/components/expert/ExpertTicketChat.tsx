@@ -140,6 +140,101 @@ export function ExpertTicketChat({ ticketId, cropName, senderRole = 'farmer', fa
         </div>
       )}
 
+      {/* Call request section for farmer */}
+      {senderRole === 'farmer' && technicianId && (
+        <div className="px-4 pb-2">
+          {existingCallRequest ? (
+            <div className="flex items-center gap-2 rounded-lg border border-border bg-muted/50 p-2.5 text-xs">
+              <Phone className="w-4 h-4 text-primary shrink-0" />
+              <div className="flex-1">
+                <span className="font-medium">Call अनुरोध:</span>{' '}
+                {existingCallRequest.status === 'requested' && <span className="text-amber-600">प्रतीक्षामा <Clock className="w-3 h-3 inline" /></span>}
+                {existingCallRequest.status === 'accepted' && <span className="text-green-600">स्वीकृत <CheckCircle2 className="w-3 h-3 inline" /></span>}
+                {existingCallRequest.status === 'completed' && <span className="text-muted-foreground">सकियो <CheckCircle2 className="w-3 h-3 inline" /></span>}
+                {existingCallRequest.status === 'missed' && <span className="text-destructive">छुटेको <XCircle className="w-3 h-3 inline" /></span>}
+              </div>
+            </div>
+          ) : (
+            <Button variant="outline" size="sm" className="w-full text-xs" onClick={() => setCallDialogOpen(true)}>
+              <Phone className="w-3.5 h-3.5 mr-1.5" />
+              कृषि विज्ञसँग कुरा गर्नुस्
+            </Button>
+          )}
+        </div>
+      )}
+
+      {/* Call request consent dialog */}
+      <Dialog open={callDialogOpen} onOpenChange={setCallDialogOpen}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Phone className="w-5 h-5 text-primary" />
+              Call अनुरोध पठाउनुहोस्
+            </DialogTitle>
+            <DialogDescription className="text-xs text-muted-foreground">
+              तपाईंको प्रश्न र फोटो expert सँग share हुनेछ। Call record गरिन सक्छ (quality को लागि)।
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-3 mt-2">
+            <div>
+              <label className="text-xs font-medium text-muted-foreground mb-1 block">कहिले कुरा गर्ने? (Preferred time)</label>
+              <Select value={preferredTime} onValueChange={setPreferredTime}>
+                <SelectTrigger className="text-sm">
+                  <SelectValue placeholder="समय छान्नुहोस्" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="morning">बिहान (8–11 AM)</SelectItem>
+                  <SelectItem value="afternoon">दिउँसो (12–3 PM)</SelectItem>
+                  <SelectItem value="evening">बेलुका (4–6 PM)</SelectItem>
+                  <SelectItem value="anytime">जुनसुकै बेला</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <label className="text-xs font-medium text-muted-foreground mb-1 block">छोटो नोट (Optional)</label>
+              <Textarea
+                placeholder="के कुरा गर्नुपर्छ..."
+                value={farmerNote}
+                onChange={e => setFarmerNote(e.target.value)}
+                rows={2}
+                className="text-sm resize-none"
+              />
+            </div>
+            <p className="text-[10px] text-muted-foreground">
+              📞 Expert उपलब्ध हुँदा तपाईंलाई जानकारी दिइनेछ।
+            </p>
+            <div className="flex gap-2">
+              <Button variant="outline" size="sm" className="flex-1" onClick={() => setCallDialogOpen(false)}>
+                रद्द गर्नुहोस्
+              </Button>
+              <Button
+                size="sm"
+                className="flex-1"
+                disabled={createCallRequest.isPending}
+                onClick={() => {
+                  createCallRequest.mutate({
+                    ticketId,
+                    technicianId: technicianId!,
+                    preferredTime: preferredTime || undefined,
+                    farmerNote: farmerNote.trim() || undefined,
+                  }, {
+                    onSuccess: () => {
+                      setCallDialogOpen(false);
+                      setPreferredTime('');
+                      setFarmerNote('');
+                    },
+                  });
+                }}
+              >
+                {createCallRequest.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : <>
+                  <Phone className="w-3.5 h-3.5 mr-1" /> पठाउनुहोस्
+                </>}
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
       <div className="border-t border-border/40 p-3">
         {/* Recommendation templates start */}
         {senderRole === 'technician' && (
