@@ -46,6 +46,9 @@ export function AskExpertForm({ prefill, onSubmitted }: AskExpertFormProps) {
   const [cropName, setCropName] = useState(prefill?.cropName || '');
   const [problemTitle, setProblemTitle] = useState(prefill?.aiDisease || '');
   
+  const [farmerName, setFarmerName] = useState('');
+  const [farmerLocation, setFarmerLocation] = useState('');
+  const [farmerPhone, setFarmerPhone] = useState('');
   const [farmerQuestion, setFarmerQuestion] = useState('');
   const [images, setImages] = useState<{ dataUrl: string; file?: File }[]>(
     prefill?.imageDataUrl ? [{ dataUrl: prefill.imageDataUrl }] : []
@@ -89,7 +92,7 @@ export function AskExpertForm({ prefill, onSubmitted }: AskExpertFormProps) {
 
   const removeImage = (index: number) => setImages(prev => prev.filter((_, i) => i !== index));
 
-  const canProceedFromProblem = problemTitle.trim().length > 0;
+  const canProceedFromProblem = problemTitle.trim().length > 0 && farmerName.trim().length > 0 && farmerPhone.trim().length >= 10;
 
   const handleSubmit = async () => {
     if (!selectedOfficeId || !selectedTechnicianId || !problemTitle.trim()) return;
@@ -108,6 +111,10 @@ export function AskExpertForm({ prefill, onSubmitted }: AskExpertFormProps) {
       }
 
       const descParts: string[] = [];
+      descParts.push(`किसानको नाम: ${farmerName.trim()}`);
+      if (farmerLocation.trim()) descParts.push(`ठेगाना: ${farmerLocation.trim()}`);
+      descParts.push(`फोन: ${farmerPhone.trim()}`);
+      descParts.push('---');
       if (farmerQuestion) descParts.push(farmerQuestion);
       if (prefill?.aiDisease) {
         descParts.push(`\n--- AI विश्लेषण ---\nरोग: ${prefill.aiDisease} (${Math.round((prefill.aiConfidence || 0) * 100)}%)`);
@@ -119,8 +126,9 @@ export function AskExpertForm({ prefill, onSubmitted }: AskExpertFormProps) {
         technicianId: selectedTechnicianId,
         cropName: cropName || 'N/A',
         problemTitle: problemTitle.trim(),
-        problemDescription: descParts.join(' ') || problemTitle.trim(),
+        problemDescription: descParts.join('\n') || problemTitle.trim(),
         imageUrls,
+        farmerPhone: farmerPhone.trim(),
         farmId: selectedFarmId || undefined,
         farmCropId: selectedFarmCropId || undefined,
       });
@@ -135,6 +143,9 @@ export function AskExpertForm({ prefill, onSubmitted }: AskExpertFormProps) {
   };
 
   const resetForm = () => {
+    setFarmerName('');
+    setFarmerLocation('');
+    setFarmerPhone('');
     setCropName('');
     setProblemTitle('');
     setFarmerQuestion('');
@@ -174,7 +185,7 @@ export function AskExpertForm({ prefill, onSubmitted }: AskExpertFormProps) {
               <CardContent className="p-4 space-y-4">
                 <h2 className="text-base font-semibold text-foreground flex items-center gap-2">
                   <Leaf className="w-4 h-4 text-primary" />
-                  समस्या विवरण भर्नुहोस्
+                  आफ्नो विवरण र समस्या भर्नुहोस्
                 </h2>
                 {prefill?.aiDisease && (
                   <div className="p-3 bg-muted/60 rounded-xl border border-border/40">
@@ -187,6 +198,24 @@ export function AskExpertForm({ prefill, onSubmitted }: AskExpertFormProps) {
                     </p>
                   </div>
                 )}
+
+                {/* Farmer personal info */}
+                <div className="space-y-3 p-3 bg-muted/40 rounded-xl border border-border/40">
+                  <p className="text-xs font-medium text-muted-foreground flex items-center gap-1"><User className="w-3 h-3" /> तपाईंको जानकारी</p>
+                  <div>
+                    <label className="text-sm font-medium mb-1 block text-foreground">👤 नाम *</label>
+                    <Input placeholder="तपाईंको पूरा नाम" value={farmerName} onChange={e => setFarmerName(e.target.value)} maxLength={100} />
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium mb-1 block text-foreground">📍 ठेगाना / स्थान</label>
+                    <Input placeholder="जस्तै: चितवन, भरतपुर-१०" value={farmerLocation} onChange={e => setFarmerLocation(e.target.value)} maxLength={200} />
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium mb-1 block text-foreground">📞 फोन नम्बर *</label>
+                    <Input type="tel" placeholder="98XXXXXXXX" value={farmerPhone} onChange={e => setFarmerPhone(e.target.value.replace(/[^0-9+]/g, ''))} maxLength={15} />
+                  </div>
+                </div>
+
                 <div>
                   <label className="text-sm font-medium mb-2 block text-foreground">📷 फोटो ({images.length}/3)</label>
                   {images.length > 0 ? (
