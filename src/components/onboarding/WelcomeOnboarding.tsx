@@ -1,14 +1,47 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Leaf, Camera, MessageCircle, ArrowRight, Phone, CheckCircle2 } from "lucide-react";
+import { Leaf, Camera, MessageCircle, ArrowRight, Phone } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 import { useLanguage } from "@/hooks/useLanguage";
-import { LanguageSelector } from "@/components/farmer/LanguageSelector";
 
 interface WelcomeOnboardingProps {
   onComplete: () => void;
 }
+
+const LanguagePillToggle = () => {
+  const { language, setLanguage } = useLanguage();
+
+  return (
+    <div className="flex flex-col items-start gap-1">
+      <div className="flex items-center bg-muted rounded-full p-1 border border-border/50">
+        <button
+          onClick={() => setLanguage("ne")}
+          className={`px-4 py-1.5 rounded-full text-sm font-bold transition-all ${
+            language === "ne"
+              ? "bg-primary text-primary-foreground shadow-sm"
+              : "text-muted-foreground hover:text-foreground"
+          }`}
+        >
+          ने
+        </button>
+        <button
+          onClick={() => setLanguage("en")}
+          className={`px-4 py-1.5 rounded-full text-sm font-bold transition-all ${
+            language === "en"
+              ? "bg-primary text-primary-foreground shadow-sm"
+              : "text-muted-foreground hover:text-foreground"
+          }`}
+        >
+          EN
+        </button>
+      </div>
+      <span className="text-[10px] text-muted-foreground pl-1">
+        {language === "ne" ? "भाषा बदल्नुस्" : "Change language"}
+      </span>
+    </div>
+  );
+};
 
 const WelcomeOnboarding = ({ onComplete }: WelcomeOnboardingProps) => {
   const [step, setStep] = useState(0);
@@ -22,11 +55,11 @@ const WelcomeOnboarding = ({ onComplete }: WelcomeOnboardingProps) => {
       emoji: "🙏",
       title: language === "ne" ? "किसान साथीमा स्वागत छ!" : "Welcome to Kisan Sathi!",
       subtitle: language === "ne"
-        ? "तपाईंको खेतीको AI साथी"
-        : "Your AI farming companion",
+        ? "तपाईंको डिजिटल खेती साथी"
+        : "Your digital farming companion",
       description: language === "ne"
-        ? "बाली रोग पत्ता लगाउनुहोस्, बजार भाउ हेर्नुहोस्, र विशेषज्ञसँग कुरा गर्नुहोस्।"
-        : "Detect crop diseases, check market prices, and talk to experts.",
+        ? "बाली रोग पत्ता लगाउनुहोस्, बजार भाउ हेर्नुहोस्, र विशेषज्ञसँग कुरा गर्नुहोस् — सबै एकै ठाउँमा।"
+        : "Detect crop diseases, check market prices, and talk to experts — all in one place.",
     },
     {
       icon: Camera,
@@ -37,20 +70,20 @@ const WelcomeOnboarding = ({ onComplete }: WelcomeOnboardingProps) => {
         ? "बालीको फोटो → AI ले रोग पत्ता लगाउँछ"
         : "Crop photo → AI detects the disease",
       description: language === "ne"
-        ? "बिरामी बालीको फोटो खिच्नुहोस्। AI ले रोग पहिचान गरी उपचार बताउँछ।"
-        : "Take a photo of a sick crop. AI identifies the disease and suggests treatment.",
+        ? "बिरामी बालीको नजिकबाट फोटो खिच्नुहोस्। AI ले रोग पहिचान गरी उपचार बताउँछ।"
+        : "Take a close-up photo of a sick crop. AI identifies the disease and suggests treatment.",
     },
     {
       icon: Phone,
       iconBg: "bg-blue-500",
       emoji: "👨‍🌾",
-      title: language === "ne" ? "विशेषज्ञसँग सोध्नुहोस्" : "Ask an expert",
+      title: language === "ne" ? "AI + विशेषज्ञ सँगै" : "AI + Experts together",
       subtitle: language === "ne"
-        ? "कृषि प्राविधिकसँग सिधै कुरा गर्नुहोस्"
-        : "Talk directly to agriculture technicians",
+        ? "AI सल्लाह + कृषि प्राविधिकको सहयोग"
+        : "AI advice + support from agriculture technicians",
       description: language === "ne"
-        ? "जटिल समस्याको लागि कृषि विज्ञसँग टिकट खोल्नुहोस् वा कल अनुरोध गर्नुहोस्।"
-        : "Open a ticket or request a call with an agriculture expert for complex problems.",
+        ? "AI ले तुरुन्तै सल्लाह दिन्छ। जटिल समस्यामा कृषि विज्ञसँग टिकट खोल्नुहोस् वा कल गर्नुहोस्।"
+        : "AI gives instant advice. For complex problems, open a ticket or call an agriculture expert.",
     },
   ];
 
@@ -77,7 +110,7 @@ const WelcomeOnboarding = ({ onComplete }: WelcomeOnboardingProps) => {
     <div className="fixed inset-0 z-[60] bg-background flex flex-col">
       {/* Top bar */}
       <div className="flex items-center justify-between px-4 pt-4 pb-2">
-        <LanguageSelector />
+        <LanguagePillToggle />
         <button
           onClick={handleSkip}
           className="text-sm text-muted-foreground font-medium px-3 py-1.5 rounded-full hover:bg-muted transition-colors"
@@ -102,7 +135,7 @@ const WelcomeOnboarding = ({ onComplete }: WelcomeOnboardingProps) => {
       <div className="flex-1 flex flex-col items-center justify-center px-6 pb-8">
         <AnimatePresence mode="wait">
           <motion.div
-            key={step}
+            key={`${step}-${language}`}
             initial={{ opacity: 0, x: 60 }}
             animate={{ opacity: 1, x: 0 }}
             exit={{ opacity: 0, x: -60 }}
@@ -133,7 +166,6 @@ const WelcomeOnboarding = ({ onComplete }: WelcomeOnboardingProps) => {
       <div className="px-6 pb-8 space-y-3">
         {step === steps.length - 1 ? (
           <>
-            {/* Last step: show quick action buttons */}
             <Button
               size="lg"
               className="w-full h-14 text-lg font-bold rounded-2xl shadow-md"
