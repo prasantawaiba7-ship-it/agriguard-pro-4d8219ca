@@ -23,16 +23,26 @@ export function FarmerNotificationBell() {
 
       if (!farmerProfile?.id) return 0;
 
-      const { count, error } = await supabase
+      const { count: notificationCount, error } = await supabase
         .from('farmer_notifications')
         .select('id', { count: 'exact', head: true })
         .eq('farmer_id', farmerProfile.id)
         .eq('read', false);
 
       if (error) throw error;
-      return count || 0;
+
+      // Fallback unread source from expert tickets
+      const { count: unreadTicketCount, error: ticketError } = await (supabase as any)
+        .from('expert_tickets')
+        .select('id', { count: 'exact', head: true })
+        .eq('farmer_id', user.id)
+        .eq('has_unread_farmer', true);
+
+      if (ticketError) throw ticketError;
+
+      return (notificationCount || 0) + (unreadTicketCount || 0);
     },
-    refetchInterval: 15000,
+    refetchInterval: 5000,
   });
 
   if (!user) return null;

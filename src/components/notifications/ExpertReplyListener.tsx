@@ -10,12 +10,12 @@ import { useQueryClient } from '@tanstack/react-query';
  * Shows a toast when an expert replies or updates call status.
  */
 export function ExpertReplyListener() {
-  const { user, profile } = useAuth();
+  const { user } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
   useEffect(() => {
-    if (!user || !profile) return;
+    if (!user) return;
 
     let farmerProfileId: string | null = null;
 
@@ -41,18 +41,17 @@ export function ExpertReplyListener() {
           },
           (payload: any) => {
             const notif = payload.new;
-            if (notif?.type === 'expert_reply') {
-              const caseId = notif.data?.case_id;
-              toast({
-                title: '🔔 ' + (notif.title || 'कृषि विज्ञको जवाफ आएको छ'),
-                description: notif.message || 'मेरा प्रश्नहरू पृष्ठमा गएर हेर्नुहोस्।',
-                duration: 8000,
-              });
-              queryClient.invalidateQueries({ queryKey: ['notifications'] });
-              queryClient.invalidateQueries({ queryKey: ['my-expert-cases'] });
-              if (caseId) {
-                queryClient.invalidateQueries({ queryKey: ['ticket-messages', caseId] });
-              }
+            const caseId = notif?.data?.case_id;
+            toast({
+              title: '🔔 ' + (notif?.title || 'कृषि विज्ञबाट अपडेट आयो'),
+              description: notif?.message || 'मेरा प्रश्नहरू पृष्ठमा गएर हेर्नुहोस्।',
+              duration: 8000,
+            });
+            queryClient.invalidateQueries({ queryKey: ['notifications'] });
+            queryClient.invalidateQueries({ queryKey: ['my-expert-cases'] });
+            queryClient.invalidateQueries({ queryKey: ['my-expert-tickets'] });
+            if (caseId) {
+              queryClient.invalidateQueries({ queryKey: ['ticket-messages', caseId] });
             }
           }
         )
@@ -98,7 +97,8 @@ export function ExpertReplyListener() {
           },
           (payload: any) => {
             const nextStatus = payload?.new?.status;
-            if (!nextStatus) return;
+            const prevStatus = payload?.old?.status;
+            if (!nextStatus || nextStatus === prevStatus) return;
 
             if (['accepted', 'declined', 'in_progress', 'completed'].includes(nextStatus)) {
               toast({
@@ -136,7 +136,7 @@ export function ExpertReplyListener() {
     return () => {
       cleanup?.();
     };
-  }, [user, profile, toast, queryClient]);
+  }, [user, toast, queryClient]);
 
   return null;
 }
