@@ -1,17 +1,19 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { 
-  Clock, CheckCircle, ChevronDown, ChevronUp, 
-  User, Bot, Leaf, AlertCircle, MessageSquare, Loader2, Send
+import {
+  Clock, CheckCircle, ChevronDown, ChevronUp,
+  User, Leaf, AlertCircle, MessageSquare, Loader2, Send, Phone
 } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Textarea } from '@/components/ui/textarea';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useMyExpertTickets, useExpertTicketMessages, useSendExpertTicketMessage, type ExpertTicket } from '@/hooks/useExpertTickets';
+import { useCreateCallRequest, useTicketCallRequest } from '@/hooks/useCallRequests';
 import { useAuth } from '@/hooks/useAuth';
-import { useLanguage } from '@/hooks/useLanguage';
 import { formatDistanceToNow } from 'date-fns';
 
 const STATUS_MAP: Record<string, { label: string; color: string; icon: React.ReactNode }> = {
@@ -23,7 +25,12 @@ const STATUS_MAP: Record<string, { label: string; color: string; icon: React.Rea
 
 function ExpertCaseCard({ caseData }: { caseData: ExpertTicket }) {
   const [isExpanded, setIsExpanded] = useState(false);
+  const [callDialogOpen, setCallDialogOpen] = useState(false);
+  const [preferredTime, setPreferredTime] = useState('');
+  const [farmerNote, setFarmerNote] = useState('');
   const { data: messages, isLoading: msgsLoading } = useExpertTicketMessages(isExpanded ? caseData.id : null);
+  const { data: existingCallRequest } = useTicketCallRequest(caseData.id);
+  const createCallRequest = useCreateCallRequest();
 
   const status = STATUS_MAP[caseData.status || 'open'] || STATUS_MAP.open;
 
@@ -139,10 +146,112 @@ function ExpertCaseCard({ caseData }: { caseData: ExpertTicket }) {
               {caseData.status !== 'closed' && (
                 <FollowUpReply caseId={caseData.id} />
               )}
+
+              {/* Call request */}
+              {caseData.status !== 'closed' && (
+                <div className="space-y-2">
+                  {existingCallRequest ? (
+                    <div className="rounded-xl border border-border/40 bg-muted/40 p-3 text-xs text-foreground">
+                      <span className="font-medium">📞 Call अनुरोध:</span>{' '}
+                      {existingCallRequest.status === 'requested' && 'प्रतीक्षामा'}
+                      {existingCallRequest.status === 'accepted' && 'स्वीकृत'}
+                      {existingCallRequest.status === 'in_progress' && 'Call हुँदैछ'}
+                      {existingCallRequest.status === 'completed' && 'सकियो'}
+                      {existingCallRequest.status === 'missed' && 'छुट्यो'}
+                    </div>
+                  ) : (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="w-full"
+                      disabled={!caseData.technician_id}
+                      onClick={() => setCallDialogOpen(true)}
+                    >
+                      <Phone className="w-4 h-4 mr-2" /> कृषि विज्ञसँग कुरा गर्नुस्
+                    </Button>
+                  )}
+
+                  {!caseData.technician_id && !existingCallRequest && (
+                    <p className="text-[11px] text-muted-foreground">प्राविधिक तोकिन बाँकी छ, अहिले call request पठाउन मिल्दैन।</p>
+                  )}
+                </div>
+              )}
             </CardContent>
           </motion.div>
         )}
       </AnimatePresence>
+
+      <Dialog open={callDialogOpen} onOpenChange={setCallDialogOpen}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Phone className="w-5 h-5 text-primary" />
+              Call अनुरोध पठाउनुहोस्
+            </DialogTitle>
+            <DialogDescription className="text-xs">
+              तपाईंको प्रश्न र फोटो कृषि विज्ञसँग share हुनेछ।
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-3">
+            <div>
+              <label className="text-xs text-muted-foreground mb-1 block">कहिले कुरा गर्ने?</label>
+              <Select value={preferredTime} onValueChange={setPreferredTime}>
+                <SelectTrigger className="text-sm">
+                  <SelectValue placeholder="समय छान्नुहोस्" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="morning">बिहान (8–11 AM)</SelectItem>
+                  <SelectItem value="afternoon">दिउँसो (12–3 PM)</SelectItem>
+                  <SelectItem value="evening">बेलुका (4–6 PM)</SelectItem>
+                  <SelectItem value="anytime">जुनसुकै बेला</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div>
+              <label className="text-xs text-muted-foreground mb-1 block">नोट (Optional)</label>
+              <Textarea
+                rows={2}
+                value={farmerNote}
+                onChange={(e) => setFarmerNote(e.target.value)}
+                placeholder="के समस्यामा कुरा गर्नुपर्छ..."
+                className="resize-none text-sm"
+              />
+            </div>
+
+            <div className="flex gap-2">
+              <Button variant="outline" className="flex-1" onClick={() => setCallDialogOpen(false)}>
+                रद्द
+              </Button>
+              <Button
+                className="flex-1"
+                disabled={createCallRequest.isPending || !caseData.technician_id}
+                onClick={() => {
+                  if (!caseData.technician_id) return;
+                  createCallRequest.mutate(
+                    {
+                      ticketId: caseData.id,
+                      technicianId: caseData.technician_id,
+                      preferredTime: preferredTime || undefined,
+                      farmerNote: farmerNote.trim() || undefined,
+                    },
+                    {
+                      onSuccess: () => {
+                        setCallDialogOpen(false);
+                        setPreferredTime('');
+                        setFarmerNote('');
+                      },
+                    }
+                  );
+                }}
+              >
+                {createCallRequest.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Confirm request'}
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </Card>
   );
 }
