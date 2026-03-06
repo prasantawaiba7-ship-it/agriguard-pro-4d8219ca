@@ -12,7 +12,6 @@ import { useQueryClient } from '@tanstack/react-query';
 export function ExpertReplyListener() {
   const { user, profile } = useAuth();
   const { toast } = useToast();
-  const navigate = useNavigate();
   const queryClient = useQueryClient();
 
   useEffect(() => {
