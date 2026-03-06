@@ -185,7 +185,7 @@ const AdminDashboard = () => {
   // Redirect non-admin users
   useEffect(() => {
     if (!isLoading && !isAdmin()) {
-      navigate('/dashboard', { replace: true });
+      navigate('/', { replace: true });
     }
   }, [isLoading, isAdmin, navigate]);
   
