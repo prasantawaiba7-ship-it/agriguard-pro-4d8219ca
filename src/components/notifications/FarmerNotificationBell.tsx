@@ -52,7 +52,7 @@ export function FarmerNotificationBell() {
       variant="ghost"
       size="sm"
       className="relative rounded-full h-9 w-9 p-0"
-      onClick={() => navigate('/my-questions')}
+      onClick={() => navigate('/expert-questions')}
       aria-label={`Notifications ${unreadCount}`}
     >
       <Bell className="w-4.5 h-4.5 text-foreground" />
