@@ -1070,15 +1070,6 @@ export function OnScreenAssistant({ isFullScreen: isEmbeddedFullScreen = false, 
                     </div>
                   </motion.button>
 
-                  {/* Safety disclaimer */}
-                  <motion.p 
-                    initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.6 }}
-                    className="text-[10px] text-muted-foreground/70 text-center mt-4 max-w-xs leading-relaxed"
-                  >
-                    {language === 'ne' 
-                      ? '⚠️ AI ले सामान्य सल्लाह दिन्छ। गम्भीर समस्यामा नजिकको कृषि कार्यालय वा कृषि विज्ञसँग सम्पर्क गर्नुहोस्।'
-                      : '⚠️ AI provides general advice. For serious problems, contact your local Krishi office or expert.'}
-                  </motion.p>
                 </div>
               </div>
             ) : (
