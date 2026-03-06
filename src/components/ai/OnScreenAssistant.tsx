@@ -51,25 +51,31 @@ interface OnScreenAssistantProps {
   inputRef?: RefObject<HTMLInputElement>;
 }
 
-// Quick action questions in different languages
+// Farmer-first bilingual suggestion chips
 const quickQuestions = {
   ne: [
-    { icon: Camera, text: 'फोटो पठाएर रोग पहिचान गर्नुहोस्', color: 'text-destructive', isPhotoAction: true },
-    { icon: Bug, text: 'मेरो बालीमा के समस्या छ?', color: 'text-destructive' },
-    { icon: CloudSun, text: 'आजको मौसम अनुसार के गर्ने?', color: 'text-blue-500' },
-    { icon: Leaf, text: 'कुन बाली लगाउँदा राम्रो हुन्छ?', color: 'text-primary' },
+    { icon: Camera, text: 'फोटो पठाउनुहोस्', subtext: 'Send crop photo', color: 'text-destructive', isPhotoAction: true },
+    { icon: Bug, text: 'मेरो बालीमा के भयो?', subtext: "What's wrong with my crop?", color: 'text-destructive' },
+    { icon: CloudSun, text: 'आज के गर्ने?', subtext: "What to do today?", color: 'hsl(var(--warning))' },
+    { icon: Leaf, text: 'कुन बाली लगाउने?', subtext: 'Which crop to plant?', color: 'text-primary' },
+    { icon: HelpCircle, text: 'मल कति हाल्ने?', subtext: 'Fertilizer advice', color: 'text-secondary' },
+    { icon: Phone, text: 'कृषि विज्ञसँग सोध्ने', subtext: 'Ask a human expert', color: 'text-muted-foreground' },
   ],
   hi: [
-    { icon: Camera, text: 'फोटो भेजकर रोग पहचानें', color: 'text-destructive', isPhotoAction: true },
-    { icon: Bug, text: 'मेरी फसल में क्या समस्या है?', color: 'text-destructive' },
-    { icon: CloudSun, text: 'आज के मौसम के अनुसार क्या करें?', color: 'text-blue-500' },
-    { icon: Leaf, text: 'कौन सी फसल लगाना अच्छा रहेगा?', color: 'text-primary' },
+    { icon: Camera, text: 'फोटो भेजें', subtext: 'Send crop photo', color: 'text-destructive', isPhotoAction: true },
+    { icon: Bug, text: 'फसल में क्या समस्या है?', subtext: "What's wrong?", color: 'text-destructive' },
+    { icon: CloudSun, text: 'आज क्या करें?', subtext: "What to do today?", color: 'hsl(var(--warning))' },
+    { icon: Leaf, text: 'कौन सी फसल लगाएँ?', subtext: 'Which crop?', color: 'text-primary' },
+    { icon: HelpCircle, text: 'खाद कितनी डालें?', subtext: 'Fertilizer advice', color: 'text-secondary' },
+    { icon: Phone, text: 'कृषि विशेषज्ञ से पूछें', subtext: 'Ask a human expert', color: 'text-muted-foreground' },
   ],
   en: [
-    { icon: Camera, text: 'Send photo to detect disease', color: 'text-destructive', isPhotoAction: true },
-    { icon: Bug, text: "What's wrong with my crop?", color: 'text-destructive' },
-    { icon: CloudSun, text: "What should I do based on today's weather?", color: 'text-blue-500' },
-    { icon: Leaf, text: 'Which crop should I plant?', color: 'text-primary' },
+    { icon: Camera, text: 'Send photo', subtext: 'Detect crop disease', color: 'text-destructive', isPhotoAction: true },
+    { icon: Bug, text: "What's wrong?", subtext: 'Describe your problem', color: 'text-destructive' },
+    { icon: CloudSun, text: "What to do today?", subtext: 'Weather-based advice', color: 'hsl(var(--warning))' },
+    { icon: Leaf, text: 'Which crop?', subtext: 'Best crop for my land', color: 'text-primary' },
+    { icon: HelpCircle, text: 'Fertilizer help', subtext: 'How much to apply?', color: 'text-secondary' },
+    { icon: Phone, text: 'Ask expert', subtext: 'Talk to Krishi Bigya', color: 'text-muted-foreground' },
   ],
 };
 
@@ -894,20 +900,24 @@ export function OnScreenAssistant({ isFullScreen: isEmbeddedFullScreen = false, 
     return (
       <>
         <div className="flex flex-col h-full bg-background">
-          {/* ========== MINIMAL HEADER ========== */}
-          <div className="sticky top-0 z-20 shrink-0 border-b border-border/50 bg-background/95 backdrop-blur-md">
-            <div className="max-w-3xl mx-auto flex items-center justify-between px-4 py-2 sm:px-6">
-              <div className="flex items-center gap-2">
-                <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
-                  <Leaf className="w-4 h-4 text-primary" />
+          {/* ========== HEADER — slim, farmer-friendly ========== */}
+          <div className="sticky top-0 z-20 shrink-0 border-b border-border/40 bg-background/95 backdrop-blur-md">
+            <div className="max-w-3xl mx-auto flex items-center justify-between px-4 h-12 sm:h-14">
+              <div className="flex items-center gap-2.5">
+                <div className="w-8 h-8 rounded-xl bg-primary/10 flex items-center justify-center">
+                  <Leaf className="w-4.5 h-4.5 text-primary" />
                 </div>
-                <div className="flex items-center gap-2">
-                  <h1 className="font-semibold text-[15px] text-foreground leading-none">Krishi Mitra</h1>
-                  <span className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />
+                <div>
+                  <div className="flex items-center gap-1.5">
+                    <h1 className="font-bold text-[15px] text-foreground leading-none tracking-tight">
+                      {language === 'ne' ? 'कृषि मित्र' : 'Krishi Mitra'}
+                    </h1>
+                    <span className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />
+                  </div>
+                  <p className="text-[10px] text-muted-foreground leading-none mt-0.5">
+                    {language === 'ne' ? 'तपाईंको कृषि सहायक' : 'Your farming assistant'}
+                  </p>
                 </div>
-                {subscribed && (
-                  <span className="text-[9px] bg-accent/15 text-accent px-1.5 py-0.5 rounded-md font-semibold">PRO</span>
-                )}
               </div>
               <div className="flex items-center gap-0.5">
                 {!isOnline && (
@@ -965,29 +975,34 @@ export function OnScreenAssistant({ isFullScreen: isEmbeddedFullScreen = false, 
           {/* ========== MESSAGES AREA ========== */}
           <div className="flex-1 overflow-y-auto">
             {messages.length === 0 ? (
-              /* ========== EMPTY STATE ========== */
-              <div className="flex flex-col items-center justify-center h-full px-5">
-                <div className="max-w-md w-full text-center">
-                  <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: 0.3 }}>
-                    <div className="w-12 h-12 rounded-2xl bg-primary/10 flex items-center justify-center mx-auto mb-4">
-                      <Leaf className="w-6 h-6 text-primary" />
+              /* ========== EMPTY STATE — farmer-first welcome ========== */
+              <div className="flex flex-col h-full px-4 sm:px-6">
+                <div className="flex-1 flex flex-col items-center justify-center max-w-lg mx-auto w-full">
+                  {/* Compact greeting */}
+                  <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="text-center mb-6">
+                    <div className="w-14 h-14 rounded-2xl bg-primary/10 flex items-center justify-center mx-auto mb-3">
+                      <Leaf className="w-7 h-7 text-primary" />
                     </div>
-                    <h2 className="text-[17px] font-semibold text-foreground mb-1">
-                      {language === 'ne' ? 'नमस्ते! म तपाईंको कृषि सहायक' : language === 'hi' ? 'नमस्ते! मैं आपका कृषि सहायक' : 'Hi! I\'m your farming assistant'}
+                    <h2 className="text-lg font-bold text-foreground">
+                      {language === 'ne' ? 'नमस्ते 🙏' : language === 'hi' ? 'नमस्ते 🙏' : 'Namaste 🙏'}
                     </h2>
-                    <p className="text-[13px] text-muted-foreground mb-6">
-                      {language === 'ne' ? 'खेतीसम्बन्धी प्रश्न सोध्नुहोस् वा फोटो पठाउनुहोस्' : language === 'hi' ? 'खेती का सवाल पूछें या फोटो भेजें' : 'Ask a farming question or send a crop photo'}
+                    <p className="text-[13px] text-muted-foreground mt-0.5">
+                      {language === 'ne' 
+                        ? 'म किसान साथी AI हुँ। खेतीको बारेमा सोध्नुहोस्।' 
+                        : language === 'hi' 
+                        ? 'मैं किसान साथी AI हूँ। खेती के बारे में पूछें।'
+                        : "I'm Kisan Sathi AI. Ask me about farming."}
                     </p>
                   </motion.div>
 
-                  {/* Suggestion chips */}
-                  <div className="grid grid-cols-2 gap-2">
+                  {/* Farmer-first suggestion chips — bilingual */}
+                  <div className="w-full grid grid-cols-2 gap-2 mb-5">
                     {quickQuestions[getQuickQuestionsLang()].map((q, idx) => (
                       <motion.button
                         key={idx}
-                        initial={{ opacity: 0, y: 8 }}
+                        initial={{ opacity: 0, y: 6 }}
                         animate={{ opacity: 1, y: 0 }}
-                        transition={{ delay: 0.1 + idx * 0.05 }}
+                        transition={{ delay: 0.05 + idx * 0.04 }}
                         onClick={() => {
                           if ('isPhotoAction' in q && q.isPhotoAction) {
                             imageInputRef.current?.click();
@@ -997,21 +1012,78 @@ export function OnScreenAssistant({ isFullScreen: isEmbeddedFullScreen = false, 
                         }}
                         disabled={isLoading}
                         className={cn(
-                          "flex items-center gap-2 px-3 py-2.5 rounded-xl border border-border/60 bg-card",
-                          "hover:border-primary/30 hover:bg-muted/50 transition-all text-left",
-                          "text-[13px] touch-manipulation active:scale-[0.98]"
+                          "flex items-start gap-2.5 p-3 rounded-xl border border-border/60 bg-card",
+                          "hover:border-primary/30 hover:bg-primary/[0.03] transition-all text-left",
+                          "touch-manipulation active:scale-[0.97]"
                         )}
                       >
-                        <q.icon className={cn("w-4 h-4 shrink-0", q.color)} />
-                        <span className="text-foreground leading-tight line-clamp-2">{q.text}</span>
+                        <div className="w-8 h-8 rounded-lg bg-muted/60 flex items-center justify-center shrink-0 mt-0.5">
+                          <q.icon className={cn("w-4 h-4", q.color)} />
+                        </div>
+                        <div className="min-w-0">
+                          <span className="text-[13px] font-medium text-foreground leading-tight block">{q.text}</span>
+                          {'subtext' in q && (
+                            <span className="text-[11px] text-muted-foreground leading-tight block mt-0.5">{q.subtext}</span>
+                          )}
+                        </div>
                       </motion.button>
                     ))}
                   </div>
+
+                  {/* Voice CTA for low-literacy users */}
+                  <motion.button
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    transition={{ delay: 0.4 }}
+                    onClick={toggleListening}
+                    disabled={isLoading}
+                    className={cn(
+                      "flex items-center gap-3 px-5 py-3 rounded-2xl w-full max-w-xs mx-auto",
+                      "border-2 border-dashed border-primary/30 bg-primary/[0.03]",
+                      "hover:border-primary/50 hover:bg-primary/[0.06] transition-all touch-manipulation active:scale-[0.97]",
+                      isListening && "border-destructive/50 bg-destructive/5"
+                    )}
+                  >
+                    <div className={cn(
+                      "w-10 h-10 rounded-full flex items-center justify-center shrink-0",
+                      isListening ? "bg-destructive text-destructive-foreground" : "bg-primary text-primary-foreground"
+                    )}>
+                      {isListening ? (
+                        <motion.div animate={{ scale: [1, 1.15, 1] }} transition={{ repeat: Infinity, duration: 0.5 }}>
+                          <MicOff className="w-5 h-5" />
+                        </motion.div>
+                      ) : (
+                        <Mic className="w-5 h-5" />
+                      )}
+                    </div>
+                    <div className="text-left">
+                      <span className="text-[14px] font-semibold text-foreground block">
+                        {isListening 
+                          ? (language === 'ne' ? 'सुन्दैछु... बोल्नुहोस्' : 'Listening... speak now')
+                          : (language === 'ne' ? '🎤 बोलेर सोध्नुहोस्' : '🎤 Ask by speaking')}
+                      </span>
+                      <span className="text-[11px] text-muted-foreground block">
+                        {isListening 
+                          ? (language === 'ne' ? 'बोलिसक्दा फेरि थिच्नुहोस्' : 'Tap again when done')
+                          : (language === 'ne' ? 'नेपाली वा English मा' : 'In Nepali or English')}
+                      </span>
+                    </div>
+                  </motion.button>
+
+                  {/* Safety disclaimer */}
+                  <motion.p 
+                    initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.6 }}
+                    className="text-[10px] text-muted-foreground/70 text-center mt-4 max-w-xs leading-relaxed"
+                  >
+                    {language === 'ne' 
+                      ? '⚠️ AI ले सामान्य सल्लाह दिन्छ। गम्भीर समस्यामा नजिकको कृषि कार्यालय वा कृषि विज्ञसँग सम्पर्क गर्नुहोस्।'
+                      : '⚠️ AI provides general advice. For serious problems, contact your local Krishi office or expert.'}
+                  </motion.p>
                 </div>
               </div>
             ) : (
               /* ========== CHAT MESSAGES ========== */
-              <div className="max-w-3xl mx-auto px-4 sm:px-6 py-4 space-y-4">
+              <div className="max-w-3xl mx-auto px-4 sm:px-6 py-4 space-y-3">
                 {messages.map((msg, i) => {
                   if (msg.diseaseResult) {
                     const userMsgWithImage = messages.slice(0, i).reverse().find(m => m.role === 'user' && m.imageUrl);
@@ -1037,7 +1109,7 @@ export function OnScreenAssistant({ isFullScreen: isEmbeddedFullScreen = false, 
                         <div className="bg-muted/50 rounded-2xl rounded-tl-sm px-3.5 py-2.5 flex items-center gap-2.5">
                           <Loader2 className="w-4 h-4 text-primary animate-spin" />
                           <span className="text-[13px] text-muted-foreground">
-                            {language === 'ne' ? 'फोटो विश्लेषण गर्दैछु...' : language === 'hi' ? 'फोटो विश्लेषण...' : 'Analyzing photo...'}
+                            {language === 'ne' ? 'फोटो हेर्दैछु...' : language === 'hi' ? 'फोटो देख रहा हूँ...' : 'Analyzing photo...'}
                           </span>
                         </div>
                       </motion.div>
@@ -1061,8 +1133,8 @@ export function OnScreenAssistant({ isFullScreen: isEmbeddedFullScreen = false, 
                       <div className={cn(
                         "max-w-[85%] sm:max-w-[75%]",
                         isUser 
-                          ? "bg-primary text-primary-foreground rounded-2xl rounded-br-sm px-3.5 py-2.5 text-[14px]" 
-                          : "text-[14px]"
+                          ? "bg-primary text-primary-foreground rounded-2xl rounded-br-sm px-3.5 py-2.5" 
+                          : "bg-card border border-border/40 rounded-2xl rounded-tl-sm px-3.5 py-2.5 shadow-sm"
                       )}>
                         {msg.role === 'user' && msg.isOffline && (
                           <div className="flex items-center gap-1 mb-1 text-[10px] opacity-70">
@@ -1070,15 +1142,15 @@ export function OnScreenAssistant({ isFullScreen: isEmbeddedFullScreen = false, 
                           </div>
                         )}
                         {msg.imageUrl && (
-                          <div className={cn("mb-2 rounded-lg overflow-hidden", isUser && "")}>
+                          <div className="mb-2 rounded-lg overflow-hidden">
                             <img src={msg.imageUrl} alt="Crop photo" className="max-w-full max-h-40 object-contain rounded-lg" />
                           </div>
                         )}
                         {isUser ? (
-                          <p className="whitespace-pre-wrap leading-relaxed">{msg.content}</p>
+                          <p className="whitespace-pre-wrap leading-relaxed text-[14px]">{msg.content}</p>
                         ) : (
                           <div className="prose prose-sm prose-neutral dark:prose-invert max-w-none">
-                            <p className="whitespace-pre-wrap leading-relaxed text-foreground">{msg.content}</p>
+                            <p className="whitespace-pre-wrap leading-relaxed text-foreground text-[14px]">{msg.content}</p>
                           </div>
                         )}
                         {msg.isOffline && !isUser && (
@@ -1107,10 +1179,12 @@ export function OnScreenAssistant({ isFullScreen: isEmbeddedFullScreen = false, 
                     <div className="w-7 h-7 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
                       <Leaf className="w-3.5 h-3.5 text-primary" />
                     </div>
-                    <div className="flex gap-1 px-3 py-2.5">
-                      <motion.div className="w-1.5 h-1.5 rounded-full bg-muted-foreground/40" animate={{ opacity: [0.3, 1, 0.3] }} transition={{ repeat: Infinity, duration: 1, delay: 0 }} />
-                      <motion.div className="w-1.5 h-1.5 rounded-full bg-muted-foreground/40" animate={{ opacity: [0.3, 1, 0.3] }} transition={{ repeat: Infinity, duration: 1, delay: 0.2 }} />
-                      <motion.div className="w-1.5 h-1.5 rounded-full bg-muted-foreground/40" animate={{ opacity: [0.3, 1, 0.3] }} transition={{ repeat: Infinity, duration: 1, delay: 0.4 }} />
+                    <div className="bg-card border border-border/40 rounded-2xl rounded-tl-sm px-4 py-3 shadow-sm">
+                      <div className="flex items-center gap-1.5">
+                        <motion.div className="w-1.5 h-1.5 rounded-full bg-primary/40" animate={{ opacity: [0.3, 1, 0.3] }} transition={{ repeat: Infinity, duration: 1, delay: 0 }} />
+                        <motion.div className="w-1.5 h-1.5 rounded-full bg-primary/40" animate={{ opacity: [0.3, 1, 0.3] }} transition={{ repeat: Infinity, duration: 1, delay: 0.2 }} />
+                        <motion.div className="w-1.5 h-1.5 rounded-full bg-primary/40" animate={{ opacity: [0.3, 1, 0.3] }} transition={{ repeat: Infinity, duration: 1, delay: 0.4 }} />
+                      </div>
                     </div>
                   </motion.div>
                 )}
@@ -1119,9 +1193,9 @@ export function OnScreenAssistant({ isFullScreen: isEmbeddedFullScreen = false, 
             )}
           </div>
 
-          {/* ========== INPUT AREA ========== */}
-          <div className="shrink-0 bg-background border-t border-border/30">
-            <div className="max-w-3xl mx-auto px-3 sm:px-5 pt-2 pb-6 sm:pb-8 space-y-2">
+          {/* ========== INPUT AREA — fixed bottom, premium feel ========== */}
+          <div className="shrink-0 bg-background/95 backdrop-blur-sm border-t border-border/30">
+            <div className="max-w-3xl mx-auto px-3 sm:px-5 pt-2 pb-5 sm:pb-6 space-y-2">
               {/* Selected image preview */}
               {selectedImage && (
                 <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="relative inline-block">
@@ -1137,13 +1211,13 @@ export function OnScreenAssistant({ isFullScreen: isEmbeddedFullScreen = false, 
                 <input ref={imageInputRef} type="file" accept="image/*" capture="environment" onChange={handleImageSelect} className="hidden" />
                 
                 <Button variant="ghost" size="icon" onClick={() => imageInputRef.current?.click()} disabled={isLoading || !!selectedImage}
-                  className="shrink-0 h-8 w-8 rounded-lg text-muted-foreground hover:text-foreground touch-manipulation"
+                  className="shrink-0 h-9 w-9 rounded-lg text-muted-foreground hover:text-foreground touch-manipulation"
                   title={language === 'ne' ? 'फोटो' : 'Photo'}>
                   <ImagePlus className="w-[18px] h-[18px]" />
                 </Button>
 
                 <Button variant={isListening ? "destructive" : "ghost"} size="icon" onClick={toggleListening} disabled={isLoading}
-                  className={cn("shrink-0 h-8 w-8 rounded-lg touch-manipulation", !isListening && "text-muted-foreground hover:text-foreground")}>
+                  className={cn("shrink-0 h-9 w-9 rounded-lg touch-manipulation", !isListening && "text-muted-foreground hover:text-foreground")}>
                   {isListening ? (
                     <motion.div animate={{ scale: [1, 1.15, 1] }} transition={{ repeat: Infinity, duration: 0.6 }}>
                       <MicOff className="w-[18px] h-[18px]" />
@@ -1164,28 +1238,27 @@ export function OnScreenAssistant({ isFullScreen: isEmbeddedFullScreen = false, 
                   }
                   onKeyPress={(e) => e.key === 'Enter' && handleSendMessage()}
                   disabled={isLoading || isListening}
-                  className="flex-1 h-8 text-[14px] border-0 bg-transparent shadow-none focus-visible:ring-0 focus-visible:ring-offset-0 px-0"
+                  className="flex-1 h-9 text-[14px] border-0 bg-transparent shadow-none focus-visible:ring-0 focus-visible:ring-offset-0 px-0"
                 />
 
                 <Button onClick={() => handleSendMessage()} disabled={(!inputText.trim() && !selectedImage) || isLoading} size="icon"
-                  className="shrink-0 h-8 w-8 rounded-lg touch-manipulation">
+                  className="shrink-0 h-9 w-9 rounded-lg touch-manipulation">
                   {isLoading ? <Loader2 className="w-[18px] h-[18px] animate-spin" /> : <Send className="w-[18px] h-[18px]" />}
                 </Button>
               </div>
 
-              {/* Listening + sub CTA */}
-              <div className="flex items-center justify-between">
+              {/* Listening indicator + subtle sub info */}
+              <div className="flex items-center justify-between px-1">
                 {isListening ? (
                   <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex items-center gap-1.5">
                     <motion.div animate={{ scale: [1, 1.3, 1] }} transition={{ repeat: Infinity, duration: 0.7 }} className="w-2 h-2 rounded-full bg-destructive" />
                     <span className="text-[11px] text-destructive font-medium">{language === 'ne' ? 'बोल्नुहोस्...' : 'Speak now...'}</span>
                   </motion.div>
                 ) : <div />}
-                {!subscribed && !subLoading && (
-                  <button onClick={() => setShowSubscriptionModal(true)} className="text-[11px] text-muted-foreground hover:text-foreground transition-colors touch-manipulation">
-                    <Crown className="w-3 h-3 inline mr-1" />
-                    {language === 'ne' ? 'PRO अपग्रेड' : 'Upgrade to PRO'}
-                  </button>
+                {!subscribed && !subLoading && queries_used > 0 && (
+                  <span className="text-[10px] text-muted-foreground/60">
+                    {queries_used}/{queries_limit}
+                  </span>
                 )}
               </div>
             </div>
@@ -1205,7 +1278,6 @@ export function OnScreenAssistant({ isFullScreen: isEmbeddedFullScreen = false, 
               language={assistantLang as 'ne' | 'hi' | 'en'}
               onClose={() => setShowVoiceCall(false)}
               onSendMessage={(question, aiResp) => {
-                // Add to chat history
                 const userMsg: Message = { role: 'user', content: question, timestamp: new Date() };
                 const assistantMsg: Message = { role: 'assistant', content: aiResp, timestamp: new Date() };
                 setMessages(prev => [...prev, userMsg, assistantMsg]);
