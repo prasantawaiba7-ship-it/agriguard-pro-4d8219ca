@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { useAuth } from '@/hooks/useAuth';
 import { useExpertTicketMessages, useSendExpertTicketMessage, uploadExpertImage } from '@/hooks/useExpertTickets';
-import { useTicketCallRequest, useCreateCallRequest } from '@/hooks/useCallRequests';
+import { useTicketCallRequest, useCreateCallRequest, useUpdateCallRequestStatus } from '@/hooks/useCallRequests';
 import { formatDistanceToNow } from 'date-fns';
 import { TemplatePicker } from './TemplatePicker';
 import { ExpertTemplate } from '@/hooks/useExpertTemplates';
@@ -37,6 +37,7 @@ export function ExpertTicketChat({ ticketId, cropName, senderRole = 'farmer', fa
   const [farmerNote, setFarmerNote] = useState('');
   const { data: existingCallRequest } = useTicketCallRequest(ticketId);
   const createCallRequest = useCreateCallRequest();
+  const updateCallStatus = useUpdateCallRequestStatus();
   // Recommendation templates start
   const [templatePickerOpen, setTemplatePickerOpen] = useState(false);
 
