@@ -84,6 +84,7 @@ export function useCreateCallRequest() {
 }
 
 export function useUpdateCallRequestStatus() {
+  const { user } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -95,6 +96,7 @@ export function useUpdateCallRequestStatus() {
       scheduledWindow?: string;
       declineReason?: string;
       declineNote?: string;
+      ticketId?: string;
     }) => {
       const updates: any = {
         status: data.status,
@@ -104,16 +106,59 @@ export function useUpdateCallRequestStatus() {
       if (data.declineReason) updates.decline_reason = data.declineReason;
       if (data.declineNote) updates.decline_note = data.declineNote;
 
-      const { error } = await (supabase as any)
+      // Update call request
+      const { data: updatedRequest, error } = await (supabase as any)
         .from('call_requests')
         .update(updates)
-        .eq('id', data.requestId);
+        .eq('id', data.requestId)
+        .select('ticket_id')
+        .single();
       if (error) throw error;
+
+      const ticketId = data.ticketId || updatedRequest?.ticket_id;
+      if (!ticketId) return;
+
+      // Build notification message for farmer
+      let notifMessage = '';
+      if (data.status === 'accepted') {
+        notifMessage = `📞 कृषि विज्ञले Call स्वीकार गर्नुभयो।`;
+        if (data.scheduledWindow) notifMessage += ` 🕐 ${data.scheduledWindow} मा call आउँछ।`;
+      } else if (data.status === 'declined') {
+        const reasons: Record<string, string> = {
+          busy: 'अहिले व्यस्त भएकाले',
+          wrong_expert: 'यो विषय अर्को विज्ञको क्षेत्र भएकाले',
+          use_chat: 'Chat मा लेख्नुस्, जवाफ दिइनेछ',
+          network: 'Network समस्याका कारण',
+        };
+        notifMessage = `📞 Call अस्वीकार गरिएको छ। ${reasons[data.declineReason || ''] || ''}`;
+        if (data.declineNote) notifMessage += ` — "${data.declineNote}"`;
+      } else if (data.status === 'in_progress') {
+        notifMessage = '📞 कृषि विज्ञले अहिले call गर्दै हुनुहुन्छ।';
+      } else if (data.status === 'completed') {
+        notifMessage = '✅ Call सम्पन्न भयो।';
+      }
+
+      // Insert system message into ticket chat so farmer sees it
+      if (notifMessage) {
+        await (supabase as any).from('expert_ticket_messages').insert({
+          ticket_id: ticketId,
+          sender_type: 'technician',
+          sender_id: user?.id || null,
+          message_text: notifMessage,
+        });
+      }
+
+      // Mark ticket as unread for farmer
+      await (supabase as any)
+        .from('expert_tickets')
+        .update({ has_unread_farmer: true })
+        .eq('id', ticketId);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['call-request'] });
       queryClient.invalidateQueries({ queryKey: ['my-expert-tickets'] });
       queryClient.invalidateQueries({ queryKey: ['expert-assigned-tickets'] });
+      queryClient.invalidateQueries({ queryKey: ['expert-ticket-messages'] });
       toast({ title: '✅ Status अपडेट भयो' });
     },
     onError: () => {
