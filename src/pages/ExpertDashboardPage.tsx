@@ -180,7 +180,14 @@ export default function ExpertDashboardPage() {
                               )}
                             </div>
                             <h3 className="font-semibold text-sm text-foreground truncate">{ticket.problem_title}</h3>
-                            <p className="text-xs text-muted-foreground">🌾 {ticket.crop_name} • {ticket.office?.name}</p>
+                            <p className="text-xs text-muted-foreground">
+                              🌾 {ticket.crop_name} • {ticket.office?.name}
+                              {pendingCallRequests?.[ticket.id] && (
+                                <span className="ml-2 inline-flex items-center gap-1 text-primary font-medium">
+                                  <Phone className="w-3 h-3" /> Call {pendingCallRequests[ticket.id] === 'requested' ? 'अनुरोध' : 'स्वीकृत'}
+                                </span>
+                              )}
+                            </p>
                           </div>
                           <p className="text-[10px] text-muted-foreground flex-shrink-0">
                             {formatDistanceToNow(new Date(ticket.updated_at), { addSuffix: true })}

@@ -36,6 +36,26 @@ export default function TechnicianDashboardPage() {
   const [selectedTicket, setSelectedTicket] = useState<ExpertTicket | null>(null);
   const [statusFilter, setStatusFilter] = useState('all');
 
+  // Fetch pending call requests for this technician
+  const { data: pendingCallRequests } = useQuery({
+    queryKey: ['pending-call-requests-tech', user?.id],
+    queryFn: async () => {
+      if (!user) return {};
+      const { data: techData } = await (supabase as any)
+        .from('technicians').select('id').eq('user_id', user.id).single();
+      if (!techData) return {};
+      const { data } = await (supabase as any)
+        .from('call_requests')
+        .select('ticket_id, status')
+        .eq('technician_id', techData.id)
+        .in('status', ['requested', 'accepted']);
+      const map: Record<string, string> = {};
+      (data || []).forEach((r: any) => { map[r.ticket_id] = r.status; });
+      return map;
+    },
+    enabled: !!user,
+  });
+
   if (!user) { navigate('/auth'); return null; }
 
   const filtered = tickets?.filter(t => statusFilter === 'all' || t.status === statusFilter) || [];
