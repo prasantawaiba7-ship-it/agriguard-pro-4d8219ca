@@ -1246,11 +1246,6 @@ export function OnScreenAssistant({ isFullScreen: isEmbeddedFullScreen = false, 
                     <span className="text-[11px] text-destructive font-medium">{language === 'ne' ? 'बोल्नुहोस्...' : 'Speak now...'}</span>
                   </motion.div>
                 ) : <div />}
-                {!subscribed && !subLoading && queries_used > 0 && (
-                  <span className="text-[10px] text-muted-foreground/60">
-                    {queries_used}/{queries_limit}
-                  </span>
-                )}
               </div>
             </div>
           </div>
@@ -1398,11 +1393,6 @@ export function OnScreenAssistant({ isFullScreen: isEmbeddedFullScreen = false, 
                   </span>
                 )}
                 
-                {!subscribed && (
-                  <span className="text-xs text-muted-foreground mr-1">
-                    {queries_used}/{queries_limit}
-                  </span>
-                )}
                 
                 {/* Language Selector */}
                 <DropdownMenu>
