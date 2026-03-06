@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
-import { Send, Loader2, ImagePlus, User, Shield, FileText, Phone, Clock, CheckCircle2, XCircle } from 'lucide-react';
+import { Send, Loader2, ImagePlus, User, Shield, FileText, Phone, Clock, CheckCircle2, XCircle, X } from 'lucide-react';
 import { TicketFeedbackCard } from '@/components/feedback/TicketFeedbackCard';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
@@ -12,6 +12,183 @@ import { ExpertTemplate } from '@/hooks/useExpertTemplates';
 import { FarmContextLine } from '@/components/farm/FarmContextLine';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import { Label } from '@/components/ui/label';
+import type { CallRequest } from '@/hooks/useCallRequests';
+
+const PREFERRED_TIME_LABELS: Record<string, string> = {
+  morning: 'बिहान (8–11 AM)',
+  afternoon: 'दिउँसो (12–3 PM)',
+  evening: 'बेलुका (4–6 PM)',
+  anytime: 'जुनसुकै बेला',
+};
+
+const DECLINE_REASONS: Record<string, string> = {
+  busy: 'अहिले व्यस्त छु',
+  wrong_expert: 'यो विषय मेरो क्षेत्र होइन',
+  use_chat: 'Chat मा लेख्नुहोस्, जवाफ दिन्छु',
+  network: 'Network समस्या',
+};
+
+const SCHEDULE_OPTIONS = [
+  { value: 'now', label: 'अहिले तुरुन्त call गर्ने' },
+  { value: 'today_afternoon', label: 'आज दिउँसो ३–५ बीचमा' },
+  { value: 'tomorrow_morning', label: 'भोलि बिहान ७–९ बीचमा' },
+  { value: 'custom', label: 'आफ्नो समय लेख्ने...' },
+];
+
+function TechnicianCallRequestPanel({ callRequest, updateCallStatus }: { callRequest: CallRequest; updateCallStatus: ReturnType<typeof useUpdateCallRequestStatus> }) {
+  const [acceptDialogOpen, setAcceptDialogOpen] = useState(false);
+  const [declineDialogOpen, setDeclineDialogOpen] = useState(false);
+  const [scheduleOption, setScheduleOption] = useState('now');
+  const [customTime, setCustomTime] = useState('');
+  const [declineReason, setDeclineReason] = useState('busy');
+  const [declineNote, setDeclineNote] = useState('');
+
+  const handleAccept = () => {
+    const window = scheduleOption === 'custom' ? customTime.trim() : SCHEDULE_OPTIONS.find(o => o.value === scheduleOption)?.label || '';
+    updateCallStatus.mutate({
+      requestId: callRequest.id,
+      status: 'accepted',
+      scheduledWindow: window,
+    }, { onSuccess: () => setAcceptDialogOpen(false) });
+  };
+
+  const handleDecline = () => {
+    updateCallStatus.mutate({
+      requestId: callRequest.id,
+      status: 'declined',
+      declineReason,
+      declineNote: declineNote.trim() || undefined,
+    }, { onSuccess: () => setDeclineDialogOpen(false) });
+  };
+
+  return (
+    <div className="px-4 pb-2">
+      <div className="rounded-lg border-2 border-primary/30 bg-primary/5 p-3 space-y-2">
+        <div className="flex items-center gap-2 text-sm font-medium text-foreground">
+          <Phone className="w-4 h-4 text-primary" />
+          📞 किसानले Call अनुरोध गरेको छ
+        </div>
+        {callRequest.preferred_time && (
+          <p className="text-xs text-muted-foreground">
+            <Clock className="w-3 h-3 inline mr-1" />
+            समय: {PREFERRED_TIME_LABELS[callRequest.preferred_time] || callRequest.preferred_time}
+          </p>
+        )}
+        {callRequest.farmer_note && (
+          <p className="text-xs text-muted-foreground">नोट: {callRequest.farmer_note}</p>
+        )}
+
+        {callRequest.status === 'requested' && (
+          <div className="flex gap-2">
+            <Button size="sm" className="flex-1 text-xs" onClick={() => setAcceptDialogOpen(true)}>
+              <CheckCircle2 className="w-3.5 h-3.5 mr-1" /> Call स्वीकार
+            </Button>
+            <Button size="sm" variant="destructive" className="flex-1 text-xs" onClick={() => setDeclineDialogOpen(true)}>
+              <XCircle className="w-3.5 h-3.5 mr-1" /> अस्वीकार
+            </Button>
+          </div>
+        )}
+
+        {callRequest.status === 'accepted' && (
+          <div className="space-y-2">
+            {callRequest.scheduled_window && (
+              <p className="text-xs text-green-700 dark:text-green-400 font-medium">
+                <Clock className="w-3 h-3 inline mr-1" />
+                {callRequest.scheduled_window}
+              </p>
+            )}
+            <div className="flex gap-2">
+              <Button size="sm" variant="outline" className="flex-1 text-xs" disabled={updateCallStatus.isPending}
+                onClick={() => updateCallStatus.mutate({ requestId: callRequest.id, status: 'in_progress' })}>
+                📞 Call गर्दैछु
+              </Button>
+              <Button size="sm" variant="outline" className="text-xs" disabled={updateCallStatus.isPending}
+                onClick={() => updateCallStatus.mutate({ requestId: callRequest.id, status: 'completed' })}>
+                Call सकियो
+              </Button>
+            </div>
+          </div>
+        )}
+
+        {callRequest.status === 'in_progress' && (
+          <Button size="sm" className="w-full text-xs" disabled={updateCallStatus.isPending}
+            onClick={() => updateCallStatus.mutate({ requestId: callRequest.id, status: 'completed' })}>
+            <CheckCircle2 className="w-3.5 h-3.5 mr-1" /> Call सकियो
+          </Button>
+        )}
+      </div>
+
+      {/* Accept dialog */}
+      <Dialog open={acceptDialogOpen} onOpenChange={setAcceptDialogOpen}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-base">
+              <Phone className="w-5 h-5 text-primary" />
+              Call समय तोक्नुहोस्
+            </DialogTitle>
+            <DialogDescription className="text-xs">किसानलाई कहिले call गर्नुहुन्छ?</DialogDescription>
+          </DialogHeader>
+          <RadioGroup value={scheduleOption} onValueChange={setScheduleOption} className="space-y-2">
+            {SCHEDULE_OPTIONS.map(opt => (
+              <div key={opt.value} className="flex items-center space-x-2">
+                <RadioGroupItem value={opt.value} id={`sched-${opt.value}`} />
+                <Label htmlFor={`sched-${opt.value}`} className="text-sm cursor-pointer">{opt.label}</Label>
+              </div>
+            ))}
+          </RadioGroup>
+          {scheduleOption === 'custom' && (
+            <Textarea
+              placeholder="उदाहरण: आज ४:३० बजे call गर्छु"
+              value={customTime}
+              onChange={e => setCustomTime(e.target.value)}
+              rows={2}
+              className="text-sm resize-none"
+            />
+          )}
+          <div className="flex gap-2 mt-2">
+            <Button variant="outline" className="flex-1" onClick={() => setAcceptDialogOpen(false)}>रद्द</Button>
+            <Button className="flex-1" disabled={updateCallStatus.isPending || (scheduleOption === 'custom' && !customTime.trim())} onClick={handleAccept}>
+              {updateCallStatus.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : 'स्वीकार गर्नुहोस्'}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Decline dialog */}
+      <Dialog open={declineDialogOpen} onOpenChange={setDeclineDialogOpen}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle className="text-base">Call अस्वीकार गर्ने कारण</DialogTitle>
+            <DialogDescription className="text-xs">किसानलाई कारण देखिनेछ।</DialogDescription>
+          </DialogHeader>
+          <RadioGroup value={declineReason} onValueChange={setDeclineReason} className="space-y-2">
+            {Object.entries(DECLINE_REASONS).map(([key, label]) => (
+              <div key={key} className="flex items-center space-x-2">
+                <RadioGroupItem value={key} id={`decline-${key}`} />
+                <Label htmlFor={`decline-${key}`} className="text-sm cursor-pointer">{label}</Label>
+              </div>
+            ))}
+          </RadioGroup>
+          <Textarea
+            placeholder="थप नोट (Optional)"
+            value={declineNote}
+            onChange={e => setDeclineNote(e.target.value)}
+            rows={2}
+            className="text-sm resize-none"
+          />
+          <div className="flex gap-2 mt-2">
+            <Button variant="outline" className="flex-1" onClick={() => setDeclineDialogOpen(false)}>रद्द</Button>
+            <Button variant="destructive" className="flex-1" disabled={updateCallStatus.isPending} onClick={handleDecline}>
+              {updateCallStatus.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : 'अस्वीकार गर्नुहोस्'}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+    </div>
+  );
+}
 
 interface ExpertTicketChatProps {
   ticketId: string;
@@ -145,15 +322,30 @@ export function ExpertTicketChat({ ticketId, cropName, senderRole = 'farmer', fa
       {senderRole === 'farmer' && technicianId && (
         <div className="px-4 pb-2">
           {existingCallRequest ? (
-            <div className="flex items-center gap-2 rounded-lg border border-border bg-muted/50 p-2.5 text-xs">
-              <Phone className="w-4 h-4 text-primary shrink-0" />
-              <div className="flex-1">
-                <span className="font-medium">Call अनुरोध:</span>{' '}
+            <div className="rounded-lg border border-border bg-muted/50 p-2.5 text-xs space-y-1">
+              <div className="flex items-center gap-2">
+                <Phone className="w-4 h-4 text-primary shrink-0" />
+                <span className="font-medium">Call अनुरोध:</span>
                 {existingCallRequest.status === 'requested' && <span className="text-amber-600">प्रतीक्षामा <Clock className="w-3 h-3 inline" /></span>}
                 {existingCallRequest.status === 'accepted' && <span className="text-green-600">स्वीकृत <CheckCircle2 className="w-3 h-3 inline" /></span>}
+                {existingCallRequest.status === 'in_progress' && <span className="text-blue-600">Call हुँदैछ 📞</span>}
                 {existingCallRequest.status === 'completed' && <span className="text-muted-foreground">सकियो <CheckCircle2 className="w-3 h-3 inline" /></span>}
+                {existingCallRequest.status === 'declined' && <span className="text-destructive">अस्वीकार <XCircle className="w-3 h-3 inline" /></span>}
                 {existingCallRequest.status === 'missed' && <span className="text-destructive">छुटेको <XCircle className="w-3 h-3 inline" /></span>}
               </div>
+              {existingCallRequest.status === 'accepted' && existingCallRequest.scheduled_window && (
+                <p className="text-green-700 dark:text-green-400 text-xs pl-6">
+                  🕐 {existingCallRequest.scheduled_window} मा call आउँछ।
+                </p>
+              )}
+              {existingCallRequest.status === 'declined' && (
+                <p className="text-muted-foreground text-xs pl-6">
+                  {existingCallRequest.decline_reason === 'busy' && 'अहिले व्यस्त, कृपया पछि अनुरोध गर्नुस्।'}
+                  {existingCallRequest.decline_reason === 'wrong_expert' && 'अर्को विज्ञ छान्नुस्।'}
+                  {existingCallRequest.decline_reason === 'use_chat' && 'Chat मा लेख्नुस्, जवाफ दिइनेछ।'}
+                  {existingCallRequest.decline_reason === 'network' && 'Network समस्या, पछि प्रयास गर्नुस्।'}
+                </p>
+              )}
             </div>
           ) : (
             <Button variant="outline" size="sm" className="w-full text-xs" onClick={() => setCallDialogOpen(true)}>
@@ -164,46 +356,16 @@ export function ExpertTicketChat({ ticketId, cropName, senderRole = 'farmer', fa
         </div>
       )}
 
-      {/* Call request section for technician */}
-      {senderRole === 'technician' && existingCallRequest && existingCallRequest.status !== 'completed' && existingCallRequest.status !== 'missed' && (
+      {/* Call request section for technician — redesigned accept/decline */}
+      {senderRole === 'technician' && existingCallRequest && !['completed', 'missed'].includes(existingCallRequest.status) && (
+        <TechnicianCallRequestPanel callRequest={existingCallRequest} updateCallStatus={updateCallStatus} />
+      )}
+      {senderRole === 'technician' && existingCallRequest?.status === 'declined' && (
         <div className="px-4 pb-2">
-          <div className="rounded-lg border-2 border-primary/30 bg-primary/5 p-3 space-y-2">
-            <div className="flex items-center gap-2 text-sm font-medium text-foreground">
-              <Phone className="w-4 h-4 text-primary" />
-              📞 किसानले Call अनुरोध गरेको छ
-            </div>
-            {existingCallRequest.preferred_time && (
-              <p className="text-xs text-muted-foreground">
-                <Clock className="w-3 h-3 inline mr-1" />
-                समय: {existingCallRequest.preferred_time === 'morning' ? 'बिहान (8–11 AM)' : existingCallRequest.preferred_time === 'afternoon' ? 'दिउँसो (12–3 PM)' : existingCallRequest.preferred_time === 'evening' ? 'बेलुका (4–6 PM)' : 'जुनसुकै बेला'}
-              </p>
-            )}
-            {existingCallRequest.farmer_note && (
-              <p className="text-xs text-muted-foreground">नोट: {existingCallRequest.farmer_note}</p>
-            )}
-            <div className="flex gap-2">
-              {existingCallRequest.status === 'requested' && (
-                <Button
-                  size="sm"
-                  className="flex-1 text-xs"
-                  disabled={updateCallStatus.isPending}
-                  onClick={() => updateCallStatus.mutate({ requestId: existingCallRequest.id, status: 'accepted' })}
-                >
-                  <CheckCircle2 className="w-3.5 h-3.5 mr-1" /> स्वीकार गर्नुहोस्
-                </Button>
-              )}
-              {(existingCallRequest.status === 'requested' || existingCallRequest.status === 'accepted') && (
-                <Button
-                  size="sm"
-                  variant="outline"
-                  className="text-xs"
-                  disabled={updateCallStatus.isPending}
-                  onClick={() => updateCallStatus.mutate({ requestId: existingCallRequest.id, status: 'completed' })}
-                >
-                  Call सकियो
-                </Button>
-              )}
-            </div>
+          <div className="rounded-lg border border-destructive/30 bg-destructive/5 p-2.5 text-xs text-muted-foreground">
+            <XCircle className="w-3.5 h-3.5 inline mr-1 text-destructive" />
+            Call अस्वीकार गरिएको छ
+            {existingCallRequest.decline_reason && <span> — {DECLINE_REASONS[existingCallRequest.decline_reason] || existingCallRequest.decline_reason}</span>}
           </div>
         </div>
       )}

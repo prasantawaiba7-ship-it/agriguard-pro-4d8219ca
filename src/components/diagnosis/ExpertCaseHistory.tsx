@@ -151,13 +151,30 @@ function ExpertCaseCard({ caseData }: { caseData: ExpertTicket }) {
               {caseData.status !== 'closed' && (
                 <div className="space-y-2">
                   {existingCallRequest ? (
-                    <div className="rounded-xl border border-border/40 bg-muted/40 p-3 text-xs text-foreground">
-                      <span className="font-medium">📞 Call अनुरोध:</span>{' '}
-                      {existingCallRequest.status === 'requested' && 'प्रतीक्षामा'}
-                      {existingCallRequest.status === 'accepted' && 'स्वीकृत'}
-                      {existingCallRequest.status === 'in_progress' && 'Call हुँदैछ'}
-                      {existingCallRequest.status === 'completed' && 'सकियो'}
-                      {existingCallRequest.status === 'missed' && 'छुट्यो'}
+                    <div className="rounded-xl border border-border/40 bg-muted/40 p-3 text-xs text-foreground space-y-1">
+                      <div className="font-medium flex items-center gap-1">
+                        📞 Call अनुरोध:
+                        {existingCallRequest.status === 'requested' && <span className="text-amber-600 ml-1">प्रतीक्षामा</span>}
+                        {existingCallRequest.status === 'accepted' && <span className="text-green-600 ml-1">स्वीकृत ✅</span>}
+                        {existingCallRequest.status === 'in_progress' && <span className="text-blue-600 ml-1">Call हुँदैछ 📞</span>}
+                        {existingCallRequest.status === 'completed' && <span className="text-muted-foreground ml-1">सकियो ✅</span>}
+                        {existingCallRequest.status === 'declined' && <span className="text-destructive ml-1">अस्वीकार ❌</span>}
+                        {existingCallRequest.status === 'missed' && <span className="text-destructive ml-1">छुट्यो</span>}
+                      </div>
+                      {existingCallRequest.status === 'accepted' && existingCallRequest.scheduled_window && (
+                        <p className="text-green-700 dark:text-green-400">
+                          🕐 कृषि विज्ञले call स्वीकार गर्नुभयो — <strong>{existingCallRequest.scheduled_window}</strong> मा call आउँछ।
+                        </p>
+                      )}
+                      {existingCallRequest.status === 'declined' && (
+                        <p className="text-muted-foreground">
+                          {existingCallRequest.decline_reason === 'busy' && 'अहिले व्यस्त भएकाले, कृपया पछि पुनः अनुरोध गर्नुस्।'}
+                          {existingCallRequest.decline_reason === 'wrong_expert' && 'यो विषय अर्को विज्ञको क्षेत्र हो, कृपया अर्को विज्ञ छान्नुस्।'}
+                          {existingCallRequest.decline_reason === 'use_chat' && 'कृपया chat मा समस्या लेख्नुस्, जवाफ दिइनेछ।'}
+                          {existingCallRequest.decline_reason === 'network' && 'Network समस्याका कारण call गर्न मिलेन, कृपया पछि प्रयास गर्नुस्।'}
+                          {existingCallRequest.decline_note && <span className="block mt-1 italic">"{existingCallRequest.decline_note}"</span>}
+                        </p>
+                      )}
                     </div>
                   ) : (
                     <Button

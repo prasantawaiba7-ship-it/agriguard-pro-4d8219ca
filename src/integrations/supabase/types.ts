@@ -366,10 +366,13 @@ export type Database = {
       call_requests: {
         Row: {
           created_at: string
+          decline_note: string | null
+          decline_reason: string | null
           farmer_id: string
           farmer_note: string | null
           id: string
           preferred_time: string | null
+          scheduled_window: string | null
           status: string
           technician_id: string
           technician_note: string | null
@@ -378,10 +381,13 @@ export type Database = {
         }
         Insert: {
           created_at?: string
+          decline_note?: string | null
+          decline_reason?: string | null
           farmer_id: string
           farmer_note?: string | null
           id?: string
           preferred_time?: string | null
+          scheduled_window?: string | null
           status?: string
           technician_id: string
           technician_note?: string | null
@@ -390,10 +396,13 @@ export type Database = {
         }
         Update: {
           created_at?: string
+          decline_note?: string | null
+          decline_reason?: string | null
           farmer_id?: string
           farmer_note?: string | null
           id?: string
           preferred_time?: string | null
+          scheduled_window?: string | null
           status?: string
           technician_id?: string
           technician_note?: string | null

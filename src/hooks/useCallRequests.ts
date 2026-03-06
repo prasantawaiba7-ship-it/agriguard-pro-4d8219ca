@@ -12,6 +12,9 @@ export interface CallRequest {
   preferred_time: string | null;
   farmer_note: string | null;
   technician_note: string | null;
+  scheduled_window: string | null;
+  decline_reason: string | null;
+  decline_note: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -85,18 +88,32 @@ export function useUpdateCallRequestStatus() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (data: { requestId: string; status: string; technicianNote?: string }) => {
+    mutationFn: async (data: {
+      requestId: string;
+      status: string;
+      technicianNote?: string;
+      scheduledWindow?: string;
+      declineReason?: string;
+      declineNote?: string;
+    }) => {
+      const updates: any = {
+        status: data.status,
+        technician_note: data.technicianNote || null,
+      };
+      if (data.scheduledWindow) updates.scheduled_window = data.scheduledWindow;
+      if (data.declineReason) updates.decline_reason = data.declineReason;
+      if (data.declineNote) updates.decline_note = data.declineNote;
+
       const { error } = await (supabase as any)
         .from('call_requests')
-        .update({
-          status: data.status,
-          technician_note: data.technicianNote || null,
-        })
+        .update(updates)
         .eq('id', data.requestId);
       if (error) throw error;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['call-request'] });
+      queryClient.invalidateQueries({ queryKey: ['my-expert-tickets'] });
+      queryClient.invalidateQueries({ queryKey: ['expert-assigned-tickets'] });
       toast({ title: '✅ Status अपडेट भयो' });
     },
     onError: () => {
