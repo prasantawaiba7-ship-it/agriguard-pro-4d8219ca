@@ -894,64 +894,69 @@ export function OnScreenAssistant({ isFullScreen: isEmbeddedFullScreen = false, 
     return (
       <>
         <div className="flex flex-col h-full bg-background">
-          {/* ========== COMPACT HEADER ========== */}
-          <div className="sticky top-0 z-20 shrink-0" style={{ background: 'linear-gradient(135deg, hsl(150 60% 28%) 0%, hsl(150 50% 36%) 50%, hsl(150 45% 32%) 100%)' }}>
-            <div className="max-w-3xl mx-auto flex items-center justify-between px-4 py-2.5 sm:px-6">
-              <div className="flex items-center gap-2.5">
-                <div className="w-9 h-9 rounded-xl bg-white/15 backdrop-blur-sm flex items-center justify-center">
-                  <Leaf className="w-4.5 h-4.5 text-white" />
+          {/* ========== MINIMAL HEADER ========== */}
+          <div className="sticky top-0 z-20 shrink-0 border-b border-border/50 bg-background/95 backdrop-blur-md">
+            <div className="max-w-3xl mx-auto flex items-center justify-between px-4 py-2 sm:px-6">
+              <div className="flex items-center gap-2">
+                <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
+                  <Leaf className="w-4 h-4 text-primary" />
                 </div>
-                <div>
-                  <h1 className="font-bold text-[18px] text-white leading-tight tracking-tight">Krishi Mitra AI</h1>
-                  <p className="text-[10px] text-white/55 font-medium">
-                    {language === 'ne' ? 'स्मार्ट कृषि सहायक' : language === 'hi' ? 'स्मार्ट कृषि सहायक' : 'Smart Farming Assistant'}
-                  </p>
+                <div className="flex items-center gap-2">
+                  <h1 className="font-semibold text-[15px] text-foreground leading-none">Krishi Mitra</h1>
+                  <span className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />
                 </div>
                 {subscribed && (
-                  <span className="text-[10px] bg-accent/90 text-accent-foreground px-2 py-0.5 rounded-full flex items-center gap-1 font-semibold">
-                    <Crown className="w-3 h-3" /> PRO
-                  </span>
+                  <span className="text-[9px] bg-accent/15 text-accent px-1.5 py-0.5 rounded-md font-semibold">PRO</span>
                 )}
               </div>
               <div className="flex items-center gap-0.5">
                 {!isOnline && (
-                  <span className="text-[10px] bg-white/15 text-white px-2 py-1 rounded-full flex items-center gap-1 mr-1">
+                  <span className="text-[10px] bg-destructive/10 text-destructive px-2 py-1 rounded-md flex items-center gap-1 mr-1">
                     <WifiOff className="w-3 h-3" />
-                    {pendingCount > 0 && <span className="font-bold">{pendingCount}</span>}
                   </span>
                 )}
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" size="icon" className="h-8 w-8 text-white/80 hover:text-white hover:bg-white/10 rounded-lg">
-                      <Globe className="w-[20px] h-[20px]" />
+                    <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-foreground rounded-lg">
+                      <Globe className="w-4 h-4" />
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end" className="min-w-[140px]">
                     {languageOptions.map((lang) => (
-                      <DropdownMenuItem
-                        key={lang.code}
-                        onClick={() => handleLanguageChange(lang.code as 'ne' | 'hi' | 'en')}
-                        className={cn("cursor-pointer", assistantLang === lang.code && "bg-primary/10 text-primary")}
-                      >
-                        <span className="mr-2">{lang.flag}</span>
-                        <span>{lang.label}</span>
+                      <DropdownMenuItem key={lang.code} onClick={() => handleLanguageChange(lang.code as 'ne' | 'hi' | 'en')}
+                        className={cn("cursor-pointer", assistantLang === lang.code && "bg-primary/10 text-primary")}>
+                        <span className="mr-2">{lang.flag}</span><span>{lang.label}</span>
                         {assistantLang === lang.code && <span className="ml-auto text-primary">✓</span>}
                       </DropdownMenuItem>
                     ))}
                   </DropdownMenuContent>
                 </DropdownMenu>
-                <Button variant="ghost" size="icon" className="h-8 w-8 text-white/80 hover:text-white hover:bg-white/10 rounded-lg" onClick={() => setShowVoiceCall(true)}>
-                  <Mic className="w-[20px] h-[20px]" />
+                <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-foreground rounded-lg" onClick={() => setShowVoiceCall(true)}>
+                  <Mic className="w-4 h-4" />
                 </Button>
                 {profile && (
-                  <Button variant="ghost" size="icon" className="h-8 w-8 text-white/80 hover:text-white hover:bg-white/10 rounded-lg" onClick={() => setShowChatHistory(true)}>
-                    <History className="w-[20px] h-[20px]" />
+                  <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-foreground rounded-lg" onClick={() => setShowChatHistory(true)}>
+                    <History className="w-4 h-4" />
                   </Button>
                 )}
                 {messages.length > 0 && (
-                  <Button variant="ghost" size="icon" className="h-8 w-8 text-white/80 hover:text-white hover:bg-white/10 rounded-lg" onClick={downloadReport} disabled={isExportingPdf}>
-                    {isExportingPdf ? <Loader2 className="w-4 h-4 animate-spin" /> : <FileDown className="w-[20px] h-[20px]" />}
-                  </Button>
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-foreground rounded-lg">
+                        <MessageSquare className="w-4 h-4" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                      <DropdownMenuItem onClick={downloadReport} disabled={isExportingPdf}>
+                        <FileDown className="w-4 h-4 mr-2" />
+                        {language === 'ne' ? 'डाउनलोड' : 'Export chat'}
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={clearChat} className="text-destructive">
+                        <X className="w-4 h-4 mr-2" />
+                        {language === 'ne' ? 'मेटाउनुहोस्' : 'Clear chat'}
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
                 )}
               </div>
             </div>
@@ -960,99 +965,59 @@ export function OnScreenAssistant({ isFullScreen: isEmbeddedFullScreen = false, 
           {/* ========== MESSAGES AREA ========== */}
           <div className="flex-1 overflow-y-auto">
             {messages.length === 0 ? (
-              /* ========== COMPACT WELCOME ========== */
-              <div className="flex flex-col px-4 py-5 sm:px-6">
-                {/* Greeting — max 120px */}
-                <div className="flex items-center gap-3 mb-4" style={{ maxHeight: 120 }}>
-                  <div className="w-14 h-14 rounded-2xl bg-primary/10 flex items-center justify-center shrink-0" style={{ boxShadow: '0 4px 16px hsl(150 67% 38% / 0.1)' }}>
-                    <Leaf className="w-7 h-7 text-primary" />
-                  </div>
-                  <div>
-                    <h2 className="text-[18px] font-bold text-foreground leading-tight">
-                      {language === 'ne' ? 'नमस्ते 👋' : 'Namaste 👋'}
+              /* ========== EMPTY STATE ========== */
+              <div className="flex flex-col items-center justify-center h-full px-5">
+                <div className="max-w-md w-full text-center">
+                  <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: 0.3 }}>
+                    <div className="w-12 h-12 rounded-2xl bg-primary/10 flex items-center justify-center mx-auto mb-4">
+                      <Leaf className="w-6 h-6 text-primary" />
+                    </div>
+                    <h2 className="text-[17px] font-semibold text-foreground mb-1">
+                      {language === 'ne' ? 'नमस्ते! म तपाईंको कृषि सहायक' : language === 'hi' ? 'नमस्ते! मैं आपका कृषि सहायक' : 'Hi! I\'m your farming assistant'}
                     </h2>
-                    <p className="text-[15px] font-semibold text-primary leading-tight">
-                      {language === 'ne' ? 'म Krishi Mitra AI' : "I am Krishi Mitra AI"}
+                    <p className="text-[13px] text-muted-foreground mb-6">
+                      {language === 'ne' ? 'खेतीसम्बन्धी प्रश्न सोध्नुहोस् वा फोटो पठाउनुहोस्' : language === 'hi' ? 'खेती का सवाल पूछें या फोटो भेजें' : 'Ask a farming question or send a crop photo'}
                     </p>
-                    <p className="text-[13px] text-muted-foreground mt-0.5">
-                      {language === 'ne' ? 'कृषिसम्बन्धी प्रश्न सोध्नुहोस्' : language === 'hi' ? 'खेती से जुड़ा सवाल पूछें' : 'Ask me anything about farming'}
-                    </p>
+                  </motion.div>
+
+                  {/* Suggestion chips */}
+                  <div className="grid grid-cols-2 gap-2">
+                    {quickQuestions[getQuickQuestionsLang()].map((q, idx) => (
+                      <motion.button
+                        key={idx}
+                        initial={{ opacity: 0, y: 8 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: 0.1 + idx * 0.05 }}
+                        onClick={() => {
+                          if ('isPhotoAction' in q && q.isPhotoAction) {
+                            imageInputRef.current?.click();
+                          } else {
+                            handleSendMessage(q.text);
+                          }
+                        }}
+                        disabled={isLoading}
+                        className={cn(
+                          "flex items-center gap-2 px-3 py-2.5 rounded-xl border border-border/60 bg-card",
+                          "hover:border-primary/30 hover:bg-muted/50 transition-all text-left",
+                          "text-[13px] touch-manipulation active:scale-[0.98]"
+                        )}
+                      >
+                        <q.icon className={cn("w-4 h-4 shrink-0", q.color)} />
+                        <span className="text-foreground leading-tight line-clamp-2">{q.text}</span>
+                      </motion.button>
+                    ))}
                   </div>
-                </div>
-
-                {/* Compact Suggestion Cards */}
-                <div className="grid grid-cols-1 gap-2 mb-4">
-                  {quickQuestions[getQuickQuestionsLang()].map((q, idx) => (
-                    <motion.button
-                      key={idx}
-                      initial={{ opacity: 0, x: -8 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      transition={{ delay: 0.15 + idx * 0.06 }}
-                      onClick={() => {
-                        if ('isPhotoAction' in q && q.isPhotoAction) {
-                          imageInputRef.current?.click();
-                        } else {
-                          handleSendMessage(q.text);
-                        }
-                      }}
-                      disabled={isLoading}
-                      className={cn(
-                        "flex items-center gap-3 px-3 py-2.5 rounded-xl border border-border/60 bg-card",
-                        "hover:border-primary/40 transition-all text-left",
-                        "text-[14px] touch-manipulation active:scale-[0.98]",
-                        'isPhotoAction' in q && q.isPhotoAction && "border-destructive/20 hover:border-destructive/40"
-                      )}
-                      style={{ boxShadow: '0 1px 4px hsl(221 39% 11% / 0.03)', minHeight: 48, maxHeight: 48 }}
-                    >
-                      <div className={cn("w-8 h-8 rounded-lg flex items-center justify-center shrink-0",
-                        'isPhotoAction' in q && q.isPhotoAction ? "bg-destructive/10" : "bg-primary/10"
-                      )}>
-                        <q.icon className={cn("w-4 h-4", q.color)} />
-                      </div>
-                      <span className="font-medium text-foreground leading-snug truncate">{q.text}</span>
-                    </motion.button>
-                  ))}
-                </div>
-
-                {/* Compact Weather Card */}
-                <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.5 }} className="mb-3" style={{ maxHeight: 60, overflow: 'hidden' }}>
-                  <WeatherAdvisoryCard language={language as 'ne' | 'hi' | 'en'} />
-                </motion.div>
-
-                {/* Voice CTA */}
-                <motion.button
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  transition={{ delay: 0.55 }}
-                  onClick={() => setShowVoiceCall(true)}
-                  className="flex items-center justify-center gap-2 w-full py-2.5 px-4 rounded-xl bg-primary text-primary-foreground font-semibold text-[14px] hover:bg-primary/90 transition-colors touch-manipulation active:scale-[0.98] mb-3"
-                  style={{ boxShadow: '0 3px 10px hsl(150 67% 38% / 0.18)' }}
-                >
-                  <Phone className="w-4 h-4" />
-                  {language === 'ne' ? 'AI सँग बोल्नुहोस्' : language === 'hi' ? 'AI से बात करें' : 'Talk with AI'}
-                </motion.button>
-
-                {/* Trust + History row */}
-                <div className="flex flex-wrap items-center justify-center gap-x-3 gap-y-1 text-[11px] text-muted-foreground">
-                  <span className="flex items-center gap-1">🌾 {language === 'ne' ? 'किसानको भरोसा' : 'Trusted by Farmers'}</span>
-                  <span className="flex items-center gap-1">📡 {language === 'ne' ? 'AI रोग पहिचान' : 'AI Disease Detection'}</span>
-                  {profile && (
-                    <button onClick={() => setShowChatHistory(true)} className="flex items-center gap-1 text-primary hover:text-primary/80 transition-colors">
-                      <History className="w-3 h-3" />
-                      {language === 'ne' ? 'पुरानो कुराकानी' : 'History'}
-                    </button>
-                  )}
                 </div>
               </div>
             ) : (
               /* ========== CHAT MESSAGES ========== */
-              <div className="max-w-3xl mx-auto px-4 sm:px-6 py-3 space-y-2.5">
+              <div className="max-w-3xl mx-auto px-4 sm:px-6 py-4 space-y-4">
                 {messages.map((msg, i) => {
                   if (msg.diseaseResult) {
                     const userMsgWithImage = messages.slice(0, i).reverse().find(m => m.role === 'user' && m.imageUrl);
                     const imageUrl = userMsgWithImage?.imageUrl || '';
                     return (
-                      <motion.div key={i} initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} className="max-w-[92%]">
+                      <motion.div key={i} initial={{ opacity: 0, y: 4 }} animate={{ opacity: 1, y: 0 }} className="max-w-[92%]">
                         <DiseaseDetectionResult 
                           result={msg.diseaseResult} language={language}
                           onSpeak={ttsSupported ? (text) => speak(text) : undefined} isSpeaking={isSpeaking}
@@ -1069,13 +1034,10 @@ export function OnScreenAssistant({ isFullScreen: isEmbeddedFullScreen = false, 
                         <div className="w-7 h-7 rounded-lg bg-primary/10 flex items-center justify-center shrink-0 mt-0.5">
                           <Leaf className="w-3.5 h-3.5 text-primary" />
                         </div>
-                        <div className="bg-card border border-border rounded-xl rounded-tl-sm px-3 py-2.5 flex items-center gap-2.5" style={{ boxShadow: '0 1px 4px hsl(221 39% 11% / 0.03)' }}>
-                          <div className="relative">
-                            <Scan className="w-4 h-4 text-primary" />
-                            <motion.div className="absolute inset-0 border-2 border-primary/40 rounded" animate={{ scale: [1, 1.3, 1], opacity: [1, 0, 1] }} transition={{ repeat: Infinity, duration: 1.5 }} />
-                          </div>
-                          <span className="text-[14px] font-medium text-foreground">
-                            {language === 'ne' ? '🔬 विश्लेषण गर्दैछु...' : language === 'hi' ? '🔬 विश्लेषण...' : '🔬 Analyzing...'}
+                        <div className="bg-muted/50 rounded-2xl rounded-tl-sm px-3.5 py-2.5 flex items-center gap-2.5">
+                          <Loader2 className="w-4 h-4 text-primary animate-spin" />
+                          <span className="text-[13px] text-muted-foreground">
+                            {language === 'ne' ? 'फोटो विश्लेषण गर्दैछु...' : language === 'hi' ? 'फोटो विश्लेषण...' : 'Analyzing photo...'}
                           </span>
                         </div>
                       </motion.div>
@@ -1086,9 +1048,9 @@ export function OnScreenAssistant({ isFullScreen: isEmbeddedFullScreen = false, 
                   return (
                     <motion.div
                       key={i}
-                      initial={{ opacity: 0, y: 6 }}
+                      initial={{ opacity: 0, y: 4 }}
                       animate={{ opacity: 1, y: 0 }}
-                      transition={{ duration: 0.25 }}
+                      transition={{ duration: 0.2 }}
                       className={cn("flex gap-2.5", isUser ? "justify-end" : "justify-start")}
                     >
                       {!isUser && (
@@ -1097,44 +1059,44 @@ export function OnScreenAssistant({ isFullScreen: isEmbeddedFullScreen = false, 
                         </div>
                       )}
                       <div className={cn(
-                        "max-w-[82%] sm:max-w-[75%] rounded-2xl px-3.5 py-2.5",
+                        "max-w-[85%] sm:max-w-[75%]",
                         isUser 
-                          ? "bg-primary text-primary-foreground rounded-br-sm text-[15px] leading-relaxed" 
-                          : "bg-card border border-border rounded-tl-sm text-[15px] leading-relaxed"
-                      )}
-                        style={!isUser ? { boxShadow: '0 1px 6px hsl(221 39% 11% / 0.04)' } : undefined}
-                      >
+                          ? "bg-primary text-primary-foreground rounded-2xl rounded-br-sm px-3.5 py-2.5 text-[14px]" 
+                          : "text-[14px]"
+                      )}>
                         {msg.role === 'user' && msg.isOffline && (
-                          <div className="flex items-center gap-1 mb-1.5 text-[10px] opacity-80">
-                            <WifiOff className="w-3 h-3" />
-                            <span>{language === 'ne' ? '📤 पठाउन बाँकी' : '📤 Queued'}</span>
+                          <div className="flex items-center gap-1 mb-1 text-[10px] opacity-70">
+                            <WifiOff className="w-3 h-3" /><span>Queued</span>
                           </div>
                         )}
                         {msg.imageUrl && (
-                          <div className="mb-2 rounded-lg overflow-hidden">
-                            <img src={msg.imageUrl} alt="Crop photo" className="max-w-full max-h-44 object-contain rounded-lg" />
+                          <div className={cn("mb-2 rounded-lg overflow-hidden", isUser && "")}>
+                            <img src={msg.imageUrl} alt="Crop photo" className="max-w-full max-h-40 object-contain rounded-lg" />
                           </div>
                         )}
-                        <p className="whitespace-pre-wrap">{msg.content}</p>
+                        {isUser ? (
+                          <p className="whitespace-pre-wrap leading-relaxed">{msg.content}</p>
+                        ) : (
+                          <div className="prose prose-sm prose-neutral dark:prose-invert max-w-none">
+                            <p className="whitespace-pre-wrap leading-relaxed text-foreground">{msg.content}</p>
+                          </div>
+                        )}
                         {msg.isOffline && !isUser && (
-                          <div className="flex items-center gap-1 mt-2 text-[10px] opacity-60">
+                          <div className="flex items-center gap-1 mt-1.5 text-[10px] text-muted-foreground">
                             <WifiOff className="w-3 h-3" />
-                            <span>{language === 'ne' ? 'अफलाइन जवाफ' : 'Offline response'}</span>
+                            <span>{language === 'ne' ? 'अफलाइन' : 'Offline'}</span>
                           </div>
                         )}
                         {!isUser && ttsSupported && !msg.diseaseResult && (
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            className="mt-2 h-6 px-2 text-[11px] text-muted-foreground hover:text-foreground rounded-md gap-1"
+                          <button
+                            className="flex items-center gap-1 mt-2 text-[11px] text-muted-foreground hover:text-foreground transition-colors"
                             onClick={() => isSpeaking ? stop() : speak(msg.content)}
                           >
                             {isSpeaking ? <VolumeX className="w-3 h-3" /> : <Volume2 className="w-3 h-3" />}
                             {isSpeaking ? (language === 'ne' ? 'रोक्नुहोस्' : 'Stop') : (language === 'ne' ? 'सुन्नुहोस्' : 'Listen')}
-                          </Button>
+                          </button>
                         )}
                       </div>
-                      {isUser && <div className="w-7 shrink-0" />}
                     </motion.div>
                   );
                 })}
@@ -1145,12 +1107,10 @@ export function OnScreenAssistant({ isFullScreen: isEmbeddedFullScreen = false, 
                     <div className="w-7 h-7 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
                       <Leaf className="w-3.5 h-3.5 text-primary" />
                     </div>
-                    <div className="bg-card border border-border rounded-xl rounded-tl-sm px-4 py-3" style={{ boxShadow: '0 1px 4px hsl(221 39% 11% / 0.03)' }}>
-                      <div className="flex gap-1.5">
-                        <motion.div className="w-2 h-2 rounded-full bg-primary/40" animate={{ y: [0, -5, 0] }} transition={{ repeat: Infinity, duration: 0.6, delay: 0 }} />
-                        <motion.div className="w-2 h-2 rounded-full bg-primary/40" animate={{ y: [0, -5, 0] }} transition={{ repeat: Infinity, duration: 0.6, delay: 0.15 }} />
-                        <motion.div className="w-2 h-2 rounded-full bg-primary/40" animate={{ y: [0, -5, 0] }} transition={{ repeat: Infinity, duration: 0.6, delay: 0.3 }} />
-                      </div>
+                    <div className="flex gap-1 px-3 py-2.5">
+                      <motion.div className="w-1.5 h-1.5 rounded-full bg-muted-foreground/40" animate={{ opacity: [0.3, 1, 0.3] }} transition={{ repeat: Infinity, duration: 1, delay: 0 }} />
+                      <motion.div className="w-1.5 h-1.5 rounded-full bg-muted-foreground/40" animate={{ opacity: [0.3, 1, 0.3] }} transition={{ repeat: Infinity, duration: 1, delay: 0.2 }} />
+                      <motion.div className="w-1.5 h-1.5 rounded-full bg-muted-foreground/40" animate={{ opacity: [0.3, 1, 0.3] }} transition={{ repeat: Infinity, duration: 1, delay: 0.4 }} />
                     </div>
                   </motion.div>
                 )}
@@ -1159,35 +1119,13 @@ export function OnScreenAssistant({ isFullScreen: isEmbeddedFullScreen = false, 
             )}
           </div>
 
-          {/* ========== FIXED INPUT BAR ========== */}
-          <div className="shrink-0 border-t border-border/40 bg-background/95 backdrop-blur-md">
-            <div className="max-w-3xl mx-auto px-3 sm:px-5 py-2.5 pb-8 sm:pb-10 space-y-2">
-              {/* Quick actions when chatting */}
-              {messages.length > 0 && (
-                <div className="flex items-center gap-1.5 flex-wrap">
-                  <button
-                    onClick={() => imageInputRef.current?.click()}
-                    disabled={isLoading || !!selectedImage}
-                    className="flex items-center gap-1 text-[12px] text-primary hover:text-primary/80 px-2.5 py-1.5 rounded-full border border-primary/20 bg-primary/5 hover:bg-primary/10 transition-all touch-manipulation font-medium"
-                  >
-                    <Camera className="w-3.5 h-3.5" />
-                    {language === 'ne' ? '📷 स्क्यान' : '📷 Scan'}
-                  </button>
-                  <button onClick={retryLastMessage} className="flex items-center gap-1 text-[12px] text-muted-foreground hover:text-foreground px-2.5 py-1.5 rounded-full border border-border hover:border-border/80 transition-all touch-manipulation">
-                    <RefreshCw className="w-3 h-3" />
-                    {language === 'ne' ? 'फेरि' : 'Retry'}
-                  </button>
-                  <button onClick={clearChat} className="flex items-center gap-1 text-[12px] text-muted-foreground hover:text-foreground px-2.5 py-1.5 rounded-full border border-border hover:border-border/80 transition-all touch-manipulation">
-                    <X className="w-3 h-3" />
-                    {language === 'ne' ? 'मेटाउनुहोस्' : 'Clear'}
-                  </button>
-                </div>
-              )}
-
+          {/* ========== INPUT AREA ========== */}
+          <div className="shrink-0 bg-background border-t border-border/30">
+            <div className="max-w-3xl mx-auto px-3 sm:px-5 pt-2 pb-6 sm:pb-8 space-y-2">
               {/* Selected image preview */}
               {selectedImage && (
                 <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="relative inline-block">
-                  <img src={selectedImage} alt="Selected" className="max-h-16 rounded-lg border-2 border-primary/30 shadow-sm" />
+                  <img src={selectedImage} alt="Selected" className="max-h-16 rounded-lg border border-border shadow-sm" />
                   <button onClick={removeSelectedImage} className="absolute -top-1.5 -right-1.5 w-5 h-5 bg-destructive text-destructive-foreground rounded-full flex items-center justify-center shadow-md">
                     <X className="w-3 h-3" />
                   </button>
@@ -1195,25 +1133,23 @@ export function OnScreenAssistant({ isFullScreen: isEmbeddedFullScreen = false, 
               )}
 
               {/* Input row */}
-              <div className="flex items-center gap-1.5 bg-muted/40 border border-border/60 rounded-xl px-1.5 py-1 transition-all focus-within:border-primary/40 focus-within:bg-background" style={{ boxShadow: '0 1px 6px hsl(221 39% 11% / 0.03)' }}>
+              <div className="flex items-end gap-2 bg-muted/30 border border-border/50 rounded-2xl px-2 py-1.5 transition-all focus-within:border-primary/30 focus-within:shadow-sm">
                 <input ref={imageInputRef} type="file" accept="image/*" capture="environment" onChange={handleImageSelect} className="hidden" />
                 
                 <Button variant="ghost" size="icon" onClick={() => imageInputRef.current?.click()} disabled={isLoading || !!selectedImage}
-                  className="shrink-0 h-9 w-9 rounded-lg text-muted-foreground hover:text-primary hover:bg-primary/10 touch-manipulation"
-                  title={language === 'ne' ? 'बाली फोटो अपलोड' : 'Upload crop photo'}
-                >
-                  <ImagePlus className="w-[20px] h-[20px]" />
+                  className="shrink-0 h-8 w-8 rounded-lg text-muted-foreground hover:text-foreground touch-manipulation"
+                  title={language === 'ne' ? 'फोटो' : 'Photo'}>
+                  <ImagePlus className="w-[18px] h-[18px]" />
                 </Button>
 
                 <Button variant={isListening ? "destructive" : "ghost"} size="icon" onClick={toggleListening} disabled={isLoading}
-                  className={cn("shrink-0 h-9 w-9 rounded-lg touch-manipulation", !isListening && "text-muted-foreground hover:text-primary hover:bg-primary/10")}
-                >
+                  className={cn("shrink-0 h-8 w-8 rounded-lg touch-manipulation", !isListening && "text-muted-foreground hover:text-foreground")}>
                   {isListening ? (
-                    <motion.div animate={{ scale: [1, 1.2, 1] }} transition={{ repeat: Infinity, duration: 0.5 }}>
-                      <MicOff className="w-[20px] h-[20px]" />
+                    <motion.div animate={{ scale: [1, 1.15, 1] }} transition={{ repeat: Infinity, duration: 0.6 }}>
+                      <MicOff className="w-[18px] h-[18px]" />
                     </motion.div>
                   ) : (
-                    <Mic className="w-[20px] h-[20px]" />
+                    <Mic className="w-[18px] h-[18px]" />
                   )}
                 </Button>
 
@@ -1223,40 +1159,35 @@ export function OnScreenAssistant({ isFullScreen: isEmbeddedFullScreen = false, 
                   onChange={(e) => setInputText(e.target.value)}
                   placeholder={
                     isListening 
-                      ? (language === 'ne' ? '🎤 सुन्दैछ...' : '🎤 Listening...')
-                      : selectedImage
-                        ? (language === 'ne' ? 'फोटोको बारेमा...' : 'About photo...')
-                        : (language === 'ne' ? 'प्रश्न लेख्नुहोस्...' : 'Type your question...')
+                      ? (language === 'ne' ? 'सुन्दैछु...' : 'Listening...')
+                      : (language === 'ne' ? 'खेतीको बारेमा सोध्नुहोस्...' : 'Ask about farming...')
                   }
                   onKeyPress={(e) => e.key === 'Enter' && handleSendMessage()}
                   disabled={isLoading || isListening}
-                  className="flex-1 h-9 text-[14px] border-0 bg-transparent shadow-none focus-visible:ring-0 focus-visible:ring-offset-0 px-1"
+                  className="flex-1 h-8 text-[14px] border-0 bg-transparent shadow-none focus-visible:ring-0 focus-visible:ring-offset-0 px-0"
                 />
 
                 <Button onClick={() => handleSendMessage()} disabled={(!inputText.trim() && !selectedImage) || isLoading} size="icon"
-                  className="shrink-0 h-9 w-9 rounded-lg touch-manipulation"
-                >
-                  <Send className="w-[20px] h-[20px]" />
+                  className="shrink-0 h-8 w-8 rounded-lg touch-manipulation">
+                  {isLoading ? <Loader2 className="w-[18px] h-[18px] animate-spin" /> : <Send className="w-[18px] h-[18px]" />}
                 </Button>
               </div>
 
-              {/* Listening indicator */}
-              {isListening && (
-                <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex items-center justify-center gap-2 py-1.5 px-3 rounded-full bg-destructive/10 border border-destructive/20 mx-auto w-fit">
-                  <motion.div animate={{ scale: [1, 1.4, 1] }} transition={{ repeat: Infinity, duration: 0.6 }} className="w-2 h-2 rounded-full bg-destructive" />
-                  <span className="text-[12px] text-destructive font-medium">
-                    {language === 'ne' ? 'सुन्दैछु...' : 'Listening...'}
-                  </span>
-                </motion.div>
-              )}
-
-              {/* Subscription CTA */}
-              {!subscribed && !subLoading && (
-                <button onClick={() => setShowSubscriptionModal(true)} className="w-full flex items-center justify-center gap-1 text-[11px] text-accent hover:text-accent/80 py-1.5 transition-colors touch-manipulation">
-                  <Crown className="w-3 h-3" />
-                  {language === 'ne' ? 'असीमित सल्लाहका लागि सदस्यता' : 'Subscribe for unlimited advice'}
-                </button>
-              )}
+              {/* Listening + sub CTA */}
+              <div className="flex items-center justify-between">
+                {isListening ? (
+                  <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex items-center gap-1.5">
+                    <motion.div animate={{ scale: [1, 1.3, 1] }} transition={{ repeat: Infinity, duration: 0.7 }} className="w-2 h-2 rounded-full bg-destructive" />
+                    <span className="text-[11px] text-destructive font-medium">{language === 'ne' ? 'बोल्नुहोस्...' : 'Speak now...'}</span>
+                  </motion.div>
+                ) : <div />}
+                {!subscribed && !subLoading && (
+                  <button onClick={() => setShowSubscriptionModal(true)} className="text-[11px] text-muted-foreground hover:text-foreground transition-colors touch-manipulation">
+                    <Crown className="w-3 h-3 inline mr-1" />
+                    {language === 'ne' ? 'PRO अपग्रेड' : 'Upgrade to PRO'}
+                  </button>
+                )}
+              </div>
             </div>
           </div>
         </div>
