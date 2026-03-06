@@ -1,5 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
-import { Send, Loader2, ImagePlus, User, Shield, FileText, Phone, PhoneCall, PhoneOff, PhoneIncoming, Clock, CheckCircle2, XCircle, X, AlertTriangle } from 'lucide-react';
+import { Send, Loader2, ImagePlus, User, Shield, FileText, Phone, PhoneCall, PhoneOff, PhoneIncoming, Clock, CheckCircle2, XCircle, X, AlertTriangle, Mic } from 'lucide-react';
+import { VoiceNoteRecorder } from '@/components/voice/VoiceNoteRecorder';
+import { VoiceNoteBubble } from '@/components/voice/VoiceNoteBubble';
 import { TicketFeedbackCard } from '@/components/feedback/TicketFeedbackCard';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
@@ -439,6 +441,7 @@ export function ExpertTicketChat({ ticketId, cropName, senderRole = 'farmer', fa
   const sendMessage = useSendExpertTicketMessage();
   const [newMessage, setNewMessage] = useState('');
   const [uploading, setUploading] = useState(false);
+  const [showVoiceRecorder, setShowVoiceRecorder] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
   const [callDialogOpen, setCallDialogOpen] = useState(false);
   const [preferredTime, setPreferredTime] = useState('');
