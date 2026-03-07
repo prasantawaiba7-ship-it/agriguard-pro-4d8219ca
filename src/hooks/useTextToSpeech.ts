@@ -148,39 +148,68 @@ function isFemaleVoice(voice: SpeechSynthesisVoice): boolean {
   return false;
 }
 
-function findBestVoice(voices: SpeechSynthesisVoice[], targetLang: string): SpeechSynthesisVoice | null {
-  if (voices.length === 0) return null;
+/**
+ * Check if a voice can handle Devanagari/Nepali text.
+ * Returns true for ne-NP, hi-IN, or any Indic voice.
+ */
+function canHandleDevanagari(voice: SpeechSynthesisVoice): boolean {
+  const lang = voice.lang.toLowerCase();
+  const name = voice.name.toLowerCase();
+  return (
+    lang.startsWith("ne") ||
+    lang.startsWith("hi") ||
+    lang.includes("-in") ||
+    name.includes("nepali") ||
+    name.includes("hindi") ||
+    name.includes("devanagari")
+  );
+}
+
+interface VoiceSearchResult {
+  voice: SpeechSynthesisVoice | null;
+  /** true when Nepali/Hindi text was requested but no suitable voice exists */
+  unsupportedLanguage: boolean;
+}
+
+function findBestVoice(voices: SpeechSynthesisVoice[], targetLang: string, textIsDevanagari: boolean): VoiceSearchResult {
+  if (voices.length === 0) return { voice: null, unsupportedLanguage: false };
 
   const langCode = targetLang.split("-")[0];
+  const needsDevanagari = langCode === "ne" || langCode === "hi" || textIsDevanagari;
   const femaleVoices = voices.filter(isFemaleVoice);
   const pool = femaleVoices.length > 0 ? femaleVoices : voices;
 
   // 1) Nepali
   let v = pool.find((x) => x.lang.toLowerCase().includes("ne") || x.name.toLowerCase().includes("nepali"));
-  if (v) return v;
+  if (v) return { voice: v, unsupportedLanguage: false };
 
   // 2) Hindi when not English
   v = pool.find((x) => x.lang.startsWith("hi") || x.name.toLowerCase().includes("hindi"));
-  if (v && langCode !== "en") return v;
+  if (v && langCode !== "en") return { voice: v, unsupportedLanguage: false };
 
   // 3) Any IN when not English
   v = pool.find((x) => x.lang.includes("IN"));
-  if (v && langCode !== "en") return v;
+  if (v && langCode !== "en") return { voice: v, unsupportedLanguage: false };
+
+  // If we need Devanagari but couldn't find any suitable voice, signal unsupported
+  if (needsDevanagari) {
+    return { voice: null, unsupportedLanguage: true };
+  }
 
   // 4) language match
   v = pool.find((x) => x.lang.startsWith(langCode));
-  if (v) return v;
+  if (v) return { voice: v, unsupportedLanguage: false };
 
   // 5) female English
   v = femaleVoices.find((x) => x.lang.startsWith("en"));
-  if (v) return v;
+  if (v) return { voice: v, unsupportedLanguage: false };
 
   // 6) google
   v = voices.find((x) => x.name.toLowerCase().includes("google"));
-  if (v) return v;
+  if (v) return { voice: v, unsupportedLanguage: false };
 
   // 7) default
-  return voices.find((x) => x.default) || voices[0] || null;
+  return { voice: voices.find((x) => x.default) || voices[0] || null, unsupportedLanguage: false };
 }
 
 function getElevenLabsFunctionUrl(): string {
