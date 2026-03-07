@@ -440,9 +440,6 @@ export function useTextToSpeech(options: UseTextToSpeechOptions = {}) {
         elevenLabsDisabled = false;
         console.log('[TTS] ElevenLabs circuit breaker reset, retrying');
       }
-        speakWithBrowser(textToSpeak, messageId);
-        return;
-      }
 
       abortControllerRef.current = new AbortController();
 
